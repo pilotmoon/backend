@@ -4,13 +4,16 @@
   "description": "Pilotmoon backend API server",
   "main": "hellonode.js",
   "scripts": {
+    "start": "node hellonode.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "private": true,
   "engines": {
-    "node": "16.x",
-    "npm": "^8.19.3"
+    "node": "16.x"
+  },
+  "dependencies": {
+    "koa": "^2.14.1"
   }
 }
