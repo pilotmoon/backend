@@ -1,12 +1,16 @@
 {
   "name": "rolo",
-  "packageManager": "yarn@3.4.1",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Pilotmoon backend API server",
+  "main": "hellonode.js",
   "scripts": {
-    "start": "node hellonode.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "author": "",
+  "license": "ISC",
+  "private": true,
   "engines": {
     "node": "16.x",
-    "yarn": "^3.4.1"
+    "npm": "^8.19.3"
   }
 }
