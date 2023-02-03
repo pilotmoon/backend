@@ -4,5 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node hellonode.js"
+  },
+  "engines": {
+    "node": "16.x",
+    "yarn": "^3.4.1"
   }
 }
