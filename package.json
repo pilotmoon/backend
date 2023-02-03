@@ -14,6 +14,7 @@
     "node": "16.x"
   },
   "dependencies": {
-    "koa": "^2.14.1"
+    "koa": "^2.14.1",
+    "mongoose": "^6.9.0"
   }
 }
