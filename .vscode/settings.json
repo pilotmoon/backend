@@ -1,0 +1,7 @@
+{
+    "standard.engine": "ts-standard",
+    "standard.validate": [
+        "typescript",
+        "typescriptreact"
+    ]
+}

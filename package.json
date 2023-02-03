@@ -1,20 +1,23 @@
 {
   "name": "rolo",
-  "version": "1.0.0",
-  "description": "Pilotmoon backend API server",
+  "version": "0.0.0",  
   "main": "hellonode.js",
   "scripts": {
     "start": "node hellonode.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
   "private": true,
   "engines": {
-    "node": "16.x"
+    "node": "16.19.0",
+    "npm": "8.19.3"
   },
   "dependencies": {
-    "koa": "^2.14.1",
-    "mongoose": "^6.9.0"
+    "koa": "2.14.1",
+    "mongoose": "6.9.0"
+  },
+  "devDependencies": {
+    "@types/koa": "2.13.5",
+    "ts-standard": "12.0.2",
+    "typescript": "4.9.5"
   }
 }

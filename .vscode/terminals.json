@@ -1,0 +1,15 @@
+{
+  "autorun": false,
+  "terminals": [
+    {
+      "name": "tsc",
+      "description": "typescript watcher",      
+      "command": "npx tsc --watch"
+    },
+    {
+      "name": "Terminal",
+      "execute": false,
+      "focus": true
+    }
+  ]
+}
