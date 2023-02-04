@@ -1,7 +1,7 @@
 {
-    "standard.engine": "ts-standard",
-    "standard.validate": [
-        "typescript",
-        "typescriptreact"
-    ]
+  "standard.engine": "ts-standard",
+  "standard.validate": [
+    "typescript",
+    "typescriptreact"
+  ]
 }

@@ -3,8 +3,13 @@
   "terminals": [
     {
       "name": "tsc",
-      "description": "typescript watcher",      
+      "description": "typescript watcher",
       "command": "npx tsc --watch"
+    },
+    {
+      "name": "fmt",
+      "description": "formatter",
+      "command": "deno fmt --watch"
     },
     {
       "name": "Terminal",
