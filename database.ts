@@ -1,12 +1,19 @@
-import mongoose from "mongoose";
+import { MongoClient, ServerApiVersion } from "mongodb";
 import { DATABASE_NAME, DATABASE_URL } from "./config";
 
 // database test
 export async function testDb(): Promise<void> {
-  mongoose.set("strictQuery", false);
-  await mongoose.connect(DATABASE_URL, { dbName: DATABASE_NAME });
-  console.log("ok");
-  const Cat = mongoose.model<any>("Cat", { name: String });
-  const kitty = new Cat({ name: "Boris" });
-  kitty.save().then(() => console.log("meow"));
+  const client = new MongoClient(DATABASE_URL, {
+    serverApi: ServerApiVersion.v1,
+  });
+  try {
+    const database = client.db("testdb");
+    const movies = database.collection("movies");
+    const document = { title: "Ghostbusters" };
+    const movie = await movies.insertOne(document);
+    console.log(movie);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
 }

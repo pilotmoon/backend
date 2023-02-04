@@ -1,9 +1,9 @@
 {
   "name": "rolo",
   "version": "0.0.0",
-  "main": "hellonode.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node hellonode.js",
+    "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true,
@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "koa": "2.14.1",
-    "mongoose": "6.9.0"
+    "mongodb": "5.0.0",
+    "zod": "3.20.2"
   },
   "devDependencies": {
     "@types/koa": "2.13.5",
