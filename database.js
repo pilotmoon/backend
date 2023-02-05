@@ -11,7 +11,7 @@ async function testDb() {
   try {
     const database = client.db("testdb");
     const movies = database.collection("movies");
-    const document = { title: "Dune" };
+    const document = { title: "Ghostbusters" };
     const movie = await movies.insertOne(document);
     console.log(movie);
   } finally {

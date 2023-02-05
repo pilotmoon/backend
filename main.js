@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const chewit_1 = require("chewit");
 const Koa = require("koa");
 const config_1 = require("./config");
 const database_1 = require("./database");
@@ -13,6 +14,6 @@ async function main() {
 // koa
 const app = new Koa();
 app.use((ctx) => {
-  ctx.body = "Hello World, from koa.";
+  ctx.body = "Hello World, from koa. " + (0, chewit_1.randomString)();
 });
 app.listen(config_1.APP_PORT);

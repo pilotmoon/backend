@@ -1,3 +1,4 @@
+import { randomString } from "chewit";
 import Koa = require("koa");
 import { APP_PORT } from "./config";
 import { testDb } from "./database";
@@ -14,6 +15,6 @@ async function main() {
 // koa
 const app = new Koa();
 app.use((ctx) => {
-  ctx.body = "Hello World, from koa.";
+  ctx.body = "Hello World, from koa. " + randomString();
 });
 app.listen(APP_PORT);
