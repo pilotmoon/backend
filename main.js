@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const chewit_1 = require("chewit");
+const chewit_1 = require("@pilotmoon/chewit");
 const Koa = require("koa");
 const config_1 = require("./config");
 const database_1 = require("./database");

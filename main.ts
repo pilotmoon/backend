@@ -1,4 +1,4 @@
-import { randomString } from "chewit";
+import { randomString } from "@pilotmoon/chewit";
 import Koa = require("koa");
 import { APP_PORT } from "./config";
 import { testDb } from "./database";
