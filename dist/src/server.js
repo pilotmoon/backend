@@ -9,7 +9,7 @@ const errors_1 = require("./errors");
 const database_1 = require("./database");
 const auth_1 = require("./auth");
 // set up router
-const router = new Router({ prefix: "/v1" });
+const router = new Router({ prefix: config_1.config.PATH_PREFIX });
 // healthcheck endpoint
 router.get("/healthcheck", async (ctx, next) => {
   ctx.body = { "healthcheck": true };
@@ -19,6 +19,11 @@ router.get("/healthcheck", async (ctx, next) => {
 router.use(require("./routers/apiKeys").router.routes());
 // set up Koa app
 const app = new Koa();
+// add function to context for generating full url
+app.context.fullUrl = function (name, params) {
+  console.log("fullUrl", name, params);
+  return config_1.config.APP_URL + router.url(name, params);
+};
 // standard error handling
 app.use(async (ctx, next) => {
   try {

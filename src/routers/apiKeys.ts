@@ -1,11 +1,17 @@
 import Router = require("@koa/router");
+import { randomUUID } from "crypto";
 import { ApiKeyParams, createApiKey } from "../auth";
 
-const router = new Router();
+export const router = new Router({ prefix: "/apikeys" });
+const PATH_NAME = randomUUID();
 
-router.post("/apikeys", async (ctx, next) => {
+router.post("/", async (ctx, next) => {
   const params = ApiKeyParams.parse(ctx.request.body);
-  ctx.body = await createApiKey(params);
+  const document = await createApiKey(params);
+  ctx.body = document;
+  ctx.status = 201;
+  ctx.set("Location", ctx.fullUrl(PATH_NAME, { id: document._id }));
 });
 
-export { router };
+router.get(PATH_NAME, "/:id", async (ctx, next) => {
+});

@@ -5,6 +5,7 @@ export const config: { [key: string]: any } = {};
 const manifest = [
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
+  { key: "PATH_PREFIX", loader: load("/v1") },
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME", loader: load("testdb") },
 ];
