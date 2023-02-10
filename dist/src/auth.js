@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getApiKeyById =
+exports.authMiddleware =
+  exports.getApiKeyById =
   exports.getApiKeyBySecretKey =
   exports.createApiKey =
   exports.init =
@@ -9,6 +10,7 @@ exports.getApiKeyById =
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
+const errors_1 = require("./errors");
 const apiKeysCollectionName = "api_keys";
 const allScopes = [
   "apikeys:create",
@@ -64,3 +66,27 @@ async function getApiKeyById(id) {
   return result;
 }
 exports.getApiKeyById = getApiKeyById;
+// auth middleware
+async function authMiddleware(ctx, next) {
+  const authorizationHeader = ctx.request.headers["authorization"];
+  const apiKeyHeader = ctx.request.headers["x-api-key"];
+  let key = "";
+  if (typeof authorizationHeader === "string") {
+    const bearerPrefix = "Bearer ";
+    if (authorizationHeader.startsWith(bearerPrefix)) {
+      key = authorizationHeader.substring(bearerPrefix.length);
+    } else {
+      throw new errors_1.ApiError(
+        401,
+        "Authorization header must start with Bearer",
+      );
+    }
+  } else if (typeof apiKeyHeader === "string" && apiKeyHeader.length > 0) {
+    key = apiKeyHeader;
+  } else {
+    throw new errors_1.ApiError(401, "API key is required");
+  }
+  console.log("API key:", key.red);
+  await next();
+}
+exports.authMiddleware = authMiddleware;

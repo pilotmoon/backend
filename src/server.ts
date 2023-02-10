@@ -3,9 +3,9 @@ import Koa = require("koa");
 import Router = require("@koa/router");
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
-import { ApiError, reportError } from "./errors";
+import { reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { init as initAuth } from "./auth";
+import { authMiddleware, init as initAuth } from "./auth";
 
 // set up router
 const router = new Router({ prefix: config.PATH_PREFIX });
@@ -28,7 +28,7 @@ app.context.fullUrl = function (name: string, params?: any) {
   return config.APP_URL + router.url(name, params);
 };
 
-// standard error handling
+// middleware for all error handling
 app.use(async (ctx, next) => {
   try {
     await next();
@@ -37,7 +37,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-// replace _id with id for string ids
+// when returning a body, replace _id with id for string ids
 app.use(async (ctx, next) => {
   await next();
   if (ctx.body && ctx.body._id) {
@@ -48,15 +48,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-// require API key for all routes
-app.use(async (ctx, next) => {
-  const apiKey = ctx.request.headers["x-api-key"];
-  if (typeof apiKey !== "string" || apiKey.length === 0) {
-    throw new ApiError(401, "API key is required");
-  }
-  await next();
-});
-
+app.use(authMiddleware);
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());

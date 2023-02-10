@@ -1,6 +1,8 @@
 import { randomString } from "@pilotmoon/chewit";
 import { z } from "zod";
 import { getDb } from "./database";
+import { ApiError } from "./errors";
+import { Context, Next } from "koa";
 
 const apiKeysCollectionName = "api_keys";
 
@@ -66,4 +68,25 @@ export async function getApiKeyById(
   const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
   const result = await collection.findOne({ _id: id });
   return result;
+}
+
+// auth middleware
+export async function authMiddleware(ctx: Context, next: Next) {
+  const authorizationHeader = ctx.request.headers["authorization"];
+  const apiKeyHeader = ctx.request.headers["x-api-key"];
+  let key = "";
+  if (typeof authorizationHeader === "string") {
+    const bearerPrefix = "Bearer ";
+    if (authorizationHeader.startsWith(bearerPrefix)) {
+      key = authorizationHeader.substring(bearerPrefix.length);
+    } else {
+      throw new ApiError(401, "Authorization header must start with Bearer");
+    }
+  } else if (typeof apiKeyHeader === "string" && apiKeyHeader.length > 0) {
+    key = apiKeyHeader;
+  } else {
+    throw new ApiError(401, "API key is required");
+  }
+  console.log("API key:", key.red);
+  await next();
 }

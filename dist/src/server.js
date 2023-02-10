@@ -24,7 +24,7 @@ app.context.fullUrl = function (name, params) {
   console.log("fullUrl", name, params);
   return config_1.config.APP_URL + router.url(name, params);
 };
-// standard error handling
+// middleware for all error handling
 app.use(async (ctx, next) => {
   try {
     await next();
@@ -32,7 +32,7 @@ app.use(async (ctx, next) => {
     (0, errors_1.reportError)(error, ctx);
   }
 });
-// replace _id with id for string ids
+// when returning a body, replace _id with id for string ids
 app.use(async (ctx, next) => {
   await next();
   if (ctx.body && ctx.body._id) {
@@ -42,14 +42,7 @@ app.use(async (ctx, next) => {
     delete ctx.body._id;
   }
 });
-// require API key for all routes
-app.use(async (ctx, next) => {
-  const apiKey = ctx.request.headers["x-api-key"];
-  if (typeof apiKey !== "string" || apiKey.length === 0) {
-    throw new errors_1.ApiError(401, "API key is required");
-  }
-  await next();
-});
+app.use(auth_1.authMiddleware);
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());
