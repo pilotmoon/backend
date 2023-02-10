@@ -37,8 +37,7 @@ export async function createApiKey(
 }
 
 function generateKeys(kind: "test" | "live") {
-  const clear = randomString({ length: 7 });
-  const id = `ak_${randomString({ length: 24 })}`;
-  const secret_key = `key_${kind}_${randomString({ length: 24 })}`;
+  const id = `ak_${randomString()}`;
+  const secret_key = `key_${kind}_${randomString()}`;
   return { id, secret_key };
 }
