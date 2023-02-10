@@ -31,7 +31,6 @@ function getErrorStatus(error) {
 }
 function reportError(error, ctx) {
   const message = getErrorMessage(error);
-  ctx.set("X-Error-Message", message);
   ctx.body = {
     error: {
       message: message,
