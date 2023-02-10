@@ -53,16 +53,14 @@ app.use(async (ctx, next) => {
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());
+// Server close-down
 const abortController = new AbortController();
-function onAppCloseServer() {
+function closeServer() {
   console.log("Closing server");
   abortController.abort();
 }
-async function main() {
-  await (0, database_1.connect)();
-  await Promise.all([
-    (0, auth_1.onAppStart)(),
-  ]);
+function startServer() {
+  console.log("Starting server");
   app.listen({
     port: config_1.config.APP_PORT,
     signal: abortController.signal,
@@ -70,18 +68,28 @@ async function main() {
     console.log(`Server listening on port ${config_1.config.APP_PORT}`.yellow);
   });
 }
-// Close-down routines
+async function main() {
+  console.log("Calling startup routines".green);
+  await (0, database_1.connect)(); // connect to database first
+  await Promise.all([
+    (0, auth_1.init)(),
+  ]);
+  console.log("Startup complete".green);
+  startServer();
+}
+// App close-down
 let closing = false;
-process.on("SIGINT", async function () {
+async function onAppClose() {
   console.log("SIGINT received".cyan);
   if (!closing) {
     closing = true;
     console.log("Calling shutdown routines".green);
     await Promise.all([
-      onAppCloseServer(),
-      (0, database_1.onAppClose)(),
+      closeServer(),
+      (0, database_1.close)(),
     ]);
-    console.log("All shutdown routines complete".green);
+    console.log("Shutdown complete".bgGreen);
   }
-});
+}
+process.on("SIGINT", onAppClose);
 main();

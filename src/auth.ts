@@ -24,11 +24,12 @@ const ApiKeySchema = ApiKeyParams.extend({
 type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
 // called at startup to set the collection index
-export async function onAppStart() {
+export async function init() {
+  console.log(`init ${apiKeysCollectionName} collection`);
   const result = await getDb()
     .collection(apiKeysCollectionName)
     .createIndex({ secret_key: 1 }, { unique: true });
-  console.log("dbinit", result);
+  console.log("createIndex", result);
 }
 
 // create a new API key

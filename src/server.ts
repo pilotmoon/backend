@@ -4,8 +4,8 @@ import Router = require("@koa/router");
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { ApiError, reportError } from "./errors";
-import { connect, onAppClose as onAppCloseDb } from "./database";
-import { onAppStart as onAppStartAuth } from "./auth";
+import { close as closeDb, connect as connectDb } from "./database";
+import { init as initAuth } from "./auth";
 
 // set up router
 const router = new Router();
@@ -61,17 +61,14 @@ app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());
 
+// Server close-down
 const abortController = new AbortController();
-function onAppCloseServer() {
+function closeServer() {
   console.log("Closing server");
   abortController.abort();
 }
-
-async function main() {
-  await connect();
-  await Promise.all([ // run all startup routines in parallel
-    onAppStartAuth(),
-  ]);
+function startServer() {
+  console.log("Starting server");
   app.listen({
     port: config.APP_PORT,
     signal: abortController.signal,
@@ -80,19 +77,29 @@ async function main() {
   });
 }
 
-// Close-down routines
+async function main() {
+  console.log("Calling startup routines".green);
+  await connectDb(); // connect to database first
+  await Promise.all([ // run all other startup routines in parallel
+    initAuth(),
+  ]);
+  console.log("Startup complete".green);
+  startServer();
+}
+
+// App close-down
 let closing = false;
-process.on("SIGINT", async function () {
+async function onAppClose() {
   console.log("SIGINT received".cyan);
   if (!closing) {
     closing = true;
     console.log("Calling shutdown routines".green);
     await Promise.all([ // run all shutdown routines in parallel
-      onAppCloseServer(),
-      onAppCloseDb(),
+      closeServer(),
+      closeDb(),
     ]);
-    console.log("All shutdown routines complete".green);
+    console.log("Shutdown complete".bgGreen);
   }
-});
-
+}
+process.on("SIGINT", onAppClose);
 main();
