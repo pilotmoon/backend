@@ -4,7 +4,7 @@ import { rolo } from "./setup";
 test("missing api key", async (t) => {
   const res = await rolo().get("healthcheck", { headers: { "X-Api-Key": "" } });
   t.is(res.status, 401);
-  t.is(res.data, "");
+  t.assert(res.data.error.message.length > 0);
 });
 
 test("healthcheck", async (t) => {

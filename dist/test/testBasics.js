@@ -7,7 +7,7 @@ const setup_1 = require("./setup");
     headers: { "X-Api-Key": "" },
   });
   t.is(res.status, 401);
-  t.is(res.data, "");
+  t.assert(res.data.error.message.length > 0);
 });
 (0, ava_1.default)("healthcheck", async (t) => {
   const res = await (0, setup_1.rolo)().get("healthcheck");

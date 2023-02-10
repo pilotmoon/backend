@@ -40,7 +40,11 @@ export function reportError(
 ) {
   const message = getErrorMessage(error);
   ctx.set("X-Error-Message", message);
-  ctx.body = "";
+  ctx.body = {
+    error: {
+      message: message,
+    },
+  };
   ctx.status = getErrorStatus(error);
   console.log(
     "Response status ".red + String(ctx.status).blue + " with message ".red +
