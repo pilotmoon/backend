@@ -33,8 +33,8 @@ async function createApiKey(params) {
 exports.createApiKey = createApiKey;
 function generateKeys(kind) {
   const clear = (0, chewit_1.randomString)({ length: 7 });
-  const id = `apikey_${clear}_${(0, chewit_1.randomString)({ length: 24 })}`;
-  const secret_key = `sk_${kind}_${clear}_${
+  const id = `ak_${(0, chewit_1.randomString)({ length: 24 })}`;
+  const secret_key = `key_${kind}_${
     (0, chewit_1.randomString)({ length: 24 })
   }`;
   return { id, secret_key };
