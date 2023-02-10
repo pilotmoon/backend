@@ -10,25 +10,25 @@ test("missing api key", async (t) => {
 test("healthcheck", async (t) => {
   const res = await rolo().get("healthcheck");
   t.is(res.status, 200);
-  t.deepEqual(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true });
 });
 
 test("healthcheck, query string", async (t) => {
   const res = await rolo().get("healthcheck?foo=bar");
   t.is(res.status, 200);
-  t.deepEqual(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true });
 });
 
 test("healthcheck, trailing slash", async (t) => {
   const res = await rolo().get("healthcheck/");
   t.is(res.status, 200);
-  t.deepEqual(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true });
 });
 
 test("healthcheck, query string, trailing slash", async (t) => {
   const res = await rolo().get("healthcheck/?foo=bar");
   t.is(res.status, 200);
-  t.deepEqual(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true });
 });
 
 test("healthcheck, post (method not allowed)", async (t) => {

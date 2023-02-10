@@ -32,17 +32,20 @@ app.use(async (ctx, next) => {
     (0, errors_1.reportError)(error, ctx);
   }
 });
-// when returning a body, replace _id with id for string ids
+// modify all response bodies
 app.use(async (ctx, next) => {
   await next();
-  if (ctx.body && ctx.body._id) {
-    if (typeof ctx.body._id === "string") {
-      ctx.body.id = ctx.body._id;
+  if (typeof ctx.body === "object") {
+    // replace _id with id
+    if (ctx.body._id) {
+      if (typeof ctx.body._id === "string") {
+        ctx.body.id = ctx.body._id;
+      }
+      delete ctx.body._id;
     }
-    delete ctx.body._id;
+    // set livemode key
+    ctx.body.livemode = ctx.state?.auth?.kind === "live";
   }
-  // set livemode key
-  ctx.body.livemode = ctx.state?.auth?.kind === "live";
 });
 app.use(auth_1.authMiddleware);
 app.use(bodyParser({ enableTypes: ["json"] }));
