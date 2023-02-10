@@ -12,8 +12,8 @@ const database_1 = require("./database");
 const errors_1 = require("./errors");
 const apiKeysCollectionName = "api_keys";
 const allScopes = [
-  "apikeys:create",
-  "apikeys:read",
+  "api_keys:create",
+  "api_keys:read",
 ];
 // schema for API keys
 exports.AuthContext = zod_1.z.object({
@@ -89,25 +89,37 @@ async function authMiddleware(ctx, next) {
   } else {
     throw new errors_1.ApiError(401, "API key is required");
   }
-  // regex match the kind part of the key
-  const match = key.match(/^key_(test|live)_/);
-  if (!match) {
-    throw new errors_1.ApiError(401, "Invalid API key prefix");
+  let kind;
+  // special case for test and live bootstrap
+  if (key === "test" || key === "live") {
+    // store the info for the rest of the app to access
+    const authContext = { kind: key, scopes: ["apikeys:create"] };
+    ctx.state.auth = authContext;
+    console.log(
+      "WARNING Using special auth context:".bgRed,
+      JSON.stringify(authContext).blue,
+    );
+  } else {
+    // regex match the kind part of the key
+    const match = key.match(/^key_(test|live)_/);
+    if (!match) {
+      throw new errors_1.ApiError(401, "Invalid API key prefix");
+    }
+    kind = match[1];
+    console.log("API key kind:", kind.blue);
+    // now we have key, look it up in the database
+    const collection = (0, database_1.getDb)(kind).collection(
+      apiKeysCollectionName,
+    );
+    const document = await collection.findOne({ key: key });
+    if (!document) {
+      throw new errors_1.ApiError(401, "Unknown API key");
+    }
+    // store the info for the rest of the app to access
+    const authContext = exports.AuthContext.parse(document);
+    console.log("Auth context:", JSON.stringify(authContext).blue);
+    ctx.state.auth = authContext;
   }
-  let keyKind = match[1];
-  console.log("API key kind:", keyKind.blue);
-  // now we have key, look it up in the database
-  const collection = (0, database_1.getDb)(keyKind).collection(
-    apiKeysCollectionName,
-  );
-  const document = await collection.findOne({ key: key });
-  if (!document) {
-    throw new errors_1.ApiError(401, "Unknown API key");
-  }
-  // store the info for the rest of the app to access
-  const authContext = exports.AuthContext.parse(document);
-  console.log("Auth context:", JSON.stringify(authContext).blue);
-  ctx.state.auth = authContext;
   await next();
 }
 exports.authMiddleware = authMiddleware;
