@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware =
-  exports.getApiKeyById =
-  exports.getApiKeyBySecretKey =
+  exports.lookupById =
+  exports.lookupByKey =
   exports.createApiKey =
   exports.init =
   exports.ApiKeyParams =
@@ -25,7 +25,7 @@ exports.ApiKeyParams = zod_1.z.object({
 const ApiKeySchema = exports.ApiKeyParams.extend({
   _id: zod_1.z.string(),
   object: zod_1.z.literal("api_key"),
-  key: zod_1.z.string(),
+  key: zod_1.z.string().optional(),
   created: zod_1.z.date(),
 });
 // called at startup to set the collection index
@@ -53,20 +53,20 @@ async function createApiKey(params) {
 }
 exports.createApiKey = createApiKey;
 // get an API key by secret key
-async function getApiKeyBySecretKey(secretKey) {
+async function lookupByKey(key) {
   const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
-  const result = await collection.findOne({ secret_key: secretKey });
+  const result = await collection.findOne({ key: key });
   return result;
 }
-exports.getApiKeyBySecretKey = getApiKeyBySecretKey;
+exports.lookupByKey = lookupByKey;
 // get an API key by id
-async function getApiKeyById(id) {
+async function lookupById(id) {
   const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
   const result = await collection.findOne({ _id: id });
   return result;
 }
-exports.getApiKeyById = getApiKeyById;
-// auth middleware
+exports.lookupById = lookupById;
+// auth middleware, allow Bearer token or x-api-key header
 async function authMiddleware(ctx, next) {
   const authorizationHeader = ctx.request.headers["authorization"];
   const apiKeyHeader = ctx.request.headers["x-api-key"];
@@ -87,6 +87,15 @@ async function authMiddleware(ctx, next) {
     throw new errors_1.ApiError(401, "API key is required");
   }
   console.log("API key:", key.red);
+  // now we have key, look it up in the database
+  const info = await lookupByKey(key);
+  if (!info) {
+    throw new errors_1.ApiError(401, "Invalid API key");
+  }
+  // delete the key from the object
+  delete info.key;
+  // store the API key info in the context
+  ctx.state.apiKey = info;
   await next();
 }
 exports.authMiddleware = authMiddleware;

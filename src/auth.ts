@@ -21,7 +21,7 @@ type ApiKeyParams = z.infer<typeof ApiKeyParams>;
 const ApiKeySchema = ApiKeyParams.extend({
   _id: z.string(),
   object: z.literal("api_key"),
-  key: z.string(),
+  key: z.string().optional(),
   created: z.date(),
 });
 type ApiKeySchema = z.infer<typeof ApiKeySchema>;
@@ -53,16 +53,16 @@ export async function createApiKey(
 }
 
 // get an API key by secret key
-export async function getApiKeyBySecretKey(
-  secretKey: string,
+export async function lookupByKey(
+  key: string,
 ): Promise<ApiKeySchema | null> {
   const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
-  const result = await collection.findOne({ secret_key: secretKey });
+  const result = await collection.findOne({ key: key });
   return result;
 }
 
 // get an API key by id
-export async function getApiKeyById(
+export async function lookupById(
   id: string,
 ): Promise<ApiKeySchema | null> {
   const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
@@ -70,7 +70,7 @@ export async function getApiKeyById(
   return result;
 }
 
-// auth middleware
+// auth middleware, allow Bearer token or x-api-key header
 export async function authMiddleware(ctx: Context, next: Next) {
   const authorizationHeader = ctx.request.headers["authorization"];
   const apiKeyHeader = ctx.request.headers["x-api-key"];
@@ -88,5 +88,18 @@ export async function authMiddleware(ctx: Context, next: Next) {
     throw new ApiError(401, "API key is required");
   }
   console.log("API key:", key.red);
+
+  // now we have key, look it up in the database
+  const info = await lookupByKey(key);
+  if (!info) {
+    throw new ApiError(401, "Invalid API key");
+  }
+
+  // delete the key from the object
+  delete info.key;
+
+  // store the API key info in the context
+  ctx.state.apiKey = info;
+
   await next();
 }
