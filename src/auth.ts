@@ -22,7 +22,7 @@ type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
   _id: z.string(),
   object: z.literal("api_key"),
-  key: z.string().optional(),
+  key: z.string(),
   created: z.date(),
 });
 type ApiKeySchema = z.infer<typeof ApiKeySchema>;
