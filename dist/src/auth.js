@@ -128,10 +128,15 @@ async function authMiddleware(ctx, next) {
   if (!document) {
     throw new errors_1.ApiError(401, "Unknown API key");
   }
-  // store the info for the rest of the app to access
-  const authContext = exports.AuthContext.parse(document);
-  console.log("Auth context:", JSON.stringify(authContext).blue);
-  ctx.state.auth = authContext;
+  // validate and store the document as the auth context
+  try {
+    const authContext = exports.AuthContext.parse(document);
+    console.log("Auth context:", JSON.stringify(authContext).blue);
+    ctx.state.auth = authContext;
+  } catch (err) {
+    console.error("Error parsing auth context", err);
+    throw new errors_1.ApiError(500, "Error parsing auth context");
+  }
   await next();
 }
 exports.authMiddleware = authMiddleware;
