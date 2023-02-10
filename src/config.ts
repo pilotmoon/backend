@@ -1,32 +1,44 @@
-// App configuration
+// app configuration
 export const config: { [key: string]: any } = {};
+
+// define config variables
+const manifest = [
+  { key: "APP_PORT", transform: decimalIntegerTransform },
+  { key: "APP_URL" },
+  { key: "DATABASE_URL", secret: true },
+  { key: "DATABASE_NAME", loader: load("testdb") },
+];
+
+// load config variables
+manifest.forEach(setConfigItem);
+
+/* Helper functions */
 
 interface Loader {
   (key: string): string | undefined;
 }
 // loader to read from process.env
-const envLoader = (key: string) => process.env[key];
+function envLoader(key: string) {
+  return process.env[key];
+}
 // construct a loader that always returns the same value
-const load = (value: any) => () => value;
+function load(value: any) {
+  return () => value;
+}
 
 interface Transformer {
   (value: string): any;
 }
-const noTransform = (string: string) => string;
-const decimalIntegerTransform = (string: string) => parseInt(string, 10);
-
-for (
-  const key of [
-    { key: "APP_PORT", transform: decimalIntegerTransform },
-    { key: "APP_URL" },
-    { key: "DATABASE_URL", secret: true },
-    { key: "DATABASE_NAME", loader: load("testdb") },
-  ]
-) {
-  loadEnv(key);
+// identity
+function noTransform(string: string) {
+  return string;
+}
+// parse a string as a decimal integer
+function decimalIntegerTransform(string: string) {
+  return parseInt(string, 10);
 }
 
-function loadEnv(
+function setConfigItem(
   { key, loader = envLoader, transform = noTransform, secret = false }: {
     key: string;
     loader?: Loader;
@@ -45,7 +57,7 @@ function loadEnv(
   const transformedValue = transform(trimmedValue);
   console.log(
     `Loaded config variable ${key.blue} with value ${
-      secret ? "<secret>".red : String(transformedValue).cyan
+      secret ? "<secret>".yellow : String(transformedValue).cyan
     } as ${typeof transformedValue}`,
   );
   config[key] = transformedValue;
