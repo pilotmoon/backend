@@ -53,14 +53,35 @@ app.use(async (ctx, next) => {
 app.use(bodyParser({ enableTypes: ["json"] }));
 app.use(router.routes());
 app.use(router.allowedMethods());
+const abortController = new AbortController();
+function onAppCloseServer() {
+  console.log("Closing server");
+  abortController.abort();
+}
 async function main() {
   await (0, database_1.connect)();
-  for (const dbInit of [auth_1.dbInit]) {
-    await dbInit();
-  }
-  app.listen(
-    config_1.APP_PORT,
-    () => console.log(`Server listening on port ${config_1.APP_PORT}`.yellow),
-  );
+  await Promise.all([
+    (0, auth_1.onAppStart)(),
+  ]);
+  app.listen({
+    port: config_1.config.APP_PORT,
+    signal: abortController.signal,
+  }, () => {
+    console.log(`Server listening on port ${config_1.config.APP_PORT}`.yellow);
+  });
 }
+// Close-down routines
+let closing = false;
+process.on("SIGINT", async function () {
+  console.log("SIGINT received".cyan);
+  if (!closing) {
+    closing = true;
+    console.log("Calling shutdown routines".green);
+    await Promise.all([
+      onAppCloseServer(),
+      (0, database_1.onAppClose)(),
+    ]);
+    console.log("All shutdown routines complete".green);
+  }
+});
 main();

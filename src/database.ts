@@ -1,22 +1,13 @@
-import { DATABASE_NAME, DATABASE_URL } from "./config";
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
-import _ = require("lodash");
+import { config } from "./config";
 
 let client: MongoClient;
-
-// Close the database connection when the process is terminated
-process.on("SIGINT", function () {
-  console.log("Closing database connection");
-  if (client) {
-    client.close();
-  }
-});
 
 // Connect to the database
 export async function connect() {
   if (!client) {
     console.log("Connecting to database");
-    client = new MongoClient(DATABASE_URL, {
+    client = new MongoClient(config.DATABASE_URL, {
       serverApi: ServerApiVersion.v1,
     });
     await client.connect();
@@ -24,7 +15,7 @@ export async function connect() {
 }
 
 // Get the database connection
-export function getDb(name: string = DATABASE_NAME): Db {
+export function getDb(name: string = config.DATABASE_NAME): Db {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",
@@ -33,6 +24,10 @@ export function getDb(name: string = DATABASE_NAME): Db {
   return client.db(name);
 }
 
-export function cleanDocument<T extends object>(doc: T) {
-  return _.omit(doc, ["_id"]) as T;
+// called at termination to close the connection
+export async function onAppClose() {
+  if (client) {
+    console.log("Closing database connection");
+    await client.close();
+  }
 }

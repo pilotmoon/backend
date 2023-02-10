@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createApiKey = exports.dbInit = exports.ApiKeyParams = void 0;
+exports.createApiKey = exports.onAppStart = exports.ApiKeyParams = void 0;
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
@@ -21,13 +21,13 @@ const ApiKeySchema = exports.ApiKeyParams.extend({
   created: zod_1.z.date(),
 });
 // called at startup to set the collection index
-async function dbInit() {
+async function onAppStart() {
   const result = await (0, database_1.getDb)()
     .collection(apiKeysCollectionName)
     .createIndex({ secret_key: 1 }, { unique: true });
   console.log("dbinit", result);
 }
-exports.dbInit = dbInit;
+exports.onAppStart = onAppStart;
 // create a new API key
 async function createApiKey(params) {
   const document = {
