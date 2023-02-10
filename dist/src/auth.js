@@ -1,26 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware =
+  exports.deleteApiKey =
+  exports.updateApiKey =
   exports.readApiKey =
   exports.createApiKey =
   exports.verifyScope =
   exports.init =
   exports.AuthContext =
+  exports.PartialAuthContext =
+  exports.SettableAuthContext =
     void 0;
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
 const errors_1 = require("./errors");
 const apiKeysCollectionName = "api_keys";
+function getCollection(kind) {
+  const db = (0, database_1.getDb)(kind);
+  return db.collection(apiKeysCollectionName);
+}
 const allScopes = [
+  "healthcheck:read",
   "api_keys:create",
   "api_keys:read",
+  "api_keys:update",
+  "api_keys:delete",
 ];
 // schema for API keys
-exports.AuthContext = zod_1.z.object({
+exports.SettableAuthContext = zod_1.z.object({
   scopes: zod_1.z.array(zod_1.z.enum(allScopes)),
+  description: zod_1.z.string().optional(),
+});
+exports.PartialAuthContext = exports.SettableAuthContext.partial();
+exports.AuthContext = exports.SettableAuthContext.extend({
   kind: zod_1.z.enum(["test", "live"]),
-  metadata: zod_1.z.record(zod_1.z.string().min(1), zod_1.z.any()).optional(),
 });
 const ApiKeySchema = exports.AuthContext.extend({
   _id: zod_1.z.string(),
@@ -59,40 +73,49 @@ async function verifyScope(scope, authContext) {
   }
 }
 exports.verifyScope = verifyScope;
-// create a new API key
+// create a new API key. returns the new key
 async function createApiKey(params, authContext) {
   await verifyScope("api_keys:create", authContext);
-  if (params.kind !== authContext.kind) {
-    throw new errors_1.ApiError(
-      403,
-      "Cannot create API key for different database",
-    );
-  }
   const document = {
     _id: `ak_${(0, chewit_1.randomString)()}`,
     object: "api_key",
     created: new Date(),
-    key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
+    key: `key_${authContext.kind}_${(0, chewit_1.randomString)()}`,
+    kind: authContext.kind,
     ...params,
   };
-  const collection = (0, database_1.getDb)(authContext.kind).collection(
-    apiKeysCollectionName,
-  );
-  const result = await collection.insertOne(document);
+  const result = await getCollection(authContext.kind).insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 exports.createApiKey = createApiKey;
-// get an API key by id
+// return an API key by its ID. returns null if the key does not exist
 async function readApiKey(id, authContext) {
   await verifyScope("api_keys:read", authContext);
-  const collection = (0, database_1.getDb)(authContext.kind).collection(
-    apiKeysCollectionName,
-  );
-  const result = await collection.findOne({ _id: id });
-  return result;
+  return await getCollection(authContext.kind).findOne({ _id: id });
 }
 exports.readApiKey = readApiKey;
+// update updatable fields of an API key and return the updated document
+// returns null if the key does not exist
+async function updateApiKey(id, params, authContext) {
+  await verifyScope("api_keys:update", authContext);
+  const result = await getCollection(authContext.kind).findOneAndUpdate({
+    _id: id,
+  }, {
+    $set: params,
+  }, {
+    returnDocument: "after",
+  });
+  return result.value;
+}
+exports.updateApiKey = updateApiKey;
+// delete an API key by its ID. returns true if the key was deleted
+async function deleteApiKey(id, authContext) {
+  await verifyScope("api_keys:delete", authContext);
+  const result = await getCollection(authContext.kind).deleteOne({ _id: id });
+  return result.deletedCount === 1;
+}
+exports.deleteApiKey = deleteApiKey;
 // auth middleware, allow Bearer token or x-api-key header
 async function authMiddleware(ctx, next) {
   const authorizationHeader = ctx.request.headers["authorization"];
@@ -128,6 +151,8 @@ async function authMiddleware(ctx, next) {
   if (!document) {
     throw new errors_1.ApiError(401, "Unknown API key");
   }
+  console.log("Api key ID:", document._id.blue);
+  ctx.state.apiKeyId = document._id;
   // validate and store the document as the auth context
   try {
     const authContext = exports.AuthContext.parse(document);

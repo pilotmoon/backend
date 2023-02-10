@@ -5,13 +5,14 @@ import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { authMiddleware, init as initAuth } from "./auth";
+import { authMiddleware, init as initAuth, verifyScope } from "./auth";
 
 // set up router
 const router = new Router({ prefix: config.PATH_PREFIX });
 
 // healthcheck endpoint
 router.get("/healthcheck", async (ctx, next) => {
+  await verifyScope("healthcheck:read", ctx.state.auth);
   ctx.body = { "healthcheck": true };
   await next();
 });

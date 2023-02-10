@@ -1,24 +1,61 @@
 import Router = require("@koa/router");
 import { randomUUID } from "crypto";
-import { AuthContext, createApiKey, readApiKey } from "../auth";
+import {
+  createApiKey,
+  deleteApiKey,
+  PartialAuthContext,
+  readApiKey,
+  SettableAuthContext,
+  updateApiKey,
+} from "../auth";
 import { ApiError } from "../errors";
 
 export const router = new Router({ prefix: "/api_keys" });
 const PATH_NAME = randomUUID();
 
-router.post("/", async (ctx, next) => {
-  const params = AuthContext.parse(ctx.request.body);
+router.post("/", async (ctx) => {
+  const params = SettableAuthContext.parse(ctx.request.body);
   const document = await createApiKey(params, ctx.state.auth);
   ctx.body = document;
   ctx.status = 201;
   ctx.set("Location", ctx.fullUrl(PATH_NAME, { id: document._id }));
 });
 
-router.get(PATH_NAME, "/:id", async (ctx, next) => {
+router.get(PATH_NAME, "/:id", async (ctx) => {
   const id = ctx.params.id;
   const document = await readApiKey(id, ctx.state.auth);
   if (!document) {
-    throw new ApiError(404, "API key not found");
+    throw new ApiError(404, "Record not found");
   }
   ctx.body = document;
+});
+
+// get current api key
+router.get("/current", async (ctx) => {
+  const document = await readApiKey(ctx.state.apiKeyId, ctx.state.auth);
+  if (!document) {
+    throw new ApiError(404, "Record not found");
+  }
+  ctx.body = document;
+});
+
+router.patch("/:id", async (ctx) => {
+  const id = ctx.params.id;
+  const params = PartialAuthContext.parse(ctx.request.body);
+  const document = await updateApiKey(id, params, ctx.state.auth);
+  if (!document) {
+    throw new ApiError(404, "Record not found");
+  }
+  ctx.body = document;
+});
+
+// delete api key
+router.delete("/:id", async (ctx) => {
+  const id = ctx.params.id;
+  const result = await deleteApiKey(id, ctx.state.auth);
+  if (!result) {
+    throw new ApiError(404, "Record not found");
+  } else {
+    ctx.status = 204;
+  }
 });

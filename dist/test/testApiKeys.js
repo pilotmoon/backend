@@ -40,37 +40,20 @@ const setup_1 = require("./setup");
   t.assert(res.data.error.message.length > 0);
   t.log(res.data.error.message);
 });
-(0, ava_1.default)("create api key, missing scopes", async (t) => {
+(0, ava_1.default)("create api key, unknown scope", async (t) => {
   const res = await (0, setup_1.rolo)().post("api_keys", {
-    kind: "test",
-  });
-  t.is(res.status, 400);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
-});
-(0, ava_1.default)("create api key, unknown scopes", async (t) => {
-  const res = await (0, setup_1.rolo)().post("api_keys", {
-    kind: "test",
     scopes: ["foo"],
   });
   t.is(res.status, 400);
   t.assert(res.data.error.message.length > 0);
   t.log(res.data.error.message);
 });
-(0, ava_1.default)("create api key, wrong kind", async (t) => {
-  const res = await (0, setup_1.rolo)().post("api_keys", {
-    kind: "live",
-    scopes: [],
-  });
-  t.is(res.status, 403);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
-});
 (0, ava_1.default)("api key CRUD", async (t) => {
   // create new key
   const res = await (0, setup_1.rolo)().post("api_keys", {
-    kind: "test",
     scopes: [],
+    description: "crud test key",
+    blah: "blah",
   });
   t.is(res.status, 201);
   const location = res.headers["location"];
@@ -88,6 +71,8 @@ const setup_1 = require("./setup");
   });
   t.assert(res2.data.id.length > 0);
   t.assert(res2.data.key.length > 0);
+  t.is(res2.data.description, "crud test key");
+  t.is(res2.data.blah, undefined);
   // update the key
   const res3 = await (0, setup_1.rolo)().put(location, {
     scopes: ["api_keys:read"],

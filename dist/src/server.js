@@ -12,6 +12,7 @@ const auth_1 = require("./auth");
 const router = new Router({ prefix: config_1.config.PATH_PREFIX });
 // healthcheck endpoint
 router.get("/healthcheck", async (ctx, next) => {
+  await (0, auth_1.verifyScope)("healthcheck:read", ctx.state.auth);
   ctx.body = { "healthcheck": true };
   await next();
 });

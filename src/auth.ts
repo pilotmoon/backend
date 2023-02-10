@@ -5,18 +5,30 @@ import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 
 const apiKeysCollectionName = "api_keys";
+function getCollection(kind: "test" | "live") {
+  const db = getDb(kind);
+  return db.collection<ApiKeySchema>(apiKeysCollectionName);
+}
 
 const allScopes = [
+  "healthcheck:read",
   "api_keys:create",
   "api_keys:read",
+  "api_keys:update",
+  "api_keys:delete",
 ] as const;
 type Scope = typeof allScopes[number];
 
 // schema for API keys
-export const AuthContext = z.object({
+export const SettableAuthContext = z.object({
   scopes: z.array(z.enum(allScopes)),
+  description: z.string().optional(),
+});
+type SettableAuthContext = z.infer<typeof SettableAuthContext>;
+export const PartialAuthContext = SettableAuthContext.partial();
+type PartialAuthContext = z.infer<typeof PartialAuthContext>;
+export const AuthContext = SettableAuthContext.extend({
   kind: z.enum(["test", "live"]),
-  metadata: z.record(z.string().min(1), z.any()).optional(),
 });
 type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
@@ -62,41 +74,60 @@ export async function verifyScope(
   }
 }
 
-// create a new API key
+// create a new API key. returns the new key
 export async function createApiKey(
-  params: AuthContext,
+  params: SettableAuthContext,
   authContext: AuthContext,
 ): Promise<ApiKeySchema> {
   await verifyScope("api_keys:create", authContext);
-  if (params.kind !== authContext.kind) {
-    throw new ApiError(403, "Cannot create API key for different database");
-  }
   const document = {
     _id: `ak_${randomString()}`,
     object: "api_key" as const,
     created: new Date(),
-    key: `key_${params.kind}_${randomString()}`,
+    key: `key_${authContext.kind}_${randomString()}`,
+    kind: authContext.kind,
     ...params,
   };
-  const collection = getDb(authContext.kind).collection<ApiKeySchema>(
-    apiKeysCollectionName,
-  );
-  const result = await collection.insertOne(document);
+  const result = await getCollection(authContext.kind).insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 
-// get an API key by id
+// return an API key by its ID. returns null if the key does not exist
 export async function readApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
   await verifyScope("api_keys:read", authContext);
-  const collection = getDb(authContext.kind).collection<ApiKeySchema>(
-    apiKeysCollectionName,
-  );
-  const result = await collection.findOne({ _id: id });
-  return result;
+  return await getCollection(authContext.kind).findOne({ _id: id });
+}
+
+// update updatable fields of an API key and return the updated document
+// returns null if the key does not exist
+export async function updateApiKey(
+  id: string,
+  params: PartialAuthContext,
+  authContext: AuthContext,
+): Promise<ApiKeySchema | null> {
+  await verifyScope("api_keys:update", authContext);
+  const result = await getCollection(authContext.kind).findOneAndUpdate({
+    _id: id,
+  }, {
+    $set: params,
+  }, {
+    returnDocument: "after",
+  });
+  return result.value;
+}
+
+// delete an API key by its ID. returns true if the key was deleted
+export async function deleteApiKey(
+  id: string,
+  authContext: AuthContext,
+): Promise<boolean> {
+  await verifyScope("api_keys:delete", authContext);
+  const result = await getCollection(authContext.kind).deleteOne({ _id: id });
+  return result.deletedCount === 1;
 }
 
 // auth middleware, allow Bearer token or x-api-key header
@@ -133,6 +164,8 @@ export async function authMiddleware(ctx: Context, next: Next) {
   if (!document) {
     throw new ApiError(401, "Unknown API key");
   }
+  console.log("Api key ID:", document._id.blue);
+  ctx.state.apiKeyId = document._id;
 
   // validate and store the document as the auth context
   try {
