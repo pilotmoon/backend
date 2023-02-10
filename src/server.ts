@@ -1,10 +1,11 @@
+import "./globals";
 import Koa = require("koa");
 import Router = require("@koa/router");
 import bodyParser = require("koa-bodyparser");
 import { APP_PORT } from "./config";
 import { ApiError, reportError } from "./errors";
 import { connect } from "./database";
-import "colors";
+import { dbInit as dbInitAuth } from "./auth";
 
 // set up router
 const router = new Router();
@@ -62,6 +63,9 @@ app.use(router.allowedMethods());
 
 async function main() {
   await connect();
+  for (const dbInit of [dbInitAuth]) {
+    await dbInit();
+  }
   app.listen(
     APP_PORT,
     () => console.log(`Server listening on port ${APP_PORT}`.yellow),

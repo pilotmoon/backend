@@ -1,17 +1,21 @@
 import { randomString } from "@pilotmoon/chewit";
 import { z } from "zod";
-import { cleanDocument, getDb } from "./database";
+import { getDb } from "./database";
 
 const apiKeysCollectionName = "apikeys";
 
+const allScopes = [
+  "apikeys:create",
+  "apikeys:read",
+] as const;
+
+// schema for API keys
 export const ApiKeyParams = z.object({
-  scopes: z.array(z.string()),
+  scopes: z.array(z.enum(allScopes)),
   kind: z.enum(["test", "live"]),
-  description: z.string().optional(),
-  entity: z.string().optional(),
+  metadata: z.record(z.string().min(1), z.any()).optional(),
 });
 type ApiKeyParams = z.infer<typeof ApiKeyParams>;
-
 const ApiKeySchema = ApiKeyParams.extend({
   _id: z.string(),
   secret_key: z.string(),
@@ -19,13 +23,21 @@ const ApiKeySchema = ApiKeyParams.extend({
 });
 type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
+// called at startup to set the collection index
+export async function dbInit() {
+  const result = await getDb()
+    .collection(apiKeysCollectionName)
+    .createIndex({ secret_key: 1 }, { unique: true });
+  console.log("dbinit", result);
+}
+
+// create a new API key
 export async function createApiKey(
   params: ApiKeyParams,
 ): Promise<ApiKeySchema> {
-  const { id, secret_key } = generateKeys(params.kind);
   const document = {
-    _id: id,
-    secret_key,
+    _id: `ak_${randomString()}`,
+    secret_key: `key_${params.kind}_${randomString()}`,
     created: new Date(),
     ...params,
   };
@@ -34,10 +46,4 @@ export async function createApiKey(
   const result = await collection.insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
-}
-
-function generateKeys(kind: "test" | "live") {
-  const id = `ak_${randomString()}`;
-  const secret_key = `key_${kind}_${randomString()}`;
-  return { id, secret_key };
 }

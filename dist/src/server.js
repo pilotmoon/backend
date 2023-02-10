@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+require("./globals");
 const Koa = require("koa");
 const Router = require("@koa/router");
 const bodyParser = require("koa-bodyparser");
 const config_1 = require("./config");
 const errors_1 = require("./errors");
 const database_1 = require("./database");
-require("colors");
+const auth_1 = require("./auth");
 // set up router
 const router = new Router();
 // healthcheck endpoint
@@ -54,6 +55,9 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 async function main() {
   await (0, database_1.connect)();
+  for (const dbInit of [auth_1.dbInit]) {
+    await dbInit();
+  }
   app.listen(
     config_1.APP_PORT,
     () => console.log(`Server listening on port ${config_1.APP_PORT}`.yellow),
