@@ -1,19 +1,37 @@
 // app configuration
-export const config: { [key: string]: any } = {};
-
-// define config variables
-const manifest = [
+interface Config {
+  APP_PORT: number;
+  APP_URL: string;
+  PATH_PREFIX: string;
+  DATABASE_URL: string;
+  DATABASE_NAME_TEST: string;
+  DATABASE_NAME_LIVE: string;
+}
+export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
   { key: "PATH_PREFIX", loader: load("/v1") },
   { key: "DATABASE_URL", secret: true },
-  { key: "DATABASE_NAME", loader: load("testdb") },
-];
+  { key: "DATABASE_NAME_TEST", loader: load("testdb") },
+  { key: "DATABASE_NAME_LIVE", loader: load("pilotmoon") },
+]);
 
 // load config variables
-manifest.forEach(setConfigItem);
+function loadConfig(manifest: ConfigItem[]) {
+  const config = {};
+  for (const item of manifest) {
+    setConfigItem(item, config);
+  }
+  return config as Config;
+}
 
-/* Helper functions */
+/* Helpers */
+interface ConfigItem {
+  key: string;
+  loader?: Loader;
+  transform?: Transformer;
+  secret?: boolean;
+}
 
 interface Loader {
   (key: string): string | undefined;
@@ -40,12 +58,9 @@ function decimalIntegerTransform(string: string) {
 }
 
 function setConfigItem(
-  { key, loader = envLoader, transform = noTransform, secret = false }: {
-    key: string;
-    loader?: Loader;
-    transform?: Transformer;
-    secret?: boolean;
-  },
+  { key, loader = envLoader, transform = noTransform, secret = false }:
+    ConfigItem,
+  config: any,
 ) {
   const value = loader(key);
   if (typeof value !== "string") {

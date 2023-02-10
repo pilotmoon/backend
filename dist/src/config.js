@@ -1,18 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
-// app configuration
-exports.config = {};
-// define config variables
-const manifest = [
+exports.config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
   { key: "PATH_PREFIX", loader: load("/v1") },
   { key: "DATABASE_URL", secret: true },
-  { key: "DATABASE_NAME", loader: load("testdb") },
-];
+  { key: "DATABASE_NAME_TEST", loader: load("testdb") },
+  { key: "DATABASE_NAME_LIVE", loader: load("pilotmoon") },
+]);
 // load config variables
-manifest.forEach(setConfigItem);
+function loadConfig(manifest) {
+  const config = {};
+  for (const item of manifest) {
+    setConfigItem(item, config);
+  }
+  return config;
+}
 // loader to read from process.env
 function envLoader(key) {
   return process.env[key];
@@ -31,6 +35,7 @@ function decimalIntegerTransform(string) {
 }
 function setConfigItem(
   { key, loader = envLoader, transform = noTransform, secret = false },
+  config,
 ) {
   const value = loader(key);
   if (typeof value !== "string") {
@@ -46,5 +51,5 @@ function setConfigItem(
       secret ? "<secret>".yellow : String(transformedValue).cyan
     } as ${typeof transformedValue}`,
   );
-  exports.config[key] = transformedValue;
+  config[key] = transformedValue;
 }
