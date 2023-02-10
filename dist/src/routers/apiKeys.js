@@ -7,20 +7,16 @@ const auth_1 = require("../auth");
 const errors_1 = require("../errors");
 exports.router = new Router({ prefix: "/api_keys" });
 const PATH_NAME = (0, crypto_1.randomUUID)();
+function sanitizeApiKey(document) {
+  delete document.key;
+  return document;
+}
 exports.router.post("/", async (ctx) => {
   const params = auth_1.SettableAuthContext.parse(ctx.request.body);
   const document = await (0, auth_1.createApiKey)(params, ctx.state.auth);
-  ctx.body = document;
+  ctx.body = document; // key only shown on creation
   ctx.status = 201;
   ctx.set("Location", ctx.fullUrl(PATH_NAME, { id: document._id }));
-});
-exports.router.get(PATH_NAME, "/:id", async (ctx) => {
-  const id = ctx.params.id;
-  const document = await (0, auth_1.readApiKey)(id, ctx.state.auth);
-  if (!document) {
-    throw new errors_1.ApiError(404, "Record not found");
-  }
-  ctx.body = document;
 });
 // get current api key
 exports.router.get("/current", async (ctx) => {
@@ -31,7 +27,15 @@ exports.router.get("/current", async (ctx) => {
   if (!document) {
     throw new errors_1.ApiError(404, "Record not found");
   }
-  ctx.body = document;
+  ctx.body = sanitizeApiKey(document);
+});
+exports.router.get(PATH_NAME, "/:id", async (ctx) => {
+  const id = ctx.params.id;
+  const document = await (0, auth_1.readApiKey)(id, ctx.state.auth);
+  if (!document) {
+    throw new errors_1.ApiError(404, "Record not found");
+  }
+  ctx.body = sanitizeApiKey(document);
 });
 exports.router.patch("/:id", async (ctx) => {
   const id = ctx.params.id;
@@ -40,7 +44,7 @@ exports.router.patch("/:id", async (ctx) => {
   if (!document) {
     throw new errors_1.ApiError(404, "Record not found");
   }
-  ctx.body = document;
+  ctx.body = sanitizeApiKey(document);
 });
 // delete api key
 exports.router.delete("/:id", async (ctx) => {

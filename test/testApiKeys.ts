@@ -61,6 +61,9 @@ test("api key CRUD", async (t) => {
     blah: "blah",
   });
   t.is(res.status, 201);
+  t.assert(res.data.key.length > 0);
+  t.is(res.data.description, "crud test key");
+  t.is(res.data.blah, undefined);
   const location = res.headers["location"];
   t.assert(
     location.length > 0 &&
@@ -76,9 +79,7 @@ test("api key CRUD", async (t) => {
     scopes: [],
   });
   t.assert(res2.data.id.length > 0);
-  t.assert(res2.data.key.length > 0);
-  t.is(res2.data.description, "crud test key");
-  t.is(res2.data.blah, undefined);
+  t.is(res2.data.key, undefined);
 
   // update the key
   const res3 = await rolo().put(location, {
@@ -86,4 +87,15 @@ test("api key CRUD", async (t) => {
   });
 
   // delete the key
+});
+
+test("get current api key", async (t) => {
+  const res = await rolo().get("api_keys/current");
+  t.is(res.status, 200);
+  t.like(res.data, {
+    id: "ak_aaiboo5zmV1ABv3KfdPNaWov",
+    kind: "test",
+  });
+  t.assert(res.data.id.length > 0);
+  t.is(res.data.key, undefined);
 });
