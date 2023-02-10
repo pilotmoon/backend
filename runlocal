@@ -1,4 +1,0 @@
-#!/bin/zsh
-export DATABASE_URL=op://dev/seal-app/dburl
-export APP_PORT=1234
-op run -- npm start
