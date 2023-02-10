@@ -53,6 +53,12 @@ async function init() {
 exports.init = init;
 // create a new API key
 async function createApiKey(params, authContext) {
+  if (params.kind !== authContext.kind) {
+    throw new errors_1.ApiError(
+      403,
+      "Cannot create API key for different database",
+    );
+  }
   const document = {
     _id: `ak_${(0, chewit_1.randomString)()}`,
     object: "api_key",
@@ -74,9 +80,6 @@ async function lookupById(id, authContext) {
     apiKeysCollectionName,
   );
   const result = await collection.findOne({ _id: id });
-  if (result) {
-    delete result.key; // don't return the secret key itself
-  }
   return result;
 }
 exports.lookupById = lookupById;

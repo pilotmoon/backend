@@ -56,6 +56,9 @@ export async function createApiKey(
   params: AuthContext,
   authContext: AuthContext,
 ): Promise<ApiKeySchema> {
+  if (params.kind !== authContext.kind) {
+    throw new ApiError(403, "Cannot create API key for different database");
+  }
   const document = {
     _id: `ak_${randomString()}`,
     object: "api_key" as const,
@@ -80,7 +83,6 @@ export async function lookupById(
     apiKeysCollectionName,
   );
   const result = await collection.findOne({ _id: id });
-  if (result) delete result.key; // don't return the secret key itself
   return result;
 }
 
