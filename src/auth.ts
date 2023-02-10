@@ -2,7 +2,7 @@ import { randomString } from "@pilotmoon/chewit";
 import { z } from "zod";
 import { getDb } from "./database";
 
-const apiKeysCollectionName = "apikeys";
+const apiKeysCollectionName = "api_keys";
 
 const allScopes = [
   "apikeys:create",
@@ -18,7 +18,7 @@ export const ApiKeyParams = z.object({
 type ApiKeyParams = z.infer<typeof ApiKeyParams>;
 const ApiKeySchema = ApiKeyParams.extend({
   _id: z.string(),
-  object: z.literal("apikey"),
+  object: z.literal("api_key"),
   key: z.string(),
   created: z.date(),
 });
@@ -39,17 +39,17 @@ export async function createApiKey(
 ): Promise<ApiKeySchema> {
   const document = {
     _id: `ak_${randomString()}`,
-    object: "apikey" as const,
-    key: `key_${params.kind}_${randomString()}`,
+    object: "api_key" as const,
     created: new Date(),
+    key: `key_${params.kind}_${randomString()}`,
     ...params,
   };
   const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
-  collection.createIndex({ secret_key: 1 }, { unique: true });
   const result = await collection.insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
+
 // get an API key by secret key
 export async function getApiKeyBySecretKey(
   secretKey: string,

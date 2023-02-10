@@ -9,7 +9,7 @@ exports.getApiKeyById =
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
-const apiKeysCollectionName = "apikeys";
+const apiKeysCollectionName = "api_keys";
 const allScopes = [
   "apikeys:create",
   "apikeys:read",
@@ -22,7 +22,7 @@ exports.ApiKeyParams = zod_1.z.object({
 });
 const ApiKeySchema = exports.ApiKeyParams.extend({
   _id: zod_1.z.string(),
-  object: zod_1.z.literal("apikey"),
+  object: zod_1.z.literal("api_key"),
   key: zod_1.z.string(),
   created: zod_1.z.date(),
 });
@@ -39,13 +39,12 @@ exports.init = init;
 async function createApiKey(params) {
   const document = {
     _id: `ak_${(0, chewit_1.randomString)()}`,
-    object: "apikey",
-    key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
+    object: "api_key",
     created: new Date(),
+    key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
     ...params,
   };
   const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
-  collection.createIndex({ secret_key: 1 }, { unique: true });
   const result = await collection.insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
