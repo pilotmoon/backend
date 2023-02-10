@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createApiKey = exports.init = exports.ApiKeyParams = void 0;
+exports.getApiKeyById =
+  exports.getApiKeyBySecretKey =
+  exports.createApiKey =
+  exports.init =
+  exports.ApiKeyParams =
+    void 0;
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
@@ -17,7 +22,8 @@ exports.ApiKeyParams = zod_1.z.object({
 });
 const ApiKeySchema = exports.ApiKeyParams.extend({
   _id: zod_1.z.string(),
-  secret_key: zod_1.z.string(),
+  object: zod_1.z.literal("apikey"),
+  key: zod_1.z.string(),
   created: zod_1.z.date(),
 });
 // called at startup to set the collection index
@@ -33,7 +39,8 @@ exports.init = init;
 async function createApiKey(params) {
   const document = {
     _id: `ak_${(0, chewit_1.randomString)()}`,
-    secret_key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
+    object: "apikey",
+    key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
     created: new Date(),
     ...params,
   };
@@ -44,3 +51,17 @@ async function createApiKey(params) {
   return document;
 }
 exports.createApiKey = createApiKey;
+// get an API key by secret key
+async function getApiKeyBySecretKey(secretKey) {
+  const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
+  const result = await collection.findOne({ secret_key: secretKey });
+  return result;
+}
+exports.getApiKeyBySecretKey = getApiKeyBySecretKey;
+// get an API key by id
+async function getApiKeyById(id) {
+  const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
+  const result = await collection.findOne({ _id: id });
+  return result;
+}
+exports.getApiKeyById = getApiKeyById;
