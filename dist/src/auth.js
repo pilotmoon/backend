@@ -52,17 +52,23 @@ async function createApiKey(params) {
   return document;
 }
 exports.createApiKey = createApiKey;
-// get an API key by secret key
+// get an API key by secret key, excluding the key from the result
 async function lookupByKey(key) {
   const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
   const result = await collection.findOne({ key: key });
+  if (result) {
+    delete result.key;
+  }
   return result;
 }
 exports.lookupByKey = lookupByKey;
-// get an API key by id
+// get an API key by id, excluding the key from the result
 async function lookupById(id) {
   const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
   const result = await collection.findOne({ _id: id });
+  if (result) {
+    delete result.key;
+  }
   return result;
 }
 exports.lookupById = lookupById;
@@ -92,8 +98,6 @@ async function authMiddleware(ctx, next) {
   if (!info) {
     throw new errors_1.ApiError(401, "Invalid API key");
   }
-  // delete the key from the object
-  delete info.key;
   // store the API key info in the context
   ctx.state.apiKey = info;
   await next();

@@ -1,6 +1,6 @@
 import Router = require("@koa/router");
 import { randomUUID } from "crypto";
-import { ApiKeyParams, createApiKey } from "../auth";
+import { ApiKeyParams, createApiKey, lookupById } from "../auth";
 
 export const router = new Router({ prefix: "/api_keys" });
 const PATH_NAME = randomUUID();
@@ -14,4 +14,10 @@ router.post("/", async (ctx, next) => {
 });
 
 router.get(PATH_NAME, "/:id", async (ctx, next) => {
+  const id = ctx.params.id;
+  const document = await lookupById(id);
+  if (!document) {
+    ctx.throw(404, "API key not found");
+  }
+  ctx.body = document;
 });

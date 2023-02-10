@@ -14,4 +14,10 @@ exports.router.post("/", async (ctx, next) => {
   ctx.set("Location", ctx.fullUrl(PATH_NAME, { id: document._id }));
 });
 exports.router.get(PATH_NAME, "/:id", async (ctx, next) => {
+  const id = ctx.params.id;
+  const document = await (0, auth_1.lookupById)(id);
+  if (!document) {
+    ctx.throw(404, "API key not found");
+  }
+  ctx.body = document;
 });
