@@ -8,7 +8,7 @@ import { close as closeDb, connect as connectDb } from "./database";
 import { init as initAuth } from "./auth";
 
 // set up router
-const router = new Router();
+const router = new Router({ prefix: "/v1" });
 
 // healthcheck endpoint
 router.get("/healthcheck", async (ctx, next) => {
@@ -48,12 +48,6 @@ app.use(async (ctx, next) => {
   if (typeof apiKey !== "string" || apiKey.length === 0) {
     throw new ApiError(401, "API key is required");
   }
-  await next();
-});
-
-// remove version prefix from all routes
-app.use(async (ctx, next) => {
-  ctx.url = ctx.url.replace("/v1", "");
   await next();
 });
 

@@ -9,7 +9,7 @@ const errors_1 = require("./errors");
 const database_1 = require("./database");
 const auth_1 = require("./auth");
 // set up router
-const router = new Router();
+const router = new Router({ prefix: "/v1" });
 // healthcheck endpoint
 router.get("/healthcheck", async (ctx, next) => {
   ctx.body = { "healthcheck": true };
@@ -43,11 +43,6 @@ app.use(async (ctx, next) => {
   if (typeof apiKey !== "string" || apiKey.length === 0) {
     throw new errors_1.ApiError(401, "API key is required");
   }
-  await next();
-});
-// remove version prefix from all routes
-app.use(async (ctx, next) => {
-  ctx.url = ctx.url.replace("/v1", "");
   await next();
 });
 app.use(bodyParser({ enableTypes: ["json"] }));
