@@ -6,8 +6,8 @@ exports.config = loadConfig([
   { key: "APP_URL" },
   { key: "PATH_PREFIX", loader: load("/v1") },
   { key: "DATABASE_URL", secret: true },
-  { key: "DATABASE_NAME_TEST", loader: load("testdb") },
-  { key: "DATABASE_NAME_LIVE", loader: load("pilotmoon") },
+  { key: "DATABASE_NAME_TEST" },
+  { key: "DATABASE_NAME_LIVE" },
 ]);
 // load config variables
 function loadConfig(manifest) {
