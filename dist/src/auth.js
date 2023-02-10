@@ -43,7 +43,7 @@ async function init() {
       // create an api key to bootstrap the system
       const authContext = {
         kind,
-        scopes: ["api_keys:create"],
+        scopes: allScopes,
         metadata: { description: "bootstrap key" },
       };
       await createApiKey(authContext, authContext);
