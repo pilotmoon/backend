@@ -31,7 +31,7 @@ async function init() {
   console.log(`init ${apiKeysCollectionName} collection`);
   const result = await (0, database_1.getDb)()
     .collection(apiKeysCollectionName)
-    .createIndex({ secret_key: 1 }, { unique: true });
+    .createIndex({ key: 1 }, { unique: true });
   console.log("createIndex", result);
 }
 exports.init = init;
