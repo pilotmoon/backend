@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware =
   exports.lookupById =
   exports.createApiKey =
+  exports.verifyScope =
   exports.init =
   exports.AuthContext =
     void 0;
@@ -51,8 +52,16 @@ async function init() {
   }
 }
 exports.init = init;
+// function for verifying whether the auth context has a given scope
+async function verifyScope(scope, authContext) {
+  if (!authContext.scopes.includes(scope)) {
+    throw new errors_1.ApiError(403, "Missing required scope: " + scope);
+  }
+}
+exports.verifyScope = verifyScope;
 // create a new API key
 async function createApiKey(params, authContext) {
+  await verifyScope("api_keys:create", authContext);
   if (params.kind !== authContext.kind) {
     throw new errors_1.ApiError(
       403,
@@ -76,6 +85,7 @@ async function createApiKey(params, authContext) {
 exports.createApiKey = createApiKey;
 // get an API key by id
 async function lookupById(id, authContext) {
+  await verifyScope("api_keys:read", authContext);
   const collection = (0, database_1.getDb)(authContext.kind).collection(
     apiKeysCollectionName,
   );

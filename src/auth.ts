@@ -10,6 +10,7 @@ const allScopes = [
   "api_keys:create",
   "api_keys:read",
 ] as const;
+type Scope = typeof allScopes[number];
 
 // schema for API keys
 export const AuthContext = z.object({
@@ -51,11 +52,22 @@ export async function init() {
   }
 }
 
+// function for verifying whether the auth context has a given scope
+export async function verifyScope(
+  scope: Scope,
+  authContext: AuthContext,
+): Promise<void> {
+  if (!authContext.scopes.includes(scope)) {
+    throw new ApiError(403, "Missing required scope: " + scope);
+  }
+}
+
 // create a new API key
 export async function createApiKey(
   params: AuthContext,
   authContext: AuthContext,
 ): Promise<ApiKeySchema> {
+  await verifyScope("api_keys:create", authContext);
   if (params.kind !== authContext.kind) {
     throw new ApiError(403, "Cannot create API key for different database");
   }
@@ -79,6 +91,7 @@ export async function lookupById(
   id: string,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
+  await verifyScope("api_keys:read", authContext);
   const collection = getDb(authContext.kind).collection<ApiKeySchema>(
     apiKeysCollectionName,
   );
