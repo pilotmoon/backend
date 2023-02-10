@@ -73,7 +73,8 @@ test("create api key, wrong kind", async (t) => {
   t.log(res.data.error.message);
 });
 
-test("create api key", async (t) => {
+test("api key CRUD", async (t) => {
+  // create new key
   const res = await rolo().post("api_keys", {
     kind: "test",
     scopes: [],
@@ -86,6 +87,7 @@ test("create api key", async (t) => {
   );
   t.log(location);
 
+  // get the key
   const res2 = await rolo().get(location);
   t.is(res2.status, 200);
   t.like(res2.data, {
@@ -94,4 +96,11 @@ test("create api key", async (t) => {
   });
   t.assert(res2.data.id.length > 0);
   t.assert(res2.data.key.length > 0);
+
+  // update the key
+  const res3 = await rolo().put(location, {
+    scopes: ["api_keys:read"],
+  });
+
+  // delete the key
 });

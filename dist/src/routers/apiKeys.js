@@ -16,7 +16,7 @@ exports.router.post("/", async (ctx, next) => {
 });
 exports.router.get(PATH_NAME, "/:id", async (ctx, next) => {
   const id = ctx.params.id;
-  const document = await (0, auth_1.lookupById)(id, ctx.state.auth);
+  const document = await (0, auth_1.readApiKey)(id, ctx.state.auth);
   if (!document) {
     throw new errors_1.ApiError(404, "API key not found");
   }

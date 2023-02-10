@@ -66,7 +66,8 @@ const setup_1 = require("./setup");
   t.assert(res.data.error.message.length > 0);
   t.log(res.data.error.message);
 });
-(0, ava_1.default)("create api key", async (t) => {
+(0, ava_1.default)("api key CRUD", async (t) => {
+  // create new key
   const res = await (0, setup_1.rolo)().post("api_keys", {
     kind: "test",
     scopes: [],
@@ -78,6 +79,7 @@ const setup_1 = require("./setup");
       location.startsWith(process.env.APP_URL),
   );
   t.log(location);
+  // get the key
   const res2 = await (0, setup_1.rolo)().get(location);
   t.is(res2.status, 200);
   t.like(res2.data, {
@@ -86,4 +88,9 @@ const setup_1 = require("./setup");
   });
   t.assert(res2.data.id.length > 0);
   t.assert(res2.data.key.length > 0);
+  // update the key
+  const res3 = await (0, setup_1.rolo)().put(location, {
+    scopes: ["api_keys:read"],
+  });
+  // delete the key
 });

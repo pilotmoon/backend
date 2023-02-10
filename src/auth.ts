@@ -87,7 +87,7 @@ export async function createApiKey(
 }
 
 // get an API key by id
-export async function lookupById(
+export async function readApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {

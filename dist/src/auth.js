@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware =
-  exports.lookupById =
+  exports.readApiKey =
   exports.createApiKey =
   exports.verifyScope =
   exports.init =
@@ -84,7 +84,7 @@ async function createApiKey(params, authContext) {
 }
 exports.createApiKey = createApiKey;
 // get an API key by id
-async function lookupById(id, authContext) {
+async function readApiKey(id, authContext) {
   await verifyScope("api_keys:read", authContext);
   const collection = (0, database_1.getDb)(authContext.kind).collection(
     apiKeysCollectionName,
@@ -92,7 +92,7 @@ async function lookupById(id, authContext) {
   const result = await collection.findOne({ _id: id });
   return result;
 }
-exports.lookupById = lookupById;
+exports.readApiKey = readApiKey;
 // auth middleware, allow Bearer token or x-api-key header
 async function authMiddleware(ctx, next) {
   const authorizationHeader = ctx.request.headers["authorization"];
