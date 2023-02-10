@@ -2,10 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware =
   exports.lookupById =
-  exports.lookupByKey =
   exports.createApiKey =
   exports.init =
-  exports.ApiKeyParams =
+  exports.AuthContext =
     void 0;
 const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
@@ -17,12 +16,12 @@ const allScopes = [
   "apikeys:read",
 ];
 // schema for API keys
-exports.ApiKeyParams = zod_1.z.object({
+exports.AuthContext = zod_1.z.object({
   scopes: zod_1.z.array(zod_1.z.enum(allScopes)),
   kind: zod_1.z.enum(["test", "live"]),
   metadata: zod_1.z.record(zod_1.z.string().min(1), zod_1.z.any()).optional(),
 });
-const ApiKeySchema = exports.ApiKeyParams.extend({
+const ApiKeySchema = exports.AuthContext.extend({
   _id: zod_1.z.string(),
   object: zod_1.z.literal("api_key"),
   key: zod_1.z.string().optional(),
@@ -31,14 +30,18 @@ const ApiKeySchema = exports.ApiKeyParams.extend({
 // called at startup to set the collection index
 async function init() {
   console.log(`init ${apiKeysCollectionName} collection`);
-  const result = await (0, database_1.getDb)()
-    .collection(apiKeysCollectionName)
-    .createIndex({ key: 1 }, { unique: true });
-  console.log("createIndex", result);
+  // set for both test and live database
+  for (const kind of ["test", "live"]) {
+    const db = (0, database_1.getDb)(kind);
+    const result = await db
+      .collection(apiKeysCollectionName)
+      .createIndex({ key: 1 }, { unique: true });
+    console.log("createIndex", db.databaseName, apiKeysCollectionName, result);
+  }
 }
 exports.init = init;
 // create a new API key
-async function createApiKey(params) {
+async function createApiKey(params, authContext) {
   const document = {
     _id: `ak_${(0, chewit_1.randomString)()}`,
     object: "api_key",
@@ -46,28 +49,22 @@ async function createApiKey(params) {
     key: `key_${params.kind}_${(0, chewit_1.randomString)()}`,
     ...params,
   };
-  const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
+  const collection = (0, database_1.getDb)(authContext.kind).collection(
+    apiKeysCollectionName,
+  );
   const result = await collection.insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 exports.createApiKey = createApiKey;
-// get an API key by secret key, excluding the key from the result
-async function lookupByKey(key) {
-  const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
-  const result = await collection.findOne({ key: key });
-  if (result) {
-    delete result.key;
-  }
-  return result;
-}
-exports.lookupByKey = lookupByKey;
-// get an API key by id, excluding the key from the result
-async function lookupById(id) {
-  const collection = (0, database_1.getDb)().collection(apiKeysCollectionName);
+// get an API key by id
+async function lookupById(id, authContext) {
+  const collection = (0, database_1.getDb)(authContext.kind).collection(
+    apiKeysCollectionName,
+  );
   const result = await collection.findOne({ _id: id });
   if (result) {
-    delete result.key;
+    delete result.key; // don't return the secret key itself
   }
   return result;
 }
@@ -92,14 +89,25 @@ async function authMiddleware(ctx, next) {
   } else {
     throw new errors_1.ApiError(401, "API key is required");
   }
-  console.log("API key:", key.red);
-  // now we have key, look it up in the database
-  const info = await lookupByKey(key);
-  if (!info) {
-    throw new errors_1.ApiError(401, "Invalid API key");
+  // regex match the kind part of the key
+  const match = key.match(/^key_(test|live)_/);
+  if (!match) {
+    throw new errors_1.ApiError(401, "Invalid API key prefix");
   }
-  // store the API key info in the context
-  ctx.state.apiKey = info;
+  let keyKind = match[1];
+  console.log("API key kind:", keyKind.blue);
+  // now we have key, look it up in the database
+  const collection = (0, database_1.getDb)(keyKind).collection(
+    apiKeysCollectionName,
+  );
+  const document = await collection.findOne({ key: key });
+  if (!document) {
+    throw new errors_1.ApiError(401, "Unknown API key");
+  }
+  // store the info for the rest of the app to access
+  const authContext = exports.AuthContext.parse(document);
+  console.log("Auth context:", JSON.stringify(authContext).blue);
+  ctx.state.auth = authContext;
   await next();
 }
 exports.authMiddleware = authMiddleware;

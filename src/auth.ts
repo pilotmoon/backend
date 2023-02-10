@@ -12,13 +12,13 @@ const allScopes = [
 ] as const;
 
 // schema for API keys
-export const ApiKeyParams = z.object({
+export const AuthContext = z.object({
   scopes: z.array(z.enum(allScopes)),
   kind: z.enum(["test", "live"]),
   metadata: z.record(z.string().min(1), z.any()).optional(),
 });
-type ApiKeyParams = z.infer<typeof ApiKeyParams>;
-const ApiKeySchema = ApiKeyParams.extend({
+type AuthContext = z.infer<typeof AuthContext>;
+const ApiKeySchema = AuthContext.extend({
   _id: z.string(),
   object: z.literal("api_key"),
   key: z.string().optional(),
@@ -29,15 +29,20 @@ type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 // called at startup to set the collection index
 export async function init() {
   console.log(`init ${apiKeysCollectionName} collection`);
-  const result = await getDb()
-    .collection(apiKeysCollectionName)
-    .createIndex({ key: 1 }, { unique: true });
-  console.log("createIndex", result);
+  // set for both test and live database
+  for (const kind of ["test", "live"] as const) {
+    const db = getDb(kind);
+    const result = await db
+      .collection(apiKeysCollectionName)
+      .createIndex({ key: 1 }, { unique: true });
+    console.log("createIndex", db.databaseName, apiKeysCollectionName, result);
+  }
 }
 
 // create a new API key
 export async function createApiKey(
-  params: ApiKeyParams,
+  params: AuthContext,
+  authContext: AuthContext,
 ): Promise<ApiKeySchema> {
   const document = {
     _id: `ak_${randomString()}`,
@@ -46,29 +51,24 @@ export async function createApiKey(
     key: `key_${params.kind}_${randomString()}`,
     ...params,
   };
-  const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
+  const collection = getDb(authContext.kind).collection<ApiKeySchema>(
+    apiKeysCollectionName,
+  );
   const result = await collection.insertOne(document);
   console.log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 
-// get an API key by secret key, excluding the key from the result
-export async function lookupByKey(
-  key: string,
-): Promise<ApiKeySchema | null> {
-  const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
-  const result = await collection.findOne({ key: key });
-  if (result) delete result.key;
-  return result;
-}
-
-// get an API key by id, excluding the key from the result
+// get an API key by id
 export async function lookupById(
   id: string,
+  authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
-  const collection = getDb().collection<ApiKeySchema>(apiKeysCollectionName);
+  const collection = getDb(authContext.kind).collection<ApiKeySchema>(
+    apiKeysCollectionName,
+  );
   const result = await collection.findOne({ _id: id });
-  if (result) delete result.key;
+  if (result) delete result.key; // don't return the secret key itself
   return result;
 }
 
@@ -89,16 +89,28 @@ export async function authMiddleware(ctx: Context, next: Next) {
   } else {
     throw new ApiError(401, "API key is required");
   }
-  console.log("API key:", key.red);
+
+  // regex match the kind part of the key
+  const match = key.match(/^key_(test|live)_/);
+  if (!match) {
+    throw new ApiError(401, "Invalid API key prefix");
+  }
+  let keyKind = match[1] as "test" | "live";
+  console.log("API key kind:", keyKind.blue);
 
   // now we have key, look it up in the database
-  const info = await lookupByKey(key);
-  if (!info) {
-    throw new ApiError(401, "Invalid API key");
+  const collection = getDb(keyKind).collection<ApiKeySchema>(
+    apiKeysCollectionName,
+  );
+  const document = await collection.findOne({ key: key });
+  if (!document) {
+    throw new ApiError(401, "Unknown API key");
   }
 
-  // store the API key info in the context
-  ctx.state.apiKey = info;
+  // store the info for the rest of the app to access
+  const authContext = AuthContext.parse(document);
+  console.log("Auth context:", JSON.stringify(authContext).blue);
 
+  ctx.state.auth = authContext;
   await next();
 }

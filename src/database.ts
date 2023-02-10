@@ -4,13 +4,20 @@ import { config } from "./config";
 let client: MongoClient;
 
 // Get the database connection
-export function getDb(name: string = config.DATABASE_NAME): Db {
+export function getDb(kind: "test" | "live"): Db {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",
     );
   }
-  return client.db(name);
+  switch (kind) {
+    case "test":
+      return client.db(config.DATABASE_NAME_TEST);
+    case "live":
+      return client.db(config.DATABASE_NAME_LIVE);
+    default:
+      throw new Error("Unknown database kind: " + kind);
+  }
 }
 
 // called at startup to connect to the database

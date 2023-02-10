@@ -5,13 +5,20 @@ const mongodb_1 = require("mongodb");
 const config_1 = require("./config");
 let client;
 // Get the database connection
-function getDb(name = config_1.config.DATABASE_NAME) {
+function getDb(kind) {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",
     );
   }
-  return client.db(name);
+  switch (kind) {
+    case "test":
+      return client.db(config_1.config.DATABASE_NAME_TEST);
+    case "live":
+      return client.db(config_1.config.DATABASE_NAME_LIVE);
+    default:
+      throw new Error("Unknown database kind: " + kind);
+  }
 }
 exports.getDb = getDb;
 // called at startup to connect to the database
