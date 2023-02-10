@@ -32,10 +32,22 @@ export async function init() {
   // set for both test and live database
   for (const kind of ["test", "live"] as const) {
     const db = getDb(kind);
-    const result = await db
-      .collection(apiKeysCollectionName)
-      .createIndex({ key: 1 }, { unique: true });
+    const collection = db.collection(apiKeysCollectionName);
+    const result = await collection.createIndex({ key: 1 }, { unique: true });
     console.log("createIndex", db.databaseName, apiKeysCollectionName, result);
+
+    // count documents in collection
+    const count = await collection.countDocuments();
+    if (count == 0) {
+      console.log("No API keys found, creating bootstrap key", kind.blue);
+      // create an api key to bootstrap the system
+      const authContext = {
+        kind,
+        scopes: ["api_keys:create" as const],
+        metadata: { description: "bootstrap key" },
+      };
+      await createApiKey(authContext, authContext);
+    }
   }
 }
 
@@ -90,39 +102,27 @@ export async function authMiddleware(ctx: Context, next: Next) {
     throw new ApiError(401, "API key is required");
   }
 
-  let kind: "test" | "live";
-  // special case for test and live bootstrap
-  if (key === "test" || key === "live") {
-    // store the info for the rest of the app to access
-    const authContext = { kind: key, scopes: ["apikeys:create"] };
-    ctx.state.auth = authContext;
-    console.log(
-      "WARNING Using special auth context:".bgRed,
-      JSON.stringify(authContext).blue,
-    );
-  } else {
-    // regex match the kind part of the key
-    const match = key.match(/^key_(test|live)_/);
-    if (!match) {
-      throw new ApiError(401, "Invalid API key prefix");
-    }
-    kind = match[1] as "test" | "live";
-    console.log("API key kind:", kind.blue);
-
-    // now we have key, look it up in the database
-    const collection = getDb(kind).collection<ApiKeySchema>(
-      apiKeysCollectionName,
-    );
-    const document = await collection.findOne({ key: key });
-    if (!document) {
-      throw new ApiError(401, "Unknown API key");
-    }
-
-    // store the info for the rest of the app to access
-    const authContext = AuthContext.parse(document);
-    console.log("Auth context:", JSON.stringify(authContext).blue);
-    ctx.state.auth = authContext;
+  // regex match the kind part of the key
+  const match = key.match(/^key_(test|live)_/);
+  if (!match) {
+    throw new ApiError(401, "Invalid API key prefix");
   }
+  const kind = match[1] as "test" | "live";
+  console.log("API key kind:", kind.blue);
+
+  // now we have key, look it up in the database
+  const collection = getDb(kind).collection<ApiKeySchema>(
+    apiKeysCollectionName,
+  );
+  const document = await collection.findOne({ key: key });
+  if (!document) {
+    throw new ApiError(401, "Unknown API key");
+  }
+
+  // store the info for the rest of the app to access
+  const authContext = AuthContext.parse(document);
+  console.log("Auth context:", JSON.stringify(authContext).blue);
+  ctx.state.auth = authContext;
 
   await next();
 }
