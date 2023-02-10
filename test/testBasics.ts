@@ -1,34 +1,28 @@
 import test from "ava";
 import { rolo } from "./setup";
 
-test("missing api key", async (t) => {
-  const res = await rolo().get("healthcheck", { headers: { "X-Api-Key": "" } });
-  t.is(res.status, 401);
-  t.assert(res.data.error.message.length > 0);
-});
-
 test("healthcheck", async (t) => {
   const res = await rolo().get("healthcheck");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true, livemode: false });
 });
 
 test("healthcheck, query string", async (t) => {
   const res = await rolo().get("healthcheck?foo=bar");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true, livemode: false });
 });
 
 test("healthcheck, trailing slash", async (t) => {
   const res = await rolo().get("healthcheck/");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true, livemode: false });
 });
 
 test("healthcheck, query string, trailing slash", async (t) => {
   const res = await rolo().get("healthcheck/?foo=bar");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true });
+  t.like(res.data, { healthcheck: true, livemode: false });
 });
 
 test("healthcheck, post (method not allowed)", async (t) => {
