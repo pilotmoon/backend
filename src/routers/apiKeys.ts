@@ -59,7 +59,7 @@ router.patch(matchId.pattern, async (ctx) => {
   if (!document) {
     throw new ApiError(404, `API key '${id}' not found`);
   }
-  ctx.body = sanitizeApiKey(document);
+  ctx.status = 204; // no content
 });
 
 // delete api key

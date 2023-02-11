@@ -83,8 +83,8 @@ test("api key CRUD test", async (t) => {
   const res2 = await rolo().get(location);
   t.is(res2.status, 200);
   t.like(res2.data, {
-    kind: "test",
     scopes: [],
+    description: "crud test key",
   });
   t.is(res2.status, 200);
   t.assert(res2.data.id.length > 0);
@@ -93,21 +93,28 @@ test("api key CRUD test", async (t) => {
 
   // update the key
   const res3 = await rolo().patch(location, {
-    scopes: ["api_keys:read"],
+    description: "crud test key updated",
   });
-  t.is(res3.status, 200);
-  t.assert(res2.data.id.length > 0);
-  t.is(res2.data.key, undefined);
-  t.assert(res3.data.scopes.includes("api_keys:read"));
+  t.is(res3.status, 204);
+  t.is(res3.data, "");
+
+  // get the key again to check update
+  const res4 = await rolo().get(location);
+  t.is(res4.status, 200);
+  t.like(res4.data, {
+    scopes: [],
+    description: "crud test key updated",
+  });
+  t.is(res4.status, 200);
 
   // delete the key
-  const res4 = await rolo().delete(location);
-  t.is(res4.status, 204);
-  t.is(res4.data, "");
+  const res5 = await rolo().delete(location);
+  t.is(res5.status, 204);
+  t.is(res5.data, "");
 
   // get the key again
-  const res5 = await rolo().get(location);
-  t.is(res5.status, 404);
+  const res6 = await rolo().get(location);
+  t.is(res6.status, 404);
 });
 
 test("get current api key", async (t) => {
@@ -168,5 +175,5 @@ test("modify other api key by id", async (t) => {
     "api_keys/" + process.env.API_KEY_ID_TEST_NO_SCOPES,
     { "description": str },
   );
-  t.is(res.status, 200);
+  t.is(res.status, 204);
 });

@@ -23,7 +23,7 @@ server.context.fullUrl = function (name: string, params?: any) {
 // middleware for error handling
 server.use(async (ctx, next) => {
   try {
-    console.log(`${ctx.method} ${ctx.url}`.bgBlue);
+    console.log("\n" + `${ctx.method} ${ctx.url}`.bgBlue);
     await next();
   } catch (error) {
     reportError(error, ctx);
@@ -38,13 +38,14 @@ server.use(async (ctx, next) => {
     } else {
       s = s.bgWhite;
     }
+    s += " " + `Sending ${ctx.response.length ?? 0} bytes`;
+    console.log(s);
     if (ctx.state.error) {
-      s += " " + String(ctx.state.error.type).bgWhite + " " +
-        ctx.state.error.message;
+      console.log(
+        String(ctx.state.error.type).bgWhite + " " +
+          ctx.state.error.message,
+      );
     }
-    console.log(
-      s,
-    );
   }
 });
 
@@ -72,6 +73,10 @@ server.use(async (ctx, next) => {
   const hasContent = typeof ctx.request.length === "number" &&
     ctx.request.length > 0;
   if (hasContent && match !== "application/json") {
+    console.log(
+      "Content-Type:",
+      String(ctx.request.headers["content-type"]).blue,
+    );
     throw new ApiError(415, "Content-Type must be application/json");
   }
   await next();

@@ -165,7 +165,8 @@ export async function authMiddleware(ctx: Context, next: Next) {
   // validate and store the document as the auth context
   try {
     const authContext = AuthContext.parse(document);
-    console.log("Auth context:", JSON.stringify(authContext).blue);
+    //console.log("Auth context:", JSON.stringify(authContext).blue);
+    console.log("Scopes:", authContext.scopes.join(", ").blue);
     ctx.state.auth = authContext;
   } catch (err) {
     console.error("Error parsing auth context", err);
