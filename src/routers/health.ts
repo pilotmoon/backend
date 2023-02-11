@@ -2,6 +2,7 @@ import { verifyScope } from "../auth";
 import { makeRouter } from "../koa";
 import { randomString } from "@pilotmoon/chewit";
 import { DatabaseKind, getDb } from "../database";
+import { config } from "../config";
 
 function getCollection(kind: DatabaseKind) {
   const db = getDb(kind);
@@ -22,7 +23,9 @@ router.get("/health", async (ctx, next) => {
   health.now = new Date();
   // insert uptime
   health.uptime = Math.floor(process.uptime());
-  // insert request details
+  // insert commit hash
+  health.commit = config.COMMIT_HASH;
+  // insert request url
   health.url = ctx.URL;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);

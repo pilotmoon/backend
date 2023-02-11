@@ -8,6 +8,7 @@ exports.config = loadConfig([
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
+  { key: "COMMIT_HASH" },
 ]);
 // load config variables
 function loadConfig(manifest) {

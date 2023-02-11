@@ -6,6 +6,7 @@ interface Config {
   DATABASE_URL: string;
   DATABASE_NAME_TEST: string;
   DATABASE_NAME_LIVE: string;
+  COMMIT_HASH: string;
 }
 export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
@@ -14,6 +15,7 @@ export const config = loadConfig([
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
+  { key: "COMMIT_HASH" },
 ]);
 
 // load config variables

@@ -5,6 +5,7 @@ const auth_1 = require("../auth");
 const koa_1 = require("../koa");
 const chewit_1 = require("@pilotmoon/chewit");
 const database_1 = require("../database");
+const config_1 = require("../config");
 function getCollection(kind) {
   const db = (0, database_1.getDb)(kind);
   return db.collection("health");
@@ -22,7 +23,9 @@ exports.router.get("/health", async (ctx, next) => {
   health.now = new Date();
   // insert uptime
   health.uptime = Math.floor(process.uptime());
-  // insert request details
+  // insert commit hash
+  health.commit = config_1.config.COMMIT_HASH;
+  // insert request url
   health.url = ctx.URL;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
