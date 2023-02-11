@@ -40,7 +40,6 @@ const ApiKeySchema = exports.AuthContext.extend({
   _id: zod_1.z.string(),
   object: zod_1.z.literal("api_key"),
   key: zod_1.z.string(),
-  created: zod_1.z.date(),
 });
 // called at startup to set the collection index
 async function init() {
@@ -103,6 +102,9 @@ async function updateApiKey(id, params, authContext) {
     _id: id,
   }, {
     $set: params,
+    $currentDate: {
+      modified: true,
+    },
   }, {
     returnDocument: "after",
   });
