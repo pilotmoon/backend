@@ -52,14 +52,13 @@ exports.httpStatusString = httpStatusString;
 function reportError(error, ctx) {
   const info = getErrorInfo(error);
   ctx.status = info.status;
+  ctx.state.error = (0, lodash_1.pickBy)({
+    message: info.message,
+    type: info.type,
+    status: httpStatusString(info.status),
+  });
   ctx.body = {
-    error: (0, lodash_1.pickBy)({
-      message: info.message,
-      type: info.type,
-      status: httpStatusString(info.status),
-    }),
+    error: ctx.state.error,
   };
-  // Log the error
-  console.log("error".bgWhite, String(info.type), "/", info.message);
 }
 exports.reportError = reportError;

@@ -59,19 +59,12 @@ export function reportError(
 ) {
   const info = getErrorInfo(error);
   ctx.status = info.status;
+  ctx.state.error = pickBy({
+    message: info.message,
+    type: info.type,
+    status: httpStatusString(info.status),
+  });
   ctx.body = {
-    error: pickBy({
-      message: info.message,
-      type: info.type,
-      status: httpStatusString(info.status),
-    }),
+    error: ctx.state.error,
   };
-
-  // Log the error
-  console.log(
-    "error".bgWhite,
-    String(info.type),
-    "/",
-    info.message,
-  );
 }

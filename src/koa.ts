@@ -8,6 +8,7 @@ import { AuthContext } from "./auth";
 interface State {
   auth: AuthContext;
   apiKeyId: string;
+  error?: any;
 }
 
 export function makeServer() {

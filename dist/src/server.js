@@ -21,7 +21,7 @@ server.context.fullUrl = function (name, params) {
 // middleware for error handling
 server.use(async (ctx, next) => {
   try {
-    console.log(ctx.url.bgBlue);
+    console.log(`${ctx.method} ${ctx.url}`.bgBlue);
     await next();
   } catch (error) {
     (0, errors_1.reportError)(error, ctx);
@@ -35,6 +35,10 @@ server.use(async (ctx, next) => {
       s = s.white.bgRed;
     } else {
       s = s.bgWhite;
+    }
+    if (ctx.state.error) {
+      s += " " + String(ctx.state.error.type).bgWhite + " " +
+        ctx.state.error.message;
     }
     console.log(s);
   }
@@ -59,8 +63,6 @@ server.use(auth_1.authMiddleware);
 // error if content-type is not application/json
 server.use(async (ctx, next) => {
   const match = ctx.request.is("application/json");
-  console.log("ctx.request.is", match);
-  console.log("content-length", ctx.request.length);
   const hasContent = typeof ctx.request.length === "number" &&
     ctx.request.length > 0;
   if (hasContent && match !== "application/json") {
