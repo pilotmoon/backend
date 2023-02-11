@@ -11,7 +11,7 @@ import { authMiddleware, init as initAuth } from "./auth";
 const router = new Router({ prefix: config.PATH_PREFIX });
 
 // add sub-routers
-router.use(require("./routers/healthcheck").router.routes());
+router.use(require("./routers/health").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
 
 // set up Koa app

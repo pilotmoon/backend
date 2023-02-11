@@ -2,7 +2,7 @@ import test from "ava";
 import { rolo } from "./setup";
 
 test("missing api key", async (t) => {
-  const res = await rolo().get("healthcheck", {
+  const res = await rolo().get("health", {
     headers: { "Authorization": null },
   });
   t.is(res.status, 401);
@@ -11,7 +11,7 @@ test("missing api key", async (t) => {
 });
 
 test("bad auth key format", async (t) => {
-  const res = await rolo().get("healthcheck", {
+  const res = await rolo().get("health", {
     headers: { "Authorization": "blah blah" },
   });
   t.is(res.status, 401);
@@ -20,7 +20,7 @@ test("bad auth key format", async (t) => {
 });
 
 test("unknown api key", async (t) => {
-  const res = await rolo().get("healthcheck", {
+  const res = await rolo().get("health", {
     headers: { "Authorization": "Bearer blah blah" },
   });
   t.is(res.status, 401);
@@ -29,7 +29,7 @@ test("unknown api key", async (t) => {
 });
 
 test("unknown api key, x-api-key", async (t) => {
-  const res = await rolo().get("healthcheck", {
+  const res = await rolo().get("health", {
     headers: { "Authorization": null, "X-Api-Key": "blah blah" },
   });
   t.is(res.status, 401);

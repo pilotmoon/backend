@@ -21,7 +21,7 @@ function getCollection(kind) {
   return db.collection(apiKeysCollectionName);
 }
 const allScopes = [
-  "healthcheck:read",
+  "health:read",
   "api_keys:create",
   "api_keys:read",
   "api_keys:update",

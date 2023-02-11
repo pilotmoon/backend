@@ -1,32 +1,32 @@
 import test from "ava";
 import { rolo } from "./setup";
 
-test("healthcheck", async (t) => {
-  const res = await rolo().get("healthcheck");
+test("health", async (t) => {
+  const res = await rolo().get("health");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true, livemode: false });
+  t.like(res.data, { object: "health", livemode: false });
 });
 
-test("healthcheck, query string", async (t) => {
-  const res = await rolo().get("healthcheck?foo=bar");
+test("health, query string", async (t) => {
+  const res = await rolo().get("health?foo=bar");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true, livemode: false });
+  t.like(res.data, { object: "health", livemode: false });
 });
 
-test("healthcheck, trailing slash", async (t) => {
-  const res = await rolo().get("healthcheck/");
+test("health, trailing slash", async (t) => {
+  const res = await rolo().get("health/");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true, livemode: false });
+  t.like(res.data, { object: "health", livemode: false });
 });
 
-test("healthcheck, query string, trailing slash", async (t) => {
-  const res = await rolo().get("healthcheck/?foo=bar");
+test("health, query string, trailing slash", async (t) => {
+  const res = await rolo().get("health/?foo=bar");
   t.is(res.status, 200);
-  t.like(res.data, { healthcheck: true, livemode: false });
+  t.like(res.data, { object: "health", livemode: false });
 });
 
-test("healthcheck, post (method not allowed)", async (t) => {
-  const res = await rolo().post("healthcheck");
+test("health, post (method not allowed)", async (t) => {
+  const res = await rolo().post("health");
   t.is(res.status, 405);
 });
 

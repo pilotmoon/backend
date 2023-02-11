@@ -11,7 +11,7 @@ const auth_1 = require("./auth");
 // set up router
 const router = new Router({ prefix: config_1.config.PATH_PREFIX });
 // add sub-routers
-router.use(require("./routers/healthcheck").router.routes());
+router.use(require("./routers/health").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
 // set up Koa app
 const app = new Koa();

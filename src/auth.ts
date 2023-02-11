@@ -11,7 +11,7 @@ function getCollection(kind: "test" | "live") {
 }
 
 const allScopes = [
-  "healthcheck:read",
+  "health:read",
   "api_keys:create",
   "api_keys:read",
   "api_keys:update",

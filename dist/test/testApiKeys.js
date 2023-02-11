@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ava_1 = require("ava");
 const setup_1 = require("./setup");
 (0, ava_1.default)("missing api key", async (t) => {
-  const res = await (0, setup_1.rolo)().get("healthcheck", {
+  const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": null },
   });
   t.is(res.status, 401);
@@ -11,7 +11,7 @@ const setup_1 = require("./setup");
   t.log(res.data.error.message);
 });
 (0, ava_1.default)("bad auth key format", async (t) => {
-  const res = await (0, setup_1.rolo)().get("healthcheck", {
+  const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": "blah blah" },
   });
   t.is(res.status, 401);
@@ -19,7 +19,7 @@ const setup_1 = require("./setup");
   t.log(res.data.error.message);
 });
 (0, ava_1.default)("unknown api key", async (t) => {
-  const res = await (0, setup_1.rolo)().get("healthcheck", {
+  const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": "Bearer blah blah" },
   });
   t.is(res.status, 401);
@@ -27,7 +27,7 @@ const setup_1 = require("./setup");
   t.log(res.data.error.message);
 });
 (0, ava_1.default)("unknown api key, x-api-key", async (t) => {
-  const res = await (0, setup_1.rolo)().get("healthcheck", {
+  const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": null, "X-Api-Key": "blah blah" },
   });
   t.is(res.status, 401);
