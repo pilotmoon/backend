@@ -53,7 +53,7 @@ test("create api key, unknown scope", async (t) => {
   t.log(res.data.error.message);
 });
 
-test("api key CRUD", async (t) => {
+test("api key CRUD test", async (t) => {
   // create new key
   const res = await rolo().post("api_keys", {
     scopes: [],
@@ -78,15 +78,28 @@ test("api key CRUD", async (t) => {
     kind: "test",
     scopes: [],
   });
+  t.is(res2.status, 200);
   t.assert(res2.data.id.length > 0);
   t.is(res2.data.key, undefined);
+  t.assert(!res2.data.scopes.includes("api_keys:read"));
 
   // update the key
-  const res3 = await rolo().put(location, {
+  const res3 = await rolo().patch(location, {
     scopes: ["api_keys:read"],
   });
+  t.is(res3.status, 200);
+  t.assert(res2.data.id.length > 0);
+  t.is(res2.data.key, undefined);
+  t.assert(res3.data.scopes.includes("api_keys:read"));
 
   // delete the key
+  const res4 = await rolo().delete(location);
+  t.is(res4.status, 204);
+  t.is(res4.data, "");
+
+  // get the key again
+  const res5 = await rolo().get(location);
+  t.is(res5.status, 404);
 });
 
 test("get current api key", async (t) => {
