@@ -20,6 +20,8 @@ exports.router.get("/health", async (ctx, next) => {
   health.random = (0, chewit_1.randomString)({ length: 10 });
   // insert date
   health.now = new Date();
+  // insert request details
+  health.url = ctx.URL;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
   health.database = await coll.insertOne(health);
