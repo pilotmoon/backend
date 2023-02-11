@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeRouter = exports.makeServer = void 0;
 /*
-Wrap Koa's Router to inject our own AppState type.
+Wrap Koa's types to inject our own state type.
 */
 const Koa = require("koa");
 const Router = require("@koa/router");

@@ -39,7 +39,7 @@ server.use(async (ctx, next) => {
       delete ctx.body._id;
     }
     // set livemode key
-    ctx.body.livemode = ctx.state?.auth?.kind === "live";
+    ctx.body.livemode = ctx.state.auth.kind === "live";
   }
 });
 server.use(auth_1.authMiddleware);

@@ -1,5 +1,5 @@
 /*
-Wrap Koa's Router to inject our own AppState type.
+Wrap Koa's types to inject our own state type.
 */
 import Koa = require("koa");
 import Router = require("@koa/router");
