@@ -25,6 +25,18 @@ server.use(async (ctx, next) => {
     await next();
   } catch (error) {
     (0, errors_1.reportError)(error, ctx);
+  } finally {
+    let s = (0, errors_1.httpStatusString)(ctx.status);
+    if (ctx.status >= 200 && ctx.status < 300) {
+      s = s.bgGreen;
+    } else if (ctx.status >= 400 && ctx.status < 500) {
+      s = s.bgYellow;
+    } else if (ctx.status >= 500 && ctx.status < 600) {
+      s = s.white.bgRed;
+    } else {
+      s = s.bgWhite;
+    }
+    console.log(s);
   }
 });
 // modify all response bodies

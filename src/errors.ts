@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { Context } from "koa";
+import { pickBy } from "lodash";
 import { STATUS_CODES } from "node:http";
 
 export class ApiError extends Error {
@@ -12,8 +13,8 @@ export class ApiError extends Error {
   }
 }
 
-function getErrorMessage(error: unknown) {
-  let message = "???";
+function getErrorInfo(error: unknown) {
+  let message;
   if (error instanceof ZodError) {
     message = fromZodError(error).message;
   } else if (error instanceof Error) {
@@ -21,36 +22,56 @@ function getErrorMessage(error: unknown) {
   } else {
     message = String(error);
   }
+
+  let type;
   if (
     error !== null &&
     typeof error === "object" &&
     "name" in error &&
     typeof error.name === "string"
   ) {
-    message += ` (${error.name})`;
+    type = error.name;
   }
-  return message;
-}
 
-function getErrorStatus(error: unknown) {
+  let status = 500; // Internal server error
   if (error instanceof ApiError) {
-    return error.status;
+    status = error.status;
   }
   if (error instanceof ZodError) {
-    return 400; // Bad request
+    status = 400; // Bad request
   }
-  return 500; // Internal server error
+
+  return { message, type, status };
+}
+
+export function httpStatusString(code: number) {
+  const string = STATUS_CODES[code];
+  if (string) {
+    return `${code} ${string}`;
+  } else {
+    return "???";
+  }
 }
 
 export function reportError(
   error: unknown,
   ctx: Context,
 ) {
-  const message = getErrorMessage(error);
-  ctx.status = getErrorStatus(error);
-  ctx.body = `${STATUS_CODES[ctx.status] ?? "???"}\n${message}`;
+  const info = getErrorInfo(error);
+  ctx.status = info.status;
+  ctx.body = {
+    error: pickBy({
+      message: info.message,
+      type: info.type,
+      status: httpStatusString(info.status),
+    }),
+  };
+
+  // Log the error
   console.log(
-    "Response status ".red + String(ctx.status).blue +
-      " with message ".red + message.blue,
+    "error".bgWhite,
+    String(info.type),
+    "/",
+    info.message,
   );
 }

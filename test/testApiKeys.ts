@@ -6,8 +6,6 @@ test("missing api key", async (t) => {
     headers: { "Authorization": null },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("bad auth key format", async (t) => {
@@ -15,8 +13,6 @@ test("bad auth key format", async (t) => {
     headers: { "Authorization": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("unknown api key", async (t) => {
@@ -24,8 +20,6 @@ test("unknown api key", async (t) => {
     headers: { "Authorization": "Bearer blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("unknown api key, x-api-key", async (t) => {
@@ -33,15 +27,11 @@ test("unknown api key, x-api-key", async (t) => {
     headers: { "Authorization": null, "X-Api-Key": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("create api key, missing payload", async (t) => {
   const res = await rolo().post("api_keys");
   t.is(res.status, 400);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("create api key, unknown scope", async (t) => {
@@ -49,8 +39,6 @@ test("create api key, unknown scope", async (t) => {
     scopes: ["foo"],
   });
   t.is(res.status, 400);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 
 test("api key, method not allowed (get)", async (t) => {
@@ -70,10 +58,7 @@ test("api key CRUD test", async (t) => {
   t.is(res.data.description, "crud test key");
   t.is(res.data.blah, undefined);
   const location = res.headers["location"];
-  t.assert(
-    location.length > 0 &&
-      location.startsWith(process.env.APP_URL),
-  );
+  t.assert(location.startsWith(process.env.APP_URL));
   t.log(location);
 
   // get the key

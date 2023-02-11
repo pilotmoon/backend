@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reportError = exports.ApiError = void 0;
+exports.reportError = exports.httpStatusString = exports.ApiError = void 0;
 const zod_1 = require("zod");
 const zod_validation_error_1 = require("zod-validation-error");
+const lodash_1 = require("lodash");
 const node_http_1 = require("node:http");
 class ApiError extends Error {
   constructor(status, message) {
@@ -12,8 +13,8 @@ class ApiError extends Error {
   }
 }
 exports.ApiError = ApiError;
-function getErrorMessage(error) {
-  let message = "???";
+function getErrorInfo(error) {
+  let message;
   if (error instanceof zod_1.ZodError) {
     message = (0, zod_validation_error_1.fromZodError)(error).message;
   } else if (error instanceof Error) {
@@ -21,32 +22,44 @@ function getErrorMessage(error) {
   } else {
     message = String(error);
   }
+  let type;
   if (
     error !== null &&
     typeof error === "object" &&
     "name" in error &&
     typeof error.name === "string"
   ) {
-    message += ` (${error.name})`;
+    type = error.name;
   }
-  return message;
-}
-function getErrorStatus(error) {
+  let status = 500; // Internal server error
   if (error instanceof ApiError) {
-    return error.status;
+    status = error.status;
   }
   if (error instanceof zod_1.ZodError) {
-    return 400; // Bad request
+    status = 400; // Bad request
   }
-  return 500; // Internal server error
+  return { message, type, status };
 }
+function httpStatusString(code) {
+  const string = node_http_1.STATUS_CODES[code];
+  if (string) {
+    return `${code} ${string}`;
+  } else {
+    return "???";
+  }
+}
+exports.httpStatusString = httpStatusString;
 function reportError(error, ctx) {
-  const message = getErrorMessage(error);
-  ctx.status = getErrorStatus(error);
-  ctx.body = `${node_http_1.STATUS_CODES[ctx.status] ?? "???"}\n${message}`;
-  console.log(
-    "Response status ".red + String(ctx.status).blue +
-      " with message ".red + message.blue,
-  );
+  const info = getErrorInfo(error);
+  ctx.status = info.status;
+  ctx.body = {
+    error: (0, lodash_1.pickBy)({
+      message: info.message,
+      type: info.type,
+      status: httpStatusString(info.status),
+    }),
+  };
+  // Log the error
+  console.log("error".bgWhite, String(info.type), "/", info.message);
 }
 exports.reportError = reportError;

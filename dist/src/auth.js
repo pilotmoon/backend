@@ -120,21 +120,15 @@ async function deleteApiKey(id, authContext) {
 exports.deleteApiKey = deleteApiKey;
 // auth middleware, allow Bearer token or x-api-key header
 async function authMiddleware(ctx, next) {
-  const authorizationHeader = ctx.request.headers["authorization"];
-  const apiKeyHeader = ctx.request.headers["x-api-key"];
+  const prefix = "Bearer ";
+  const authorization = ctx.request.headers["authorization"];
   let key = "";
-  if (typeof authorizationHeader === "string") {
-    const bearerPrefix = "Bearer ";
-    if (authorizationHeader.startsWith(bearerPrefix)) {
-      key = authorizationHeader.substring(bearerPrefix.length);
+  if (typeof authorization === "string") {
+    if (authorization.startsWith(prefix)) {
+      key = authorization.substring(prefix.length);
     } else {
-      throw new errors_1.ApiError(
-        401,
-        "Authorization header must start with Bearer",
-      );
+      throw new errors_1.ApiError(401, "Bearer token is required");
     }
-  } else if (typeof apiKeyHeader === "string" && apiKeyHeader.length > 0) {
-    key = apiKeyHeader;
   } else {
     throw new errors_1.ApiError(401, "API key is required");
   }

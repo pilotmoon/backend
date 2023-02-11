@@ -7,46 +7,34 @@ const setup_1 = require("./setup");
     headers: { "Authorization": null },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("bad auth key format", async (t) => {
   const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("unknown api key", async (t) => {
   const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": "Bearer blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("unknown api key, x-api-key", async (t) => {
   const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": null, "X-Api-Key": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("create api key, missing payload", async (t) => {
   const res = await (0, setup_1.rolo)().post("api_keys");
   t.is(res.status, 400);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("create api key, unknown scope", async (t) => {
   const res = await (0, setup_1.rolo)().post("api_keys", {
     scopes: ["foo"],
   });
   t.is(res.status, 400);
-  t.assert(res.data.length > 0);
-  t.log(res.data);
 });
 (0, ava_1.default)("api key, method not allowed (get)", async (t) => {
   const res = await (0, setup_1.rolo)().get("api_keys");
@@ -64,10 +52,7 @@ const setup_1 = require("./setup");
   t.is(res.data.description, "crud test key");
   t.is(res.data.blah, undefined);
   const location = res.headers["location"];
-  t.assert(
-    location.length > 0 &&
-      location.startsWith(process.env.APP_URL),
-  );
+  t.assert(location.startsWith(process.env.APP_URL));
   t.log(location);
   // get the key
   const res2 = await (0, setup_1.rolo)().get(location);

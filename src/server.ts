@@ -2,7 +2,7 @@ import "./globals";
 import { makeRouter, makeServer } from "./koa";
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
-import { reportError } from "./errors";
+import { httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 
@@ -27,6 +27,18 @@ server.use(async (ctx, next) => {
     await next();
   } catch (error) {
     reportError(error, ctx);
+  } finally {
+    let s = httpStatusString(ctx.status);
+    if (ctx.status >= 200 && ctx.status < 300) {
+      s = s.bgGreen;
+    } else if (ctx.status >= 400 && ctx.status < 500) {
+      s = s.bgYellow;
+    } else if (ctx.status >= 500 && ctx.status < 600) {
+      s = s.white.bgRed;
+    } else {
+      s = s.bgWhite;
+    }
+    console.log(s);
   }
 });
 
