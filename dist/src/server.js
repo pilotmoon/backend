@@ -55,7 +55,20 @@ server.use(async (ctx, next) => {
   }
 });
 server.use(auth_1.authMiddleware);
-server.use(bodyParser({ enableTypes: ["json"] }));
+server.use(bodyParser({
+  enableTypes: ["json"],
+  onerror: () => {
+    throw new errors_1.ApiError(400, "Invalid JSON");
+  },
+}));
+// error if content-type is not application/json
+server.use(async (ctx, next) => {
+  const match = ctx.request.is("application/json");
+  if (match !== "application/json" && match !== null) {
+    throw new errors_1.ApiError(415, "Content-Type must be application/json");
+  }
+  await next();
+});
 server.use(router.routes());
 server.use(router.allowedMethods());
 // Server close-down

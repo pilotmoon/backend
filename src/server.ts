@@ -2,7 +2,7 @@ import "./globals";
 import { makeRouter, makeServer } from "./koa";
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
-import { httpStatusString, reportError } from "./errors";
+import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 
@@ -59,7 +59,20 @@ server.use(async (ctx, next) => {
 });
 
 server.use(authMiddleware);
-server.use(bodyParser({ enableTypes: ["json"] }));
+server.use(bodyParser({
+  enableTypes: ["json"],
+  onerror: () => {
+    throw new ApiError(400, "Invalid JSON");
+  },
+}));
+// error if content-type is not application/json
+server.use(async (ctx, next) => {
+  const match = ctx.request.is("application/json");
+  if (match !== "application/json" && match !== null) {
+    throw new ApiError(415, "Content-Type must be application/json");
+  }
+  await next();
+});
 server.use(router.routes());
 server.use(router.allowedMethods());
 
