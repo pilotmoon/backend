@@ -26,9 +26,9 @@ exports.router.all("/health", async (ctx, next) => {
   // insert commit hash
   health.commit = config_1.config.COMMIT_HASH;
   // insert request info
-  health.requestUrl = String(ctx.request.URL);
-  health.requestMethod = String(ctx.request.method);
-  health.requestHeaders = ctx.request.headers;
+  health.url = String(ctx.request.url);
+  health.method = String(ctx.request.method);
+  health.headers = ctx.request.headers;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
   health.database = await coll.insertOne(health);
