@@ -26,7 +26,7 @@ router.get("/health", async (ctx, next) => {
   // insert commit hash
   health.commit = config.COMMIT_HASH;
   // insert request url
-  health.url = ctx.URL;
+  health.url = String(ctx.URL);
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
   health.database = await coll.insertOne(health);
