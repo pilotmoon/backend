@@ -106,7 +106,7 @@ test("get current api key", async (t) => {
   const res = await rolo().get("api_keys/current");
   t.is(res.status, 200);
   t.like(res.data, {
-    id: "ak_aaiboo5zmV1ABv3KfdPNaWov",
+    id: process.env.API_KEY_ID_TEST_GOOD,
     kind: "test",
   });
   t.assert(res.data.id.length > 0);

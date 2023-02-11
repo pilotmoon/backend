@@ -30,7 +30,7 @@ const allScopes = [
 // schema for API keys
 exports.SettableAuthContext = zod_1.z.object({
   scopes: zod_1.z.array(zod_1.z.enum(allScopes)),
-  description: zod_1.z.string().optional(),
+  description: zod_1.z.string(),
 });
 exports.PartialAuthContext = exports.SettableAuthContext.partial();
 exports.AuthContext = exports.SettableAuthContext.extend({
@@ -58,7 +58,7 @@ async function init() {
       const authContext = {
         kind,
         scopes: allScopes,
-        metadata: { description: "bootstrap key" },
+        description: "bootstrap key",
       };
       await createApiKey(authContext, authContext);
     }

@@ -22,7 +22,7 @@ type Scope = typeof allScopes[number];
 // schema for API keys
 export const SettableAuthContext = z.object({
   scopes: z.array(z.enum(allScopes)),
-  description: z.string().optional(),
+  description: z.string(),
 });
 type SettableAuthContext = z.infer<typeof SettableAuthContext>;
 export const PartialAuthContext = SettableAuthContext.partial();
@@ -56,7 +56,7 @@ export async function init() {
       const authContext = {
         kind,
         scopes: allScopes as any,
-        metadata: { description: "bootstrap key" },
+        description: "bootstrap key",
       };
       await createApiKey(authContext, authContext);
     }

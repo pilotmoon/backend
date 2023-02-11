@@ -96,7 +96,7 @@ const setup_1 = require("./setup");
   const res = await (0, setup_1.rolo)().get("api_keys/current");
   t.is(res.status, 200);
   t.like(res.data, {
-    id: "ak_aaiboo5zmV1ABv3KfdPNaWov",
+    id: process.env.API_KEY_ID_TEST_GOOD,
     kind: "test",
   });
   t.assert(res.data.id.length > 0);
