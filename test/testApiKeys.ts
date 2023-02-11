@@ -128,6 +128,14 @@ test("get current api key", async (t) => {
   t.is(res.data.key, undefined);
 });
 
+test("head current api key", async (t) => {
+  const res = await rolo().head("api_keys/current");
+  t.is(res.status, 200);
+  t.is(res.data, "");
+  t.is(res.headers["content-type"], "application/json; charset=utf-8");
+  t.log("content-length", res.headers["content-length"]);
+});
+
 test("modify current api key", async (t) => {
   const res = await rolo().patch("api_keys/current", { "description": "foo" });
   t.is(res.status, 405);

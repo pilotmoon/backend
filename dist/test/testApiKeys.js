@@ -110,6 +110,13 @@ const chewit_1 = require("@pilotmoon/chewit");
   t.assert(res.data.id.length > 0);
   t.is(res.data.key, undefined);
 });
+(0, ava_1.default)("head current api key", async (t) => {
+  const res = await (0, setup_1.rolo)().head("api_keys/current");
+  t.is(res.status, 200);
+  t.is(res.data, "");
+  t.is(res.headers["content-type"], "application/json; charset=utf-8");
+  t.log("content-length", res.headers["content-length"]);
+});
 (0, ava_1.default)("modify current api key", async (t) => {
   const res = await (0, setup_1.rolo)().patch("api_keys/current", {
     "description": "foo",
