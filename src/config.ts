@@ -68,15 +68,10 @@ function setConfigItem(
   if (typeof value !== "string") {
     throw new Error("Missing environment variable: " + key);
   }
-  const trimmedValue = value.trim();
-  if (trimmedValue.length === 0) {
-    throw new Error("Empty environment variable: " + key);
-  }
-  const transformedValue = transform(trimmedValue);
   console.log(
     `Loaded config variable ${key.blue} with value ${
-      secret ? "<secret>".yellow : String(transformedValue).cyan
-    } as ${typeof transformedValue}`,
+      secret ? "<secret>".yellow : String(value).cyan
+    } as ${typeof value}`,
   );
-  config[key] = transformedValue;
+  config[key] = value;
 }
