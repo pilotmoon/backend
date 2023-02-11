@@ -12,7 +12,7 @@ function getCollection(kind) {
 }
 exports.router = (0, koa_1.makeRouter)();
 // health check endpoint
-exports.router.get("/health", async (ctx, next) => {
+exports.router.all("/health", async (ctx, next) => {
   console.log("health");
   await (0, auth_1.verifyScope)("health:read", ctx.state.auth);
   // add object identifier to response
@@ -25,8 +25,10 @@ exports.router.get("/health", async (ctx, next) => {
   health.uptime = Math.floor(process.uptime());
   // insert commit hash
   health.commit = config_1.config.COMMIT_HASH;
-  // insert request url
-  health.url = String(ctx.URL);
+  // insert request info
+  health.requestUrl = String(ctx.request.URL);
+  health.requestMethod = String(ctx.request.method);
+  health.requestHeaders = ctx.request.headers;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
   health.database = await coll.insertOne(health);

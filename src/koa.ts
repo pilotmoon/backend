@@ -11,7 +11,7 @@ interface State {
 }
 
 export function makeServer() {
-  return new Koa<State>();
+  return new Koa<State>({ proxy: true });
 }
 
 export function makeRouter(opt?: Router.RouterOptions) {

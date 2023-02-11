@@ -1,5 +1,7 @@
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { Context } from "koa";
+import { STATUS_CODES } from "node:http";
 
 export class ApiError extends Error {
   status: number;
@@ -11,13 +13,23 @@ export class ApiError extends Error {
 }
 
 function getErrorMessage(error: unknown) {
+  let message = "???";
   if (error instanceof ZodError) {
-    return fromZodError(error).message;
+    message = fromZodError(error).message;
+  } else if (error instanceof Error) {
+    message = error.message;
+  } else {
+    message = String(error);
   }
-  if (error instanceof Error) {
-    return error.message;
+  if (
+    error !== null &&
+    typeof error === "object" &&
+    "name" in error &&
+    typeof error.name === "string"
+  ) {
+    message += ` (${error.name})`;
   }
-  return String(error); // Fallback
+  return message;
 }
 
 function getErrorStatus(error: unknown) {
@@ -32,21 +44,13 @@ function getErrorStatus(error: unknown) {
 
 export function reportError(
   error: unknown,
-  ctx: {
-    set: (field: string, val: string) => void;
-    body: unknown;
-    status: number;
-  },
+  ctx: Context,
 ) {
   const message = getErrorMessage(error);
-  ctx.body = {
-    error: {
-      message: message,
-    },
-  };
   ctx.status = getErrorStatus(error);
+  ctx.body = `${STATUS_CODES[ctx.status] ?? "???"}\n${message}`;
   console.log(
-    "Response status ".red + String(ctx.status).blue + " with message ".red +
-      message.blue,
+    "Response status ".red + String(ctx.status).blue +
+      " with message ".red + message.blue,
   );
 }
