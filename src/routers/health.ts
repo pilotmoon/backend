@@ -18,6 +18,8 @@ router.get("/health", async (ctx, next) => {
   const health = { "object": "health" } as any;
   // add random string to test caching
   health.random = randomString({ length: 10 });
+  // insert date
+  health.now = new Date();
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
   health.database = await coll.insertOne(health);

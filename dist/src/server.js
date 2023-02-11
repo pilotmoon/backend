@@ -23,6 +23,7 @@ app.context.fullUrl = function (name, params) {
 // middleware for all error handling
 app.use(async (ctx, next) => {
   try {
+    console.log(ctx.url.bgBlue);
     await next();
   } catch (error) {
     (0, errors_1.reportError)(error, ctx);
