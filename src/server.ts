@@ -10,14 +10,8 @@ import { authMiddleware, init as initAuth, verifyScope } from "./auth";
 // set up router
 const router = new Router({ prefix: config.PATH_PREFIX });
 
-// healthcheck endpoint
-router.get("/healthcheck", async (ctx, next) => {
-  await verifyScope("healthcheck:read", ctx.state.auth);
-  ctx.body = { "healthcheck": true };
-  await next();
-});
-
 // add sub-routers
+router.use(require("./routers/healthcheck").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
 
 // set up Koa app
