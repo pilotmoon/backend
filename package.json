@@ -8,7 +8,7 @@
     "start": "node dist/src/server.js",
     "dev": "npm run env && source .env && npx tsc-watch --onSuccess \"npm run start\"",
     "test": "npm run env && source .env && npx ava",
-    "test-prod": "npm run env && source .env && export APP_URL=${APP_URL_PROD} && npx ava"
+    "test-prod": "npm run env && source .env && export APP_URL=${APP_URL_PROD} && npx ava --serial"
   },
   "private": true,
   "engines": {
@@ -17,7 +17,7 @@
   },
   "ava": {
     "files": [
-      "dist/test/test*.js"
+      "dist/test/test.js"
     ]
   },
   "dependencies": {

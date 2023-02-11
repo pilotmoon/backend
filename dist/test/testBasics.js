@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ava_1 = require("ava");
 const setup_1 = require("./setup");
-(0, ava_1.default)("health", async (t) => {
+ava_1.default.serial("health", async (t) => {
   const res = await (0, setup_1.rolo)().get("health");
   t.is(res.status, 200);
   t.like(res.data, { object: "health", livemode: false });
