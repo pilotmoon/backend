@@ -31,7 +31,9 @@ router.get("/health", async (ctx, next) => {
   health.headers = ctx.request.headers;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
-  health.database = await coll.insertOne(health);
+  const dbInsert = await coll.insertOne(health);
+  const dbDelete = await coll.deleteOne({ _id: dbInsert.insertedId });
+  health.selfTest = { dbInsert, dbDelete };
   // return response
   ctx.body = health;
   await next();
