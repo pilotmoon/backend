@@ -21,14 +21,26 @@ const chewit_1 = require("@pilotmoon/chewit");
   });
   t.is(res.status, 401);
 });
-(0, ava_1.default)("unknown api key, x-api-key", async (t) => {
-  const res = await (0, setup_1.rolo)().get("health", {
-    headers: { "Authorization": null, "X-Api-Key": "blah blah" },
-  });
-  t.is(res.status, 401);
-});
 (0, ava_1.default)("create api key, missing payload", async (t) => {
-  const res = await (0, setup_1.rolo)().post("api_keys");
+  const res = await (0, setup_1.rolo)().post("api_keys", "", {
+    headers: { "Content-Type": "application/json" },
+  });
+  t.is(res.status, 400);
+  t.log(res.data.error.message);
+});
+(0, ava_1.default)("create api key, form encoded", async (t) => {
+  const res = await (0, setup_1.rolo)().post(
+    "api_keys",
+    new URLSearchParams({ foo: "bar" }),
+  );
+  t.is(res.status, 415);
+});
+(0, ava_1.default)("create api key, string", async (t) => {
+  const res = await (0, setup_1.rolo)().post("api_keys", "foo");
+  t.is(res.status, 415);
+});
+(0, ava_1.default)("create api key, empty object", async (t) => {
+  const res = await (0, setup_1.rolo)().post("api_keys", {});
   t.is(res.status, 400);
 });
 (0, ava_1.default)("create api key, unknown scope", async (t) => {

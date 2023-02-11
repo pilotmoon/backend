@@ -7,8 +7,7 @@
     "build": "npx tsc",
     "start": "node dist/src/server.js",
     "dev": "npm run env && source .env && npx tsc-watch --onSuccess \"npm run start\"",
-    "test": "npm run env && source .env && npx ava",
-    "test-watch": "npm run env && source .env && npx ava --watch"
+    "test": "npm run env && source .env && npx ava"
   },
   "private": true,
   "engines": {

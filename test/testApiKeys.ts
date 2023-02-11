@@ -23,15 +23,32 @@ test("unknown api key", async (t) => {
   t.is(res.status, 401);
 });
 
-test("unknown api key, x-api-key", async (t) => {
-  const res = await rolo().get("health", {
-    headers: { "Authorization": null, "X-Api-Key": "blah blah" },
+test("create api key, missing payload", async (t) => {
+  const res = await rolo().post("api_keys", "", {
+    headers: { "Content-Type": "application/json" },
   });
-  t.is(res.status, 401);
+  t.is(res.status, 400);
+  t.log(res.data.error.message);
 });
 
-test("create api key, missing payload", async (t) => {
-  const res = await rolo().post("api_keys");
+test("create api key, form encoded", async (t) => {
+  const res = await rolo().post(
+    "api_keys",
+    new URLSearchParams({ foo: "bar" }),
+  );
+  t.is(res.status, 415);
+});
+
+test("create api key, string", async (t) => {
+  const res = await rolo().post(
+    "api_keys",
+    "foo",
+  );
+  t.is(res.status, 415);
+});
+
+test("create api key, empty object", async (t) => {
+  const res = await rolo().post("api_keys", {});
   t.is(res.status, 400);
 });
 

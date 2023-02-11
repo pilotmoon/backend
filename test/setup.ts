@@ -6,7 +6,9 @@ export function rolo(key = process.env.API_KEY_TEST_GOOD) {
   if (!roloInstance) {
     roloInstance = axios.create({
       baseURL: process.env.APP_URL,
-      headers: { "Authorization": `Bearer ${key}` },
+      headers: {
+        "Authorization": `Bearer ${key}`,
+      },
       validateStatus: () => true, //
     });
   }

@@ -18,7 +18,7 @@ server.context.fullUrl = function (name, params) {
   console.log("fullUrl", name, params);
   return config_1.config.APP_URL + router.url(name, params);
 };
-// middleware for all error handling
+// middleware for error handling
 server.use(async (ctx, next) => {
   try {
     console.log(ctx.url.bgBlue);
@@ -54,21 +54,26 @@ server.use(async (ctx, next) => {
     ctx.body.livemode = ctx.state.auth.kind === "live";
   }
 });
+// do auth first
 server.use(auth_1.authMiddleware);
+// error if content-type is not application/json
+server.use(async (ctx, next) => {
+  const match = ctx.request.is("application/json");
+  if (match !== "application/json" && match !== null) {
+    console.log(ctx.header);
+    console.log(String(ctx.body));
+    throw new errors_1.ApiError(415, "Content-Type must be application/json");
+  }
+  await next();
+});
+// parse request body
 server.use(bodyParser({
   enableTypes: ["json"],
   onerror: () => {
     throw new errors_1.ApiError(400, "Invalid JSON");
   },
 }));
-// error if content-type is not application/json
-server.use(async (ctx, next) => {
-  const match = ctx.request.is("application/json");
-  if (match !== "application/json" && match !== null) {
-    throw new errors_1.ApiError(415, "Content-Type must be application/json");
-  }
-  await next();
-});
+// add routes and allowed methods
 server.use(router.routes());
 server.use(router.allowedMethods());
 // Server close-down
