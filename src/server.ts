@@ -5,7 +5,7 @@ import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { authMiddleware, init as initAuth, verifyScope } from "./auth";
+import { authMiddleware, init as initAuth } from "./auth";
 
 // set up router
 const router = new Router({ prefix: config.PATH_PREFIX });
