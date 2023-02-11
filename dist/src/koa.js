@@ -7,7 +7,7 @@ Wrap Koa's types to inject our own state type.
 const Koa = require("koa");
 const Router = require("@koa/router");
 function makeServer() {
-  return new Koa({ proxy: true });
+  return new Koa();
 }
 exports.makeServer = makeServer;
 function makeRouter(opt) {
