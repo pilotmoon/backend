@@ -1,27 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./globals");
-const Koa = require("koa");
-const Router = require("@koa/router");
+const koa_1 = require("./koa");
 const bodyParser = require("koa-bodyparser");
 const config_1 = require("./config");
 const errors_1 = require("./errors");
 const database_1 = require("./database");
 const auth_1 = require("./auth");
-// set up router
-const router = new Router({ prefix: config_1.config.PATH_PREFIX });
-// add sub-routers
+// set up routers
+const router = (0, koa_1.makeRouter)({ prefix: config_1.config.PATH_PREFIX });
 router.use(require("./routers/health").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
-// set up Koa app
-const app = new Koa();
+// set up Koa server
+const server = (0, koa_1.makeServer)();
 // add function to context for generating full url
-app.context.fullUrl = function (name, params) {
+server.context.fullUrl = function (name, params) {
   console.log("fullUrl", name, params);
   return config_1.config.APP_URL + router.url(name, params);
 };
 // middleware for all error handling
-app.use(async (ctx, next) => {
+server.use(async (ctx, next) => {
   try {
     console.log(ctx.url.bgBlue);
     await next();
@@ -30,7 +28,7 @@ app.use(async (ctx, next) => {
   }
 });
 // modify all response bodies
-app.use(async (ctx, next) => {
+server.use(async (ctx, next) => {
   await next();
   if (typeof ctx.body === "object") {
     // replace _id with id
@@ -44,10 +42,10 @@ app.use(async (ctx, next) => {
     ctx.body.livemode = ctx.state?.auth?.kind === "live";
   }
 });
-app.use(auth_1.authMiddleware);
-app.use(bodyParser({ enableTypes: ["json"] }));
-app.use(router.routes());
-app.use(router.allowedMethods());
+server.use(auth_1.authMiddleware);
+server.use(bodyParser({ enableTypes: ["json"] }));
+server.use(router.routes());
+server.use(router.allowedMethods());
 // Server close-down
 const abortController = new AbortController();
 function closeServer() {
@@ -56,7 +54,7 @@ function closeServer() {
 }
 function startServer() {
   console.log("Starting server");
-  app.listen({
+  server.listen({
     port: config_1.config.APP_PORT,
     signal: abortController.signal,
   }, () => {

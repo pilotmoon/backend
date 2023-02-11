@@ -1,30 +1,27 @@
 import "./globals";
-import Koa = require("koa");
-import Router = require("@koa/router");
+import { makeRouter, makeServer } from "./koa";
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 
-// set up router
-const router = new Router({ prefix: config.PATH_PREFIX });
-
-// add sub-routers
+// set up routers
+const router = makeRouter({ prefix: config.PATH_PREFIX });
 router.use(require("./routers/health").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
 
-// set up Koa app
-const app = new Koa();
+// set up Koa server
+const server = makeServer();
 
 // add function to context for generating full url
-app.context.fullUrl = function (name: string, params?: any) {
+server.context.fullUrl = function (name: string, params?: any) {
   console.log("fullUrl", name, params);
   return config.APP_URL + router.url(name, params);
 };
 
 // middleware for all error handling
-app.use(async (ctx, next) => {
+server.use(async (ctx, next) => {
   try {
     console.log(ctx.url.bgBlue);
     await next();
@@ -34,7 +31,7 @@ app.use(async (ctx, next) => {
 });
 
 // modify all response bodies
-app.use(async (ctx, next) => {
+server.use(async (ctx, next) => {
   await next();
   if (typeof ctx.body === "object") {
     // replace _id with id
@@ -49,10 +46,10 @@ app.use(async (ctx, next) => {
   }
 });
 
-app.use(authMiddleware);
-app.use(bodyParser({ enableTypes: ["json"] }));
-app.use(router.routes());
-app.use(router.allowedMethods());
+server.use(authMiddleware);
+server.use(bodyParser({ enableTypes: ["json"] }));
+server.use(router.routes());
+server.use(router.allowedMethods());
 
 // Server close-down
 const abortController = new AbortController();
@@ -62,7 +59,7 @@ function closeServer() {
 }
 function startServer() {
   console.log("Starting server");
-  app.listen({
+  server.listen({
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {

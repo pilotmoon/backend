@@ -2,14 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const auth_1 = require("../auth");
-const Router = require("@koa/router");
+const koa_1 = require("../koa");
 const chewit_1 = require("@pilotmoon/chewit");
 const database_1 = require("../database");
 function getCollection(kind) {
   const db = (0, database_1.getDb)(kind);
   return db.collection("health");
 }
-exports.router = new Router();
+exports.router = (0, koa_1.makeRouter)();
 // health check endpoint
 exports.router.get("/health", async (ctx, next) => {
   console.log("health");

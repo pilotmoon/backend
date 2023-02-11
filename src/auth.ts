@@ -30,7 +30,7 @@ type PartialAuthContext = z.infer<typeof PartialAuthContext>;
 export const AuthContext = SettableAuthContext.extend({
   kind: z.enum(["test", "live"]),
 });
-type AuthContext = z.infer<typeof AuthContext>;
+export type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
   _id: z.string(),
   object: z.literal("api_key"),
@@ -156,17 +156,13 @@ export async function authMiddleware(ctx: Context, next: Next) {
     throw new ApiError(401, "Invalid API key prefix");
   }
   const kind = match[1] as DatabaseKind;
-  console.log("API key kind:", kind.blue);
 
   // now we have key, look it up in the database
-  const collection = getDb(kind).collection<ApiKeySchema>(
-    apiKeysCollectionName,
-  );
-  const document = await collection.findOne({ key: key });
+  const document = await getCollection(kind).findOne({ key: key });
   if (!document) {
-    throw new ApiError(401, "Unknown API key");
+    throw new ApiError(401, "Invalid API key");
   }
-  console.log("Api key ID:", document._id.blue);
+  console.log("API key ID:", document._id.blue);
   ctx.state.apiKeyId = document._id;
 
   // validate and store the document as the auth context

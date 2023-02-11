@@ -1,5 +1,3 @@
-import Router = require("@koa/router");
-import { randomUUID } from "node:crypto";
 import {
   createApiKey,
   deleteApiKey,
@@ -8,9 +6,11 @@ import {
   SettableAuthContext,
   updateApiKey,
 } from "../auth";
+import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
+import { randomUUID } from "node:crypto";
 
-export const router = new Router({ prefix: "/api_keys" });
+export const router = makeRouter({ prefix: "/api_keys" });
 const PATH_NAME = randomUUID();
 
 function sanitizeApiKey(document: any) {

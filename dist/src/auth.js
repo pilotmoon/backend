@@ -144,16 +144,12 @@ async function authMiddleware(ctx, next) {
     throw new errors_1.ApiError(401, "Invalid API key prefix");
   }
   const kind = match[1];
-  console.log("API key kind:", kind.blue);
   // now we have key, look it up in the database
-  const collection = (0, database_1.getDb)(kind).collection(
-    apiKeysCollectionName,
-  );
-  const document = await collection.findOne({ key: key });
+  const document = await getCollection(kind).findOne({ key: key });
   if (!document) {
-    throw new errors_1.ApiError(401, "Unknown API key");
+    throw new errors_1.ApiError(401, "Invalid API key");
   }
-  console.log("Api key ID:", document._id.blue);
+  console.log("API key ID:", document._id.blue);
   ctx.state.apiKeyId = document._id;
   // validate and store the document as the auth context
   try {

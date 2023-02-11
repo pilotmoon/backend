@@ -1,5 +1,5 @@
 import { verifyScope } from "../auth";
-import Router = require("@koa/router");
+import { makeRouter } from "../koa";
 import { randomString } from "@pilotmoon/chewit";
 import { DatabaseKind, getDb } from "../database";
 
@@ -8,7 +8,7 @@ function getCollection(kind: DatabaseKind) {
   return db.collection("health");
 }
 
-export const router = new Router();
+export const router = makeRouter();
 
 // health check endpoint
 router.get("/health", async (ctx, next) => {

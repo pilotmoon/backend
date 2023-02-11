@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
-const Router = require("@koa/router");
-const node_crypto_1 = require("node:crypto");
 const auth_1 = require("../auth");
+const koa_1 = require("../koa");
 const errors_1 = require("../errors");
-exports.router = new Router({ prefix: "/api_keys" });
+const node_crypto_1 = require("node:crypto");
+exports.router = (0, koa_1.makeRouter)({ prefix: "/api_keys" });
 const PATH_NAME = (0, node_crypto_1.randomUUID)();
 function sanitizeApiKey(document) {
   delete document.key;
