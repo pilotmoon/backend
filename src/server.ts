@@ -63,7 +63,11 @@ server.use(authMiddleware);
 // error if content-type is not application/json
 server.use(async (ctx, next) => {
   const match = ctx.request.is("application/json");
-  if (typeof match === "string" && match !== "application/json") {
+  console.log("ctx.request.is", match);
+  console.log("content-length", ctx.request.length);
+  const hasContent = typeof ctx.request.length === "number" &&
+    ctx.request.length > 0;
+  if (hasContent && match !== "application/json") {
     throw new ApiError(415, "Content-Type must be application/json");
   }
   await next();
