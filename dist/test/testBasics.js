@@ -22,10 +22,6 @@ const setup_1 = require("./setup");
   t.is(res.status, 200);
   t.like(res.data, { object: "health", livemode: false });
 });
-(0, ava_1.default)("health, post (method not allowed)", async (t) => {
-  const res = await (0, setup_1.rolo)().post("health");
-  t.is(res.status, 405);
-});
 (0, ava_1.default)("not found", async (t) => {
   const res = await (0, setup_1.rolo)().get("not-found");
   t.is(res.status, 404);

@@ -6,8 +6,8 @@ test("missing api key", async (t) => {
     headers: { "Authorization": null },
   });
   t.is(res.status, 401);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
 });
 
 test("bad auth key format", async (t) => {
@@ -15,8 +15,8 @@ test("bad auth key format", async (t) => {
     headers: { "Authorization": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
 });
 
 test("unknown api key", async (t) => {
@@ -24,8 +24,8 @@ test("unknown api key", async (t) => {
     headers: { "Authorization": "Bearer blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
 });
 
 test("unknown api key, x-api-key", async (t) => {
@@ -33,15 +33,15 @@ test("unknown api key, x-api-key", async (t) => {
     headers: { "Authorization": null, "X-Api-Key": "blah blah" },
   });
   t.is(res.status, 401);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
 });
 
 test("create api key, missing payload", async (t) => {
   const res = await rolo().post("api_keys");
   t.is(res.status, 400);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
 });
 
 test("create api key, unknown scope", async (t) => {
@@ -49,8 +49,13 @@ test("create api key, unknown scope", async (t) => {
     scopes: ["foo"],
   });
   t.is(res.status, 400);
-  t.assert(res.data.error.message.length > 0);
-  t.log(res.data.error.message);
+  t.assert(res.data.length > 0);
+  t.log(res.data);
+});
+
+test("api key, method not allowed (get)", async (t) => {
+  const res = await rolo().get("api_keys");
+  t.is(res.status, 405);
 });
 
 test("api key CRUD test", async (t) => {

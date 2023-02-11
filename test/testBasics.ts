@@ -25,11 +25,6 @@ test("health, query string, trailing slash", async (t) => {
   t.like(res.data, { object: "health", livemode: false });
 });
 
-test("health, post (method not allowed)", async (t) => {
-  const res = await rolo().post("health");
-  t.is(res.status, 405);
-});
-
 test("not found", async (t) => {
   const res = await rolo().get("not-found");
   t.is(res.status, 404);

@@ -4,7 +4,7 @@ exports.config = void 0;
 exports.config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
-  { key: "PATH_PREFIX", loader: load("/v1") },
+  { key: "PATH_PREFIX" },
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
