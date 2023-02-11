@@ -20,8 +20,8 @@ router.get("/health", async (ctx, next) => {
   health.random = randomString({ length: 10 });
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
-  const document = await coll.insertOne(health);
-  health.database = String(document.insertedId);
+  health.database = await coll.insertOne(health);
+  // return response
   ctx.body = health;
   await next();
 });
