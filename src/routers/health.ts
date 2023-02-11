@@ -12,29 +12,34 @@ function getCollection(kind: DatabaseKind) {
 export const router = makeRouter();
 
 // health check endpoint
-router.get("/health", async (ctx, next) => {
-  console.log("health");
+router.get("/health", async (ctx) => {
   await verifyScope("health:read", ctx.state.auth);
+
   // add object identifier to response
   const health = { "object": "health" } as any;
+
   // add random string to test caching
   health.random = randomString({ length: 10 });
-  // insert date
+
+  // insert date and uptime
   health.now = new Date();
-  // insert uptime
   health.uptime = Math.floor(process.uptime());
+
   // insert commit hash
   health.commit = config.COMMIT_HASH;
+
   // insert request info
   health.url = String(ctx.request.url);
   health.method = String(ctx.request.method);
   health.headers = ctx.request.headers;
+
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
-  const dbInsert = await coll.insertOne(health);
-  const dbDelete = await coll.deleteOne({ _id: dbInsert.insertedId });
-  health.selfTest = { dbInsert, dbDelete };
-  // return response
+  const document = await coll.insertOne(health);
+  const deleteResult = await coll.deleteOne({ _id: document.insertedId });
+  health.selfTest = {
+    database: deleteResult.acknowledged && deleteResult.deletedCount === 1,
+  };
+
   ctx.body = health;
-  await next();
 });

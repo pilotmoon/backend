@@ -12,16 +12,14 @@ function getCollection(kind) {
 }
 exports.router = (0, koa_1.makeRouter)();
 // health check endpoint
-exports.router.get("/health", async (ctx, next) => {
-  console.log("health");
+exports.router.get("/health", async (ctx) => {
   await (0, auth_1.verifyScope)("health:read", ctx.state.auth);
   // add object identifier to response
   const health = { "object": "health" };
   // add random string to test caching
   health.random = (0, chewit_1.randomString)({ length: 10 });
-  // insert date
+  // insert date and uptime
   health.now = new Date();
-  // insert uptime
   health.uptime = Math.floor(process.uptime());
   // insert commit hash
   health.commit = config_1.config.COMMIT_HASH;
@@ -31,10 +29,10 @@ exports.router.get("/health", async (ctx, next) => {
   health.headers = ctx.request.headers;
   // test database connection
   const coll = getCollection(ctx.state.auth.kind);
-  const dbInsert = await coll.insertOne(health);
-  const dbDelete = await coll.deleteOne({ _id: dbInsert.insertedId });
-  health.selfTest = { dbInsert, dbDelete };
-  // return response
+  const document = await coll.insertOne(health);
+  const deleteResult = await coll.deleteOne({ _id: document.insertedId });
+  health.selfTest = {
+    database: deleteResult.acknowledged && deleteResult.deletedCount === 1,
+  };
   ctx.body = health;
-  await next();
 });
