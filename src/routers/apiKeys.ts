@@ -1,5 +1,5 @@
 import Router = require("@koa/router");
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import {
   createApiKey,
   deleteApiKey,

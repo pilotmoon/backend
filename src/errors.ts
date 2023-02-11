@@ -1,5 +1,5 @@
 import { ZodError } from "zod";
-import { fromZodError, isValidationErrorLike } from "zod-validation-error";
+import { fromZodError } from "zod-validation-error";
 
 export class ApiError extends Error {
   status: number;

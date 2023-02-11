@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const Router = require("@koa/router");
-const crypto_1 = require("crypto");
+const node_crypto_1 = require("node:crypto");
 const auth_1 = require("../auth");
 const errors_1 = require("../errors");
 exports.router = new Router({ prefix: "/api_keys" });
-const PATH_NAME = (0, crypto_1.randomUUID)();
+const PATH_NAME = (0, node_crypto_1.randomUUID)();
 function sanitizeApiKey(document) {
   delete document.key;
   return document;
