@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ava_1 = require("ava");
 const setup_1 = require("./setup");
+const chewit_1 = require("@pilotmoon/chewit");
 (0, ava_1.default)("missing api key", async (t) => {
   const res = await (0, setup_1.rolo)().get("health", {
     headers: { "Authorization": null },
@@ -90,4 +91,49 @@ const setup_1 = require("./setup");
   });
   t.assert(res.data.id.length > 0);
   t.is(res.data.key, undefined);
+});
+(0, ava_1.default)("modify current api key", async (t) => {
+  const res = await (0, setup_1.rolo)().patch("api_keys/current", {
+    "description": "foo",
+  });
+  t.is(res.status, 405);
+});
+(0, ava_1.default)("delete current api key", async (t) => {
+  const res = await (0, setup_1.rolo)().delete("api_keys/current");
+  t.is(res.status, 405);
+});
+(0, ava_1.default)("options current api key", async (t) => {
+  const res = await (0, setup_1.rolo)().options("api_keys/current");
+  t.is(res.status, 200);
+  const allow = res.headers["allow"].split(", ").sort();
+  t.deepEqual(allow, ["GET", "HEAD"]);
+});
+(0, ava_1.default)("options current api key by id", async (t) => {
+  const res = await (0, setup_1.rolo)().options(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+  );
+  t.is(res.status, 200);
+  const allow = res.headers["allow"].split(", ").sort();
+  t.deepEqual(allow, ["DELETE", "GET", "HEAD", "PATCH"]);
+});
+(0, ava_1.default)("delete current api key by id", async (t) => {
+  const res = await (0, setup_1.rolo)().delete(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+  );
+  t.is(res.status, 400);
+});
+(0, ava_1.default)("modify current api key by id", async (t) => {
+  const res = await (0, setup_1.rolo)().patch(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+    { "description": "foo" },
+  );
+  t.is(res.status, 400);
+});
+(0, ava_1.default)("modify other api key by id", async (t) => {
+  const str = "random " + (0, chewit_1.randomString)({ length: 10 });
+  const res = await (0, setup_1.rolo)().patch(
+    "api_keys/" + process.env.API_KEY_ID_TEST_NO_SCOPES,
+    { "description": str },
+  );
+  t.is(res.status, 200);
 });

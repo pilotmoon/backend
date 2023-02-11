@@ -11,7 +11,13 @@ import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 
 export const router = makeRouter({ prefix: "/api_keys" });
-const PATH_NAME = randomUUID();
+const matchId = {
+  pattern: `/:id(ak_[0-9a-zA-Z]{24})`,
+};
+const matchIdAndCurrent = {
+  pattern: `/:id(ak_[0-9a-zA-Z]{24}|current)`,
+  uuid: randomUUID(),
+};
 
 function sanitizeApiKey(document: any) {
   delete document.key;
@@ -23,10 +29,13 @@ router.post("/", async (ctx) => {
   const document = await createApiKey(params, ctx.state.auth);
   ctx.body = document;
   ctx.status = 201;
-  ctx.set("Location", ctx.fullUrl(PATH_NAME, { id: document._id }));
+  ctx.set(
+    "Location",
+    ctx.fullUrl(matchIdAndCurrent.uuid, { id: document._id }),
+  );
 });
 
-router.get(PATH_NAME, "/:id", async (ctx) => {
+router.get(matchIdAndCurrent.uuid, matchIdAndCurrent.pattern, async (ctx) => {
   let id;
   if (ctx.params.id === "current") {
     id = ctx.state.apiKeyId;
@@ -40,13 +49,11 @@ router.get(PATH_NAME, "/:id", async (ctx) => {
   ctx.body = sanitizeApiKey(document);
 });
 
-router.patch("/:id", async (ctx) => {
-  let id;
-  if (ctx.params.id === "current") {
-    id = ctx.state.apiKeyId;
-  } else {
-    id = ctx.params.id;
+router.patch(matchId.pattern, async (ctx) => {
+  if (ctx.params.id === ctx.state.apiKeyId) {
+    throw new ApiError(400, "Cannot modify current API key");
   }
+  const id = ctx.params.id;
   const params = PartialAuthContext.parse(ctx.request.body);
   const document = await updateApiKey(id, params, ctx.state.auth);
   if (!document) {
@@ -56,8 +63,8 @@ router.patch("/:id", async (ctx) => {
 });
 
 // delete api key
-router.delete("/:id", async (ctx) => {
-  if (ctx.params.id === "current") {
+router.delete(matchId.pattern, async (ctx) => {
+  if (ctx.params.id === ctx.state.apiKeyId) {
     throw new ApiError(400, "Cannot delete current API key");
   }
   const id = ctx.params.id;

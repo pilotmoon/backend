@@ -1,5 +1,6 @@
 import test from "ava";
 import { rolo } from "./setup";
+import { randomString } from "@pilotmoon/chewit";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
@@ -101,4 +102,54 @@ test("get current api key", async (t) => {
   });
   t.assert(res.data.id.length > 0);
   t.is(res.data.key, undefined);
+});
+
+test("modify current api key", async (t) => {
+  const res = await rolo().patch("api_keys/current", { "description": "foo" });
+  t.is(res.status, 405);
+});
+
+test("delete current api key", async (t) => {
+  const res = await rolo().delete("api_keys/current");
+  t.is(res.status, 405);
+});
+
+test("options current api key", async (t) => {
+  const res = await rolo().options("api_keys/current");
+  t.is(res.status, 200);
+  const allow = res.headers["allow"].split(", ").sort();
+  t.deepEqual(allow, ["GET", "HEAD"]);
+});
+
+test("options current api key by id", async (t) => {
+  const res = await rolo().options(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+  );
+  t.is(res.status, 200);
+  const allow = res.headers["allow"].split(", ").sort();
+  t.deepEqual(allow, ["DELETE", "GET", "HEAD", "PATCH"]);
+});
+
+test("delete current api key by id", async (t) => {
+  const res = await rolo().delete(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+  );
+  t.is(res.status, 400);
+});
+
+test("modify current api key by id", async (t) => {
+  const res = await rolo().patch(
+    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+    { "description": "foo" },
+  );
+  t.is(res.status, 400);
+});
+
+test("modify other api key by id", async (t) => {
+  const str = "random " + randomString({ length: 10 });
+  const res = await rolo().patch(
+    "api_keys/" + process.env.API_KEY_ID_TEST_NO_SCOPES,
+    { "description": str },
+  );
+  t.is(res.status, 200);
 });
