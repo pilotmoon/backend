@@ -12,7 +12,7 @@ function getCollection(kind) {
 }
 exports.router = (0, koa_1.makeRouter)();
 // health check endpoint
-exports.router.all("/health", async (ctx, next) => {
+exports.router.get("/health", async (ctx, next) => {
   console.log("health");
   await (0, auth_1.verifyScope)("health:read", ctx.state.auth);
   // add object identifier to response

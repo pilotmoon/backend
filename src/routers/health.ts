@@ -12,7 +12,7 @@ function getCollection(kind: DatabaseKind) {
 export const router = makeRouter();
 
 // health check endpoint
-router.all("/health", async (ctx, next) => {
+router.get("/health", async (ctx, next) => {
   console.log("health");
   await verifyScope("health:read", ctx.state.auth);
   // add object identifier to response
