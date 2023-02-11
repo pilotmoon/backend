@@ -56,6 +56,13 @@ server.use(async (ctx, next) => {
 });
 // do auth first
 server.use(auth_1.authMiddleware);
+// parse request body
+server.use(bodyParser({
+  enableTypes: ["json"],
+  onerror: () => {
+    throw new errors_1.ApiError(400, "Invalid JSON");
+  },
+}));
 // error if content-type is not application/json
 server.use(async (ctx, next) => {
   const match = ctx.request.is("application/json");
@@ -66,13 +73,6 @@ server.use(async (ctx, next) => {
   }
   await next();
 });
-// parse request body
-server.use(bodyParser({
-  enableTypes: ["json"],
-  onerror: () => {
-    throw new errors_1.ApiError(400, "Invalid JSON");
-  },
-}));
 // add routes and allowed methods
 server.use(router.routes());
 server.use(router.allowedMethods());
