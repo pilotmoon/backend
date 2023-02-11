@@ -3,8 +3,10 @@ import { config } from "./config";
 
 let client: MongoClient;
 
+export type DatabaseKind = "test" | "live";
+
 // Get the database connection
-export function getDb(kind: "test" | "live"): Db {
+export function getDb(kind: DatabaseKind): Db {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",

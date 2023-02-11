@@ -1,11 +1,11 @@
 import { randomString } from "@pilotmoon/chewit";
 import { z } from "zod";
-import { getDb } from "./database";
+import { DatabaseKind, getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 
 const apiKeysCollectionName = "api_keys";
-function getCollection(kind: "test" | "live") {
+function getCollection(kind: DatabaseKind) {
   const db = getDb(kind);
   return db.collection<ApiKeySchema>(apiKeysCollectionName);
 }
@@ -155,7 +155,7 @@ export async function authMiddleware(ctx: Context, next: Next) {
   if (!match) {
     throw new ApiError(401, "Invalid API key prefix");
   }
-  const kind = match[1] as "test" | "live";
+  const kind = match[1] as DatabaseKind;
   console.log("API key kind:", kind.blue);
 
   // now we have key, look it up in the database
