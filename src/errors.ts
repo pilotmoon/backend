@@ -64,7 +64,9 @@ export function reportError(
     type: info.type,
     status: httpStatusString(info.status),
   });
-  ctx.body = `${
-    httpStatusString(info.status, { showCode: false })
-  } (${info.message})`;
+  let body = httpStatusString(info.status, { showCode: false });
+  if (info.status < 500) {
+    body += ` (${info.message})`;
+  }
+  ctx.body = body;
 }
