@@ -44,10 +44,10 @@ function getErrorInfo(error: unknown) {
   return { message, type, status };
 }
 
-export function httpStatusString(code: number) {
+export function httpStatusString(code: number, { showCode = true } = {}) {
   const string = STATUS_CODES[code];
   if (string) {
-    return `${code} ${string}`;
+    return showCode ? `${code} ${string}` : string;
   } else {
     return "???";
   }
@@ -64,7 +64,7 @@ export function reportError(
     type: info.type,
     status: httpStatusString(info.status),
   });
-  ctx.body = {
-    error: ctx.state.error,
-  };
+  ctx.body = `${
+    httpStatusString(info.status, { showCode: false })
+  } (${info.message})`;
 }
