@@ -7,6 +7,7 @@ import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 import { log } from "./logger";
 import { asciiHello } from "./static";
+import { intersection, union } from "lodash";
 
 // set up main router
 const mainRouter = makeRouter();
@@ -67,16 +68,13 @@ server.use(async (ctx, next) => {
   }
 });
 
-// access whitelist
+// access allowlist
 server.use(async (ctx, next) => {
-  const ip = ctx.request.ip;
-  log("ip", ip);
-
-  const whitelist = config.ACCESS_WHITELIST;
-  if (whitelist.length > 0) {
-    if (!whitelist.includes(ip)) {
-      //throw new ApiError(403, "Access denied");
-    }
+  const ips = union(ctx.request.ips, [ctx.request.ip]);
+  const allow = config.ACCESS_ALLOWLIST;
+  log("ips:", ips, "allow:", allow);
+  if (allow.length > 0 && intersection(ips, allow).length == 0) {
+    throw new ApiError(403, "Access denied");
   }
   await next();
 });

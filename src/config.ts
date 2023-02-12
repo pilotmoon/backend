@@ -10,7 +10,7 @@ interface Config {
   DATABASE_NAME_LIVE: string;
   COMMIT_HASH: string;
   BOOTSTRAP_SEED: string;
-  ACCESS_WHITELIST: string[];
+  ACCESS_ALLOWLIST: string[];
 }
 export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
@@ -24,7 +24,7 @@ export const config = loadConfig([
     optional: true,
     transform: (val) => val.length === 40 ? val : repeat("?", 40),
   },
-  { key: "ACCESS_WHITELIST", transform: commaListTransform, optional: true },
+  { key: "ACCESS_ALLOWLIST", transform: commaListTransform, optional: true },
 ]);
 
 // load config variables
