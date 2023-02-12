@@ -14,7 +14,7 @@ router.use(require("./routers/apiKeys").router.routes());
 
 const helloRouter = makeRouter();
 helloRouter.get("/", (ctx) => {
-  ctx.body = `Pilotmoon API Server\nv2\n${config.COMMIT_HASH}\nhello :)`;
+  ctx.body = `Pilotmoon API Server\nv2\n${config.COMMIT_HASH}\n`;
 });
 
 // set up Koa server
