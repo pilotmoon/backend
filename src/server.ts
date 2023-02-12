@@ -14,7 +14,23 @@ router.use(require("./routers/apiKeys").router.routes());
 
 const helloRouter = makeRouter();
 helloRouter.get("/", (ctx) => {
-  ctx.body = `Pilotmoon API Server\nv2\n${config.COMMIT_HASH}\n`;
+  ctx.body = `
+
+
+                     ,--,
+                   ,--.'|
+  __  ,-.   ,---.  |  | :     ,---.
+,' ,'/ /|  '   ,'\\ :  : '    '   ,'\\
+'  | |' | /   /   ||  ' |   /   /   |
+|  |   ,'.   ; ,. :'  | |  .   ; ,. :
+'  :  /  '   | |: :|  | :  '   | |: :
+|  | '   '   | .; :'  : |__'   | .; :
+;  : |   |   :    ||  | '.'|   :    |
+|  , ;    \\   \\  / ;  :    ;\\   \\  /
+ ---'      \`----'  |  ,   /  \`----'
+                    ---\`-'
+
+Pilotmoon API Server v2\n${config.COMMIT_HASH}\n`;
 });
 
 // set up Koa server
