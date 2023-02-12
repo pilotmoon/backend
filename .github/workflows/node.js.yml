@@ -20,15 +20,7 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        mongodb-version: ['6.0']
-
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
@@ -36,19 +28,31 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - run: npm ci
+    - run: npm run build
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+        mongodb-version: ['6.0']
+    steps:
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.8.0
       with:
         mongodb-version: ${{ matrix.mongodb-version }}
         mongodb-replica-set: rs0
-    - run: npm ci
-    - run: npm run build
     - name: Run E2E Tests
       uses: BerniWittmann/background-server-action@v1
       with:
         command: npm run test
         start: npm run start
         wait-on: '${{ vars.APP_URL }}'
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
     - name: DigitalOcean App Platform deployment
       uses: digitalocean/app_action@main
       with:
