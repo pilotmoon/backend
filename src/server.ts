@@ -8,9 +8,14 @@ import { authMiddleware, init as initAuth } from "./auth";
 import { log } from "./logger";
 
 // set up routers
-const router = makeRouter({ prefix: config.PATH_PREFIX });
+const router = makeRouter();
 router.use(require("./routers/health").router.routes());
 router.use(require("./routers/apiKeys").router.routes());
+
+const helloRouter = makeRouter();
+helloRouter.get("/", (ctx) => {
+  ctx.body = `Pilotmoon API Server ${config.COMMIT_HASH}`;
+});
 
 // set up Koa server
 const server = makeServer();
@@ -66,6 +71,9 @@ server.use(async (ctx, next) => {
   }
 });
 
+// root GET is allowed without auth
+server.use(helloRouter.routes());
+server.use(helloRouter.allowedMethods());
 // do auth first
 server.use(authMiddleware);
 // error if content-type is not application/json
