@@ -7,7 +7,7 @@ import { logw } from "./logger";
 const prando = new Prando(config.BOOTSTRAP_SEED);
 let prngCount = 0;
 function pseudoRng(size: number): Array<number> {
-  logw("Using pseudo-random number generator", { count: ++prngCount });
+  logw("Using PRNG", { count: ++prngCount });
   const arr = [];
   for (let i = 0; i < size; i++) {
     arr.push(prando.nextInt(0, 255));
