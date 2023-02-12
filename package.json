@@ -4,7 +4,7 @@
   "main": "main.js",
   "scripts": {
     "start": "node ./dist/src/server.js",
-    "build": "zsh ./scripts/build",
+    "build": "pwd && zsh ./scripts/build",
     "dev": "zsh ./scripts/dev",
     "test": "zsh ./scripts/test",
     "test-prod": "zsh ./scripts/test-prod"
