@@ -50,3 +50,8 @@ jobs:
         command: npm run test
         start: npm run start
         wait-on: '${{ vars.APP_URL }}'
+    - name: DigitalOcean App Platform deployment
+      uses: digitalocean/app_action@main
+      with:
+        app_name: seal-app
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
