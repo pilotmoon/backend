@@ -14,10 +14,7 @@ router.use(require("./routers/apiKeys").router.routes());
 
 const helloRouter = makeRouter();
 helloRouter.get("/", (ctx) => {
-  ctx.body = `
-
-
-                     ,--,
+  ctx.body = `                     ,--,
                    ,--.'|
   __  ,-.   ,---.  |  | :     ,---.
 ,' ,'/ /|  '   ,'\\ :  : '    '   ,'\\
