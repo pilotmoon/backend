@@ -3,12 +3,11 @@
   "version": "0.0.0",
   "main": "main.js",
   "scripts": {
-    "env": "[[ -f .env ]] || op inject -i .env-template -o .env",
-    "build": "npx tsc",
-    "start": "node dist/src/server.js",
-    "dev": "npm run env && source .env && npx tsc-watch --onSuccess \"npm run start\"",
-    "test": "npm run env && source .env && npx ava --serial",
-    "test-prod": "npm run env && source .env && export APP_URL=${APP_URL_PROD} && npx ava --serial"
+    "start": "node ./dist/src/server.js",
+    "build": "./scripts/build",
+    "dev": "./scripts/dev",
+    "test": "./scripts/test",
+    "test-prod": "./scripts/test-prod"
   },
   "private": true,
   "engines": {

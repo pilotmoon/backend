@@ -1,0 +1,5 @@
+#!/bin/zsh
+set -e
+./scripts/env
+source .env
+npx ava --serial

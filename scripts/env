@@ -1,0 +1,3 @@
+#!/bin/zsh
+set -e
+[[ -f .env ]] || op inject -i .env-template -o .env
