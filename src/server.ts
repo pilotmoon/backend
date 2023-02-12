@@ -69,11 +69,13 @@ server.use(async (ctx, next) => {
 
 // access whitelist
 server.use(async (ctx, next) => {
+  const ip = ctx.request.ip;
+  log("ip", ip);
+
   const whitelist = config.ACCESS_WHITELIST;
   if (whitelist.length > 0) {
-    const ip = ctx.request.ip;
     if (!whitelist.includes(ip)) {
-      throw new ApiError(403, "Access denied");
+      //throw new ApiError(403, "Access denied");
     }
   }
   await next();
