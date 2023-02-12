@@ -32,6 +32,7 @@ jobs:
     - run: npm run build
 
   test:
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -51,6 +52,7 @@ jobs:
         wait-on: '${{ vars.APP_URL }}'
 
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - name: DigitalOcean App Platform deployment
