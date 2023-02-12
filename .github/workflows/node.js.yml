@@ -1,14 +1,12 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
-name: Node.js CI
+name: Build, test and deploy
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+    tags:
+      - v*
 env:
   APP_PORT: "${{ vars.APP_PORT }}"
   APP_URL: "${{ vars.APP_URL }}"
@@ -21,6 +19,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+        mongodb-version: ['6.0']
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
@@ -30,15 +32,6 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x]
-        mongodb-version: ['6.0']
-    steps:
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.8.0
       with:
@@ -50,11 +43,6 @@ jobs:
         command: npm run test
         start: npm run start
         wait-on: '${{ vars.APP_URL }}'
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
     - name: DigitalOcean App Platform deployment
       uses: digitalocean/app_action@main
       with:
