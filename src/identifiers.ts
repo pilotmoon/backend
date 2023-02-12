@@ -1,5 +1,5 @@
 import Prando from "prando";
-import { nodeRng, randomString } from "@pilotmoon/chewit";
+import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config";
 import { logw } from "./logger";
 
@@ -18,7 +18,7 @@ function pseudoRng(size: number): Array<number> {
 // return the currently configured RNG
 let usePrng = false;
 function rng() {
-  return usePrng ? pseudoRng : nodeRng;
+  return usePrng ? pseudoRng : defaultRng;
 }
 
 // generate a random identifier with the given prefix
