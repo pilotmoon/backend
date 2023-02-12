@@ -1,4 +1,4 @@
-import { log } from "./logger";
+import { log, logw } from "./logger";
 import { repeat } from "lodash";
 
 // app configuration
@@ -21,9 +21,10 @@ export const config = loadConfig([
   { key: "BOOTSTRAP_SEED" },
   {
     key: "COMMIT_HASH",
+    optional: true,
     transform: (val) => val.length === 40 ? val : repeat("?", 40),
   },
-  { key: "ACCESS_WHITELIST", transform: commaListTransform },
+  { key: "ACCESS_WHITELIST", transform: commaListTransform, optional: true },
 ]);
 
 // load config variables
@@ -41,6 +42,7 @@ interface ConfigItem {
   loader?: Loader;
   transform?: Transformer;
   secret?: boolean;
+  optional?: boolean;
 }
 
 interface Loader {
@@ -74,13 +76,23 @@ function commaListTransform(string: string) {
 }
 
 function setConfigItem(
-  { key, loader = envLoader, transform = noTransform, secret = false }:
-    ConfigItem,
+  {
+    key,
+    loader = envLoader,
+    transform = noTransform,
+    secret = false,
+    optional = false,
+  }: ConfigItem,
   config: any,
 ) {
-  const value = loader(key);
+  let value = loader(key);
   if (typeof value !== "string") {
-    throw new Error("Missing environment variable: " + key);
+    if (optional) {
+      logw("Missing environment variable: " + key);
+    } else {
+      throw new Error("Missing environment variable: " + key);
+    }
+    value = "";
   }
   const transformed = transform(value);
   log(
