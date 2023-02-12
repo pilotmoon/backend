@@ -28,7 +28,6 @@ test("create api key, missing payload", async (t) => {
     headers: { "Content-Type": "application/json" },
   });
   t.is(res.status, 400);
-  t.log(res.data.error.message);
 });
 
 test("create api key, form encoded", async (t) => {

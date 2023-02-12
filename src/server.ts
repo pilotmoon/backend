@@ -6,17 +6,12 @@ import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 import { log } from "./logger";
-import { welcome } from "./static";
+import { asciiHello } from "./static";
 
-// set up routers
-const router = makeRouter();
-router.use(require("./routers/health").router.routes());
-router.use(require("./routers/apiKeys").router.routes());
-
-const helloRouter = makeRouter();
-helloRouter.get("/", (ctx) => {
-  ctx.body = `${welcome}Pilotmoon API Server v2\n${config.COMMIT_HASH}\n`;
-});
+// set up main router
+const mainRouter = makeRouter();
+mainRouter.use(require("./routers/health").router.routes());
+mainRouter.use(require("./routers/apiKeys").router.routes());
 
 // set up Koa server
 const server = makeServer();
@@ -24,7 +19,7 @@ const server = makeServer();
 // add function to context for generating full url
 server.context.fullUrl = function (name: string, params?: any) {
   log("fullUrl", name, params);
-  return config.APP_URL + router.url(name, params);
+  return config.APP_URL + mainRouter.url(name, params);
 };
 
 // middleware for error handling
@@ -73,9 +68,13 @@ server.use(async (ctx, next) => {
 });
 
 // root GET is allowed without auth
-server.use(helloRouter.routes());
-server.use(helloRouter.allowedMethods());
-// do auth first
+const rootRouter = makeRouter();
+rootRouter.get("/", (ctx) => {
+  ctx.body = asciiHello();
+});
+server.use(rootRouter.routes());
+server.use(rootRouter.allowedMethods());
+// then do auth
 server.use(authMiddleware);
 // error if content-type is not application/json
 server.use(async (ctx, next) => {
@@ -99,8 +98,8 @@ server.use(bodyParser({
   },
 }));
 // add routes and allowed methods
-server.use(router.routes());
-server.use(router.allowedMethods());
+server.use(mainRouter.routes());
+server.use(mainRouter.allowedMethods());
 
 // Server close-down
 const abortController = new AbortController();

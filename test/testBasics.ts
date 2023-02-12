@@ -30,12 +30,7 @@ test("not found", async (t) => {
   t.is(res.status, 404);
 });
 
-test("not found, root", async (t) => {
-  const res = await rolo().get("");
-  t.is(res.status, 404);
-});
-
-test("not found, root, trailing slash", async (t) => {
+test("root", async (t) => {
   const res = await rolo().get("/");
-  t.is(res.status, 404);
+  t.is(res.status, 200);
 });

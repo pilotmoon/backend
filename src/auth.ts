@@ -4,6 +4,7 @@ import { DatabaseKind, getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 import { log, loge } from "./logger";
+import { bootstrapKeys } from "./bootstrap";
 
 const apiKeysCollectionName = "api_keys";
 function getCollection(kind: DatabaseKind) {
@@ -57,10 +58,17 @@ export async function init() {
       const authContext = {
         kind,
         scopes: allScopes as any,
-        description: "bootstrap key",
+        description: "bootstrap key (generated)",
       };
       await createApiKey(authContext, authContext);
     }
+  }
+
+  // insert bootstrap keys
+  bootstrapKeys.allScopes.scopes = allScopes as any;
+  for (const [key, value] of Object.entries(bootstrapKeys)) {
+    await getCollection("test").deleteOne({ _id: value._id });
+    await getCollection("test").insertOne(value as any);
   }
 }
 
