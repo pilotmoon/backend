@@ -28,6 +28,7 @@ helloRouter.get("/", (ctx) => {
                     ---\`-'
 
 Pilotmoon API Server v2\n${config.COMMIT_HASH}\n`;
+  ctx.set("cache-control", "max-age=60");
 });
 
 // set up Koa server
