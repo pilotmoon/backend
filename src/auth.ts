@@ -3,6 +3,7 @@ import { z } from "zod";
 import { DatabaseKind, getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
+import { log, loge } from "./logger";
 
 const apiKeysCollectionName = "api_keys";
 function getCollection(kind: DatabaseKind) {
@@ -40,18 +41,18 @@ type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
 // called at startup to set the collection index
 export async function init() {
-  console.log(`init ${apiKeysCollectionName} collection`);
+  log(`init ${apiKeysCollectionName} collection`);
   // set for both test and live database
   for (const kind of ["test", "live"] as const) {
     const db = getDb(kind);
     const collection = db.collection(apiKeysCollectionName);
     const result = await collection.createIndex({ key: 1 }, { unique: true });
-    console.log("createIndex", db.databaseName, apiKeysCollectionName, result);
+    log("createIndex", db.databaseName, apiKeysCollectionName, result);
 
     // count documents in collection
     const count = await collection.countDocuments();
     if (count == 0) {
-      console.log("No API keys found, creating bootstrap key", kind.blue);
+      log("No API keys found, creating bootstrap key", kind.blue);
       // create an api key to bootstrap the system
       const authContext = {
         kind,
@@ -88,7 +89,7 @@ export async function createApiKey(
     ...params,
   };
   const result = await getCollection(authContext.kind).insertOne(document);
-  console.log(`Inserted API key with _id: ${result.insertedId}`);
+  log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 
@@ -159,17 +160,17 @@ export async function authMiddleware(ctx: Context, next: Next) {
   if (!document) {
     throw new ApiError(401, "Invalid API key");
   }
-  console.log("API key ID:", document._id.blue);
+  log("API key ID:", document._id.blue);
   ctx.state.apiKeyId = document._id;
 
   // validate and store the document as the auth context
   try {
     const authContext = AuthContext.parse(document);
-    //console.log("Auth context:", JSON.stringify(authContext).blue);
-    console.log("Scopes:", authContext.scopes.join(", ").blue);
+    //log("Auth context:", JSON.stringify(authContext).blue);
+    log("Scopes:", authContext.scopes.join(", ").blue);
     ctx.state.auth = authContext;
   } catch (err) {
-    console.error("Error parsing auth context", err);
+    loge("Error parsing auth context", err);
     throw new ApiError(500, "Error parsing auth context");
   }
 

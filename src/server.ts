@@ -5,6 +5,7 @@ import { config } from "./config";
 import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
+import { log } from "./logger";
 
 // set up routers
 const router = makeRouter({ prefix: config.PATH_PREFIX });
@@ -16,14 +17,14 @@ const server = makeServer();
 
 // add function to context for generating full url
 server.context.fullUrl = function (name: string, params?: any) {
-  console.log("fullUrl", name, params);
+  log("fullUrl", name, params);
   return config.APP_URL + router.url(name, params);
 };
 
 // middleware for error handling
 server.use(async (ctx, next) => {
   try {
-    console.log("\n" + `${ctx.method} ${ctx.url}`.bgBlue);
+    log("\n" + `${ctx.method} ${ctx.url}`.bgBlue);
     await next();
   } catch (error) {
     reportError(error, ctx);
@@ -39,9 +40,9 @@ server.use(async (ctx, next) => {
       s = s.bgWhite;
     }
     s += " " + `Sending ${ctx.response.length ?? 0} bytes`;
-    console.log(s);
+    log(s);
     if (ctx.state.error) {
-      console.log(
+      log(
         String(ctx.state.error.type).bgWhite + " " +
           ctx.state.error.message,
       );
@@ -73,7 +74,7 @@ server.use(async (ctx, next) => {
   const hasContent = typeof ctx.request.length === "number" &&
     ctx.request.length > 0;
   if (hasContent && match !== "application/json") {
-    console.log(
+    log(
       "Content-Type:",
       String(ctx.request.headers["content-type"]).blue,
     );
@@ -95,41 +96,41 @@ server.use(router.allowedMethods());
 // Server close-down
 const abortController = new AbortController();
 function closeServer() {
-  console.log("Closing server");
+  log("Closing server");
   abortController.abort();
 }
 function startServer() {
-  console.log("Starting server");
+  log("Starting server");
   server.listen({
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {
-    console.log(`Server listening on port ${config.APP_PORT}`.yellow);
+    log(`Server listening on port ${config.APP_PORT}`.yellow);
   });
 }
 
 async function main() {
-  console.log("Calling startup routines".green);
+  log("Calling startup routines".green);
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
     initAuth(),
   ]);
-  console.log("Startup complete".green);
+  log("Startup complete".green);
   startServer();
 }
 
 // App close-down
 let closing = false;
 async function onAppClose() {
-  console.log("SIGINT received".cyan);
+  log("SIGINT received".cyan);
   if (!closing) {
     closing = true;
-    console.log("Calling shutdown routines".green);
+    log("Calling shutdown routines".green);
     await Promise.all([ // run all shutdown routines in parallel
       closeServer(),
       closeDb(),
     ]);
-    console.log("Shutdown complete".bgGreen);
+    log("Shutdown complete".bgGreen);
   }
 }
 process.on("SIGINT", onAppClose);

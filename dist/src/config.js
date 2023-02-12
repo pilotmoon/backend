@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
+const logger_1 = require("./logger");
 exports.config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
@@ -42,7 +43,7 @@ function setConfigItem(
   if (typeof value !== "string") {
     throw new Error("Missing environment variable: " + key);
   }
-  console.log(
+  (0, logger_1.log)(
     `Loaded config variable ${key.blue} with value ${
       secret ? "<secret>".yellow : String(value).cyan
     } as ${typeof value}`,

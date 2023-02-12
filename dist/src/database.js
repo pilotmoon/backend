@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.close = exports.connect = exports.getDb = void 0;
 const mongodb_1 = require("mongodb");
 const config_1 = require("./config");
+const logger_1 = require("./logger");
 let client;
 // Get the database connection
 function getDb(kind) {
@@ -24,19 +25,19 @@ exports.getDb = getDb;
 // called at startup to connect to the database
 async function connect() {
   if (!client) {
-    console.log("Connecting to database");
+    (0, logger_1.log)("Connecting to database");
     client = new mongodb_1.MongoClient(config_1.config.DATABASE_URL, {
       serverApi: mongodb_1.ServerApiVersion.v1,
     });
     await client.connect();
-    console.log("Connected to database".yellow, client.db().databaseName);
+    (0, logger_1.log)("Connected to database".yellow, client.db().databaseName);
   }
 }
 exports.connect = connect;
 // called at termination to close the connection
 async function close() {
   if (client) {
-    console.log("Closing database connection");
+    (0, logger_1.log)("Closing database connection");
     await client.close();
   }
 }

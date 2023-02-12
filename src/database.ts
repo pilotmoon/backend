@@ -1,5 +1,6 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
 import { config } from "./config";
+import { log } from "./logger";
 
 let client: MongoClient;
 
@@ -25,19 +26,19 @@ export function getDb(kind: DatabaseKind): Db {
 // called at startup to connect to the database
 export async function connect() {
   if (!client) {
-    console.log("Connecting to database");
+    log("Connecting to database");
     client = new MongoClient(config.DATABASE_URL, {
       serverApi: ServerApiVersion.v1,
     });
     await client.connect();
-    console.log("Connected to database".yellow, client.db().databaseName);
+    log("Connected to database".yellow, client.db().databaseName);
   }
 }
 
 // called at termination to close the connection
 export async function close() {
   if (client) {
-    console.log("Closing database connection");
+    log("Closing database connection");
     await client.close();
   }
 }

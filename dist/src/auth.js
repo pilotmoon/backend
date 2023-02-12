@@ -15,6 +15,7 @@ const chewit_1 = require("@pilotmoon/chewit");
 const zod_1 = require("zod");
 const database_1 = require("./database");
 const errors_1 = require("./errors");
+const logger_1 = require("./logger");
 const apiKeysCollectionName = "api_keys";
 function getCollection(kind) {
   const db = (0, database_1.getDb)(kind);
@@ -43,17 +44,22 @@ const ApiKeySchema = exports.AuthContext.extend({
 });
 // called at startup to set the collection index
 async function init() {
-  console.log(`init ${apiKeysCollectionName} collection`);
+  (0, logger_1.log)(`init ${apiKeysCollectionName} collection`);
   // set for both test and live database
   for (const kind of ["test", "live"]) {
     const db = (0, database_1.getDb)(kind);
     const collection = db.collection(apiKeysCollectionName);
     const result = await collection.createIndex({ key: 1 }, { unique: true });
-    console.log("createIndex", db.databaseName, apiKeysCollectionName, result);
+    (0, logger_1.log)(
+      "createIndex",
+      db.databaseName,
+      apiKeysCollectionName,
+      result,
+    );
     // count documents in collection
     const count = await collection.countDocuments();
     if (count == 0) {
-      console.log("No API keys found, creating bootstrap key", kind.blue);
+      (0, logger_1.log)("No API keys found, creating bootstrap key", kind.blue);
       // create an api key to bootstrap the system
       const authContext = {
         kind,
@@ -84,7 +90,7 @@ async function createApiKey(params, authContext) {
     ...params,
   };
   const result = await getCollection(authContext.kind).insertOne(document);
-  console.log(`Inserted API key with _id: ${result.insertedId}`);
+  (0, logger_1.log)(`Inserted API key with _id: ${result.insertedId}`);
   return document;
 }
 exports.createApiKey = createApiKey;
@@ -143,16 +149,16 @@ async function authMiddleware(ctx, next) {
   if (!document) {
     throw new errors_1.ApiError(401, "Invalid API key");
   }
-  console.log("API key ID:", document._id.blue);
+  (0, logger_1.log)("API key ID:", document._id.blue);
   ctx.state.apiKeyId = document._id;
   // validate and store the document as the auth context
   try {
     const authContext = exports.AuthContext.parse(document);
-    //console.log("Auth context:", JSON.stringify(authContext).blue);
-    console.log("Scopes:", authContext.scopes.join(", ").blue);
+    //log("Auth context:", JSON.stringify(authContext).blue);
+    (0, logger_1.log)("Scopes:", authContext.scopes.join(", ").blue);
     ctx.state.auth = authContext;
   } catch (err) {
-    console.error("Error parsing auth context", err);
+    (0, logger_1.loge)("Error parsing auth context", err);
     throw new errors_1.ApiError(500, "Error parsing auth context");
   }
   await next();

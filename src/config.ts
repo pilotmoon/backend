@@ -1,3 +1,5 @@
+import { log } from "./logger";
+
 // app configuration
 interface Config {
   APP_PORT: number;
@@ -68,7 +70,7 @@ function setConfigItem(
   if (typeof value !== "string") {
     throw new Error("Missing environment variable: " + key);
   }
-  console.log(
+  log(
     `Loaded config variable ${key.blue} with value ${
       secret ? "<secret>".yellow : String(value).cyan
     } as ${typeof value}`,
