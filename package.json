@@ -4,10 +4,10 @@
   "main": "main.js",
   "scripts": {
     "start": "node ./dist/src/server.js",
-    "build": "pwd && zsh ./scripts/build",
-    "dev": "zsh ./scripts/dev",
-    "test": "zsh ./scripts/test",
-    "test-prod": "zsh ./scripts/test-prod"
+    "build": "./scripts/build",
+    "dev": "./scripts/dev",
+    "test": "./scripts/test",
+    "test-prod": "./scripts/test-prod"
   },
   "private": true,
   "engines": {

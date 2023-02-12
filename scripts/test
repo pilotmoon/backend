@@ -1,6 +1,6 @@
-#!/bin/zsh
+#!/bin/sh
 set -e
-if [[ ! -v APP_PORT ]]; then
+if [ -z ${APP_PORT+x} ]; then
   echo "generating .env file"
   ./scripts/env
   source .env

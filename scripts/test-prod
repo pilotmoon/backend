@@ -1,6 +1,6 @@
 #!/bin/zsh
 set -e
-if [[ -v APP_PORT ]]; then
+if [ ! -z ${APP_PORT+x} ]; then
   echo "APP_PORT is already set - aborting"
   echo "this should only be run in dev environment"
   exit 1
