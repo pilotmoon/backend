@@ -6,6 +6,7 @@ import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./auth";
 import { log } from "./logger";
+import { welcome } from "./static";
 
 // set up routers
 const router = makeRouter();
@@ -14,21 +15,7 @@ router.use(require("./routers/apiKeys").router.routes());
 
 const helloRouter = makeRouter();
 helloRouter.get("/", (ctx) => {
-  ctx.body = `                     ,--,
-                   ,--.'|
-  __  ,-.   ,---.  |  | :     ,---.
-,' ,'/ /|  '   ,'\\ :  : '    '   ,'\\
-'  | |' | /   /   ||  ' |   /   /   |
-|  |   ,'.   ; ,. :'  | |  .   ; ,. :
-'  :  /  '   | |: :|  | :  '   | |: :
-|  | '   '   | .; :'  : |__'   | .; :
-;  : |   |   :    ||  | '.'|   :    |
-|  , ;    \\   \\  / ;  :    ;\\   \\  /
- ---'      \`----'  |  ,   /  \`----'
-                    ---\`-'
-
-Pilotmoon API Server v2\n${config.COMMIT_HASH}\n`;
-  ctx.set("cache-control", "max-age=60");
+  ctx.body = `${welcome}Pilotmoon API Server v2\n${config.COMMIT_HASH}\n`;
 });
 
 // set up Koa server
