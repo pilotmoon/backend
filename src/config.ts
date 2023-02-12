@@ -10,6 +10,7 @@ interface Config {
   DATABASE_NAME_LIVE: string;
   COMMIT_HASH: string;
   BOOTSTRAP_SEED: string;
+  ACCESS_WHITELIST: string[];
 }
 export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
@@ -22,6 +23,7 @@ export const config = loadConfig([
     key: "COMMIT_HASH",
     transform: (val) => val.length === 40 ? val : repeat("?", 40),
   },
+  { key: "ACCESS_WHITELIST", transform: commaListTransform },
 ]);
 
 // load config variables
@@ -64,6 +66,12 @@ function noTransform(string: string) {
 function decimalIntegerTransform(string: string) {
   return parseInt(string, 10);
 }
+function commaListTransform(string: string) {
+  if (!string) {
+    return [];
+  }
+  return string.split(",").map((item) => item.trim());
+}
 
 function setConfigItem(
   { key, loader = envLoader, transform = noTransform, secret = false }:
@@ -77,8 +85,8 @@ function setConfigItem(
   const transformed = transform(value);
   log(
     `Loaded config variable ${key.blue} with value ${
-      secret ? "<secret>".yellow : String(transformed).cyan
-    } as ${typeof transformed}`,
+      secret ? "<secret>".yellow : JSON.stringify(transformed).cyan
+    }`,
   );
   config[key] = transformed;
 }
