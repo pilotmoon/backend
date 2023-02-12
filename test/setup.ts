@@ -1,14 +1,31 @@
 import axios, { AxiosInstance } from "axios";
-
+import { deterministic, randomIdentifier } from "../src/identifiers";
 let roloInstance: AxiosInstance;
+let keyStore: { [key: string]: { id: string; key: string } };
 
-export function rolo(key = process.env.API_KEY_TEST_GOOD) {
+export function keys() {
+  if (!keyStore) {
+    keyStore = {};
+    for (const name of ["runner", "noscope", "subject"]) {
+      deterministic(() => {
+        keyStore[name] = {
+          id: randomIdentifier("ak"),
+          key: randomIdentifier("key_test"),
+        };
+      });
+    }
+    console.log("Created keyStore", keyStore);
+  }
+  return keyStore;
+}
+
+export function rolo() {
   if (!roloInstance) {
     console.log("CREATING ROLO INSTANCE");
     roloInstance = axios.create({
       baseURL: process.env.APP_URL,
       headers: {
-        "Authorization": `Bearer ${key}`,
+        "Authorization": `Bearer ${(keys()).runner.key}`,
       },
       validateStatus: () => true, //
     });

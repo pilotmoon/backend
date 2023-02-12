@@ -5,23 +5,19 @@ import { repeat } from "lodash";
 interface Config {
   APP_PORT: number;
   APP_URL: string;
-  PATH_PREFIX: string;
   DATABASE_URL: string;
   DATABASE_NAME_TEST: string;
   DATABASE_NAME_LIVE: string;
   COMMIT_HASH: string;
-  API_KEY_TEST_GOOD: string;
-  API_KEY_ID_TEST_GOOD: string;
-  API_KEY_TEST_NO_SCOPES: string;
-  API_KEY_ID_TEST_NO_SCOPES: string;
+  BOOTSTRAP_SEED: string;
 }
 export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "APP_URL" },
-  { key: "PATH_PREFIX" },
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
+  { key: "BOOTSTRAP_SEED" },
   {
     key: "COMMIT_HASH",
     transform: (val) => val.length === 40 ? val : repeat("?", 40),

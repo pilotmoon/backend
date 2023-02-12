@@ -31,7 +31,7 @@ export async function connect() {
       serverApi: ServerApiVersion.v1,
     });
     await client.connect();
-    log("Connected to database".yellow, client.db().databaseName);
+    log("Connected to database".green, client.db().databaseName);
   }
 }
 

@@ -1,6 +1,7 @@
 import test from "ava";
-import { rolo } from "./setup";
+import { keys, rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
+import { config } from "../src/config";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
@@ -75,7 +76,7 @@ test("api key CRUD test", async (t) => {
   t.is(res.data.description, "crud test key");
   t.is(res.data.blah, undefined);
   const location = res.headers["location"];
-  t.assert(location.startsWith(process.env.APP_URL));
+  t.assert(location.startsWith(config.APP_URL));
   t.log(location);
 
   // get the key
@@ -120,7 +121,7 @@ test("get current api key", async (t) => {
   const res = await rolo().get("api_keys/current");
   t.is(res.status, 200);
   t.like(res.data, {
-    id: process.env.API_KEY_ID_TEST_GOOD,
+    id: keys().runner.id,
     kind: "test",
   });
   t.assert(res.data.id.length > 0);
@@ -154,7 +155,7 @@ test("options current api key", async (t) => {
 
 test("options current api key by id", async (t) => {
   const res = await rolo().options(
-    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+    "api_keys/" + keys().runner.id,
   );
   t.is(res.status, 200);
   const allow = res.headers["allow"].split(", ").sort();
@@ -163,14 +164,14 @@ test("options current api key by id", async (t) => {
 
 test("delete current api key by id", async (t) => {
   const res = await rolo().delete(
-    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+    "api_keys/" + keys().runner.id,
   );
   t.is(res.status, 400);
 });
 
 test("modify current api key by id", async (t) => {
   const res = await rolo().patch(
-    "api_keys/" + process.env.API_KEY_ID_TEST_GOOD,
+    "api_keys/" + keys().runner.id,
     { "description": "foo" },
   );
   t.is(res.status, 400);
@@ -179,7 +180,7 @@ test("modify current api key by id", async (t) => {
 test("modify other api key by id", async (t) => {
   const str = "random " + randomString({ length: 10 });
   const res = await rolo().patch(
-    "api_keys/" + process.env.API_KEY_ID_TEST_NO_SCOPES,
+    "api_keys/" + keys().subject.id,
     { "description": str },
   );
   t.is(res.status, 204);

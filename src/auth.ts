@@ -1,10 +1,10 @@
-import { randomString } from "@pilotmoon/chewit";
+import { deterministic, randomIdentifier } from "./identifiers";
 import { z } from "zod";
 import { DatabaseKind, getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 import { log, loge } from "./logger";
-import { bootstrapKeys } from "./bootstrap";
+import { MongoServerError } from "mongodb";
 
 const apiKeysCollectionName = "api_keys";
 function getCollection(kind: DatabaseKind) {
@@ -12,7 +12,7 @@ function getCollection(kind: DatabaseKind) {
   return db.collection<ApiKeySchema>(apiKeysCollectionName);
 }
 
-const allScopes = [
+export const allScopes = [
   "health:read",
   "api_keys:create",
   "api_keys:read",
@@ -38,38 +38,66 @@ const ApiKeySchema = AuthContext.extend({
   object: z.literal("api_key"),
   key: z.string(),
 });
-type ApiKeySchema = z.infer<typeof ApiKeySchema>;
+export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
-// called at startup to set the collection index
+// called at startup to prepare the database
 export async function init() {
   log(`init ${apiKeysCollectionName} collection`);
-  // set for both test and live database
+  // for both test and live database
   for (const kind of ["test", "live"] as const) {
     const db = getDb(kind);
     const collection = db.collection(apiKeysCollectionName);
     const result = await collection.createIndex({ key: 1 }, { unique: true });
     log("createIndex", db.databaseName, apiKeysCollectionName, result);
 
-    // count documents in collection
+    // if there are no keys, create a bootstrap key
     const count = await collection.countDocuments();
     if (count == 0) {
       log("No API keys found, creating bootstrap key", kind.blue);
-      // create an api key to bootstrap the system
       const authContext = {
         kind,
         scopes: allScopes as any,
-        description: "bootstrap key (generated)",
+        description: "bootstrap key (randomly generated)",
       };
       await createApiKey(authContext, authContext);
     }
   }
 
-  // insert bootstrap keys
-  bootstrapKeys.allScopes.scopes = allScopes as any;
-  for (const [key, value] of Object.entries(bootstrapKeys)) {
-    await getCollection("test").deleteOne({ _id: value._id });
-    await getCollection("test").insertOne(value as any);
-  }
+  // create a deterministic key for testing
+  console.log("Creating fixed test keys");
+  await deterministic(async () => {
+    for (
+      const { scopes, desc } of [
+        {
+          scopes: allScopes,
+          desc: "test runner key (deterministically generated)",
+        },
+        {
+          scopes: [],
+          desc: "test no-scopes key (deterministically generated)",
+        },
+        {
+          scopes: ["health:read"],
+          desc: "test subject key (deterministically generated)",
+        },
+      ]
+    ) {
+      try {
+        const testKey = await createApiKey({
+          scopes: scopes as any,
+          description: desc,
+        }, { kind: "test", scopes: ["api_keys:create"], description: "" });
+        log("Test key created", testKey._id);
+      } catch (err) {
+        if (err instanceof MongoServerError && err.code === 11000) {
+          log("Test key already exists");
+        } else {
+          loge("Error creating test key");
+          throw err;
+        }
+      }
+    }
+  });
 }
 
 // function for verifying whether the auth context has a given scope
@@ -89,10 +117,10 @@ export async function createApiKey(
 ): Promise<ApiKeySchema> {
   await verifyScope("api_keys:create", authContext);
   const document = {
-    _id: `ak_${randomString()}`,
+    _id: randomIdentifier("ak"),
     object: "api_key" as const,
     created: new Date(),
-    key: `key_${authContext.kind}_${randomString()}`,
+    key: randomIdentifier(`key_${authContext.kind}`),
     kind: authContext.kind,
     ...params,
   };
