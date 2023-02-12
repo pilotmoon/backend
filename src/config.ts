@@ -11,6 +11,7 @@ interface Config {
   COMMIT_HASH: string;
   BOOTSTRAP_SEED: string;
   ACCESS_ALLOWLIST: string[];
+  APP_TEST_URL: string;
 }
 export const config = loadConfig([
   { key: "APP_PORT", transform: decimalIntegerTransform },
@@ -25,6 +26,7 @@ export const config = loadConfig([
     transform: (val) => val.length === 40 ? val : repeat("?", 40),
   },
   { key: "ACCESS_ALLOWLIST", transform: commaListTransform, optional: true },
+  { key: "APP_TEST_URL", optional: true },
 ]);
 
 // load config variables

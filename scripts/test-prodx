@@ -8,5 +8,5 @@ fi
 ./scripts/env
 source .env
 export APP_URL=${APP_URL_CANONICAL}
-export APP_TEST_URL=${APP_URL_CANONICAL}
-npx ava --serial
+export APP_TEST_URL=${APP_URL_ALT}
+npx ava

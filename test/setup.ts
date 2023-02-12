@@ -23,7 +23,7 @@ export function rolo() {
   if (!roloInstance) {
     console.log("CREATING ROLO INSTANCE");
     roloInstance = axios.create({
-      baseURL: process.env.APP_URL,
+      baseURL: process.env.APP_TEST_URL,
       headers: {
         "Authorization": `Bearer ${(keys()).runner.key}`,
       },
