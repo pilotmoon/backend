@@ -1,0 +1,2 @@
+#!/bin/zsh
+git diff-index --quiet HEAD && echo $(git rev-parse HEAD) || echo ""

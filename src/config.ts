@@ -1,4 +1,5 @@
 import { log } from "./logger";
+import { repeat } from "lodash";
 
 // app configuration
 interface Config {
@@ -21,7 +22,10 @@ export const config = loadConfig([
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
-  { key: "COMMIT_HASH" },
+  {
+    key: "COMMIT_HASH",
+    transform: (val) => val.length === 40 ? val : repeat("?", 40),
+  },
 ]);
 
 // load config variables
@@ -74,10 +78,11 @@ function setConfigItem(
   if (typeof value !== "string") {
     throw new Error("Missing environment variable: " + key);
   }
+  const transformed = transform(value);
   log(
     `Loaded config variable ${key.blue} with value ${
-      secret ? "<secret>".yellow : String(value).cyan
-    } as ${typeof value}`,
+      secret ? "<secret>".yellow : String(transformed).cyan
+    } as ${typeof transformed}`,
   );
-  config[key] = value;
+  config[key] = transformed;
 }
