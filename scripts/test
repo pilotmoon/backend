@@ -1,5 +1,8 @@
 #!/bin/zsh
 set -e
-./scripts/env
-source .env
+if [[ ! -v APP_PORT ]]; then
+  echo "generating .env file"
+  ./scripts/env
+  source .env
+fi
 npx ava --serial
