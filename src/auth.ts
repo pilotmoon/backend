@@ -82,20 +82,15 @@ export async function init() {
         },
       ]
     ) {
-      try {
-        const testKey = await createApiKey({
+      const testKey = await createApiKey(
+        {
           scopes: scopes as any,
           description: desc,
-        }, { kind: "test", scopes: ["apiKeys:create"], description: "" });
-        log("Test key created", testKey._id);
-      } catch (err) {
-        if (err instanceof MongoServerError && err.code === 11000) {
-          log("Test key already exists");
-        } else {
-          loge("Error creating test key");
-          throw err;
-        }
-      }
+        },
+        { kind: "test", scopes: ["apiKeys:create"], description: "" },
+        { replace: true },
+      );
+      log("Test key created", testKey._id);
     }
   });
 }
@@ -114,6 +109,7 @@ export async function verifyScope(
 export async function createApiKey(
   params: SettableAuthContext,
   authContext: AuthContext,
+  { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
   await verifyScope("apiKeys:create", authContext);
   const document = {
@@ -124,6 +120,9 @@ export async function createApiKey(
     kind: authContext.kind,
     ...params,
   };
+  if (replace) {
+    await getCollection(authContext.kind).deleteOne({ _id: document._id });
+  }
   const result = await getCollection(authContext.kind).insertOne(document);
   log(`Inserted API key with _id: ${result.insertedId}`);
   return document;
