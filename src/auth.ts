@@ -6,7 +6,7 @@ import { Context, Next } from "koa";
 import { log, loge } from "./logger";
 import { MongoServerError } from "mongodb";
 
-const apiKeysCollectionName = "api_keys";
+const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: DatabaseKind) {
   const db = getDb(kind);
   return db.collection<ApiKeySchema>(apiKeysCollectionName);
@@ -14,10 +14,10 @@ function getCollection(kind: DatabaseKind) {
 
 export const allScopes = [
   "health:read",
-  "api_keys:create",
-  "api_keys:read",
-  "api_keys:update",
-  "api_keys:delete",
+  "apiKeys:create",
+  "apiKeys:read",
+  "apiKeys:update",
+  "apiKeys:delete",
 ] as const;
 type Scope = typeof allScopes[number];
 
@@ -35,7 +35,7 @@ export const AuthContext = SettableAuthContext.extend({
 export type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
   _id: z.string(),
-  object: z.literal("api_key"),
+  object: z.literal("apiKey"),
   key: z.string(),
 });
 export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
@@ -86,7 +86,7 @@ export async function init() {
         const testKey = await createApiKey({
           scopes: scopes as any,
           description: desc,
-        }, { kind: "test", scopes: ["api_keys:create"], description: "" });
+        }, { kind: "test", scopes: ["apiKeys:create"], description: "" });
         log("Test key created", testKey._id);
       } catch (err) {
         if (err instanceof MongoServerError && err.code === 11000) {
@@ -115,10 +115,10 @@ export async function createApiKey(
   params: SettableAuthContext,
   authContext: AuthContext,
 ): Promise<ApiKeySchema> {
-  await verifyScope("api_keys:create", authContext);
+  await verifyScope("apiKeys:create", authContext);
   const document = {
     _id: randomIdentifier("ak"),
-    object: "api_key" as const,
+    object: "apiKey" as const,
     created: new Date(),
     key: randomIdentifier(`key_${authContext.kind}`),
     kind: authContext.kind,
@@ -134,7 +134,7 @@ export async function readApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
-  await verifyScope("api_keys:read", authContext);
+  await verifyScope("apiKeys:read", authContext);
   return await getCollection(authContext.kind).findOne({ _id: id });
 }
 
@@ -145,7 +145,7 @@ export async function updateApiKey(
   params: PartialAuthContext,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
-  await verifyScope("api_keys:update", authContext);
+  await verifyScope("apiKeys:update", authContext);
   const result = await getCollection(authContext.kind).findOneAndUpdate({
     _id: id,
   }, {
@@ -164,7 +164,7 @@ export async function deleteApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<boolean> {
-  await verifyScope("api_keys:delete", authContext);
+  await verifyScope("apiKeys:delete", authContext);
   const result = await getCollection(authContext.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }

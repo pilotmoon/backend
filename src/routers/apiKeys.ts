@@ -10,7 +10,7 @@ import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 
-export const router = makeRouter({ prefix: "/api_keys" });
+export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
   pattern: `/:id(ak_[0-9a-zA-Z]{24})`,
 };
