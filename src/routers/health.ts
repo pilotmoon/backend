@@ -1,10 +1,11 @@
 import { verifyScope } from "../auth";
 import { makeRouter } from "../koa";
 import { randomString } from "@pilotmoon/chewit";
-import { DatabaseKind, getDb } from "../database";
+import { getDb } from "../database";
 import { config } from "../config";
+import { KeyKind } from "../identifiers";
 
-function getCollection(kind: DatabaseKind) {
+function getCollection(kind: KeyKind) {
   const db = getDb(kind);
   return db.collection("health");
 }

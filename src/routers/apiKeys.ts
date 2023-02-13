@@ -9,13 +9,14 @@ import {
 import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
+import { makeIdentifierPattern } from "../identifiers";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
-  pattern: `/:id(ak_[0-9a-zA-Z]{24})`,
+  pattern: makeIdentifierPattern("id", "ak"),
 };
 const matchIdAndCurrent = {
-  pattern: `/:id(ak_[0-9a-zA-Z]{24}|current)`,
+  pattern: makeIdentifierPattern("id", "ak", ["current"]),
   uuid: randomUUID(),
 };
 

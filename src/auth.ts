@@ -1,12 +1,13 @@
-import { deterministic, randomIdentifier } from "./identifiers";
+import { deterministic, randomIdentifier, randomKey } from "./identifiers";
 import { z } from "zod";
-import { DatabaseKind, getDb } from "./database";
+import { getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 import { log, loge } from "./logger";
+import { KeyKind, keyKinds, keyRegex } from "./identifiers";
 
 const apiKeysCollectionName = "apiKeys";
-function getCollection(kind: DatabaseKind) {
+function getCollection(kind: KeyKind) {
   const db = getDb(kind);
   return db.collection<ApiKeySchema>(apiKeysCollectionName);
 }
@@ -29,7 +30,7 @@ type SettableAuthContext = z.infer<typeof SettableAuthContext>;
 export const PartialAuthContext = SettableAuthContext.partial();
 type PartialAuthContext = z.infer<typeof PartialAuthContext>;
 export const AuthContext = SettableAuthContext.extend({
-  kind: z.enum(["test", "live"]),
+  kind: z.enum(keyKinds),
 });
 export type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
@@ -43,7 +44,7 @@ export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 export async function init() {
   log(`init ${apiKeysCollectionName} collection`);
   // for both test and live database
-  for (const kind of ["test", "live"] as const) {
+  for (const kind of keyKinds) {
     const db = getDb(kind);
     const collection = db.collection(apiKeysCollectionName);
     const result = await collection.createIndex({ key: 1 }, { unique: true });
@@ -89,7 +90,6 @@ export async function init() {
         { kind: "test", scopes: ["apiKeys:create"], description: "" },
         { replace: true },
       );
-      log("Test key created", testKey._id);
     }
   });
 }
@@ -115,7 +115,7 @@ export async function createApiKey(
     _id: randomIdentifier("ak"),
     object: "apiKey" as const,
     created: new Date(),
-    key: randomIdentifier(`key_${authContext.kind}`),
+    key: randomKey(authContext.kind),
     kind: authContext.kind,
     ...params,
   };
@@ -183,11 +183,11 @@ export async function authMiddleware(ctx: Context, next: Next) {
   }
 
   // regex match the kind part of the key
-  const match = key.match(/^key_(test|live)_/);
+  const match = key.match(keyRegex);
   if (!match) {
     throw new ApiError(401, "Invalid API key prefix");
   }
-  const kind = match[1] as DatabaseKind;
+  const kind = match[1] as KeyKind;
 
   // now we have key, look it up in the database
   const document = await getCollection(kind).findOne({ key: key });

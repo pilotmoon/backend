@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { deterministic, randomIdentifier } from "../src/identifiers";
+import { deterministic, randomIdentifier, randomKey } from "../src/identifiers";
 import { config } from "../src/config";
 
 let roloInstance: AxiosInstance;
@@ -12,7 +12,7 @@ export function keys() {
       deterministic(() => {
         keyStore[name] = {
           id: randomIdentifier("ak"),
-          key: randomIdentifier("key_test"),
+          key: randomKey("test"),
         };
       });
     }

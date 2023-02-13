@@ -1,13 +1,12 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
 import { config } from "./config";
 import { log } from "./logger";
+import { KeyKind } from "./identifiers";
 
 let client: MongoClient;
 
-export type DatabaseKind = "test" | "live";
-
 // Get the database connection
-export function getDb(kind: DatabaseKind): Db {
+export function getDb(kind: KeyKind): Db {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",
