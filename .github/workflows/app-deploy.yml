@@ -11,6 +11,7 @@ on:
 env:
   APP_PORT: "${{ vars.APP_PORT }}"
   APP_URL: "${{ vars.APP_URL }}"
+  APP_TEST_URL: "${{ vars.APP_URL }}"
   DATABASE_URL: "${{ vars.DATABASE_URL }}"
   DATABASE_NAME_LIVE: "${{ vars.DATABASE_NAME_LIVE }}"
   DATABASE_NAME_TEST: "${{ vars.DATABASE_NAME_TEST }}"
