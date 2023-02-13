@@ -4,7 +4,6 @@ import { DatabaseKind, getDb } from "./database";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 import { log, loge } from "./logger";
-import { MongoServerError } from "mongodb";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: DatabaseKind) {
