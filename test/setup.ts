@@ -1,5 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomIdentifier } from "../src/identifiers";
+import { config } from "../src/config";
+
 let roloInstance: AxiosInstance;
 let keyStore: { [key: string]: { id: string; key: string } };
 
@@ -23,7 +25,7 @@ export function rolo() {
   if (!roloInstance) {
     console.log("CREATING ROLO INSTANCE");
     roloInstance = axios.create({
-      baseURL: process.env.APP_TEST_URL,
+      baseURL: config.APP_TEST_URL,
       headers: {
         "Authorization": `Bearer ${(keys()).runner.key}`,
       },
