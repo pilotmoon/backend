@@ -26,10 +26,10 @@ export function randomKey(
   kind: KeyKind,
   idPrefix: string,
 ) {
-  const idChars = randomString({ length: idLength, rng: rng() });
-  const keyChars = randomString({ length: keyLength, rng: rng() });
+  const keyChars = randomString({ length: idLength + keyLength, rng: rng() });
+  const idChars = keyChars.slice(0, idLength);
   const id = `${idPrefix}_${idChars}` as const;
-  const key = `${keyPrefix}_${kind}_${idChars + keyChars}` as const;
+  const key = `${keyPrefix}_${kind}_${keyChars}` as const;
   return { key, id };
 }
 
