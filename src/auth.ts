@@ -111,11 +111,12 @@ export async function createApiKey(
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
   await verifyScope("apiKeys:create", authContext);
+  const { id, key } = randomKey(authContext.kind, "ak");
   const document = {
-    _id: randomIdentifier("ak"),
+    _id: id,
     object: "apiKey" as const,
     created: new Date(),
-    key: randomKey(authContext.kind),
+    key,
     kind: authContext.kind,
     ...params,
   };

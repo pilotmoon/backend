@@ -4,30 +4,37 @@ import { config } from "./config";
 import { logw } from "./logger";
 
 export type KeyKind = typeof keyKinds[number];
-export type IdentifierPrefix = typeof identifierPrefixes[number];
+export type IdPrefix = typeof idPrefixes[number];
 export type Key = `key_${KeyKind}_${string}`;
-export type Identifier = `${IdentifierPrefix}_${string}`;
+export type Id = `${IdPrefix}_${string}`;
 
 export const keyKinds = ["test", "live"] as const;
-export const identifierPrefixes = ["ak"] as const;
-const keyLength = 40;
-const identifierLength = 16;
+export const idPrefixes = ["ak"] as const;
+const keyLength = 24;
+const idLength = 16;
 const keyPrefix = "key";
-const base62 = "[a-zA-Z0-9]";
+const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const keyRegex = new RegExp(
-  `^${keyPrefix}_(${keyKinds.join("|")})_${base62}{${keyLength}}$`,
+  `^${keyPrefix}_(${keyKinds.join("|")})_${base62(idLength)}${
+    base62(keyLength)
+  }`,
 );
 
 // generate a random identifier with the given prefix
-export function randomIdentifier(prefix: IdentifierPrefix): Identifier {
-  return `${prefix}_${randomString({ length: identifierLength, rng: rng() })}`;
+export function randomIdentifier(prefix: IdPrefix): Id {
+  return `${prefix}_${randomString({ length: idLength, rng: rng() })}`;
 }
 
-// generate a key with the given kind
-export function randomKey(kind: KeyKind): Key {
-  return `${keyPrefix}_${kind}_${
-    randomString({ length: keyLength, rng: rng() })
-  }`;
+// generate a key with the given kind, and its identifier
+export function randomKey(
+  kind: KeyKind,
+  identifierPrefix: IdPrefix,
+): { key: Key; id: Id } {
+  const idChars = randomString({ length: idLength, rng: rng() });
+  const keyChars = randomString({ length: keyLength, rng: rng() });
+  const id = `${identifierPrefix}_${idChars}` as const;
+  const key = `${keyPrefix}_${kind}_${idChars}${keyChars}` as const;
+  return { key, id };
 }
 
 // produce pattern such as `/:id(ak_[0-9a-zA-Z]{20}|current)`
@@ -36,7 +43,7 @@ export function makeIdentifierPattern(
   prefix: string,
   fixedIdentifiers: string[] = [],
 ): string {
-  const patterns = [`${prefix}_${base62}{${identifierLength}}`]
+  const patterns = [`${prefix}_${base62(idLength)}`]
     .concat(fixedIdentifiers);
   return `/:${varName}(${patterns.join("|")})`;
 }

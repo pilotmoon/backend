@@ -10,10 +10,7 @@ export function keys() {
     keyStore = {};
     for (const name of ["runner", "noscope", "subject"]) {
       deterministic(() => {
-        keyStore[name] = {
-          id: randomIdentifier("ak"),
-          key: randomKey("test"),
-        };
+        keyStore[name] = randomKey("test", "ak");
       });
     }
     console.log("Created keyStore", keyStore);
