@@ -63,8 +63,8 @@ interface Transformer {
   (value: string): any;
 }
 // identity
-function noTransform(string: string) {
-  return string;
+function trimTransform(string: string) {
+  return string.trim();
 }
 // parse a string as a decimal integer
 function decimalIntegerTransform(string: string) {
@@ -81,7 +81,7 @@ function setConfigItem(
   {
     key,
     loader = envLoader,
-    transform = noTransform,
+    transform = trimTransform,
     secret = false,
     optional = false,
   }: ConfigItem,
