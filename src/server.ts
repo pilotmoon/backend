@@ -72,7 +72,7 @@ server.use(async (ctx, next) => {
 server.use(async (ctx, next) => {
   const ips = union(ctx.request.ips, [ctx.request.ip]);
   const allow = config.ACCESS_ALLOWLIST;
-  log("ips:", ips, "allow:", allow);
+  log("IPs:", ips, "Allow:", allow);
   if (allow.length > 0 && intersection(ips, allow).length == 0) {
     throw new ApiError(403, "Access denied");
   }
