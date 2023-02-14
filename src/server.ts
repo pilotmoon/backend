@@ -113,7 +113,7 @@ server.use(bodyParser({
 server.use(mainRouter.routes());
 server.use(mainRouter.allowedMethods());
 
-// Server close-down
+// Server startup and shutdown
 const abortController = new AbortController();
 function closeServer() {
   log("Closing server");
@@ -129,19 +129,9 @@ function startServer() {
   });
 }
 
-async function main() {
-  log("Calling startup routines".green);
-  await connectDb(); // connect to database first
-  await Promise.all([ // run all other startup routines in parallel
-    initAuth(),
-  ]);
-  log("Startup complete".green);
-  startServer();
-}
-
 // App close-down
 let closing = false;
-async function onAppClose() {
+process.on("SIGINT", async () => {
   log("SIGINT received".cyan);
   if (!closing) {
     closing = true;
@@ -152,6 +142,15 @@ async function onAppClose() {
     ]);
     log("Shutdown complete".bgGreen);
   }
-}
-process.on("SIGINT", onAppClose);
-main();
+});
+
+// App startup
+(async () => {
+  log("Calling startup routines".green);
+  await connectDb(); // connect to database first
+  await Promise.all([ // run all other startup routines in parallel
+    initAuth(),
+  ]);
+  log("Startup complete".green);
+  startServer();
+})();
