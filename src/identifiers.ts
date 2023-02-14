@@ -10,9 +10,10 @@ export type Id = `${IdPrefix}_${string}`;
 
 export const keyKinds = ["test", "live"] as const;
 export const idPrefixes = ["ak"] as const;
+
+const keyPrefix = "key";
 const keyLength = 24;
 const idLength = 16;
-const keyPrefix = "key";
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const keyRegex = new RegExp(
   `^${keyPrefix}_(${keyKinds.join("|")})_${base62(idLength)}${
