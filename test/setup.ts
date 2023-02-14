@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { deterministic, randomIdentifier, randomKey } from "../src/identifiers";
+import { deterministic, randomKey } from "../src/identifiers";
 import { config } from "../src/config";
 
 let roloInstance: AxiosInstance;

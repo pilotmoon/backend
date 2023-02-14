@@ -3,38 +3,33 @@ import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config";
 import { logw } from "./logger";
 
-export type KeyKind = typeof keyKinds[number];
-export type IdPrefix = typeof idPrefixes[number];
-export type Key = `key_${KeyKind}_${string}`;
-export type Id = `${IdPrefix}_${string}`;
-
 export const keyKinds = ["test", "live"] as const;
-export const idPrefixes = ["ak"] as const;
+export type KeyKind = typeof keyKinds[number];
 
 const keyPrefix = "key";
 const keyLength = 24;
 const idLength = 16;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const keyRegex = new RegExp(
-  `^${keyPrefix}_(${keyKinds.join("|")})_${base62(idLength)}${
-    base62(keyLength)
+  `^${keyPrefix}_(${keyKinds.join("|")})_${
+    base62(idLength) + base62(keyLength)
   }`,
 );
 
 // generate a random identifier with the given prefix
-export function randomIdentifier(prefix: IdPrefix): Id {
+export function randomIdentifier(prefix: string): string {
   return `${prefix}_${randomString({ length: idLength, rng: rng() })}`;
 }
 
 // generate a key with the given kind, and its identifier
 export function randomKey(
   kind: KeyKind,
-  identifierPrefix: IdPrefix,
-): { key: Key; id: Id } {
+  idPrefix: string,
+) {
   const idChars = randomString({ length: idLength, rng: rng() });
   const keyChars = randomString({ length: keyLength, rng: rng() });
-  const id = `${identifierPrefix}_${idChars}` as const;
-  const key = `${keyPrefix}_${kind}_${idChars}${keyChars}` as const;
+  const id = `${idPrefix}_${idChars}` as const;
+  const key = `${keyPrefix}_${kind}_${idChars + keyChars}` as const;
   return { key, id };
 }
 
