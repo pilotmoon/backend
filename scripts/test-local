@@ -5,4 +5,4 @@ if [ -z ${APP_PORT+x} ]; then
   ./scripts/env
   source .env
 fi
-npx ava dist/test/test.js --serial
+npx ava dist/test/testApi.js --serial
