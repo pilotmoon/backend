@@ -6,6 +6,7 @@
     "start": "node ./dist/src/server.js",
     "build": "./scripts/build",
     "dev": "./scripts/dev",
+    "deploy": "./scripts/deploy",
     "test-unit": "./scripts/test-unit",
     "test-local": "./scripts/test-local",
     "test-prod": "./scripts/test-prod",
