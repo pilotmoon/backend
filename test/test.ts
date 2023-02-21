@@ -1,2 +1,0 @@
-import "./testBasics";
-import "./testApiKeys";

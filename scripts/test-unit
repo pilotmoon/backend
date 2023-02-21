@@ -4,6 +4,5 @@ if [ -z ${APP_PORT+x} ]; then
   echo "generating .env file"
   ./scripts/env
   source .env
-  export COMMIT_HASH=$(./scripts/commit-hash)
 fi
-npx ava --serial
+npx ava dist/test/testUnit.js

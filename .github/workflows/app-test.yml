@@ -19,6 +19,7 @@ env:
   DATABASE_NAME_TEST: "${{ vars.DATABASE_NAME_TEST }}"
   COMMIT_HASH: ""
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
+  APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
 
 jobs:
   test:
@@ -36,6 +37,8 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build
+    - name: Run init tests
+      run: npm run test-unit
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.8.0
       with:
@@ -44,7 +47,7 @@ jobs:
     - name: Run E2E Tests
       uses: BerniWittmann/background-server-action@v1
       with:
-        command: npm run test
+        command: npm run test-local
         start: npm run start
         wait-on: '${{ vars.APP_URL }}'
 

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+if [ -z ${APP_PORT+x} ]; then
+  echo "generating .env file"
+  ./scripts/env
+  source .env
+fi
+npx ava dist/test/test.js --serial

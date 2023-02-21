@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
-import { deterministic, randomKey } from "../src/identifiers";
-import { config } from "../src/config";
+import { deterministic, randomKey } from "../../src/identifiers";
+import { config } from "../../src/config";
 
 let roloInstance: AxiosInstance;
 let keyStore: { [key: string]: { id: string; key: string } };

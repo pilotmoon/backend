@@ -8,6 +8,8 @@ interface Config {
   DATABASE_URL: string;
   DATABASE_NAME_TEST: string;
   DATABASE_NAME_LIVE: string;
+  APP_SECRET_TEST: string;
+  APP_SECRET_LIVE: string;
   COMMIT_HASH: string;
   BOOTSTRAP_SEED: string;
   ACCESS_ALLOWLIST: string[];
@@ -19,6 +21,8 @@ export const config = loadConfig([
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
+  { key: "APP_SECRET_TEST", secret: true },
+  { key: "APP_SECRET_LIVE", secret: true, optional: true },
   { key: "BOOTSTRAP_SEED" },
   {
     key: "COMMIT_HASH",
@@ -90,9 +94,11 @@ function setConfigItem(
   let value = loader(key);
   if (typeof value !== "string") {
     if (optional) {
-      logw("Missing environment variable: " + key);
+      logw(
+        "Substituting empty string for missing environment variable: " + key,
+      );
     } else {
-      throw new Error("Missing environment variable: " + key);
+      throw new Error("Missing required environment variable: " + key);
     }
     value = "";
   }

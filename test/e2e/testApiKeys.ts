@@ -1,7 +1,7 @@
 import test from "ava";
 import { keys, rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
-import { config } from "../src/config";
+import { config } from "../../src/config";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
