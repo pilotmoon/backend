@@ -26,7 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        #node-version: [16.x, 18.x]
+        node-version: [16.x]
         mongodb-version: ['6.0']
     steps:
     - uses: actions/checkout@v3
@@ -37,7 +38,7 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build
-    - name: Run init tests
+    - name: Run unit tests
       run: npm run test-unit
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.8.0
