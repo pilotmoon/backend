@@ -7,6 +7,7 @@ import { Context, Next } from "koa";
 import { log, loge } from "./logger";
 import { KeyKind, keyKinds, keyRegex } from "./identifiers";
 import { hashPassword, verifyPassword } from "./scrypt";
+import LRUCache = require("lru-cache");
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {
@@ -165,6 +166,50 @@ export async function deleteApiKey(
   return result.deletedCount === 1;
 }
 
+// auth cache -- fetches and verifies API keys
+const authCache = new LRUCache<
+  string,
+  { authContext: AuthContext; keyId: string }
+>({
+  max: 100000,
+  ttl: 1000 * 60 * 60, // 1 hour
+  fetchMethod: async (key: string) => {
+    // regex match the kind part of the key
+    const match = key.match(keyRegex);
+    if (!match) {
+      throw new ApiError(401, "Invalid API key format");
+    }
+    const kind = match[1] as KeyKind;
+    const idPrefix = match[2];
+
+    // now we have deconstructed the key, look it up in the database
+    const keyId = "ak_" + idPrefix;
+    const document = ApiKeySchema.parse(
+      await getCollection(kind).findOne({ _id: keyId }),
+    );
+
+    // verify the key
+    const valid = await verifyPassword(
+      Buffer.from(document.hashedKey.buffer),
+      key,
+    );
+    if (!valid) {
+      throw new ApiError(401, "Invalid API key");
+    }
+
+    // validate and store the document as the auth context
+    let authContext: AuthContext;
+    try {
+      authContext = AuthContext.parse(document);
+    } catch (err) {
+      loge("Error parsing auth context", err);
+      throw new ApiError(500, "Error parsing auth context");
+    }
+
+    return { authContext, keyId };
+  },
+});
+
 // auth middleware, allow Bearer token or x-api-key header
 export async function authMiddleware(ctx: Context, next: Next) {
   const bearerPrefix = "Bearer ";
@@ -179,39 +224,12 @@ export async function authMiddleware(ctx: Context, next: Next) {
   } else {
     throw new ApiError(401, "API key is required");
   }
-
-  // regex match the kind part of the key
-  const match = key.match(keyRegex);
-  if (!match) {
-    throw new ApiError(401, "Invalid API key");
+  const info = await authCache.fetch(key);
+  if (!info) {
+    throw new ApiError(500, "Unable to fetch API key");
   }
-  const kind = match[1] as KeyKind;
-  const idPrefix = match[2];
-
-  // now we have deconstructed the key, look it up in the database
-  const keyId = "ak_" + idPrefix;
-  const document = ApiKeySchema.parse(
-    await getCollection(kind).findOne({ _id: keyId }),
-  );
-  // verify the key
-  const valid = await verifyPassword(
-    Buffer.from(document.hashedKey.buffer),
-    key,
-  );
-  if (!valid) {
-    throw new ApiError(401, "Invalid API key");
-  }
-
-  // validate and store the document as the auth context
-  try {
-    const authContext = AuthContext.parse(document);
-    log("Scopes:", authContext.scopes.join(", ").blue);
-    ctx.state.apiKeyId = keyId;
-    ctx.state.auth = authContext;
-  } catch (err) {
-    loge("Error parsing auth context", err);
-    throw new ApiError(500, "Error parsing auth context");
-  }
+  ctx.state.auth = info.authContext;
+  ctx.state.apiKeyId = info.keyId;
 
   await next();
 }
