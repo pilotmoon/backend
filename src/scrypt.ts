@@ -4,7 +4,6 @@ import { log, loge } from "./logger";
 const scryptAsync = promisify(scrypt);
 
 export async function hashPassword(password: string) {
-  log("hashing password: " + password);
   const salt = randomBytes(16);
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return Buffer.concat([salt, buf]);

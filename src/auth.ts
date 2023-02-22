@@ -1,10 +1,12 @@
 import { deterministic, randomKey } from "./identifiers";
 import { z } from "zod";
 import { getDb } from "./database";
+import { Binary } from "mongodb";
 import { ApiError } from "./errors";
 import { Context, Next } from "koa";
 import { log, loge } from "./logger";
 import { KeyKind, keyKinds, keyRegex } from "./identifiers";
+import { hashPassword, verifyPassword } from "./scrypt";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {
@@ -36,7 +38,8 @@ export type AuthContext = z.infer<typeof AuthContext>;
 const ApiKeySchema = AuthContext.extend({
   _id: z.string(),
   object: z.literal("apiKey"),
-  key: z.string(),
+  key: z.string().optional(),
+  hashedKey: z.custom<Binary>((v) => v instanceof Binary),
 });
 export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
@@ -45,10 +48,7 @@ export async function init() {
   log(`init ${apiKeysCollectionName} collection`);
   // for both test and live database
   for (const kind of keyKinds) {
-    const db = getDb(kind);
-    const collection = db.collection(apiKeysCollectionName);
-    const result = await collection.createIndex({ key: 1 }, { unique: true });
-    log("createIndex", db.databaseName, apiKeysCollectionName, result);
+    const collection = getDb(kind).collection(apiKeysCollectionName);
 
     // if there are no keys, create a bootstrap key
     const count = await collection.countDocuments();
@@ -56,10 +56,11 @@ export async function init() {
       log("No API keys found, creating bootstrap key", kind.blue);
       const authContext = {
         kind,
-        scopes: allScopes as any,
+        scopes: ["apiKeys:create" as const],
         description: "bootstrap key (randomly generated)",
       };
-      await createApiKey(authContext, authContext);
+      const document = await createApiKey(authContext, authContext);
+      console.log("Bootstrap key:".bgRed, document.key);
     }
   }
 
@@ -82,7 +83,7 @@ export async function init() {
         },
       ]
     ) {
-      const testKey = await createApiKey(
+      await createApiKey(
         {
           scopes: scopes as any,
           description: desc,
@@ -115,8 +116,7 @@ export async function createApiKey(
   const document = {
     _id: id,
     object: "apiKey" as const,
-    created: new Date(),
-    key,
+    hashedKey: new Binary(await hashPassword(key)),
     kind: authContext.kind,
     ...params,
   };
@@ -125,7 +125,7 @@ export async function createApiKey(
   }
   const result = await getCollection(authContext.kind).insertOne(document);
   log(`Inserted API key with _id: ${result.insertedId}`);
-  return document;
+  return { ...document, key }; // return the key in cleartext since it's a new key
 }
 
 // return an API key by its ID. returns null if the key does not exist
@@ -149,9 +149,6 @@ export async function updateApiKey(
     _id: id,
   }, {
     $set: params,
-    $currentDate: {
-      modified: true,
-    },
   }, {
     returnDocument: "after",
   });
@@ -170,12 +167,12 @@ export async function deleteApiKey(
 
 // auth middleware, allow Bearer token or x-api-key header
 export async function authMiddleware(ctx: Context, next: Next) {
-  const prefix = "Bearer ";
+  const bearerPrefix = "Bearer ";
   const authorization = ctx.request.headers["authorization"];
   let key = "";
   if (typeof authorization === "string") {
-    if (authorization.startsWith(prefix)) {
-      key = authorization.substring(prefix.length);
+    if (authorization.startsWith(bearerPrefix)) {
+      key = authorization.substring(bearerPrefix.length);
     } else {
       throw new ApiError(401, "Bearer token is required");
     }
@@ -186,23 +183,30 @@ export async function authMiddleware(ctx: Context, next: Next) {
   // regex match the kind part of the key
   const match = key.match(keyRegex);
   if (!match) {
-    throw new ApiError(401, "Invalid API key prefix");
-  }
-  const kind = match[1] as KeyKind;
-
-  // now we have key, look it up in the database
-  const document = await getCollection(kind).findOne({ key: key });
-  if (!document) {
     throw new ApiError(401, "Invalid API key");
   }
-  log("API key ID:", document._id.blue);
-  ctx.state.apiKeyId = document._id;
+  const kind = match[1] as KeyKind;
+  const idPrefix = match[2];
+
+  // now we have deconstructed the key, look it up in the database
+  const keyId = "ak_" + idPrefix;
+  const document = ApiKeySchema.parse(
+    await getCollection(kind).findOne({ _id: keyId }),
+  );
+  // verify the key
+  const valid = await verifyPassword(
+    Buffer.from(document.hashedKey.buffer),
+    key,
+  );
+  if (!valid) {
+    throw new ApiError(401, "Invalid API key");
+  }
 
   // validate and store the document as the auth context
   try {
     const authContext = AuthContext.parse(document);
-    //log("Auth context:", JSON.stringify(authContext).blue);
     log("Scopes:", authContext.scopes.join(", ").blue);
+    ctx.state.apiKeyId = keyId;
     ctx.state.auth = authContext;
   } catch (err) {
     loge("Error parsing auth context", err);
