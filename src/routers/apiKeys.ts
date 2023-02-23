@@ -36,7 +36,7 @@ router.post("/", async (ctx) => {
   ctx.status = 201;
   ctx.set(
     "Location",
-    ctx.fullUrl(matchIdAndCurrent.uuid, { id: document._id }),
+    ctx.location(matchIdAndCurrent.uuid, { id: document._id }),
   );
 });
 

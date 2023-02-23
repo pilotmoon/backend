@@ -1,7 +1,6 @@
 import test from "ava";
 import { keys, rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
-import { config } from "../../src/config";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
@@ -76,7 +75,7 @@ test("api key CRUD test", async (t) => {
   t.is(res.data.description, "crud test key");
   t.is(res.data.blah, undefined);
   const location = res.headers["location"];
-  t.assert(location.startsWith(config.APP_URL));
+  t.is(location, "/apiKeys/" + res.data.id);
   t.log(location);
 
   // get the key

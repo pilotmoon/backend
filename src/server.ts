@@ -5,6 +5,7 @@ import { config } from "./config";
 import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./authController";
+import { init as initProducts } from "./routers/products";
 import { log } from "./logger";
 import { asciiHello } from "./static";
 import { intersection, union } from "lodash";
@@ -13,14 +14,15 @@ import { intersection, union } from "lodash";
 const mainRouter = makeRouter();
 mainRouter.use(require("./routers/health").router.routes());
 mainRouter.use(require("./routers/apiKeys").router.routes());
+mainRouter.use(require("./routers/products").router.routes());
 
 // set up Koa server
 const server = makeServer();
 
-// add function to context for generating full url
-server.context.fullUrl = function (name: string, params?: any) {
-  log("fullUrl", name, params);
-  return config.APP_URL + mainRouter.url(name, params);
+// add function to context for generating url for Location header
+server.context.location = function (name: string, params?: any) {
+  log("location", name, params);
+  return mainRouter.url(name, params);
 };
 
 // middleware for error handling
@@ -151,6 +153,7 @@ process.on("SIGINT", async () => {
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
     initAuth(),
+    initProducts(),
   ]);
   log("Startup complete".green);
   startServer();

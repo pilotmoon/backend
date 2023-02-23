@@ -17,11 +17,11 @@ export const testKeys = {
     description: "test subject key (deterministically generated)",
   },
   updateonly: {
-    scopes: ["apiKeys:update"],
+    scopes: ["apiKeys:update", "products:update"],
     description: "test update-only key (deterministically generated)",
   },
   readonly: {
-    scopes: ["apiKeys:read"],
+    scopes: ["apiKeys:read", "products:read"],
     description: "test read-only key (deterministically generated)",
   },
 };

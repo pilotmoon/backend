@@ -25,6 +25,9 @@ const constScopes = [
   "apiKeys:update",
   "apiKeys:delete",
   "products:create",
+  "products:read",
+  "products:update",
+  "products:delete",
 ] as const;
 
 // scope type
