@@ -85,14 +85,18 @@ router.post("/", async (ctx) => {
 // list products
 router.get("/", async (ctx) => {
   const authContext = ctx.state.auth;
-  const { limit, offset, order } = ctx.state.paginate;
+  const { limit, offset, order, orderBy } = ctx.state.paginate;
   assertScope("products:read", authContext);
   const cursor = getCollection(authContext.kind).find()
-    .sort({ created: order })
+    .sort({ [orderBy]: order })
     .skip(offset)
     .limit(limit);
   const documents = await cursor.toArray();
-  ctx.body = documents.map((document) => ProductRecord.parse(document));
+  try {
+    ctx.body = documents.map((document) => ProductRecord.parse(document));
+  } catch (error: any) {
+    throw new ApiError(500, "Error parsing database result: " + error?.message);
+  }
 });
 
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {

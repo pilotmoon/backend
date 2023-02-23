@@ -10,6 +10,7 @@ export type PaginateState = {
   offset: number;
   limit: number;
   order: 1 | -1;
+  orderBy: "created";
 };
 
 export function paginator(
@@ -51,7 +52,7 @@ export function paginator(
       throw new ApiError(400, "order must be 1 or -1");
     }
 
-    ctx.state.paginate = { offset, limit, order };
+    ctx.state.paginate = { offset, limit, order, orderBy: "created" };
     await next();
   };
 }

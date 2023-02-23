@@ -208,7 +208,7 @@ test("list api keys", async (t) => {
   t.is(res.data.object, "list");
   t.is(res.status, 200);
   t.is(res.data.items.length, 4);
-  t.deepEqual(res.data.paginate, { limit: 4, offset: 0, order: -1 });
+  t.like(res.data.paginate, { limit: 4, offset: 0, order: -1 });
   t.is(res.data.items[0].key, undefined);
   t.is(res.data.items[0].id, keys()["readonly"].id);
 });
@@ -250,7 +250,7 @@ test("list api keys, order ascending", async (t) => {
   const res = await rolo().get("apiKeys?order=1");
   t.is(res.data.object, "list");
   t.is(res.status, 200);
-  t.deepEqual(res.data.paginate, { limit: 10, offset: 0, order: 1 });
+  t.like(res.data.paginate, { limit: 10, offset: 0, order: 1 });
 });
 
 test("list api keys, order invalid", async (t) => {
@@ -275,7 +275,7 @@ test("list api keys, limit and offset", async (t) => {
   t.is(res.data.object, "list");
   t.is(res.status, 200);
   t.is(res.data.items.length, 3);
-  t.deepEqual(res.data.paginate, { limit: 3, offset: 2, order: -1 });
+  t.like(res.data.paginate, { limit: 3, offset: 2, order: -1 });
   t.is(res.data.items[0].id, keys()["subject"].id);
   t.is(res.data.items[1].id, keys()["noscope"].id);
   t.is(res.data.items[2].id, keys()["runner"].id);

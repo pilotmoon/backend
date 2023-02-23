@@ -167,10 +167,10 @@ export async function listApiKeys(
   paginate: PaginateState,
 ): Promise<ApiKeySchema[]> {
   assertScope("apiKeys:read", authContext);
-  const { offset, limit, order } = paginate;
+  const { offset, limit, order, orderBy } = paginate;
   const cursor = await getCollection(authContext.kind)
     .find()
-    .sort({ created: order })
+    .sort({ [orderBy]: order })
     .skip(offset)
     .limit(limit);
   const documents = await cursor.toArray();
@@ -274,10 +274,11 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
 }
 
 // auth cache
-const authCache = new TTLCache<string, AuthContext>({
-  max: 100000,
-  ttl: 1000 * 60 * 60, // 1 hour
-});
+const minute = 1000 * 60;
+const hour = minute * 60;
+const ttl = minute * 10;
+const revalidateTime = minute * 5;
+const authCache = new TTLCache<string, AuthContext>({ max: 100_000, ttl });
 
 // auth middleware, allow Bearer token or x-api-key header
 export async function authMiddleware(ctx: Context, next: Next) {
@@ -302,6 +303,20 @@ export async function authMiddleware(ctx: Context, next: Next) {
   if (!authContext) {
     authContext = await validateSecretKey(keyParts);
     authCache.set(keyParts.cacheKey, authContext);
+  } else {
+    // revalidate in background if sufficiently old
+    const ttlRemaining = authCache.getRemainingTTL(keyParts.cacheKey);
+    if (ttlRemaining < ttl - revalidateTime) {
+      log("Revalidating API key in background");
+      validateSecretKey(keyParts)
+        .then((authContext) => {
+          authCache.set(keyParts.cacheKey, authContext);
+        })
+        .catch((err) => {
+          log("Error revalidating API key: " + err.message);
+          authCache.delete(keyParts.cacheKey);
+        });
+    }
   }
 
   log("New auth cache size: " + authCache.size);

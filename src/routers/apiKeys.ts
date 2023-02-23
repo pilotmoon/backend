@@ -11,7 +11,6 @@ import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
-import { log } from "../logger";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
