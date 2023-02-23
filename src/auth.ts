@@ -172,7 +172,7 @@ export async function deleteApiKey(
 interface SecretKeyParts {
   key: string;
   kind: KeyKind;
-  keyId: string;
+  id: string;
   cacheKey: string;
 }
 
@@ -184,7 +184,7 @@ function parseSecretKey(key: string): SecretKeyParts {
     throw new ApiError(401, "Invalid API key (bad format)");
   }
   const kind = match[1] as KeyKind;
-  const keyId = "ak_" + match[2];
+  const id = "ak_" + match[2];
 
   // generate sha256 hashed version of the key so we can store it
   // in the cache without exposing the secret key to the cache.
@@ -192,15 +192,15 @@ function parseSecretKey(key: string): SecretKeyParts {
   // chance of a collision between different keys.
   const hash = createHash("sha256");
   hash.update(key);
-  const cacheKey = keyId + ":" + hash.digest("hex");
+  const cacheKey = id + ":" + hash.digest("hex");
 
-  return { key, kind, keyId, cacheKey };
+  return { key, kind, id, cacheKey };
 }
 
 // fetch the key record from the database and verify the secret key
 // note: this function usually takes ~100ms to run so should be cached
-async function validateSecretKey({ key, kind, keyId }: SecretKeyParts) {
-  let document = await getCollection(kind).findOne({ _id: keyId });
+async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
+  let document = await getCollection(kind).findOne({ _id: id });
   if (!document) {
     throw new ApiError(401, "Invalid API key (bad id)");
   }
@@ -254,6 +254,6 @@ export async function authMiddleware(ctx: Context, next: Next) {
 
   log("auth cache size: " + authCache.size);
   ctx.state.auth = authContext;
-  ctx.state.apiKeyId = keyParts.keyId;
+  ctx.state.apiKeyId = keyParts.id;
   await next();
 }
