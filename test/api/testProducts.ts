@@ -116,6 +116,12 @@ test("update product, no read access", async (t) => {
   });
   t.is(res.status, 204);
   t.is(res.data, "");
+  // set it back
+  const res2 = await rolo().patch(`/products/${fooProductId}`, {
+    name: "foo",
+  });
+  t.is(res2.status, 200);
+  t.like(res2.data, fooProduct);
 });
 
 test("update product, no update access", async (t) => {
@@ -123,6 +129,14 @@ test("update product, no update access", async (t) => {
     name: "foo4",
   });
   t.is(res.status, 403);
+});
+
+test("list products", async (t) => {
+  const res = await rolo().get("/products?limit=2");
+  t.is(res.status, 200);
+  t.is(res.data.length, 2);
+  t.like(res.data[1], fooProduct);
+  t.like(res.data[0], barProduct);
 });
 
 test("delete products", async (t) => {

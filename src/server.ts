@@ -9,6 +9,7 @@ import { init as initProducts } from "./routers/products";
 import { log } from "./logger";
 import { asciiHello } from "./static";
 import { intersection, union } from "lodash";
+import { paginator } from "./paginate";
 
 // set up main router
 const mainRouter = makeRouter();
@@ -91,6 +92,7 @@ server.use(rootRouter.routes());
 server.use(rootRouter.allowedMethods());
 // then do auth
 server.use(authMiddleware);
+server.use(paginator());
 // error if content-type is not application/json
 server.use(async (ctx, next) => {
   const match = ctx.request.is("application/json");

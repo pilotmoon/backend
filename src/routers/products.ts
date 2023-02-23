@@ -82,6 +82,19 @@ router.post("/", async (ctx) => {
   }
 });
 
+// list products
+router.get("/", async (ctx) => {
+  const authContext = ctx.state.auth;
+  const { limit, offset } = ctx.state.paginate;
+  assertScope("products:read", authContext);
+  const cursor = getCollection(authContext.kind).find()
+    .sort({ created: -1 })
+    .skip(offset)
+    .limit(limit);
+  const documents = await cursor.toArray();
+  ctx.body = documents.map((document) => ProductRecord.parse(document));
+});
+
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const authContext = ctx.state.auth;
   assertScope("products:read", authContext);
