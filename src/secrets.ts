@@ -23,32 +23,36 @@ function getSecretKey(kind: KeyKind) {
   if (!/^[0-9a-f]{64}$/.test(hexKey)) {
     throw new Error(`No secret key for kind '${kind}'`);
   }
-  return hexKey;
+  return Buffer.from(hexKey, "hex");
 }
 
-export function encryptString(message: string, kind: KeyKind): string {
-  const key = Buffer.from(getSecretKey(kind), "hex");
+export function encryptString(message: string, kind: KeyKind): Buffer {
+  const key = getSecretKey(kind);
   const iv = randomBytes(16);
 
   const cipher = createCipheriv("aes256", key, iv);
 
-  return iv.toString("hex") +
-    cipher.update(marker, "utf8", "hex") +
-    cipher.update(message, "utf8", "hex") +
-    cipher.final("hex");
+  return Buffer.concat([
+    iv,
+    cipher.update(marker, "utf8"),
+    cipher.update(message, "utf8"),
+    cipher.final(),
+  ]);
 }
 
-export function decryptString(encryptedMessage: string, kind: KeyKind): string {
-  const key = Buffer.from(getSecretKey(kind), "hex");
-  const iv = Buffer.from(encryptedMessage.slice(0, 32), "hex");
-  const encryptedMessageWithoutIv = encryptedMessage.slice(32);
+export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
+  const key = getSecretKey(kind);
+  const iv = encryptedMessage.subarray(0, 16);
+  const encryptedMessageWithoutIv = encryptedMessage.subarray(16);
 
   const decipher = createDecipheriv("aes256", key, iv);
-  const plainText = decipher.update(encryptedMessageWithoutIv, "hex", "utf8") +
-    decipher.final("utf8");
+  const plainText = Buffer.concat([
+    decipher.update(encryptedMessageWithoutIv),
+    decipher.final(),
+  ]).toString("utf8");
 
   if (!plainText.startsWith(marker)) {
     throw new Error("Unable to decrypt string");
   }
-  return plainText.slice(6);
+  return plainText.slice(marker.length);
 }
