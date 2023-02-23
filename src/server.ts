@@ -128,7 +128,7 @@ function startServer() {
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {
-    log(`Server listening on port ${config.APP_PORT}`.green);
+    log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
   });
 }
 

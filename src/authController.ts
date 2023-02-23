@@ -53,6 +53,7 @@ const ApiKeySchema = AuthContext.extend({
   object: z.literal("apiKey"),
   key: z.string().optional(),
   hashedKey: z.custom<Binary>((v) => v instanceof Binary),
+  created: z.date(),
 });
 export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
@@ -62,7 +63,8 @@ export async function init() {
 
   // for both test and live database
   for (const kind of keyKinds) {
-    const collection = getDb(kind).collection(apiKeysCollectionName);
+    const collection = getCollection(kind);
+    collection.createIndex({ created: 1 });
 
     // if there are no keys, create a bootstrap key
     const count = await collection.countDocuments();
@@ -130,12 +132,16 @@ export async function createApiKey(
     object: "apiKey" as const,
     hashedKey: new Binary(await hashPassword(key)),
     kind: authContext.kind,
+    created: new Date(),
     ...params,
   };
   if (replace) {
     await getCollection(authContext.kind).deleteOne({ _id: document._id });
   }
-  const result = await getCollection(authContext.kind).insertOne(document);
+
+  const result = await getCollection(authContext.kind).insertOne(
+    ApiKeySchema.parse(document),
+  );
   log(`Inserted API key with _id: ${result.insertedId}`);
   return { ...document, key }; // return the key in cleartext since it's a new key
 }
@@ -146,7 +152,8 @@ export async function readApiKey(
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
   assertScope("apiKeys:read", authContext);
-  return await getCollection(authContext.kind).findOne({ _id: id });
+  const document = await getCollection(authContext.kind).findOne({ _id: id });
+  return document === null ? null : ApiKeySchema.parse(document);
 }
 
 // update updatable fields of an API key and return the updated document
@@ -170,7 +177,7 @@ export async function updateApiKey(
   if (typeof document === "object" && document !== null) {
     if (hasScope("apiKeys:read", authContext)) {
       log("Returning updated API key record");
-      return document;
+      return ApiKeySchema.parse(document);
     } else {
       log("No read scope, so not returning record");
       return null;
