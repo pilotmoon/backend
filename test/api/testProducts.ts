@@ -1,6 +1,5 @@
 import test from "ava";
 import { keys, rolo } from "./setup";
-import { createUniqueNameId } from "mnemonic-id";
 import { randomString } from "@pilotmoon/chewit";
 
 function bundleId(id: string) {
@@ -48,7 +47,6 @@ test("create product, bad edition", async (t) => {
 });
 
 test("create product", async (t) => {
-  fooProduct.bundleId = createUniqueNameId();
   const res = await rolo().post("products", fooProduct);
   t.is(res.status, 201);
   t.like(res.data, fooProduct);
@@ -125,4 +123,18 @@ test("update product, no update access", async (t) => {
     name: "foo4",
   });
   t.is(res.status, 403);
+});
+
+test("delete products", async (t) => {
+  const res = await rolo().delete(`/products/${fooProductId}`);
+  t.is(res.status, 204);
+  t.is(res.data, "");
+  const res2 = await rolo().delete(`/products/${barProductId}`);
+  t.is(res2.status, 204);
+  t.is(res2.data, "");
+});
+
+test("delete product, not found", async (t) => {
+  const res = await rolo().delete("/products/123");
+  t.is(res.status, 404);
 });

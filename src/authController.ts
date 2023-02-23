@@ -126,6 +126,8 @@ export async function createApiKey(
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
   assertScope("apiKeys:create", authContext);
+
+  // create key document
   const { id, key } = randomKey(authContext.kind, "ak");
   const document = {
     _id: id,
@@ -135,13 +137,15 @@ export async function createApiKey(
     created: new Date(),
     ...params,
   };
+  ApiKeySchema.parse(document);
+
+  // delete existing key if it exists
   if (replace) {
     await getCollection(authContext.kind).deleteOne({ _id: document._id });
   }
 
-  const result = await getCollection(authContext.kind).insertOne(
-    ApiKeySchema.parse(document),
-  );
+  // insert new
+  const result = await getCollection(authContext.kind).insertOne(document);
   log(`Inserted API key with _id: ${result.insertedId}`);
   return { ...document, key }; // return the key in cleartext since it's a new key
 }

@@ -24,6 +24,7 @@ export async function init() {
     // create unique compound index on bundleId and edition
     const collection = getCollection(kind);
     collection.createIndex({ bundleId: 1, edition: 1 }, { unique: true });
+    collection.createIndex({ created: 1 });
   }
 }
 
@@ -46,6 +47,7 @@ type PartialProductRecord = z.infer<typeof PartialProductRecord>;
 const ProductRecord = SettableProductRecord.extend({
   _id: z.string(),
   object: z.literal("product"),
+  created: z.date(),
 });
 export type ProductRecord = z.infer<typeof ProductRecord>;
 
@@ -59,13 +61,15 @@ router.post("/", async (ctx) => {
   const document = {
     _id: randomIdentifier("pr"),
     object: "product" as const,
+    created: new Date(),
     ...suppliedProductData,
   };
+  ProductRecord.parse(document);
 
   // insert into database
   const collection = getCollection(authContext.kind);
   try {
-    const result = await collection.insertOne(ProductRecord.parse(document));
+    const result = await collection.insertOne(document);
     ctx.body = document;
     ctx.status = 201;
     ctx.set("Location", ctx.location(matchId.uuid, { id: document._id }));
@@ -83,10 +87,9 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   assertScope("products:read", authContext);
   const id = ctx.params.id;
   const document = await getCollection(authContext.kind).findOne({ _id: id });
-  if (!document) {
-    throw new ApiError(404, `Product '${id}' not found`);
+  if (document) {
+    ctx.body = ProductRecord.parse(document);
   }
-  ctx.body = ProductRecord.parse(document);
 });
 
 router.patch(matchId.pattern, async (ctx) => {
@@ -117,15 +120,16 @@ router.patch(matchId.pattern, async (ctx) => {
     } else {
       ctx.status = 204;
     }
-  } else {
-    throw new ApiError(404, `Product '${id}' not found`);
   }
 });
 
 router.delete(matchId.pattern, async (ctx) => {
+  log("delete product", { id: ctx.params.id });
   const authContext = ctx.state.auth;
   assertScope("products:delete", authContext);
   const id = ctx.params.id;
   const result = await getCollection(authContext.kind).deleteOne({ _id: id });
-  return result.deletedCount === 1;
+  if (result.deletedCount === 1) {
+    ctx.status = 204;
+  }
 });
