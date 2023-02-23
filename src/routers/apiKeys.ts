@@ -6,7 +6,7 @@ import {
   readApiKey,
   SettableAuthContext,
   updateApiKey,
-} from "../authController";
+} from "../controllers/authController";
 import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";

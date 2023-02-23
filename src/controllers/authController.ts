@@ -1,16 +1,16 @@
-import { deterministic, randomKey } from "./identifiers";
+import { deterministic, randomKey } from "../identifiers";
 import { z } from "zod";
-import { getDb } from "./database";
+import { getDb } from "../database";
 import { Binary } from "mongodb";
-import { ApiError } from "./errors";
+import { ApiError } from "../errors";
 import { Context, Next } from "koa";
-import { log, loge } from "./logger";
-import { KeyKind, keyKinds, keyRegex } from "./identifiers";
-import { hashPassword, verifyPassword } from "./scrypt";
+import { log, loge } from "../logger";
+import { KeyKind, keyKinds, keyRegex } from "../identifiers";
+import { hashPassword, verifyPassword } from "../scrypt";
 import TTLCache = require("@isaacs/ttlcache");
 import { createHash } from "node:crypto";
-import { TestKey, testKeys } from "../test/api/setup";
-import { PaginateState } from "./paginate";
+import { TestKey, testKeys } from "../../test/api/setup";
+import { PaginateState } from "../paginate";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {

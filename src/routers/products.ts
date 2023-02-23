@@ -1,4 +1,4 @@
-import { assertScope, hasScope } from "../authController";
+import { assertScope, hasScope } from "../controllers/authController";
 import { makeRouter } from "../koa";
 import { getDb } from "../database";
 import { MongoServerError } from "mongodb";
