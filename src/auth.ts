@@ -7,7 +7,8 @@ import { Context, Next } from "koa";
 import { log, loge } from "./logger";
 import { KeyKind, keyKinds, keyRegex } from "./identifiers";
 import { hashPassword, verifyPassword } from "./scrypt";
-import LRUCache = require("lru-cache");
+import TTLCache = require("@isaacs/ttlcache");
+import { createHash } from "node:crypto";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {
@@ -166,48 +167,64 @@ export async function deleteApiKey(
   return result.deletedCount === 1;
 }
 
-// auth cache -- fetches and verifies API keys
-const authCache = new LRUCache<
-  string,
-  { authContext: AuthContext; keyId: string }
->({
+/*** middleware ***/
+
+interface SecretKeyParts {
+  key: string;
+  kind: KeyKind;
+  keyId: string;
+  cacheKey: string;
+}
+
+function parseSecretKey(key: string): SecretKeyParts {
+  // example key format
+  // key_test_1J2k3L4m5N6o7P8q9R0s1T2u3V4w5X6y7Z8ty37q
+  const match = key.match(keyRegex);
+  if (!match) {
+    throw new ApiError(401, "Invalid API key (bad format)");
+  }
+  const kind = match[1] as KeyKind;
+  const keyId = "ak_" + match[2];
+
+  // generate sha256 hashed version of the key so we can store it
+  // in the cache without exposing the secret key to the cache.
+  // include the unique keyId in the cache key so that there is no
+  // chance of a collision between different keys.
+  const hash = createHash("sha256");
+  hash.update(key);
+  const cacheKey = keyId + ":" + hash.digest("hex");
+
+  return { key, kind, keyId, cacheKey };
+}
+
+// fetch the key record from the database and verify the secret key
+// note: this function usually takes ~100ms to run so should be cached
+async function validateSecretKey({ key, kind, keyId }: SecretKeyParts) {
+  let document = await getCollection(kind).findOne({ _id: keyId });
+  if (!document) {
+    throw new ApiError(401, "Invalid API key (bad id)");
+  }
+
+  // parse the document to catch any schema errors
+  document = ApiKeySchema.parse(document);
+
+  // verify the key
+  const valid = await verifyPassword(
+    Buffer.from(document.hashedKey.buffer),
+    key,
+  );
+  if (!valid) {
+    throw new ApiError(401, "Invalid API key (bad secret)");
+  }
+
+  // parsing again returns a more specific type
+  return AuthContext.parse(document);
+}
+
+// auth cache
+const authCache = new TTLCache<string, AuthContext>({
   max: 100000,
   ttl: 1000 * 60 * 60, // 1 hour
-  fetchMethod: async (key: string) => {
-    // regex match the kind part of the key
-    const match = key.match(keyRegex);
-    if (!match) {
-      throw new ApiError(401, "Invalid API key format");
-    }
-    const kind = match[1] as KeyKind;
-    const idPrefix = match[2];
-
-    // now we have deconstructed the key, look it up in the database
-    const keyId = "ak_" + idPrefix;
-    const document = ApiKeySchema.parse(
-      await getCollection(kind).findOne({ _id: keyId }),
-    );
-
-    // verify the key
-    const valid = await verifyPassword(
-      Buffer.from(document.hashedKey.buffer),
-      key,
-    );
-    if (!valid) {
-      throw new ApiError(401, "Invalid API key");
-    }
-
-    // validate and store the document as the auth context
-    let authContext: AuthContext;
-    try {
-      authContext = AuthContext.parse(document);
-    } catch (err) {
-      loge("Error parsing auth context", err);
-      throw new ApiError(500, "Error parsing auth context");
-    }
-
-    return { authContext, keyId };
-  },
 });
 
 // auth middleware, allow Bearer token or x-api-key header
@@ -224,12 +241,19 @@ export async function authMiddleware(ctx: Context, next: Next) {
   } else {
     throw new ApiError(401, "API key is required");
   }
-  const info = await authCache.fetch(key);
-  if (!info) {
-    throw new ApiError(500, "Unable to fetch API key");
-  }
-  ctx.state.auth = info.authContext;
-  ctx.state.apiKeyId = info.keyId;
 
+  // check the cache
+  const keyParts = parseSecretKey(key);
+  let authContext = authCache.get(keyParts.cacheKey);
+
+  // if not in the cache, perform full validation
+  if (!authContext) {
+    authContext = await validateSecretKey(keyParts);
+    authCache.set(keyParts.cacheKey, authContext);
+  }
+
+  log("auth cache size: " + authCache.size);
+  ctx.state.auth = authContext;
+  ctx.state.apiKeyId = keyParts.keyId;
   await next();
 }
