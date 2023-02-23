@@ -27,11 +27,11 @@ export const testKeys = {
 };
 
 const instances = new Map<string, AxiosInstance>();
-let keyStore: { [key: string]: { id: string; key: string } };
 type KeyName = [keyof typeof testKeys][number];
+let keyStore: Record<KeyName, { id: string; key: string }>;
 export function keys() {
   if (!keyStore) {
-    keyStore = {};
+    keyStore = {} as any;
     for (const keyName of Object.keys(testKeys) as KeyName[]) {
       deterministic(() => {
         keyStore[keyName] = randomKey("test", "ak");

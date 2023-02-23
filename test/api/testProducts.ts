@@ -134,9 +134,10 @@ test("update product, no update access", async (t) => {
 test("list products", async (t) => {
   const res = await rolo().get("/products?limit=2");
   t.is(res.status, 200);
-  t.is(res.data.length, 2);
-  t.like(res.data[1], fooProduct);
-  t.like(res.data[0], barProduct);
+  t.is(res.data.items.length, 2);
+  t.is(res.data.object, "list");
+  t.like(res.data.items[1], fooProduct);
+  t.like(res.data.items[0], barProduct);
 });
 
 test("delete products", async (t) => {

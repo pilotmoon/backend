@@ -58,8 +58,8 @@ test("create api key, unknown scope", async (t) => {
   t.is(res.status, 400);
 });
 
-test("api key, method not allowed (get)", async (t) => {
-  const res = await rolo().get("apiKeys");
+test("api keys, method not allowed (delete)", async (t) => {
+  const res = await rolo().delete("apiKeys");
   t.is(res.status, 405);
 });
 
@@ -201,4 +201,87 @@ test("modify other api key by id, no write scope", async (t) => {
     { "description": "foo" },
   );
   t.is(res.status, 403);
+});
+
+test("list api keys", async (t) => {
+  const res = await rolo().get("apiKeys?limit=4");
+  t.is(res.data.object, "list");
+  t.is(res.status, 200);
+  t.is(res.data.items.length, 4);
+  t.deepEqual(res.data.paginate, { limit: 4, offset: 0, order: -1 });
+  t.is(res.data.items[0].key, undefined);
+  t.is(res.data.items[0].id, keys()["readonly"].id);
+});
+
+test("list api keys, no read scope", async (t) => {
+  const res = await rolo("updateonly").get("apiKeys?limit=4");
+  t.is(res.status, 403);
+});
+
+test("list api keys, limit zero", async (t) => {
+  const res = await rolo().get("apiKeys?limit=0");
+  t.is(res.status, 400);
+});
+
+test("list api keys, limit negative", async (t) => {
+  const res = await rolo().get("apiKeys?limit=-1");
+  t.is(res.status, 400);
+});
+
+test("list api keys, limit too large", async (t) => {
+  const res = await rolo().get("apiKeys?limit=1000");
+  t.is(res.status, 200);
+  t.is(res.data.paginate.limit, 100);
+});
+
+test("list api keys, offset negative", async (t) => {
+  const res = await rolo().get("apiKeys?offset=-1");
+  t.is(res.status, 400);
+});
+
+test("list api keys, offset too large", async (t) => {
+  const res = await rolo().get("apiKeys?offset=10000");
+  t.is(res.data.object, "list");
+  t.is(res.status, 200);
+  t.is(res.data.items.length, 0);
+});
+
+test("list api keys, order ascending", async (t) => {
+  const res = await rolo().get("apiKeys?order=1");
+  t.is(res.data.object, "list");
+  t.is(res.status, 200);
+  t.deepEqual(res.data.paginate, { limit: 10, offset: 0, order: 1 });
+});
+
+test("list api keys, order invalid", async (t) => {
+  const res = await rolo().get("apiKeys?order=2");
+  t.is(res.status, 400);
+  const res2 = await rolo().get("apiKeys?order=a");
+  t.is(res2.status, 400);
+});
+
+test("list api keys, limit invalid", async (t) => {
+  const res = await rolo().get("apiKeys?limit=a");
+  t.is(res.status, 400);
+});
+
+test("list api keys, offset invalid", async (t) => {
+  const res = await rolo().get("apiKeys?offset=a");
+  t.is(res.status, 400);
+});
+
+test("list api keys, limit and offset", async (t) => {
+  const res = await rolo().get("apiKeys?limit=3&offset=2");
+  t.is(res.data.object, "list");
+  t.is(res.status, 200);
+  t.is(res.data.items.length, 3);
+  t.deepEqual(res.data.paginate, { limit: 3, offset: 2, order: -1 });
+  t.is(res.data.items[0].id, keys()["subject"].id);
+  t.is(res.data.items[1].id, keys()["noscope"].id);
+  t.is(res.data.items[2].id, keys()["runner"].id);
+});
+
+test("list api keys, duplicated limit", async (t) => {
+  const res = await rolo().get("apiKeys?limit=3&limit=4");
+  t.is(res.status, 400);
 });

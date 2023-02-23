@@ -1,6 +1,7 @@
 import {
   createApiKey,
   deleteApiKey,
+  listApiKeys,
   PartialAuthContext,
   readApiKey,
   SettableAuthContext,
@@ -38,6 +39,12 @@ router.post("/", async (ctx) => {
     "Location",
     ctx.location(matchIdAndCurrent.uuid, { id: document._id }),
   );
+});
+
+// list api keys
+router.get("/", async (ctx) => {
+  const documents = await listApiKeys(ctx.state.auth, ctx.state.paginate);
+  ctx.body = documents.map(sanitize);
 });
 
 router.get(matchIdAndCurrent.uuid, matchIdAndCurrent.pattern, async (ctx) => {

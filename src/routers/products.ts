@@ -85,10 +85,10 @@ router.post("/", async (ctx) => {
 // list products
 router.get("/", async (ctx) => {
   const authContext = ctx.state.auth;
-  const { limit, offset } = ctx.state.paginate;
+  const { limit, offset, order } = ctx.state.paginate;
   assertScope("products:read", authContext);
   const cursor = getCollection(authContext.kind).find()
-    .sort({ created: -1 })
+    .sort({ created: order })
     .skip(offset)
     .limit(limit);
   const documents = await cursor.toArray();

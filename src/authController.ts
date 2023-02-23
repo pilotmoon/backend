@@ -10,6 +10,7 @@ import { hashPassword, verifyPassword } from "./scrypt";
 import TTLCache = require("@isaacs/ttlcache");
 import { createHash } from "node:crypto";
 import { TestKey, testKeys } from "../test/api/setup";
+import { PaginateState } from "./paginate";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {
@@ -158,6 +159,22 @@ export async function readApiKey(
   assertScope("apiKeys:read", authContext);
   const document = await getCollection(authContext.kind).findOne({ _id: id });
   return document === null ? null : ApiKeySchema.parse(document);
+}
+
+// list API keys
+export async function listApiKeys(
+  authContext: AuthContext,
+  paginate: PaginateState,
+): Promise<ApiKeySchema[]> {
+  assertScope("apiKeys:read", authContext);
+  const { offset, limit, order } = paginate;
+  const cursor = await getCollection(authContext.kind)
+    .find()
+    .sort({ created: order })
+    .skip(offset)
+    .limit(limit);
+  const documents = await cursor.toArray();
+  return documents.map((document) => ApiKeySchema.parse(document));
 }
 
 // update updatable fields of an API key and return the updated document

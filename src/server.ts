@@ -60,12 +60,24 @@ server.use(async (ctx, next) => {
 server.use(async (ctx, next) => {
   await next();
   if (typeof ctx.body === "object") {
-    // replace _id with id
-    if (ctx.body._id) {
-      if (typeof ctx.body._id === "string") {
-        ctx.body.id = ctx.body._id;
+    // if array
+    function replace(obj: any) {
+      if (obj._id) {
+        if (typeof obj._id === "string") {
+          obj.id = obj._id;
+        }
+        delete obj._id;
       }
-      delete ctx.body._id;
+      return obj;
+    }
+    if (Array.isArray(ctx.body)) {
+      ctx.body = {
+        object: "list",
+        paginate: ctx.state.paginate,
+        items: ctx.body.map(replace),
+      };
+    } else {
+      ctx.body = replace(ctx.body);
     }
     // set livemode key
     ctx.body.livemode = ctx.state.auth.kind === "live";
