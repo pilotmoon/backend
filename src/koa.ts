@@ -3,7 +3,7 @@ Wrap Koa's types to inject our own state type.
 */
 import Koa = require("koa");
 import Router = require("@koa/router");
-import { AuthContext } from "./auth";
+import { AuthContext } from "./authController";
 
 interface State {
   auth: AuthContext;

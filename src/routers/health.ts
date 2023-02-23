@@ -1,4 +1,4 @@
-import { assertScope } from "../auth";
+import { assertScope } from "../authController";
 import { makeRouter } from "../koa";
 import { randomString } from "@pilotmoon/chewit";
 import { getDb } from "../database";

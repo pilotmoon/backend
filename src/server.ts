@@ -4,7 +4,7 @@ import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { authMiddleware, init as initAuth } from "./auth";
+import { authMiddleware, init as initAuth } from "./authController";
 import { log } from "./logger";
 import { asciiHello } from "./static";
 import { intersection, union } from "lodash";
