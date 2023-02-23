@@ -1,7 +1,5 @@
 import { Context, Next } from "koa";
-import { max } from "lodash";
 import { ApiError } from "./errors";
-import { log } from "./logger";
 
 export type PaginateOptions = {
   maximumLimit?: number;
@@ -18,30 +16,30 @@ export function paginator(
   { maximumLimit = 100, defaultLimit = 10 }: PaginateOptions = {},
 ) {
   return async function (ctx: Context, next: Next) {
-    function getQueryNumber(name: string, defaultValue: number) {
+    function getQueryInteger(name: string, defaultValue: number) {
       const query = ctx.query[name];
       if (typeof query === "undefined") {
         return defaultValue;
       }
       if (typeof query === "string") {
-        const result = parseInt(query, 10);
-        if (isNaN(result)) {
-          throw new ApiError(400, `${name} must be a number`);
+        const result = Number(query);
+        if (isNaN(result) || !Number.isInteger(result)) {
+          throw new ApiError(400, `${name} must be an integer`);
         }
         return result;
       }
-      throw new ApiError(
-        400,
-        `invalid or duplicated ${name} parameter in query`,
-      );
+      if (Array.isArray(query)) {
+        throw new ApiError(400, `duplicated ${name} parameter in query`);
+      }
+      throw new ApiError(400, `problem with ${name} parameter in query`);
     }
 
-    const offset = getQueryNumber("offset", 0);
+    const offset = getQueryInteger("offset", 0);
     const limit = Math.min(
-      getQueryNumber("limit", defaultLimit),
+      getQueryInteger("limit", defaultLimit),
       maximumLimit,
     );
-    const order = getQueryNumber("order", -1);
+    const order = getQueryInteger("order", -1);
 
     if (offset < 0) {
       throw new ApiError(400, "offset must be >= 0");

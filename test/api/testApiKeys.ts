@@ -284,4 +284,17 @@ test("list api keys, limit and offset", async (t) => {
 test("list api keys, duplicated limit", async (t) => {
   const res = await rolo().get("apiKeys?limit=3&limit=4");
   t.is(res.status, 400);
+  t.log(res.data);
+});
+
+test("list api keys, invalid characters in offset", async (t) => {
+  const res = await rolo().get("apiKeys?offset=0g");
+  t.is(res.status, 400);
+  t.log(res.data);
+});
+
+test("list api keys, non-integer offset", async (t) => {
+  const res = await rolo().get("apiKeys?offset=1.5");
+  t.is(res.status, 400);
+  t.log(res.data);
 });
