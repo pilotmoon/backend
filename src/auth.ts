@@ -153,13 +153,12 @@ export async function updateApiKey(
     returnDocument: "after",
   });
   const document = result.value;
-  log("document:", document);
   if (typeof document === "object" && document !== null) {
     if (hasScope("apiKeys:read", authContext)) {
       log("Returning updated API key record");
       return document;
     } else {
-      log("No read scope, so not returning updated API key record");
+      log("No read scope, so not returning record");
       return null;
     }
   } else {
@@ -263,7 +262,7 @@ export async function authMiddleware(ctx: Context, next: Next) {
     authCache.set(keyParts.cacheKey, authContext);
   }
 
-  log("auth cache size: " + authCache.size);
+  log("New auth cache size: " + authCache.size);
   ctx.state.auth = authContext;
   ctx.state.apiKeyId = keyParts.id;
   await next();

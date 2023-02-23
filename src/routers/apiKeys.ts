@@ -61,7 +61,6 @@ router.patch(matchId.pattern, async (ctx) => {
   const id = ctx.params.id;
   const params = PartialAuthContext.parse(ctx.request.body);
   const document = await updateApiKey(id, params, ctx.state.auth);
-  log("got document", document);
   if (document === false) {
     throw new ApiError(404, `API key '${id}' not found`);
   } else if (document !== null) {
