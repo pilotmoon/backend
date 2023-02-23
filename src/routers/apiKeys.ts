@@ -10,6 +10,7 @@ import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
+import { log } from "../logger";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
@@ -20,10 +21,18 @@ const matchIdAndCurrent = {
   uuid: randomUUID(),
 };
 
+function excludeKey(obj: Record<string, unknown>, key: string) {
+  const { [key]: removed, ...rest } = obj;
+  return rest;
+}
+function sanitize(document: Record<string, unknown>) {
+  return excludeKey(document, "hashedKey");
+}
+
 router.post("/", async (ctx) => {
   const params = SettableAuthContext.parse(ctx.request.body);
   const document = await createApiKey(params, ctx.state.auth);
-  ctx.body = document;
+  ctx.body = sanitize(document);
   ctx.status = 201;
   ctx.set(
     "Location",
@@ -42,7 +51,7 @@ router.get(matchIdAndCurrent.uuid, matchIdAndCurrent.pattern, async (ctx) => {
   if (!document) {
     throw new ApiError(404, `API key '${id}' not found`);
   }
-  ctx.body = document;
+  ctx.body = sanitize(document);
 });
 
 router.patch(matchId.pattern, async (ctx) => {
@@ -52,10 +61,14 @@ router.patch(matchId.pattern, async (ctx) => {
   const id = ctx.params.id;
   const params = PartialAuthContext.parse(ctx.request.body);
   const document = await updateApiKey(id, params, ctx.state.auth);
-  if (!document) {
+  log("got document", document);
+  if (document === false) {
     throw new ApiError(404, `API key '${id}' not found`);
+  } else if (document !== null) {
+    ctx.body = sanitize(document);
+  } else {
+    ctx.status = 204; // no content
   }
-  ctx.status = 204; // no content
 });
 
 // delete api key

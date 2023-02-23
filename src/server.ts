@@ -47,6 +47,7 @@ server.use(async (ctx, next) => {
       log(
         String(ctx.state.error.type).bgWhite + " " +
           ctx.state.error.message,
+        ctx.state.error.stack ? "\n" + ctx.state.error.stack : "",
       );
     }
   }

@@ -1,4 +1,4 @@
-import { verifyScope } from "../auth";
+import { assertScope } from "../auth";
 import { makeRouter } from "../koa";
 import { randomString } from "@pilotmoon/chewit";
 import { getDb } from "../database";
@@ -14,7 +14,7 @@ export const router = makeRouter();
 
 // health check endpoint
 router.get("/health", async (ctx) => {
-  await verifyScope("health:read", ctx.state.auth);
+  assertScope("health:read", ctx.state.auth);
 
   // add object identifier to response
   const health = { "object": "health" } as any;

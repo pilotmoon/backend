@@ -2,15 +2,39 @@ import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/identifiers";
 import { config } from "../../src/config";
 
-let roloInstance: AxiosInstance;
-let keyStore: { [key: string]: { id: string; key: string } };
+export type TestKey = typeof testKeys[keyof typeof testKeys];
+export const testKeys = {
+  runner: {
+    scopes: "#all#",
+    description: "test all-scopes runner key (deterministically generated)",
+  },
+  noscope: {
+    scopes: [],
+    description: "test no-scopes key (deterministically generated)",
+  },
+  subject: {
+    scopes: ["health:read"],
+    description: "test subject key (deterministically generated)",
+  },
+  updateonly: {
+    scopes: ["apiKeys:update"],
+    description: "test update-only key (deterministically generated)",
+  },
+  readonly: {
+    scopes: ["apiKeys:read"],
+    description: "test read-only key (deterministically generated)",
+  },
+};
 
+const instances = new Map<string, AxiosInstance>();
+let keyStore: { [key: string]: { id: string; key: string } };
+type KeyName = [keyof typeof testKeys][number];
 export function keys() {
   if (!keyStore) {
     keyStore = {};
-    for (const name of ["runner", "noscope", "subject"]) {
+    for (const keyName of Object.keys(testKeys) as KeyName[]) {
       deterministic(() => {
-        keyStore[name] = randomKey("test", "ak");
+        keyStore[keyName] = randomKey("test", "ak");
       });
     }
     console.log("Created keyStore", keyStore);
@@ -18,16 +42,17 @@ export function keys() {
   return keyStore;
 }
 
-export function rolo() {
-  if (!roloInstance) {
-    console.log("CREATING ROLO INSTANCE");
-    roloInstance = axios.create({
+export function rolo(keyName: KeyName = "runner"): AxiosInstance {
+  let instance = instances.get(keyName);
+  if (!instance) {
+    instance = axios.create({
       baseURL: config.APP_TEST_URL,
       headers: {
-        "Authorization": `Bearer ${(keys()).runner.key}`,
+        "Authorization": `Bearer ${(keys())[keyName].key}`,
       },
       validateStatus: () => true, //
     });
+    instances.set(keyName, instance);
   }
-  return roloInstance;
+  return instance;
 }

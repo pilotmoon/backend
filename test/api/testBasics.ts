@@ -7,6 +7,11 @@ test("health", async (t) => {
   t.like(res.data, { object: "health", livemode: false });
 });
 
+test("health, no access", async (t) => {
+  const res = await rolo("noscope").get("health");
+  t.is(res.status, 403);
+});
+
 test("health, query string", async (t) => {
   const res = await rolo().get("health?foo=bar");
   t.is(res.status, 200);

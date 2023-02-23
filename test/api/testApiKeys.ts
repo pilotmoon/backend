@@ -95,8 +95,8 @@ test("api key CRUD test", async (t) => {
   const res3 = await rolo().patch(location, {
     description: "crud test key updated",
   });
-  t.is(res3.status, 204);
-  t.is(res3.data, "");
+  t.is(res3.status, 200);
+  t.is(res3.data.description, "crud test key updated");
 
   // get the key again to check update
   const res4 = await rolo().get(location);
@@ -183,5 +183,23 @@ test("modify other api key by id", async (t) => {
     "apiKeys/" + keys().subject.id,
     { "description": str },
   );
+  t.is(res.status, 200);
+  t.is(res.data.description, str);
+});
+
+test("modify other api key by id, no read scope", async (t) => {
+  const res = await rolo("updateonly").patch(
+    "apiKeys/" + keys().subject.id,
+    { "description": "foo" },
+  );
   t.is(res.status, 204);
+  t.is(res.data, "");
+});
+
+test("modify other api key by id, no write scope", async (t) => {
+  const res = await rolo("readonly").patch(
+    "apiKeys/" + keys().subject.id,
+    { "description": "foo" },
+  );
+  t.is(res.status, 403);
 });

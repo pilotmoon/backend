@@ -9,6 +9,7 @@ import { KeyKind, keyKinds, keyRegex } from "./identifiers";
 import { hashPassword, verifyPassword } from "./scrypt";
 import TTLCache = require("@isaacs/ttlcache");
 import { createHash } from "node:crypto";
+import { TestKey, testKeys } from "../test/api/setup";
 
 const apiKeysCollectionName = "apiKeys";
 function getCollection(kind: KeyKind) {
@@ -66,30 +67,19 @@ export async function init() {
     }
   }
 
-  // create a deterministic key for testing
+  // create deterministic test keys
   console.log("Creating fixed test keys");
   await deterministic(async () => {
     for (
-      const { scopes, desc } of [
-        {
-          scopes: allScopes,
-          desc: "test runner key (deterministically generated)",
-        },
-        {
-          scopes: [],
-          desc: "test no-scopes key (deterministically generated)",
-        },
-        {
-          scopes: ["health:read"],
-          desc: "test subject key (deterministically generated)",
-        },
-      ]
+      const [name, keyDef] of Object.entries<TestKey>(testKeys)
     ) {
+      if (keyDef.scopes === "#all#") {
+        keyDef.scopes = allScopes as any;
+      }
+      keyDef.description = `[${name}] ` + keyDef.description;
+      const authContext = SettableAuthContext.parse(keyDef);
       await createApiKey(
-        {
-          scopes: scopes as any,
-          description: desc,
-        },
+        authContext,
         { kind: "test", scopes: ["apiKeys:create"], description: "" },
         { replace: true },
       );
@@ -97,14 +87,20 @@ export async function init() {
   });
 }
 
-// function for verifying whether the auth context has a given scope
-export async function verifyScope(
+// functions for verifying whether the auth context has a given scope
+export function assertScope(
   scope: Scope,
   authContext: AuthContext,
-): Promise<void> {
-  if (!authContext.scopes.includes(scope)) {
+) {
+  if (!hasScope(scope, authContext)) {
     throw new ApiError(403, "Missing required scope: " + scope);
   }
+}
+export function hasScope(
+  scope: Scope,
+  authContext: AuthContext,
+) {
+  return authContext.scopes.includes(scope);
 }
 
 // create a new API key. returns the new key
@@ -113,7 +109,7 @@ export async function createApiKey(
   authContext: AuthContext,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
-  await verifyScope("apiKeys:create", authContext);
+  assertScope("apiKeys:create", authContext);
   const { id, key } = randomKey(authContext.kind, "ak");
   const document = {
     _id: id,
@@ -135,18 +131,20 @@ export async function readApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<ApiKeySchema | null> {
-  await verifyScope("apiKeys:read", authContext);
+  assertScope("apiKeys:read", authContext);
   return await getCollection(authContext.kind).findOne({ _id: id });
 }
 
 // update updatable fields of an API key and return the updated document
-// returns null if the key does not exist
+// returns false if the key does not exist, returns null if the key exists
+// but the user does not have permission to read it, otherwise returns the
+// updated document
 export async function updateApiKey(
   id: string,
   params: PartialAuthContext,
   authContext: AuthContext,
-): Promise<ApiKeySchema | null> {
-  await verifyScope("apiKeys:update", authContext);
+): Promise<ApiKeySchema | null | false> {
+  assertScope("apiKeys:update", authContext);
   const result = await getCollection(authContext.kind).findOneAndUpdate({
     _id: id,
   }, {
@@ -154,7 +152,20 @@ export async function updateApiKey(
   }, {
     returnDocument: "after",
   });
-  return result.value;
+  const document = result.value;
+  log("document:", document);
+  if (typeof document === "object" && document !== null) {
+    if (hasScope("apiKeys:read", authContext)) {
+      log("Returning updated API key record");
+      return document;
+    } else {
+      log("No read scope, so not returning updated API key record");
+      return null;
+    }
+  } else {
+    log("API key record not found");
+    return false;
+  }
 }
 
 // delete an API key by its ID. returns true if the key was deleted
@@ -162,7 +173,7 @@ export async function deleteApiKey(
   id: string,
   authContext: AuthContext,
 ): Promise<boolean> {
-  await verifyScope("apiKeys:delete", authContext);
+  assertScope("apiKeys:delete", authContext);
   const result = await getCollection(authContext.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }
