@@ -19,7 +19,8 @@ router.get("/health", async (ctx) => {
   // add object identifier to response
   const health = { "object": "health" } as any;
 
-  // add random string to test caching
+  // add random string to response
+  health.name = "Pilotmoon API Server v2";
   health.random = randomString({ length: 10 });
 
   // insert date and uptime
@@ -30,17 +31,17 @@ router.get("/health", async (ctx) => {
   health.commit = config.COMMIT_HASH;
 
   // insert request info
-  health.url = String(ctx.request.url);
-  health.method = String(ctx.request.method);
-  health.headers = ctx.request.headers;
+  // health.url = String(ctx.request.url);
+  // health.method = String(ctx.request.method);
+  // health.headers = ctx.request.headers;
 
   // test database connection
-  const coll = getCollection(ctx.state.auth.kind);
-  const document = await coll.insertOne(health);
-  const deleteResult = await coll.deleteOne({ _id: document.insertedId });
-  health.selfTest = {
-    database: deleteResult.acknowledged && deleteResult.deletedCount === 1,
-  };
+  // const coll = getCollection(ctx.state.auth.kind);
+  // const document = await coll.insertOne(health);
+  // const deleteResult = await coll.deleteOne({ _id: document.insertedId });
+  // health.selfTest = {
+  //   database: deleteResult.acknowledged && deleteResult.deletedCount === 1,
+  // };
 
   ctx.body = health;
 });
