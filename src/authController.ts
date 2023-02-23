@@ -17,18 +17,25 @@ function getCollection(kind: KeyKind) {
   return db.collection<ApiKeySchema>(apiKeysCollectionName);
 }
 
-export const allScopes = [
+// all the possible scopes
+const constScopes = [
   "health:read",
   "apiKeys:create",
   "apiKeys:read",
   "apiKeys:update",
   "apiKeys:delete",
+  "products:create",
 ] as const;
-type Scope = typeof allScopes[number];
+
+// scope type
+export const Scopes = z.array(z.enum(constScopes));
+export type Scopes = z.infer<typeof Scopes>;
+export type Scope = Scopes[number];
+export const allScopes: Scopes = constScopes as any;
 
 // schema for API keys
 export const SettableAuthContext = z.object({
-  scopes: z.array(z.enum(allScopes)),
+  scopes: Scopes,
   description: z.string(),
 });
 type SettableAuthContext = z.infer<typeof SettableAuthContext>;
@@ -49,6 +56,7 @@ export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 // called at startup to prepare the database
 export async function init() {
   log(`init ${apiKeysCollectionName} collection`);
+
   // for both test and live database
   for (const kind of keyKinds) {
     const collection = getDb(kind).collection(apiKeysCollectionName);
@@ -57,12 +65,15 @@ export async function init() {
     const count = await collection.countDocuments();
     if (count == 0) {
       log("No API keys found, creating bootstrap key", kind.blue);
-      const authContext = {
-        kind,
-        scopes: ["apiKeys:create" as const],
+      const settableAuthContext = {
+        scopes: allScopes,
         description: "bootstrap key (randomly generated)",
       };
-      const document = await createApiKey(authContext, authContext);
+      const document = await createApiKey(settableAuthContext, {
+        kind: kind,
+        scopes: ["apiKeys:create"],
+        description: "",
+      });
       console.log("Bootstrap key:".bgRed, document.key);
     }
   }
@@ -78,11 +89,11 @@ export async function init() {
       }
       keyDef.description = `[${name}] ` + keyDef.description;
       const authContext = SettableAuthContext.parse(keyDef);
-      await createApiKey(
-        authContext,
-        { kind: "test", scopes: ["apiKeys:create"], description: "" },
-        { replace: true },
-      );
+      await createApiKey(authContext, {
+        kind: "test",
+        scopes: ["apiKeys:create"],
+        description: "",
+      }, { replace: true });
     }
   });
 }

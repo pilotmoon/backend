@@ -6,7 +6,7 @@ import { logw } from "./logger";
 export const keyKinds = ["test", "live"] as const;
 export type KeyKind = typeof keyKinds[number];
 
-const keyPrefix = "key";
+const keyPrefix = "sk";
 const keyLength = 24;
 const idLength = 16;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
