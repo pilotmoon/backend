@@ -12,6 +12,7 @@ import {
   ZProductInfo,
   ZSecret,
 } from "../controllers/productsController";
+import { assertScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/products" });
 const matchId = {
@@ -48,6 +49,12 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
+router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
+  if (await deleteProduct(ctx.params.id, ctx.state.auth)) {
+    ctx.status = 204;
+  }
+});
+
 // add or update a named secret using a dedicated url
 router.put(matchId.pattern + "/secrets/:secretId", async (ctx) => {
   const suppliedSecret = ZSecret.parse(ctx.request.body);
@@ -68,8 +75,15 @@ router.put(matchId.pattern + "/secrets/:secretId", async (ctx) => {
   }
 });
 
-router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
-  if (await deleteProduct(ctx.params.id, ctx.state.auth)) {
-    ctx.status = 204;
+// read a named secret using a dedicated url
+router.get(matchId.pattern + "/secrets/:secretId", async (ctx) => {
+  assertScope("secrets:read", ctx.state.auth); // special scope for unredacted secrets
+
+  const document = await readProduct(ctx.params.id, ctx.state.auth);
+  if (!document?.secrets) return;
+
+  const secret = document.secrets[ctx.params.secretId];
+  if (secret) {
+    ctx.body = secret; // note: no sanitization
   }
 });

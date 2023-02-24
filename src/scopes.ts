@@ -11,6 +11,7 @@ const constScopes = [
   "products:read",
   "products:update",
   "products:delete",
+  "secrets:read",
   "licenseKeys:create",
   "licenseKeys:read",
   "licenseKeys:update",

@@ -192,7 +192,43 @@ test("add a key pair to the foo product using the put endpoint", async (t) => {
 
 test("try top get a secret using its own endpoint", async (t) => {
   const res = await rolo().get(`/products/${fooProductId}/secrets/mysecret`);
-  t.is(res.status, 405);
+  t.is(res.status, 200);
+  // this time the private key should be returned
+  t.is(res.data.publicKey, testAquaticPrimeKeyPair.publicKey);
+  t.is(res.data.privateKey, testAquaticPrimeKeyPair.privateKey);
+});
+
+test("try to get a secret that does not exist", async (t) => {
+  const res = await rolo().get(
+    `/products/${fooProductId}/secrets/doesnotexist`,
+  );
+  t.is(res.status, 404);
+});
+
+test("try to get a secret withou the right permissions", async (t) => {
+  const res = await rolo("readonly").get(
+    `/products/${fooProductId}/secrets/mysecret`,
+  );
+  t.is(res.status, 403);
+});
+
+test("create a product without secrets and then add one", async (t) => {
+  const res = await rolo().post("/products", {
+    name: "baz",
+    identifiers: ["baz"],
+  });
+  t.is(res.status, 201);
+
+  const res2 = await rolo().put(
+    `/products/${res.data.id}/secrets/mysecret`,
+    testAquaticPrimeKeyPair,
+  );
+  t.is(res2.status, 204);
+
+  const res3 = await rolo().get(`/products/${res.data.id}`);
+  t.is(res3.status, 200);
+  t.is(res3.data.secrets.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
+  t.deepEqual(res3.data.secrets.mysecret.privateKey, undefined);
 });
 
 test("delete product", async (t) => {
