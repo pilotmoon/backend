@@ -12,17 +12,31 @@ import { allScopes, Scope, Scopes } from "../scopes";
 
 /*** Schemas ***/
 
-export const ZSettableAuthContext = z.object({
+// Schema for the parts of the info that must be provided at creation time
+export const ZAuthContextInfo = z.object({
   scopes: Scopes,
   description: z.string(),
 });
-type SettableAuthContext = z.infer<typeof ZSettableAuthContext>;
-export const ZPartialAuthContext = ZSettableAuthContext.partial();
-type PartialAuthContext = z.infer<typeof ZPartialAuthContext>;
-export const ZAuthContext = ZSettableAuthContext.extend({
+type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
+
+// Schema for the parts of the info that can be updated later
+export const ZAuthContextInfoUpdate = ZAuthContextInfo.partial();
+type AuthContextInfoUpdate = z.infer<typeof ZAuthContextInfoUpdate>;
+
+// Schema for the full info of a key, including the key kind (test or live)
+// which is derived from the auth context used to create the key.
+// It is not possible to create a test key with a live auth context,
+// or vice versa.
+export const ZAuthContext = ZAuthContextInfo.extend({
   kind: z.enum(keyKinds),
 });
 export type AuthContext = z.infer<typeof ZAuthContext>;
+
+// Schema for the full API key record to be stored in the database
+// This includes the secret key itself, which is stored hashed.
+// The secret key is only returned to the client once, when the api key is created.
+// The plain text key is never stored in the database. (It is removed from
+// the document before it is stored.)
 export const ZApiKeySchema = ZAuthContext.extend({
   _id: z.string(),
   object: z.literal("apiKey"),
@@ -34,6 +48,7 @@ export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
 /*** Scope Assessment ****/
 
+// Function to check that the given auth context has the given scope.
 export function assertScope(
   scope: Scope,
   authContext: AuthContext,
@@ -92,7 +107,7 @@ export async function init() {
       if (keyDef.scopes === "#all#") keyDef.scopes = allScopes;
       keyDef.description = `[${name}] ` + keyDef.description;
       await createApiKey(
-        ZSettableAuthContext.parse(keyDef),
+        ZAuthContextInfo.parse(keyDef),
         specialContext("test"),
         { replace: true },
       );
@@ -101,9 +116,15 @@ export async function init() {
 }
 
 /*** C.R.U.D. ***/
+// (This stands for Create, Read, Update, Delete. It's a title for this
+// section of the file.)
 
+// Create a new API key. Returns the created key, including the secret key
+// in cleartext. The `replace` option can be used to allow overwriting an
+// existing key with the same id. (This only happens when the key is created
+// with a the deterministic key generator, e.g. in tests.)
 export async function createApiKey(
-  params: SettableAuthContext,
+  params: AuthContextInfo,
   auth: AuthContext,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
@@ -132,6 +153,9 @@ export async function createApiKey(
   }
 }
 
+// Read an API key. Returns null if the key does not exist. Throws an
+// internal server error if the database returns a document that does
+// not match the schema.
 export async function readApiKey(
   id: string,
   auth: AuthContext,
@@ -147,6 +171,13 @@ export async function readApiKey(
   }
 }
 
+// List API keys. This is a paginated list. The default order is by
+// creation date, descending. Only the first `limit` keys are returned.
+// The `offset` parameter can be used to skip the first `offset` keys.
+// The `orderBy` and `order` parameters can be used to change the sort order.
+// The `order` parameter can be either "1" or "-1" to sort ascending or descending.
+// Throws an internal server error if the database returns a document that
+// does not match the schema.
 export async function listApiKeys(
   { limit, offset, order, orderBy }: PaginateState,
   auth: AuthContext,
@@ -158,12 +189,21 @@ export async function listApiKeys(
     .skip(offset)
     .limit(limit);
   const documents = await cursor.toArray();
-  return documents.map((document) => ZApiKeySchema.parse(document));
+  try {
+    return documents.map((document) => ZApiKeySchema.parse(document));
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
+  }
 }
 
+// Update an API key. Only the description and scopes can be updated.
+// Returns true if the key was updated, false if the key does not exist.
+// Accepts a partial update, in which case only the fields that are present
+// are updated.
 export async function updateApiKey(
   id: string,
-  params: PartialAuthContext,
+  params: AuthContextInfoUpdate,
   auth: AuthContext,
 ): Promise<boolean> {
   assertScope("apiKeys:update", auth);
@@ -180,6 +220,8 @@ export async function updateApiKey(
   }
 }
 
+// Delete an API key. Returns true if the key was deleted, false if the key
+// does not exist.
 export async function deleteApiKey(
   id: string,
   auth: AuthContext,

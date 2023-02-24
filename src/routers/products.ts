@@ -8,8 +8,8 @@ import {
   readProduct,
   sanitize,
   updateProduct,
-  ZPartialProductInfo,
   ZProductInfo,
+  ZProductInfoUpdate,
   ZSecret,
 } from "../controllers/productsController";
 import { assertScope } from "../controllers/authController";
@@ -46,7 +46,7 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 
 // update a product
 router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
-  const suppliedData = ZPartialProductInfo.strict().parse(ctx.request.body);
+  const suppliedData = ZProductInfoUpdate.strict().parse(ctx.request.body);
   if (await updateProduct(ctx.params.id, suppliedData, ctx.state.auth)) {
     ctx.status = 204;
   }
