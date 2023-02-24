@@ -19,7 +19,7 @@ const matchId = {
 
 // create new product
 router.post("/", async (ctx) => {
-  const suppliedData = ZProductInfo.parse(ctx.request.body);
+  const suppliedData = ZProductInfo.strict().parse(ctx.request.body);
   const document = await createProduct(suppliedData, ctx.state.auth);
   ctx.body = document;
   ctx.status = 201;
@@ -40,7 +40,7 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 });
 
 router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
-  const suppliedData = ZPartialProductInfo.parse(ctx.request.body);
+  const suppliedData = ZPartialProductInfo.strict().parse(ctx.request.body);
   if (await updateProduct(ctx.params.id, suppliedData, ctx.state.auth)) {
     ctx.status = 204;
   }

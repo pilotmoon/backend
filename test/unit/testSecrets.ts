@@ -1,6 +1,8 @@
 import {
-  decryptString as decrypt,
-  encryptString as encrypt,
+  decrypt as decrypt,
+  decryptRecord,
+  encrypt as encrypt,
+  encryptRecord,
 } from "../../src/secrets";
 import test from "ava";
 
@@ -40,4 +42,25 @@ test("encrypt then modify iv", (t) => {
     Buffer.from("12345678901234567890123456789012", "hex"),
   ]);
   t.log(t.throws(() => decrypt(modified, "test"))?.message);
+});
+
+test("encrypt and decrypt record", (t) => {
+  const record = {
+    foo: "bar",
+    baz: "qux",
+    encrypted: "hello world",
+  };
+  // encrypt the record
+  const encrypted = encryptRecord(record, ["encrypted"], "test");
+
+  // verify that the encrypted value is different
+  t.notDeepEqual(encrypted, record);
+  t.assert(typeof encrypted.encrypted === "object");
+
+  // verify that the non-encrypted keys didn't change
+  t.like(encrypted, { foo: record.foo, baz: record.baz });
+
+  // verify that the encrypted value is decrypted correctly
+  const decrypted = decryptRecord(encrypted, ["encrypted"], "test");
+  t.deepEqual(decrypted, record);
 });

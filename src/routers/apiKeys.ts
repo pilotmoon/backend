@@ -11,6 +11,7 @@ import { makeRouter } from "../koaWrapper";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
+import { omit } from "../omit";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
@@ -19,16 +20,12 @@ const matchId = {
 };
 const matchIdAndCurrent = makeIdentifierPattern("id", "ak", ["current"]);
 
-function excludeKey(obj: Record<string, unknown>, key: string) {
-  const { [key]: removed, ...rest } = obj;
-  return rest;
-}
 function sanitize(document: Record<string, unknown>) {
-  return excludeKey(document, "hashedKey");
+  return omit(document, "hashedKey");
 }
 
 router.post("/", async (ctx) => {
-  const params = ZSettableAuthContext.parse(ctx.request.body);
+  const params = ZSettableAuthContext.strict().parse(ctx.request.body);
   const document = await createApiKey(params, ctx.state.auth);
   ctx.body = sanitize(document);
   ctx.status = 201;
@@ -53,7 +50,7 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   if (ctx.params.id === ctx.state.apiKeyId) {
     throw new ApiError(400, "Cannot modify current API key");
   }
-  const params = ZPartialAuthContext.parse(ctx.request.body);
+  const params = ZPartialAuthContext.strict().parse(ctx.request.body);
   if (await updateApiKey(ctx.params.id, params, ctx.state.auth)) {
     ctx.status = 204;
   }

@@ -1,12 +1,9 @@
 // Module to encrypt and decrypt secrets
-// using the key stored in the environment variable
+// using the key stored in the environment variable.
+// Also provices support for validating mongodb Binary objects.
 
-import {
-  createCipheriv,
-  createDecipheriv,
-  Encoding,
-  randomBytes,
-} from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { Binary } from "mongodb";
 import { config } from "./config";
 import { KeyKind } from "./identifiers";
 
@@ -26,7 +23,7 @@ function getSecretKey(kind: KeyKind) {
   return Buffer.from(hexKey, "hex");
 }
 
-export function encryptString(message: string, kind: KeyKind): Buffer {
+export function encrypt(message: string, kind: KeyKind): Buffer {
   const key = getSecretKey(kind);
   const iv = randomBytes(16);
 
@@ -40,7 +37,7 @@ export function encryptString(message: string, kind: KeyKind): Buffer {
   ]);
 }
 
-export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
+export function decrypt(encryptedMessage: Buffer, kind: KeyKind): string {
   const key = getSecretKey(kind);
   const iv = encryptedMessage.subarray(0, 16);
   const encryptedMessageWithoutIv = encryptedMessage.subarray(16);
@@ -55,4 +52,38 @@ export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
     throw new Error("Unable to decrypt string");
   }
   return plainText.slice(marker.length);
+}
+
+// replace the given keys with encrypted binary values
+// suitable for storing in the database.
+export function encryptRecord<
+  T extends Record<string, unknown>,
+  K extends keyof T,
+>(record: T, keys: readonly K[], kind: KeyKind) {
+  const result = { ...record } as Record<K | string, unknown>;
+  for (const key of keys) {
+    if (key in record) {
+      result[key] = new Binary(
+        encrypt(JSON.stringify(record[key]), kind),
+      );
+    }
+  }
+  return result;
+}
+
+// replace the given keys with decrypted values
+// suitable for use in the application.
+export function decryptRecord<
+  T extends Record<string, unknown>,
+  K extends keyof T,
+>(record: T, keys: readonly K[], kind: KeyKind) {
+  const result = { ...record } as Record<K | string, unknown>;
+  for (const key of keys) {
+    if (key in record) {
+      result[key] = JSON.parse(
+        decrypt(Buffer.from((record[key] as Binary).buffer), kind),
+      );
+    }
+  }
+  return result;
 }

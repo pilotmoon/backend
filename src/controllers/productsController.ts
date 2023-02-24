@@ -4,6 +4,11 @@ import { assertScope, AuthContext } from "../controllers/authController";
 import { handleControllerError } from "../errors";
 import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
+import { ZPortableKeyPair } from "../keyPair";
+import { decryptRecord, encrypt, encryptRecord } from "../secrets";
+import { omit } from "../omit";
+import { ZMongoBinary } from "../binary";
+import { Binary } from "mongodb";
 
 /*** Database ***/
 
@@ -27,9 +32,9 @@ export const ZProductInfo = z.object({
   name: z.string(),
   edition: z.enum(["standalone", "mas", "setapp"]),
   bundleId: z.string(),
-  aquaticPrimePublicKey: z.string().optional(),
-  aquaticPrimePrivateKey: z.string().optional(),
+  aquaticPrimeKeyPair: z.union([ZPortableKeyPair, ZMongoBinary]).optional(),
 });
+const keysToEncrypt = ["aquaticPrimeKeyPair"] as const;
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();
 export type PartialProductInfo = z.infer<typeof ZPartialProductInfo>;
@@ -51,13 +56,15 @@ export async function createProduct(
     _id: randomIdentifier("pr"),
     object: "product" as const,
     created: new Date(),
-    ...info,
+    ...encryptRecord(info, keysToEncrypt, auth.kind) as ProductInfo,
   };
 
   try {
     ZProductRecord.parse(document);
     await dbc(auth.kind).insertOne(document);
-    return document;
+    return ZProductRecord.parse(
+      decryptRecord(document, keysToEncrypt, auth.kind),
+    );
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -76,7 +83,9 @@ export async function listProducts(
   const documents = await cursor.toArray();
 
   try {
-    return documents.map((document) => ZProductRecord.parse(document));
+    return documents.map((document) =>
+      ZProductRecord.parse(decryptRecord(document, keysToEncrypt, auth.kind))
+    );
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -92,7 +101,9 @@ export async function readProduct(
 
   if (!document) return null;
   try {
-    return ZProductRecord.parse(document);
+    return ZProductRecord.parse(
+      decryptRecord(document, keysToEncrypt, auth.kind),
+    );
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -108,7 +119,7 @@ export async function updateProduct(
   try {
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
-      { $set: info },
+      { $set: encryptRecord(info, keysToEncrypt, auth.kind) },
       { returnDocument: "after" },
     );
     return (!!result.value);

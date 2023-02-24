@@ -63,12 +63,21 @@ test("api keys, method not allowed (delete)", async (t) => {
   t.is(res.status, 405);
 });
 
-test("api key CRUD test", async (t) => {
+test("create api key with additional key not in schema", async (t) => {
   // create new key
   const res = await rolo().post("apiKeys", {
     scopes: [],
     description: "crud test key",
     blah: "blah",
+  });
+  t.is(res.status, 400);
+});
+
+test("api key CRUD test", async (t) => {
+  // create new key
+  const res = await rolo().post("apiKeys", {
+    scopes: [],
+    description: "crud test key",
   });
   t.is(res.status, 201);
   t.assert(res.data.key.length > 0);
@@ -184,6 +193,14 @@ test("modify other api key by id", async (t) => {
   );
   t.is(res.status, 204);
   t.is(res.data, "");
+});
+
+test("modify other api key, adding unrecognized key", async (t) => {
+  const res = await rolo().patch(
+    "apiKeys/" + keys().subject.id,
+    { "blah": "blah" },
+  );
+  t.is(res.status, 400);
 });
 
 test("modify other api key by id, no read scope", async (t) => {
