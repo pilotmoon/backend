@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
-import { makeGenericIdPattern } from "../identifiers";
+import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers";
 import {
   createProduct,
   deleteProduct,
@@ -16,7 +16,7 @@ import { assertScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/products" });
 const matchId = {
-  pattern: makeGenericIdPattern("id"),
+  pattern: makeIdentifierPattern("id", "pr"),
   uuid: randomUUID(),
 };
 
@@ -35,6 +35,7 @@ router.get("/", async (ctx) => {
   ctx.body = documents.map(sanitize);
 });
 
+// read a product
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readProduct(ctx.params.id, ctx.state.auth);
   if (document) {
@@ -42,6 +43,7 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
+// update a product
 router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   const suppliedData = ZPartialProductInfo.strict().parse(ctx.request.body);
   if (await updateProduct(ctx.params.id, suppliedData, ctx.state.auth)) {
@@ -49,6 +51,7 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
+// delete a product
 router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
   if (await deleteProduct(ctx.params.id, ctx.state.auth)) {
     ctx.status = 204;
@@ -85,5 +88,13 @@ router.get(matchId.pattern + "/secrets/:secretId", async (ctx) => {
   const secret = document.secrets[ctx.params.secretId];
   if (secret) {
     ctx.body = secret; // note: no sanitization
+  }
+});
+
+// read a product using one of its identifiers, using `byIdentifier` url
+router.get("/byIdentifier/:identifier", async (ctx) => {
+  const document = await readProduct(ctx.params.identifier, ctx.state.auth);
+  if (document) {
+    ctx.body = sanitize(document);
   }
 });
