@@ -13,6 +13,8 @@ import { processPagination } from "./middleware/processPagination";
 import { handleError } from "./middleware/handleError";
 import { formatBody } from "./middleware/formatBody";
 import { checkAccess } from "./middleware/checkAccess";
+import { measureResponseTime } from "./middleware/measureResponseTime";
+import { enforceJson } from "./middleware/enforceJson";
 
 // set up main router
 const mainRouter = makeRouter();
@@ -20,79 +22,58 @@ mainRouter.use(require("./routers/health").router.routes());
 mainRouter.use(require("./routers/apiKeys").router.routes());
 mainRouter.use(require("./routers/products").router.routes());
 
-// set up Koa server
-const server = makeServer();
-
-// add function to context for generating url for Location header
-server.context.location = function (name: string, params?: any) {
-  log("location", name, params);
-  const result = mainRouter.url(name, params);
-  if (result instanceof Error) {
-    throw result;
-  }
-  return result;
-};
-
-// middleware to measure response time
-server.use(async (ctx, next) => {
-  const start = Date.now();
-  await next();
-  const time = `${Date.now() - start} ms`;
-  log("Response time:", time);
-  ctx.set("X-Response-Time", time);
-});
-
-// root GET is allowed without auth
+// the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();
 rootRouter.get("/", (ctx) => {
   ctx.body = asciiHello();
 });
 
-server.use(handleError);
-server.use(formatBody);
-server.use(checkAccess);
-server.use(rootRouter.routes());
-server.use(rootRouter.allowedMethods());
-server.use(authorize);
-server.use(processPagination());
+// create Koa server
+const app = makeServer();
 
-// error if content-type is not application/json
-server.use(async (ctx, next) => {
-  const match = ctx.request.is("application/json");
-  const hasContent = typeof ctx.request.length === "number" &&
-    ctx.request.length > 0;
-  if (hasContent && match !== "application/json") {
-    throw new ApiError(415, "Content-Type must be application/json");
-  }
-  await next();
-});
+// function that routers can use for generating url for Location header
+app.context.location = function (name: string, params?: any) {
+  const result = mainRouter.url(name, params);
+  if (result instanceof Error) throw result;
+  return result;
+};
 
-// parse request body
-server.use(bodyParser({
+// body parser that only accepts JSON
+const jsonBodyParser = bodyParser({
   enableTypes: ["json"],
   onerror: () => {
     throw new ApiError(400, "Invalid JSON");
   },
-}));
+});
 
-// add routes and allowed methods
-server.use(mainRouter.routes());
-server.use(mainRouter.allowedMethods());
+// add all middleware
+app.use(measureResponseTime);
+app.use(handleError);
+app.use(formatBody);
+app.use(checkAccess);
+app.use(rootRouter.routes());
+app.use(rootRouter.allowedMethods());
+app.use(authorize);
+app.use(processPagination());
+app.use(enforceJson);
+app.use(jsonBodyParser);
+app.use(mainRouter.routes());
+app.use(mainRouter.allowedMethods());
 
 // server startup and shutdown
 const abortController = new AbortController();
-function closeServer() {
-  log("Closing server");
-  abortController.abort();
-}
 function startServer() {
   log("Starting server");
-  server.listen({
+  app.listen({
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {
     log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
   });
+}
+function closeServer() {
+  log("Closing server");
+  abortController.abort();
 }
 
 // app close-down
