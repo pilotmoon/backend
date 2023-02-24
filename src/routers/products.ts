@@ -23,7 +23,7 @@ router.post("/", async (ctx) => {
   const document = await createProduct(suppliedData, ctx.state.auth);
   ctx.body = document;
   ctx.status = 201;
-  ctx.set("Location", ctx.location(matchId.uuid, { id: document._id }));
+  ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
 
 // list products

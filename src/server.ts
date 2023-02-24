@@ -32,7 +32,7 @@ rootRouter.get("/", (ctx) => {
 const app = makeServer();
 
 // function that routers can use for generating url for Location header
-app.context.location = function (name: string, params?: any) {
+app.context.getLocation = function (name: string, params?: any) {
   const result = mainRouter.url(name, params);
   if (result instanceof Error) throw result;
   return result;

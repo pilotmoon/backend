@@ -17,7 +17,7 @@ interface State extends Koa.DefaultState {
 
 interface Context extends Koa.DefaultContext {
   // function to generate Location header
-  location(name: string, params?: any): string;
+  getLocation(name: string, params?: any): string;
 }
 
 export function makeServer() {
