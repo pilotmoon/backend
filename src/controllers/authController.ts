@@ -191,13 +191,11 @@ export async function updateApiKey(
 ): Promise<boolean> {
   assertScope("apiKeys:update", auth);
   try {
-    const result = await getCollection(auth.kind).findOneAndUpdate({
-      _id: id,
-    }, {
-      $set: params,
-    }, {
-      returnDocument: "after",
-    });
+    const result = await getCollection(auth.kind).findOneAndUpdate(
+      { _id: id },
+      { $set: params },
+      { returnDocument: "after" },
+    );
     return (!!result.value);
   } catch (error) {
     handleControllerError(error);

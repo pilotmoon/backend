@@ -101,13 +101,11 @@ export async function updateProduct(
 ) {
   assertScope("products:update", auth);
   try {
-    const result = await getCollection(auth.kind).findOneAndUpdate({
-      _id: id,
-    }, {
-      $set: info,
-    }, {
-      returnDocument: "after",
-    });
+    const result = await getCollection(auth.kind).findOneAndUpdate(
+      { _id: id },
+      { $set: info },
+      { returnDocument: "after" },
+    );
     return (!!result.value);
   } catch (error) {
     handleControllerError(error);
