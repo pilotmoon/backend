@@ -5,10 +5,10 @@ import {
   createProduct,
   deleteProduct,
   listProducts,
-  PartialProductInfo,
-  ProductInfo,
   readProduct,
   updateProduct,
+  ZPartialProductInfo,
+  ZProductInfo,
 } from "../controllers/productsController";
 
 export const router = makeRouter({ prefix: "/products" });
@@ -19,7 +19,7 @@ const matchId = {
 
 // create new product
 router.post("/", async (ctx) => {
-  const suppliedData = ProductInfo.parse(ctx.request.body);
+  const suppliedData = ZProductInfo.parse(ctx.request.body);
   const document = await createProduct(suppliedData, ctx.state.auth);
   ctx.body = document;
   ctx.status = 201;
@@ -40,7 +40,7 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 });
 
 router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
-  const suppliedData = PartialProductInfo.parse(ctx.request.body);
+  const suppliedData = ZPartialProductInfo.parse(ctx.request.body);
   if (await updateProduct(ctx.params.id, suppliedData, ctx.state.auth)) {
     ctx.status = 204;
   }

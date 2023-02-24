@@ -2,10 +2,10 @@ import {
   createApiKey,
   deleteApiKey,
   listApiKeys,
-  PartialAuthContext,
   readApiKey,
-  SettableAuthContext,
   updateApiKey,
+  ZPartialAuthContext,
+  ZSettableAuthContext,
 } from "../controllers/authController";
 import { makeRouter } from "../koa";
 import { ApiError } from "../errors";
@@ -28,7 +28,7 @@ function sanitize(document: Record<string, unknown>) {
 }
 
 router.post("/", async (ctx) => {
-  const params = SettableAuthContext.parse(ctx.request.body);
+  const params = ZSettableAuthContext.parse(ctx.request.body);
   const document = await createApiKey(params, ctx.state.auth);
   ctx.body = sanitize(document);
   ctx.status = 201;
@@ -53,7 +53,7 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   if (ctx.params.id === ctx.state.apiKeyId) {
     throw new ApiError(400, "Cannot modify current API key");
   }
-  const params = PartialAuthContext.parse(ctx.request.body);
+  const params = ZPartialAuthContext.parse(ctx.request.body);
   if (await updateApiKey(ctx.params.id, params, ctx.state.auth)) {
     ctx.status = 204;
   }

@@ -3,7 +3,7 @@ import { getDb } from "../database";
 import { assertScope, AuthContext } from "../controllers/authController";
 import { handleControllerError } from "../errors";
 import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
-import { PaginateState } from "../paginate";
+import { PaginateState } from "../middleware/paginate";
 
 /*** Database ***/
 
@@ -23,22 +23,22 @@ export async function init() {
 
 /*** Schemas ***/
 
-export const ProductInfo = z.object({
+export const ZProductInfo = z.object({
   name: z.string(),
   edition: z.enum(["standalone", "mas", "setapp"]),
   bundleId: z.string(),
   aquaticPrimePublicKey: z.string().optional(),
   aquaticPrimePrivateKey: z.string().optional(),
 });
-export type ProductInfo = z.infer<typeof ProductInfo>;
-export const PartialProductInfo = ProductInfo.partial();
-export type PartialProductInfo = z.infer<typeof PartialProductInfo>;
-export const ProductRecord = ProductInfo.extend({
+export type ProductInfo = z.infer<typeof ZProductInfo>;
+export const ZPartialProductInfo = ZProductInfo.partial();
+export type PartialProductInfo = z.infer<typeof ZPartialProductInfo>;
+export const ZProductRecord = ZProductInfo.extend({
   _id: z.string(),
   object: z.literal("product"),
   created: z.date(),
 });
-export type ProductRecord = z.infer<typeof ProductRecord>;
+export type ProductRecord = z.infer<typeof ZProductRecord>;
 
 /*** C.R.U.D. ***/
 
@@ -55,7 +55,7 @@ export async function createProduct(
   };
 
   try {
-    ProductRecord.parse(document);
+    ZProductRecord.parse(document);
     await dbc(auth.kind).insertOne(document);
     return document;
   } catch (error) {
@@ -76,7 +76,7 @@ export async function listProducts(
   const documents = await cursor.toArray();
 
   try {
-    return documents.map((document) => ProductRecord.parse(document));
+    return documents.map((document) => ZProductRecord.parse(document));
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -92,7 +92,7 @@ export async function readProduct(
 
   if (!document) return null;
   try {
-    return ProductRecord.parse(document);
+    return ZProductRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw (error);
