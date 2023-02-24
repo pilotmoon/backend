@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
-import { makeIdentifierPattern } from "../identifiers";
+import { makeGenericIdPattern } from "../identifiers";
 import {
   createProduct,
   deleteProduct,
@@ -16,7 +16,7 @@ import { assertScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/products" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "pr"),
+  pattern: makeGenericIdPattern("id"),
   uuid: randomUUID(),
 };
 

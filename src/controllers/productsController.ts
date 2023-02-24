@@ -108,12 +108,15 @@ export async function listProducts(
   }
 }
 
+// id can be any identifier, not just the _id
 export async function readProduct(
   id: string,
   auth: AuthContext,
 ): Promise<ProductRecord | null> {
   assertScope("products:read", auth);
-  const document = await dbc(auth.kind).findOne({ _id: id });
+  const document = await dbc(auth.kind).findOne(
+    { $or: [{ _id: id }, { identifiers: id }] },
+  );
 
   if (!document) return null;
   try {
@@ -134,7 +137,7 @@ export async function updateProduct(
   try {
     encryptInPlace(info.secrets, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
-      { _id: id },
+      { $or: [{ _id: id }, { identifiers: id }] },
       { $set: info },
       { returnDocument: "after" },
     );
@@ -150,6 +153,8 @@ export async function deleteProduct(
   auth: AuthContext,
 ) {
   assertScope("products:delete", auth);
-  const result = await dbc(auth.kind).deleteOne({ _id: id });
+  const result = await dbc(auth.kind).deleteOne(
+    { $or: [{ _id: id }, { identifiers: id }] },
+  );
   return result.deletedCount === 1;
 }
