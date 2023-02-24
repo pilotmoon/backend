@@ -34,7 +34,7 @@ export const ZProductInfo = z.object({
   bundleId: z.string(),
   aquaticPrimeKeyPair: ZPortableKeyPair.optional(),
 });
-const keysToEncrypt = ["aquaticPrimeKeyPair"] as const;
+export const keyPairNames = ["aquaticPrimeKeyPair"] as const;
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();
 export type PartialProductInfo = z.infer<typeof ZPartialProductInfo>;
@@ -61,9 +61,9 @@ export async function createProduct(
 
   try {
     ZProductRecord.parse(document);
-    encryptInPlace(document, keysToEncrypt, auth.kind);
+    encryptInPlace(document, keyPairNames, auth.kind);
     await dbc(auth.kind).insertOne(document);
-    decryptInPlace(document, keysToEncrypt, auth.kind);
+    decryptInPlace(document, keyPairNames, auth.kind);
     return document;
   } catch (error) {
     handleControllerError(error);
@@ -84,7 +84,7 @@ export async function listProducts(
 
   try {
     return documents.map((document) => {
-      decryptInPlace(document, keysToEncrypt, auth.kind);
+      decryptInPlace(document, keyPairNames, auth.kind);
       return ZProductRecord.parse(document);
     });
   } catch (error) {
@@ -102,7 +102,7 @@ export async function readProduct(
 
   if (!document) return null;
   try {
-    decryptInPlace(document, keysToEncrypt, auth.kind);
+    decryptInPlace(document, keyPairNames, auth.kind);
     return ZProductRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
@@ -117,7 +117,7 @@ export async function updateProduct(
 ) {
   assertScope("products:update", auth);
   try {
-    encryptInPlace(info, keysToEncrypt, auth.kind);
+    encryptInPlace(info, keyPairNames, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
       { $set: info },

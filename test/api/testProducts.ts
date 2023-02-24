@@ -82,7 +82,11 @@ test("create product, aquatic prime", async (t) => {
   });
   t.is(res.status, 201);
   t.like(res.data, barProduct);
-  t.like(res.data.aquaticPrimeKeyPair, testAquaticPrimeKeyPair);
+  t.is(
+    res.data.aquaticPrimeKeyPair.publicKey,
+    testAquaticPrimeKeyPair.publicKey,
+  );
+  t.is(res.data.aquaticPrimeKeyPair.privateKey, undefined);
   t.is(res.headers.location, `/products/${res.data.id}`);
   barProductId = res.data.id;
 });
@@ -175,10 +179,14 @@ test("add an aquaticprime key pair to the foo product", async (t) => {
   t.is(res.status, 204);
 });
 
-test("retreive the aquaticprime key pair from the foo product", async (t) => {
+test("retrieve the aquaticprime key pair and check private key is redacted", async (t) => {
   const res = await rolo().get(`/products/${fooProductId}`);
   t.is(res.status, 200);
-  t.like(res.data, { aquaticPrimeKeyPair: testAquaticPrimeKeyPair });
+  t.is(
+    res.data.aquaticPrimeKeyPair.publicKey,
+    testAquaticPrimeKeyPair.publicKey,
+  );
+  t.is(res.data.aquaticPrimeKeyPair.privateKey, undefined);
 });
 
 test("delete product", async (t) => {

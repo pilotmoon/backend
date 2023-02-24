@@ -4,6 +4,7 @@ import { makeIdentifierPattern } from "../identifiers";
 import {
   createProduct,
   deleteProduct,
+  keyPairNames,
   listProducts,
   readProduct,
   updateProduct,
@@ -17,11 +18,21 @@ const matchId = {
   uuid: randomUUID(),
 };
 
+function sanitize(info: any) {
+  const result = { ...info };
+  for (const key of keyPairNames) {
+    if (result[key]?.privateKey) {
+      result[key].privateKey = undefined;
+    }
+  }
+  return result;
+}
+
 // create new product
 router.post("/", async (ctx) => {
   const suppliedData = ZProductInfo.strict().parse(ctx.request.body);
   const document = await createProduct(suppliedData, ctx.state.auth);
-  ctx.body = document;
+  ctx.body = sanitize(document);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
@@ -29,13 +40,13 @@ router.post("/", async (ctx) => {
 // list products
 router.get("/", async (ctx) => {
   const documents = await listProducts(ctx.state.paginate, ctx.state.auth);
-  ctx.body = documents;
+  ctx.body = documents.map(sanitize);
 });
 
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readProduct(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = document;
+    ctx.body = sanitize(document);
   }
 });
 
