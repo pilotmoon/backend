@@ -4,40 +4,17 @@ import { getDb } from "../database";
 import { Binary } from "mongodb";
 import { ApiError, handleControllerError } from "../errors";
 import { Context, Next } from "koa";
-import { log, loge } from "../logger";
+import { log } from "../logger";
 import { KeyKind, keyKinds, keyRegex } from "../identifiers";
 import { hashPassword, verifyPassword } from "../scrypt";
 import TTLCache = require("@isaacs/ttlcache");
 import { createHash } from "node:crypto";
 import { TestKey, testKeys } from "../../test/api/setup";
 import { PaginateState } from "../paginate";
+import { allScopes, Scope, Scopes } from "../scopes";
 
-const apiKeysCollectionName = "apiKeys";
-function getCollection(kind: KeyKind) {
-  const db = getDb(kind);
-  return db.collection<ApiKeySchema>(apiKeysCollectionName);
-}
+/*** Schemas ***/
 
-// all the possible scopes
-const constScopes = [
-  "health:read",
-  "apiKeys:create",
-  "apiKeys:read",
-  "apiKeys:update",
-  "apiKeys:delete",
-  "products:create",
-  "products:read",
-  "products:update",
-  "products:delete",
-] as const;
-
-// scope type
-export const Scopes = z.array(z.enum(constScopes));
-export type Scopes = z.infer<typeof Scopes>;
-export type Scope = Scopes[number];
-export const allScopes: Scopes = constScopes as any;
-
-// schema for API keys
 export const SettableAuthContext = z.object({
   scopes: Scopes,
   description: z.string(),
@@ -58,53 +35,8 @@ const ApiKeySchema = AuthContext.extend({
 });
 export type ApiKeySchema = z.infer<typeof ApiKeySchema>;
 
-// called at startup to prepare the database
-export async function init() {
-  log(`init ${apiKeysCollectionName} collection`);
+/*** Scope Assessment ****/
 
-  // for both test and live database
-  for (const kind of keyKinds) {
-    const collection = getCollection(kind);
-    collection.createIndex({ created: 1 });
-
-    // if there are no keys, create a bootstrap key
-    const count = await collection.countDocuments();
-    if (count == 0) {
-      log("No API keys found, creating bootstrap key", kind.blue);
-      const settableAuthContext = {
-        scopes: allScopes,
-        description: "bootstrap key (randomly generated)",
-      };
-      const document = await createApiKey(settableAuthContext, {
-        kind: kind,
-        scopes: ["apiKeys:create"],
-        description: "",
-      });
-      console.log("Bootstrap key:".bgRed, document.key);
-    }
-  }
-
-  // create deterministic test keys
-  console.log("Creating fixed test keys");
-  await deterministic(async () => {
-    for (
-      const [name, keyDef] of Object.entries<TestKey>(testKeys)
-    ) {
-      if (keyDef.scopes === "#all#") {
-        keyDef.scopes = allScopes as any;
-      }
-      keyDef.description = `[${name}] ` + keyDef.description;
-      const authContext = SettableAuthContext.parse(keyDef);
-      await createApiKey(authContext, {
-        kind: "test",
-        scopes: ["apiKeys:create"],
-        description: "",
-      }, { replace: true });
-    }
-  });
-}
-
-// functions for verifying whether the auth context has a given scope
 export function assertScope(
   scope: Scope,
   authContext: AuthContext,
@@ -120,15 +52,67 @@ export function hasScope(
   return authContext.scopes.includes(scope);
 }
 
-// create a new API key. returns the new key
+/*** Database ***/
+
+// helper function to get the database collection for a given key kind
+function dbc(kind: KeyKind) {
+  return getDb(kind).collection<ApiKeySchema>("apiKeys");
+}
+
+// helper to make a dummy context for inserting a new key
+function specialContext(kind: KeyKind): AuthContext {
+  return { kind: kind, scopes: ["apiKeys:create"], description: "" };
+}
+
+// called at startup to prepare the database
+export async function init() {
+  for (const kind of keyKinds) {
+    const collection = dbc(kind);
+
+    // create indexes
+    collection.createIndex({ created: 1 });
+
+    // if there are no keys, create a bootstrap key
+    const count = await collection.countDocuments();
+    if (count == 0) {
+      log("No API keys found, creating bootstrap key", kind.blue);
+      const settableAuthContext = {
+        scopes: allScopes,
+        description: "bootstrap key (randomly generated)",
+      };
+      const document = await createApiKey(
+        settableAuthContext,
+        specialContext(kind),
+      );
+      console.log("Bootstrap key:".bgMagenta, document.key);
+    }
+  }
+
+  // create deterministic test keys
+  console.log("Creating fixed test keys");
+  await deterministic(async () => {
+    for (
+      const [name, keyDef] of Object.entries<TestKey>(testKeys)
+    ) {
+      if (keyDef.scopes === "#all#") keyDef.scopes = allScopes;
+      keyDef.description = `[${name}] ` + keyDef.description;
+      await createApiKey(
+        SettableAuthContext.parse(keyDef),
+        specialContext("test"),
+        { replace: true },
+      );
+    }
+  });
+}
+
+/*** C.R.U.D. ***/
+
 export async function createApiKey(
   params: SettableAuthContext,
   auth: AuthContext,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
   assertScope("apiKeys:create", auth);
-
-  // create key document
   const { id, key } = randomKey(auth.kind, "ak");
   const document = {
     _id: id,
@@ -138,26 +122,27 @@ export async function createApiKey(
     created: new Date(),
     ...params,
   };
-  ApiKeySchema.parse(document);
 
-  // delete existing key if it exists
-  if (replace) {
-    await getCollection(auth.kind).deleteOne({ _id: document._id });
+  try {
+    ApiKeySchema.parse(document);
+    if (replace) { // delete existing key if it exists
+      await dbc(auth.kind).deleteOne({ _id: document._id });
+    }
+    const result = await dbc(auth.kind).insertOne(document);
+    log(`Inserted API key with _id: ${result.insertedId}`);
+    return { ...document, key }; // return the key in cleartext since it's a new key
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
   }
-
-  // insert new
-  const result = await getCollection(auth.kind).insertOne(document);
-  log(`Inserted API key with _id: ${result.insertedId}`);
-  return { ...document, key }; // return the key in cleartext since it's a new key
 }
 
-// return an API key by its ID. returns null if the key does not exist
 export async function readApiKey(
   id: string,
   auth: AuthContext,
 ): Promise<ApiKeySchema | null> {
   assertScope("apiKeys:read", auth);
-  const document = await getCollection(auth.kind).findOne({ _id: id });
+  const document = await dbc(auth.kind).findOne({ _id: id });
   if (!document) return null;
   try {
     return ApiKeySchema.parse(document);
@@ -167,13 +152,12 @@ export async function readApiKey(
   }
 }
 
-// list API keys
 export async function listApiKeys(
   { limit, offset, order, orderBy }: PaginateState,
   auth: AuthContext,
 ): Promise<ApiKeySchema[]> {
   assertScope("apiKeys:read", auth);
-  const cursor = await getCollection(auth.kind)
+  const cursor = await dbc(auth.kind)
     .find()
     .sort({ [orderBy]: order })
     .skip(offset)
@@ -182,8 +166,6 @@ export async function listApiKeys(
   return documents.map((document) => ApiKeySchema.parse(document));
 }
 
-// update updatable fields of an API key.
-// returns false if the key does not exist, else returns the document.
 export async function updateApiKey(
   id: string,
   params: PartialAuthContext,
@@ -191,7 +173,7 @@ export async function updateApiKey(
 ): Promise<boolean> {
   assertScope("apiKeys:update", auth);
   try {
-    const result = await getCollection(auth.kind).findOneAndUpdate(
+    const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
       { $set: params },
       { returnDocument: "after" },
@@ -203,17 +185,16 @@ export async function updateApiKey(
   }
 }
 
-// delete an API key by its ID. returns true if the key was deleted
 export async function deleteApiKey(
   id: string,
   auth: AuthContext,
 ): Promise<boolean> {
   assertScope("apiKeys:delete", auth);
-  const result = await getCollection(auth.kind).deleteOne({ _id: id });
+  const result = await dbc(auth.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }
 
-/*** middleware ***/
+/*** Middleware ***/
 
 interface SecretKeyParts {
   key: string;
@@ -246,7 +227,7 @@ function parseSecretKey(key: string): SecretKeyParts {
 // fetch the key record from the database and verify the secret key
 // note: this function usually takes ~100ms to run so should be cached
 async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
-  let document = await getCollection(kind).findOne({ _id: id });
+  let document = await dbc(kind).findOne({ _id: id });
   if (!document) {
     throw new ApiError(401, "Invalid API key (bad id)");
   }
@@ -269,7 +250,6 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
 
 // auth cache
 const minute = 1000 * 60;
-const hour = minute * 60;
 const ttl = minute * 10;
 const revalidateTime = minute * 5;
 const authCache = new TTLCache<string, AuthContext>({ max: 100_000, ttl });
