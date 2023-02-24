@@ -26,12 +26,10 @@ export async function init() {
 /*** Schemas ***/
 
 // a type to store secrets indexed by name
-const ZSecrets = z.record(
-  z.string(),
-  z.discriminatedUnion("object", [
-    ZPortableKeyPair,
-  ]),
-);
+export const ZSecret = z.discriminatedUnion("object", [
+  ZPortableKeyPair,
+]);
+export type Secret = z.infer<typeof ZSecret>;
 
 // a function to sanitize secrets
 export function sanitize(info: PartialProductInfo) {
@@ -50,7 +48,7 @@ export function sanitize(info: PartialProductInfo) {
 export const ZProductInfo = z.object({
   name: z.string(),
   identifiers: z.array(z.string()), // a product can have multiple identifiers
-  secrets: ZSecrets.optional(),
+  secrets: z.record(z.string(), ZSecret).optional(),
 });
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();

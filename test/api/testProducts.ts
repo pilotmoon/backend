@@ -174,6 +174,27 @@ test("retrieve the aquaticprime key pairs and check private key is redacted", as
   t.is(res.data.secrets.blah.redacted, true);
 });
 
+test("add a key pair to the foo product using the put endpoint", async (t) => {
+  // add the aquaticprime key pair with a new name
+  const res = await rolo().put(
+    `/products/${fooProductId}/secrets/mysecret`,
+    testAquaticPrimeKeyPair,
+  );
+  t.is(res.status, 204);
+
+  // retrieve the aquaticprime key pairs and check private key is redacted
+  const res2 = await rolo().get(`/products/${fooProductId}`);
+  t.is(res2.status, 200);
+  t.is(res2.data.secrets.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
+  t.deepEqual(res2.data.secrets.mysecret.privateKey, undefined);
+  t.is(res2.data.secrets.mysecret.redacted, true);
+});
+
+test("try top get a secret using its own endpoint", async (t) => {
+  const res = await rolo().get(`/products/${fooProductId}/secrets/mysecret`);
+  t.is(res.status, 405);
+});
+
 test("delete product", async (t) => {
   const res2 = await rolo().delete(`/products/${barProductId}`);
   t.is(res2.status, 204);
