@@ -11,6 +11,10 @@ const constScopes = [
   "products:read",
   "products:update",
   "products:delete",
+  "licenseKeys:create",
+  "licenseKeys:read",
+  "licenseKeys:update",
+  "licenseKeys:delete",
 ] as const;
 
 // scope type
