@@ -13,7 +13,7 @@ export type PaginateState = {
   orderBy: "created";
 };
 
-export function paginator(
+export function processPagination(
   { maximumLimit = 100, defaultLimit = 10 }: PaginateOptions = {},
 ) {
   return async function (ctx: Context, next: Next) {

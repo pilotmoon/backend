@@ -7,7 +7,7 @@ import {
   ZPartialAuthContext,
   ZSettableAuthContext,
 } from "../controllers/authController";
-import { makeRouter } from "../koa";
+import { makeRouter } from "../koaWrapper";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";

@@ -1,5 +1,5 @@
 import { assertScope } from "../controllers/authController";
-import { makeRouter } from "../koa";
+import { makeRouter } from "../koaWrapper";
 import { randomString } from "@pilotmoon/chewit";
 import { getDb } from "../database";
 import { config } from "../config";

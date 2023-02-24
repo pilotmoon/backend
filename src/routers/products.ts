@@ -1,4 +1,4 @@
-import { makeRouter } from "../koa";
+import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
 import {

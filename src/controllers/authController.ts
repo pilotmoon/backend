@@ -7,7 +7,7 @@ import { log } from "../logger";
 import { KeyKind, keyKinds } from "../identifiers";
 import { hashPassword } from "../scrypt";
 import { TestKey, testKeys } from "../../test/api/setup";
-import { PaginateState } from "../middleware/paginate";
+import { PaginateState } from "../middleware/processPagination";
 import { allScopes, Scope, Scopes } from "../scopes";
 
 /*** Schemas ***/

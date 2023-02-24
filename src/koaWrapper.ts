@@ -4,18 +4,15 @@ Wrap Koa's types to inject our own state type.
 import Koa = require("koa");
 import Router = require("@koa/router");
 import { AuthContext } from "./controllers/authController";
-import { PaginateState } from "./middleware/paginate";
+import { PaginateState } from "./middleware/processPagination";
 
 interface State extends Koa.DefaultState {
-  // items set by authMiddleware
+  // items set by auth midddleware
   auth: AuthContext;
   apiKeyId: string;
 
-  // items set by paginator
+  // items set by paginator middleware
   paginate: PaginateState;
-
-  // items set by error handling middleware
-  error?: any;
 }
 
 interface Context extends Koa.DefaultContext {

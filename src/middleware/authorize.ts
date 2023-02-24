@@ -11,7 +11,6 @@ import {
   ZAuthContext,
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
-import { Scope } from "../scopes";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
@@ -68,8 +67,8 @@ const ttl = minute * 10;
 const revalidateTime = minute * 5;
 const authCache = new TTLCache<string, AuthContext>({ max: 100000, ttl });
 
-// auth middleware to c
-export async function authMiddleware(ctx: Context, next: Next) {
+// authorization middleware
+export async function authorize(ctx: Context, next: Next) {
   // get the authorization header
   const authorization = ctx.request.headers["authorization"];
   if (typeof authorization !== "string") {

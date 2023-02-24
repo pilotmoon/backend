@@ -3,7 +3,7 @@ import { getDb } from "../database";
 import { assertScope, AuthContext } from "../controllers/authController";
 import { handleControllerError } from "../errors";
 import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
-import { PaginateState } from "../middleware/paginate";
+import { PaginateState } from "../middleware/processPagination";
 
 /*** Database ***/
 
