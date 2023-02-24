@@ -68,7 +68,7 @@ function startServer() {
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {
-    log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
+    log(`Server listening on port ${config.APP_PORT}`.bgCyan);
   });
 }
 function closeServer() {
