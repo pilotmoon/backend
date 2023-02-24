@@ -1,4 +1,5 @@
 import { Context, Next } from "koa";
+import { ApiError } from "../errors";
 
 // replace _id with id
 function replaceId(obj: any) {
@@ -11,11 +12,19 @@ function replaceId(obj: any) {
   return obj;
 }
 
-// modify all response bodies
+// modify all response bodies.
+// also, add livemode key
+// we will also check that the client accepts JSON
+// and return a 406 (Not Acceptable) if not
 export async function formatBody(ctx: Context, next: Next) {
   await next();
   // if body is not an object, don't modify it
   if (typeof ctx.body !== "object" || ctx.body === null) return;
+
+  // check that client accepts JSON
+  if (!ctx.accepts("application/json")) {
+    throw new ApiError(406, "Client does not accept JSON");
+  }
 
   let newBody;
   if (Array.isArray(ctx.body)) {
