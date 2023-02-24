@@ -15,11 +15,9 @@ import { makeIdentifierPattern } from "../identifiers";
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
   pattern: makeIdentifierPattern("id", "ak"),
-};
-const matchIdAndCurrent = {
-  pattern: makeIdentifierPattern("id", "ak", ["current"]),
   uuid: randomUUID(),
 };
+const matchIdAndCurrent = makeIdentifierPattern("id", "ak", ["current"]);
 
 function excludeKey(obj: Record<string, unknown>, key: string) {
   const { [key]: removed, ...rest } = obj;
@@ -34,45 +32,30 @@ router.post("/", async (ctx) => {
   const document = await createApiKey(params, ctx.state.auth);
   ctx.body = sanitize(document);
   ctx.status = 201;
-  ctx.set(
-    "Location",
-    ctx.location(matchIdAndCurrent.uuid, { id: document._id }),
-  );
+  ctx.set("Location", ctx.location(matchId.uuid, { id: document._id }));
 });
 
 // list api keys
 router.get("/", async (ctx) => {
-  const documents = await listApiKeys(ctx.state.auth, ctx.state.paginate);
+  const documents = await listApiKeys(ctx.state.paginate, ctx.state.auth);
   ctx.body = documents.map(sanitize);
 });
 
-router.get(matchIdAndCurrent.uuid, matchIdAndCurrent.pattern, async (ctx) => {
-  let id;
-  if (ctx.params.id === "current") {
-    id = ctx.state.apiKeyId;
-  } else {
-    id = ctx.params.id;
-  }
+router.get(matchIdAndCurrent, async (ctx) => {
+  const id = (ctx.params.id === "current") ? ctx.state.apiKeyId : ctx.params.id;
   const document = await readApiKey(id, ctx.state.auth);
-  if (!document) {
-    throw new ApiError(404, `API key '${id}' not found`);
+  if (document) {
+    ctx.body = sanitize(document);
   }
-  ctx.body = sanitize(document);
 });
 
-router.patch(matchId.pattern, async (ctx) => {
+router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   if (ctx.params.id === ctx.state.apiKeyId) {
     throw new ApiError(400, "Cannot modify current API key");
   }
-  const id = ctx.params.id;
   const params = PartialAuthContext.parse(ctx.request.body);
-  const document = await updateApiKey(id, params, ctx.state.auth);
-  if (document === false) {
-    throw new ApiError(404, `API key '${id}' not found`);
-  } else if (document !== null) {
-    ctx.body = sanitize(document);
-  } else {
-    ctx.status = 204; // no content
+  if (await updateApiKey(ctx.params.id, params, ctx.state.auth)) {
+    ctx.status = 204;
   }
 });
 
@@ -81,11 +64,7 @@ router.delete(matchId.pattern, async (ctx) => {
   if (ctx.params.id === ctx.state.apiKeyId) {
     throw new ApiError(400, "Cannot delete current API key");
   }
-  const id = ctx.params.id;
-  const result = await deleteApiKey(id, ctx.state.auth);
-  if (!result) {
-    throw new ApiError(404, `API key '${id}' not found`);
-  } else {
+  if (await deleteApiKey(ctx.params.id, ctx.state.auth)) {
     ctx.status = 204;
   }
 });

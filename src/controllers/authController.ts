@@ -2,7 +2,7 @@ import { deterministic, randomKey } from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
-import { ApiError } from "../errors";
+import { ApiError, handleInternalError } from "../errors";
 import { Context, Next } from "koa";
 import { log, loge } from "../logger";
 import { KeyKind, keyKinds, keyRegex } from "../identifiers";
@@ -123,18 +123,18 @@ export function hasScope(
 // create a new API key. returns the new key
 export async function createApiKey(
   params: SettableAuthContext,
-  authContext: AuthContext,
+  auth: AuthContext,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
-  assertScope("apiKeys:create", authContext);
+  assertScope("apiKeys:create", auth);
 
   // create key document
-  const { id, key } = randomKey(authContext.kind, "ak");
+  const { id, key } = randomKey(auth.kind, "ak");
   const document = {
     _id: id,
     object: "apiKey" as const,
     hashedKey: new Binary(await hashPassword(key)),
-    kind: authContext.kind,
+    kind: auth.kind,
     created: new Date(),
     ...params,
   };
@@ -142,11 +142,11 @@ export async function createApiKey(
 
   // delete existing key if it exists
   if (replace) {
-    await getCollection(authContext.kind).deleteOne({ _id: document._id });
+    await getCollection(auth.kind).deleteOne({ _id: document._id });
   }
 
   // insert new
-  const result = await getCollection(authContext.kind).insertOne(document);
+  const result = await getCollection(auth.kind).insertOne(document);
   log(`Inserted API key with _id: ${result.insertedId}`);
   return { ...document, key }; // return the key in cleartext since it's a new key
 }
@@ -154,21 +154,26 @@ export async function createApiKey(
 // return an API key by its ID. returns null if the key does not exist
 export async function readApiKey(
   id: string,
-  authContext: AuthContext,
+  auth: AuthContext,
 ): Promise<ApiKeySchema | null> {
-  assertScope("apiKeys:read", authContext);
-  const document = await getCollection(authContext.kind).findOne({ _id: id });
-  return document === null ? null : ApiKeySchema.parse(document);
+  assertScope("apiKeys:read", auth);
+  const document = await getCollection(auth.kind).findOne({ _id: id });
+  if (!document) return null;
+  try {
+    return ApiKeySchema.parse(document);
+  } catch (error) {
+    handleInternalError(error);
+    throw (error);
+  }
 }
 
 // list API keys
 export async function listApiKeys(
-  authContext: AuthContext,
-  paginate: PaginateState,
+  { limit, offset, order, orderBy }: PaginateState,
+  auth: AuthContext,
 ): Promise<ApiKeySchema[]> {
-  assertScope("apiKeys:read", authContext);
-  const { offset, limit, order, orderBy } = paginate;
-  const cursor = await getCollection(authContext.kind)
+  assertScope("apiKeys:read", auth);
+  const cursor = await getCollection(auth.kind)
     .find()
     .sort({ [orderBy]: order })
     .skip(offset)
@@ -177,45 +182,36 @@ export async function listApiKeys(
   return documents.map((document) => ApiKeySchema.parse(document));
 }
 
-// update updatable fields of an API key and return the updated document
-// returns false if the key does not exist, returns null if the key exists
-// but the user does not have permission to read it, otherwise returns the
-// updated document
+// update updatable fields of an API key.
+// returns false if the key does not exist, else returns the document.
 export async function updateApiKey(
   id: string,
   params: PartialAuthContext,
-  authContext: AuthContext,
-): Promise<ApiKeySchema | null | false> {
-  assertScope("apiKeys:update", authContext);
-  const result = await getCollection(authContext.kind).findOneAndUpdate({
-    _id: id,
-  }, {
-    $set: params,
-  }, {
-    returnDocument: "after",
-  });
-  const document = result.value;
-  if (typeof document === "object" && document !== null) {
-    if (hasScope("apiKeys:read", authContext)) {
-      log("Returning updated API key record");
-      return ApiKeySchema.parse(document);
-    } else {
-      log("No read scope, so not returning record");
-      return null;
-    }
-  } else {
-    log("API key record not found");
-    return false;
+  auth: AuthContext,
+): Promise<boolean> {
+  assertScope("apiKeys:update", auth);
+  try {
+    const result = await getCollection(auth.kind).findOneAndUpdate({
+      _id: id,
+    }, {
+      $set: params,
+    }, {
+      returnDocument: "after",
+    });
+    return (!!result.value);
+  } catch (error) {
+    handleInternalError(error);
+    throw (error);
   }
 }
 
 // delete an API key by its ID. returns true if the key was deleted
 export async function deleteApiKey(
   id: string,
-  authContext: AuthContext,
+  auth: AuthContext,
 ): Promise<boolean> {
-  assertScope("apiKeys:delete", authContext);
-  const result = await getCollection(authContext.kind).deleteOne({ _id: id });
+  assertScope("apiKeys:delete", auth);
+  const result = await getCollection(auth.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }
 

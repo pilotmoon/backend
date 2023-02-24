@@ -5,7 +5,7 @@ import { config } from "./config";
 import { ApiError, httpStatusString, reportError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
 import { authMiddleware, init as initAuth } from "./controllers/authController";
-import { init as initProducts } from "./routers/products";
+import { init as initProducts } from "./controllers/productsController";
 import { log } from "./logger";
 import { asciiHello } from "./static";
 import { intersection, union } from "lodash";

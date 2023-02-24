@@ -74,8 +74,9 @@ test("update product", async (t) => {
   const res = await rolo().patch(`/products/${fooProductId}`, {
     name: "foo2",
   });
-  t.is(res.status, 200);
-  t.like(res.data, { ...fooProduct, name: "foo2" });
+  fooProduct.name = "foo2";
+  t.is(res.status, 204);
+  t.is(res.data, "");
 });
 
 test("update product, not found", async (t) => {
@@ -107,21 +108,8 @@ test("update product, duplicate of self", async (t) => {
   const res = await rolo().patch(`/products/${fooProductId}`, {
     bundleId: fooProduct.bundleId,
   });
-  t.is(res.status, 200);
-});
-
-test("update product, no read access", async (t) => {
-  const res = await rolo("updateonly").patch(`/products/${fooProductId}`, {
-    name: "foo3",
-  });
   t.is(res.status, 204);
   t.is(res.data, "");
-  // set it back
-  const res2 = await rolo().patch(`/products/${fooProductId}`, {
-    name: "foo",
-  });
-  t.is(res2.status, 200);
-  t.like(res2.data, fooProduct);
 });
 
 test("update product, no update access", async (t) => {
