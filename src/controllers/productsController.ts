@@ -5,7 +5,7 @@ import { handleControllerError } from "../errors";
 import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
-import { decryptRecord, encrypt, encryptRecord } from "../secrets";
+import { decryptInPlace, encryptInPlace } from "../secrets";
 import { omit } from "../omit";
 import { ZMongoBinary } from "../binary";
 import { Binary } from "mongodb";
@@ -32,7 +32,7 @@ export const ZProductInfo = z.object({
   name: z.string(),
   edition: z.enum(["standalone", "mas", "setapp"]),
   bundleId: z.string(),
-  aquaticPrimeKeyPair: z.union([ZPortableKeyPair, ZMongoBinary]).optional(),
+  aquaticPrimeKeyPair: ZPortableKeyPair.optional(),
 });
 const keysToEncrypt = ["aquaticPrimeKeyPair"] as const;
 export type ProductInfo = z.infer<typeof ZProductInfo>;
@@ -56,15 +56,15 @@ export async function createProduct(
     _id: randomIdentifier("pr"),
     object: "product" as const,
     created: new Date(),
-    ...encryptRecord(info, keysToEncrypt, auth.kind) as ProductInfo,
+    ...info,
   };
 
   try {
     ZProductRecord.parse(document);
+    encryptInPlace(document, keysToEncrypt, auth.kind);
     await dbc(auth.kind).insertOne(document);
-    return ZProductRecord.parse(
-      decryptRecord(document, keysToEncrypt, auth.kind),
-    );
+    decryptInPlace(document, keysToEncrypt, auth.kind);
+    return document;
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -83,9 +83,10 @@ export async function listProducts(
   const documents = await cursor.toArray();
 
   try {
-    return documents.map((document) =>
-      ZProductRecord.parse(decryptRecord(document, keysToEncrypt, auth.kind))
-    );
+    return documents.map((document) => {
+      decryptInPlace(document, keysToEncrypt, auth.kind);
+      return ZProductRecord.parse(document);
+    });
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -101,9 +102,8 @@ export async function readProduct(
 
   if (!document) return null;
   try {
-    return ZProductRecord.parse(
-      decryptRecord(document, keysToEncrypt, auth.kind),
-    );
+    decryptInPlace(document, keysToEncrypt, auth.kind);
+    return ZProductRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -117,9 +117,10 @@ export async function updateProduct(
 ) {
   assertScope("products:update", auth);
   try {
+    encryptInPlace(info, keysToEncrypt, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
-      { $set: encryptRecord(info, keysToEncrypt, auth.kind) },
+      { $set: info },
       { returnDocument: "after" },
     );
     return (!!result.value);

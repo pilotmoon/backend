@@ -1,6 +1,14 @@
 // Module to encrypt and decrypt secrets
 // using the key stored in the environment variable.
-// Also provices support for validating mongodb Binary objects.
+// The binary format of the encrypted string is
+// the initialization vector (16 bytes) followed
+// by the encrypted message.
+// The encrypted message is prefixed with the
+// string "#utf8#" as a marker.
+// The key is stored in the environment variable
+// APP_SECRET_LIVE or APP_SECRET_TEST depending
+// on the key kind.
+// The key is a 32 byte (256 bit) hex string.
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { Binary } from "mongodb";
@@ -23,7 +31,8 @@ function getSecretKey(kind: KeyKind) {
   return Buffer.from(hexKey, "hex");
 }
 
-export function encrypt(message: string, kind: KeyKind): Buffer {
+// encrypt a string to a buffer using the specified key kind
+export function encryptString(message: string, kind: KeyKind): Buffer {
   const key = getSecretKey(kind);
   const iv = randomBytes(16);
 
@@ -37,7 +46,8 @@ export function encrypt(message: string, kind: KeyKind): Buffer {
   ]);
 }
 
-export function decrypt(encryptedMessage: Buffer, kind: KeyKind): string {
+// decrypt a buffer to a string using the specified key kind
+export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
   const key = getSecretKey(kind);
   const iv = encryptedMessage.subarray(0, 16);
   const encryptedMessageWithoutIv = encryptedMessage.subarray(16);
@@ -54,36 +64,42 @@ export function decrypt(encryptedMessage: Buffer, kind: KeyKind): string {
   return plainText.slice(marker.length);
 }
 
-// replace the given keys with encrypted binary values
-// suitable for storing in the database.
-export function encryptRecord<
+// The encryptInPlace and decryptInPlace functions
+// modify the record in place.  This is intended for encrypting
+// and decrypting records as the last step immediately before inserting,
+// or first step immediately after retrieving from the database.
+// The operations are not type-safe, since the values are modified
+// in place so the modifications are not reflected in the type system.
+// The caller must ensure that the requested values are JSON
+// serializable. If the keys are not present in the record, then
+// they are ignored.
+// The MongoDB Binary type is used to store the encrypted values
+// since it will be stored directly in the database.
+
+// encrypt the values of the specified keys in the record ready for storage.
+export function encryptInPlace<
   T extends Record<string, unknown>,
   K extends keyof T,
 >(record: T, keys: readonly K[], kind: KeyKind) {
-  const result = { ...record } as Record<K | string, unknown>;
   for (const key of keys) {
     if (key in record) {
-      result[key] = new Binary(
-        encrypt(JSON.stringify(record[key]), kind),
-      );
+      record[key] = new Binary(
+        encryptString(JSON.stringify(record[key]), kind),
+      ) as any;
     }
   }
-  return result;
 }
 
-// replace the given keys with decrypted values
-// suitable for use in the application.
-export function decryptRecord<
+// decrypt the values of the specified keys in the record ready for use.
+export function decryptInPlace<
   T extends Record<string, unknown>,
   K extends keyof T,
 >(record: T, keys: readonly K[], kind: KeyKind) {
-  const result = { ...record } as Record<K | string, unknown>;
   for (const key of keys) {
-    if (key in record) {
-      result[key] = JSON.parse(
-        decrypt(Buffer.from((record[key] as Binary).buffer), kind),
+    if (key in record && record[key] instanceof Binary) {
+      record[key] = JSON.parse(
+        decryptString(Buffer.from((record[key] as Binary).buffer), kind),
       );
     }
   }
-  return result;
 }
