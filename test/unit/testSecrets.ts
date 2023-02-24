@@ -55,7 +55,7 @@ test("encrypt and decrypt record in place", (t) => {
   };
   const original = { ...record };
   // encrypt the record
-  encryptInPlace(record, ["encrypted"], "test");
+  encryptInPlace(record, "test", ["encrypted"]);
 
   // verify that the encrypted value is different
   t.notDeepEqual(record, original);
@@ -65,6 +65,6 @@ test("encrypt and decrypt record in place", (t) => {
   t.like(record, { foo: "bar", baz: "qux" });
 
   // verify that the encrypted value is decrypted correctly
-  decryptInPlace(record, ["encrypted"], "test");
+  decryptInPlace(record, "test", ["encrypted"]);
   t.deepEqual(record, original);
 });

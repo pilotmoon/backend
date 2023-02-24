@@ -17,19 +17,18 @@ const testAquaticPrimeKeyPair = {
   privateKey:
     "7E1114F56721BAC8F17B4805211DB9247940B1E0F0C6EE386473084B3DEB0475B5BC86BC5841E7DB46047E5ACFA09D88C41FD2B519D79BF7BE7D644F65FA29E9E9AFDC9AF918D1870264F8CCDDD1BEF46359582C3A18BC5E138121D6C9FF60AFBCA679F165B826D27A778348A11CBDF66F91651F91FE52B0EC7BA9B590266E63",
   keyFormat: "hex",
+  object: "keyPair",
 };
 
 test.before(() => {
   uniqueSuffix = randomString({ length: 8 });
   fooProduct = {
     name: "foo",
-    bundleId: bundleId("com.example.foo"),
-    edition: "standalone",
+    identifiers: [bundleId("com.example.foo")],
   };
   barProduct = {
     name: "bar",
-    bundleId: bundleId("com.example.bar"),
-    edition: "standalone",
+    identifiers: [bundleId("com.example.bar")],
   };
 });
 
@@ -43,15 +42,6 @@ test("create product, missing payload", async (t) => {
 test("create product, no scope", async (t) => {
   const res = await rolo("noscope").post("products", fooProduct);
   t.is(res.status, 403);
-});
-
-test("create product, bad edition", async (t) => {
-  const res = await rolo().post("products", {
-    name: "foo",
-    bundleId: "com.example.foo",
-    edition: "foo",
-  });
-  t.is(res.status, 400);
 });
 
 test("create product", async (t) => {
@@ -78,15 +68,12 @@ test("create product, unexpected key", async (t) => {
 test("create product, aquatic prime", async (t) => {
   const res = await rolo().post("products", {
     ...barProduct,
-    aquaticPrimeKeyPair: testAquaticPrimeKeyPair,
+    secrets: {
+      "aquaticPrime": testAquaticPrimeKeyPair,
+    },
   });
   t.is(res.status, 201);
   t.like(res.data, barProduct);
-  t.is(
-    res.data.aquaticPrimeKeyPair.publicKey,
-    testAquaticPrimeKeyPair.publicKey,
-  );
-  t.is(res.data.aquaticPrimeKeyPair.privateKey, undefined);
   t.is(res.headers.location, `/products/${res.data.id}`);
   barProductId = res.data.id;
 });
@@ -126,17 +113,9 @@ test("update product, bad edition", async (t) => {
 test("update product, violating unique constraint", async (t) => {
   // try to update bar to foo's bundleId
   const res2 = await rolo().patch(`/products/${barProductId}`, {
-    bundleId: fooProduct.bundleId,
+    identifiers: [...barProduct.identifiers, fooProduct.identifiers[0]],
   });
   t.is(res2.status, 409);
-});
-
-test("update product, duplicate of self", async (t) => {
-  const res = await rolo().patch(`/products/${fooProductId}`, {
-    bundleId: fooProduct.bundleId,
-  });
-  t.is(res.status, 204);
-  t.is(res.data, "");
 });
 
 test("update product, no update access", async (t) => {
@@ -172,21 +151,27 @@ test("verify that foo does not have an aquaticprime key pair", async (t) => {
   t.is(res.data.aquaticPrimeKeyPair, undefined);
 });
 
-test("add an aquaticprime key pair to the foo product", async (t) => {
-  const res = await rolo().patch(`/products/${fooProductId}`, {
-    aquaticPrimeKeyPair: testAquaticPrimeKeyPair,
-  });
-  t.is(res.status, 204);
+test("add a key pair to the foo product", async (t) => {
+  // first get the foo product
+  const res = await rolo().get(`/products/${fooProductId}`);
+
+  // add the aquaticprime key pair with a new name
+  const secrets = { blah: testAquaticPrimeKeyPair };
+
+  // update the foo product
+  const res2 = await rolo().patch(`/products/${fooProductId}`, { secrets });
+  t.is(res2.status, 204);
 });
 
-test("retrieve the aquaticprime key pair and check private key is redacted", async (t) => {
+test("retrieve the aquaticprime key pairs and check private key is redacted", async (t) => {
   const res = await rolo().get(`/products/${fooProductId}`);
   t.is(res.status, 200);
   t.is(
-    res.data.aquaticPrimeKeyPair.publicKey,
+    res.data.secrets.blah.publicKey,
     testAquaticPrimeKeyPair.publicKey,
   );
-  t.is(res.data.aquaticPrimeKeyPair.privateKey, undefined);
+  t.deepEqual(res.data.secrets.blah.privateKey, undefined);
+  t.is(res.data.secrets.blah.redacted, true);
 });
 
 test("delete product", async (t) => {

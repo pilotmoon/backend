@@ -4,8 +4,8 @@ import { makeIdentifierPattern } from "../identifiers";
 import {
   createProduct,
   deleteProduct,
-  keyPairNames,
   listProducts,
+  PartialProductInfo,
   readProduct,
   updateProduct,
   ZPartialProductInfo,
@@ -18,14 +18,17 @@ const matchId = {
   uuid: randomUUID(),
 };
 
-function sanitize(info: any) {
-  const result = { ...info };
-  for (const key of keyPairNames) {
-    if (result[key]?.privateKey) {
-      result[key].privateKey = undefined;
+function sanitize(info: PartialProductInfo) {
+  const secrets = info.secrets;
+  if (secrets) {
+    for (const [key, value] of Object.entries(secrets)) {
+      if (value.object == "keyPair") {
+        (secrets[key] as any).privateKey = undefined;
+        (secrets[key] as any).redacted = true;
+      }
     }
   }
-  return result;
+  return { ...info, secrets };
 }
 
 // create new product

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 // zod schema for a portable key pair
 export const ZPortableKeyPair = z.object({
+  object: z.literal("keyPair"),
   publicKey: z.string(),
   privateKey: z.string(),
   keyFormat: z.enum(["hex", "base64"]),

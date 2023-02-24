@@ -6,9 +6,6 @@ import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { decryptInPlace, encryptInPlace } from "../secrets";
-import { omit } from "../omit";
-import { ZMongoBinary } from "../binary";
-import { Binary } from "mongodb";
 
 /*** Database ***/
 
@@ -21,20 +18,26 @@ function dbc(kind: KeyKind) {
 export async function init() {
   for (const kind of keyKinds) {
     const collection = dbc(kind);
-    collection.createIndex({ bundleId: 1, edition: 1 }, { unique: true });
+    collection.createIndex({ identifiers: 1 }, { unique: true });
     collection.createIndex({ created: 1 });
   }
 }
 
 /*** Schemas ***/
 
+// a type to store secrets indexed by name
+const ZSecrets = z.record(
+  z.string(),
+  z.discriminatedUnion("object", [
+    ZPortableKeyPair,
+  ]),
+);
+
 export const ZProductInfo = z.object({
   name: z.string(),
-  edition: z.enum(["standalone", "mas", "setapp"]),
-  bundleId: z.string(),
-  aquaticPrimeKeyPair: ZPortableKeyPair.optional(),
+  identifiers: z.array(z.string()), // a product can have multiple identifiers
+  secrets: ZSecrets.optional(),
 });
-export const keyPairNames = ["aquaticPrimeKeyPair"] as const;
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();
 export type PartialProductInfo = z.infer<typeof ZPartialProductInfo>;
@@ -61,9 +64,9 @@ export async function createProduct(
 
   try {
     ZProductRecord.parse(document);
-    encryptInPlace(document, keyPairNames, auth.kind);
+    encryptInPlace(document.secrets, auth.kind);
     await dbc(auth.kind).insertOne(document);
-    decryptInPlace(document, keyPairNames, auth.kind);
+    decryptInPlace(document.secrets, auth.kind);
     return document;
   } catch (error) {
     handleControllerError(error);
@@ -84,7 +87,7 @@ export async function listProducts(
 
   try {
     return documents.map((document) => {
-      decryptInPlace(document, keyPairNames, auth.kind);
+      decryptInPlace(document.secrets, auth.kind);
       return ZProductRecord.parse(document);
     });
   } catch (error) {
@@ -102,7 +105,7 @@ export async function readProduct(
 
   if (!document) return null;
   try {
-    decryptInPlace(document, keyPairNames, auth.kind);
+    decryptInPlace(document.secrets, auth.kind);
     return ZProductRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
@@ -117,7 +120,7 @@ export async function updateProduct(
 ) {
   assertScope("products:update", auth);
   try {
-    encryptInPlace(info, keyPairNames, auth.kind);
+    encryptInPlace(info.secrets, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
       { $set: info },

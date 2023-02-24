@@ -76,26 +76,32 @@ export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
 // The MongoDB Binary type is used to store the encrypted values
 // since it will be stored directly in the database.
 
-// encrypt the values of the specified keys in the record ready for storage.
-export function encryptInPlace<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(record: T, keys: readonly K[], kind: KeyKind) {
-  for (const key of keys) {
+// encrypt the values for the specified keys in the record, ready for storage.
+// if the keys are not specified, then all values are encrypted.
+export function encryptInPlace(
+  record: Record<string, unknown> | undefined,
+  kind: KeyKind,
+  keys?: string[],
+) {
+  if (!record) return;
+  for (const key of keys ? keys : Object.keys(record)) {
     if (key in record) {
       record[key] = new Binary(
         encryptString(JSON.stringify(record[key]), kind),
-      ) as any;
+      );
     }
   }
 }
 
 // decrypt the values of the specified keys in the record ready for use.
-export function decryptInPlace<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(record: T, keys: readonly K[], kind: KeyKind) {
-  for (const key of keys) {
+// if the keys are not specified, then all binary keys are decrypted.
+export function decryptInPlace(
+  record: Record<string, unknown> | undefined,
+  kind: KeyKind,
+  keys?: string[],
+) {
+  if (!record) return;
+  for (const key of keys ? keys : Object.keys(record)) {
     if (key in record && record[key] instanceof Binary) {
       record[key] = JSON.parse(
         decryptString(Buffer.from((record[key] as Binary).buffer), kind),
