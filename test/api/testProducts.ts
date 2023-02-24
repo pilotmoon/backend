@@ -44,6 +44,21 @@ test("create product, no scope", async (t) => {
   t.is(res.status, 403);
 });
 
+test("create product, missing identifiers array", async (t) => {
+  const res = await rolo().post("products", {
+    name: "foo",
+  });
+  t.is(res.status, 400);
+});
+
+test("create product, empty identifiers", async (t) => {
+  const res = await rolo().post("products", {
+    name: "foo",
+    identifiers: [],
+  });
+  t.is(res.status, 400);
+});
+
 test("create product", async (t) => {
   const res = await rolo().post("products", fooProduct);
   t.is(res.status, 201);
@@ -215,7 +230,7 @@ test("try to get a secret withou the right permissions", async (t) => {
 test("create a product without secrets and then add one", async (t) => {
   const res = await rolo().post("/products", {
     name: "baz",
-    identifiers: ["baz"],
+    identifiers: [bundleId("com.example.baz")],
   });
   t.is(res.status, 201);
 

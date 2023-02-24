@@ -46,9 +46,9 @@ export function sanitize(info: PartialProductInfo) {
 }
 
 export const ZProductInfo = z.object({
-  name: z.string(),
-  identifiers: z.array(z.string()), // a product can have multiple identifiers
-  secrets: z.record(z.string(), ZSecret).optional(),
+  name: z.string().min(1),
+  identifiers: z.array(z.string().min(1)).nonempty(),
+  secrets: z.record(z.string().min(1), ZSecret).optional(),
 });
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();
