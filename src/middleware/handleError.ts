@@ -1,7 +1,6 @@
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { Context, Next } from "koa";
-import { pickBy } from "lodash";
 import { STATUS_CODES } from "node:http";
 import { ApiError } from "../errors";
 import { log } from "../logger";
