@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
-import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers";
+import { genericIdPattern, makeIdentifierPattern } from "../identifiers";
 import {
   createProduct,
   deleteProduct,
@@ -13,6 +13,7 @@ import {
   ZSecret,
 } from "../controllers/productsController";
 import { assertScope } from "../controllers/authController";
+import { log } from "../logger";
 
 export const router = makeRouter({ prefix: "/products" });
 const matchId = {
@@ -92,7 +93,7 @@ router.get(matchId.pattern + "/secrets/:secretId", async (ctx) => {
 });
 
 // read a product using one of its identifiers, using `byIdentifier` url
-router.get("/byIdentifier/:identifier", async (ctx) => {
+router.get(`/byIdentifier/:identifier(${genericIdPattern})`, async (ctx) => {
   const document = await readProduct(ctx.params.identifier, ctx.state.auth);
   if (document) {
     ctx.body = sanitize(document);

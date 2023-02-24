@@ -10,7 +10,7 @@ const keyPrefix = "sk";
 const keyLength = 24;
 const idLength = 16;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
-const genericIdPattern = `[0-9a-zA-Z-_.]+`;
+export const genericIdPattern = `[0-9a-zA-Z-_.]+`;
 export const keyRegex = new RegExp(
   `^${keyPrefix}_(${keyKinds.join("|")})_(${base62(idLength)})${
     base62(keyLength)
