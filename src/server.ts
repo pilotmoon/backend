@@ -31,7 +31,16 @@ server.context.location = function (name: string, params?: any) {
   return result;
 };
 
-// middleware for error handling
+// middleware to measure response time
+server.use(async (ctx, next) => {
+  const start = Date.now();
+  await next();
+  const time = `${Date.now() - start} ms`;
+  log("Response time:", time);
+  ctx.set("X-Response-Time", time);
+});
+
+// middleware for pretty logging
 server.use(async (ctx, next) => {
   try {
     log("\n" + `${ctx.method} ${ctx.url}`.bgBlue);
@@ -65,7 +74,7 @@ server.use(async (ctx, next) => {
 server.use(async (ctx, next) => {
   await next();
   if (typeof ctx.body === "object") {
-    // if array
+    // replace _id with id
     function replace(obj: any) {
       if (obj._id) {
         if (typeof obj._id === "string") {
@@ -75,6 +84,7 @@ server.use(async (ctx, next) => {
       }
       return obj;
     }
+    // if array, wrap in list object
     if (Array.isArray(ctx.body)) {
       ctx.body = {
         object: "list",
