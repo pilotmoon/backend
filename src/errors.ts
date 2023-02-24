@@ -14,7 +14,7 @@ export class ApiError extends Error {
   }
 }
 
-export function handleInternalError(error: unknown) {
+export function handleControllerError(error: unknown) {
   if (error instanceof MongoServerError && error.code === 11000) {
     throw new ApiError(409, "Unique constraint violation");
   } else if (error instanceof ZodError) {

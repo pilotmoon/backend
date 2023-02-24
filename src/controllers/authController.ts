@@ -2,7 +2,7 @@ import { deterministic, randomKey } from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
-import { ApiError, handleInternalError } from "../errors";
+import { ApiError, handleControllerError } from "../errors";
 import { Context, Next } from "koa";
 import { log, loge } from "../logger";
 import { KeyKind, keyKinds, keyRegex } from "../identifiers";
@@ -162,7 +162,7 @@ export async function readApiKey(
   try {
     return ApiKeySchema.parse(document);
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }
@@ -200,7 +200,7 @@ export async function updateApiKey(
     });
     return (!!result.value);
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }

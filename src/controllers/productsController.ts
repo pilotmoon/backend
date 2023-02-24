@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getDb } from "../database";
 import { assertScope, AuthContext } from "../controllers/authController";
-import { handleInternalError } from "../errors";
+import { handleControllerError } from "../errors";
 import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
 import { PaginateState } from "../paginate";
 
@@ -54,7 +54,7 @@ export async function createProduct(
     await getCollection(auth.kind).insertOne(document);
     return document;
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }
@@ -73,7 +73,7 @@ export async function listProducts(
   try {
     return documents.map((document) => ProductRecord.parse(document));
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }
@@ -89,7 +89,7 @@ export async function readProduct(
   try {
     return ProductRecord.parse(document);
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }
@@ -110,7 +110,7 @@ export async function updateProduct(
     });
     return (!!result.value);
   } catch (error) {
-    handleInternalError(error);
+    handleControllerError(error);
     throw (error);
   }
 }
