@@ -54,11 +54,10 @@ export function sanitize(info: ProductInfoUpdate) {
 // schema for the legal identifiers of a product
 const ZIdentifier = z.string().regex(genericIdRegex).max(100);
 
-// schema for the parts of the info that can be provided at creation time
+// schema for the parts of the info that must be provided at creation time
 export const ZProductInfo = z.object({
   name: z.string().min(1).max(100),
-  identifiers: z.array(ZIdentifier)
-    .nonempty(),
+  identifiers: z.array(ZIdentifier).nonempty(),
   secrets: z.record(z.string().min(1).max(100), ZSecret).optional(),
 });
 export type ProductInfo = z.infer<typeof ZProductInfo>;
@@ -75,8 +74,15 @@ export const ZProductRecord = ZProductInfo.extend({
 });
 export type ProductRecord = z.infer<typeof ZProductRecord>;
 
-/*** C.R.U.D. ***/
+/*** C.R.U.D. Operations ***/
 
+// Create a new product. The auth context must have the "products:create" scope.
+// The product info may contain secrets, which will be encrypted in the database.
+// The product info must contain an array of client-provided identifiers, which
+// will be used to look up the product later. The identifiers must be unique
+// across all products. At least one identifier must be provided. A canonical
+// ID will also be generated for the product, with the "pr" prefix, which will be
+// the primary identifier used to look up the product.
 export async function createProduct(
   info: ProductInfo,
   auth: AuthContext,
@@ -101,6 +107,8 @@ export async function createProduct(
   }
 }
 
+// List products. The auth context must have the "products:read" scope.
+// The paginate state must contain the limit and offset for the query.
 export async function listProducts(
   { limit, offset, order, orderBy }: PaginateState,
   auth: AuthContext,
@@ -123,7 +131,8 @@ export async function listProducts(
   }
 }
 
-// id can be any identifier, not just the _id
+// Read a product by its canonical ID or one of its other identifiers. The auth
+// context must have the "products:read" scope.
 export async function readProduct(
   id: string,
   auth: AuthContext,
@@ -143,6 +152,9 @@ export async function readProduct(
   }
 }
 
+// Update a product by its canonical ID or one of its other identifiers. The auth
+// context must have the "products:update" scope. The product info may contain
+// secrets, which will be encrypted in the database.
 export async function updateProduct(
   id: string,
   info: ProductInfoUpdate,
@@ -163,6 +175,9 @@ export async function updateProduct(
   }
 }
 
+// Delete a product by its canonical ID or one of its other identifiers. The auth
+// context must have the "products:delete" scope. Returns true if the product was
+// deleted, false if it was not found.
 export async function deleteProduct(
   id: string,
   auth: AuthContext,
