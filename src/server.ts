@@ -24,7 +24,11 @@ const server = makeServer();
 // add function to context for generating url for Location header
 server.context.location = function (name: string, params?: any) {
   log("location", name, params);
-  return mainRouter.url(name, params);
+  const result = mainRouter.url(name, params);
+  if (result instanceof Error) {
+    throw result;
+  }
+  return result;
 };
 
 // middleware for error handling
