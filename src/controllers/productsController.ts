@@ -2,7 +2,12 @@ import { z } from "zod";
 import { getDb } from "../database";
 import { assertScope, AuthContext } from "../controllers/authController";
 import { handleControllerError } from "../errors";
-import { KeyKind, keyKinds, randomIdentifier } from "../identifiers";
+import {
+  genericIdRegex,
+  KeyKind,
+  keyKinds,
+  randomIdentifier,
+} from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { decryptInPlace, encryptInPlace } from "../secrets";
@@ -44,11 +49,12 @@ export function sanitize(info: PartialProductInfo) {
   }
   return { ...info, secrets };
 }
-
+const ZIdentifier = z.string().regex(genericIdRegex).max(100);
 export const ZProductInfo = z.object({
-  name: z.string().min(1),
-  identifiers: z.array(z.string().min(1)).nonempty(),
-  secrets: z.record(z.string().min(1), ZSecret).optional(),
+  name: z.string().min(1).max(100),
+  identifiers: z.array(ZIdentifier)
+    .nonempty(),
+  secrets: z.record(z.string().min(1).max(100), ZSecret).optional(),
 });
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 export const ZPartialProductInfo = ZProductInfo.partial();
