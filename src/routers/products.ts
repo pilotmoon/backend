@@ -5,8 +5,8 @@ import {
   createProduct,
   deleteProduct,
   listProducts,
-  PartialProductInfo,
   readProduct,
+  sanitize,
   updateProduct,
   ZPartialProductInfo,
   ZProductInfo,
@@ -17,19 +17,6 @@ const matchId = {
   pattern: makeIdentifierPattern("id", "pr"),
   uuid: randomUUID(),
 };
-
-function sanitize(info: PartialProductInfo) {
-  const secrets = info.secrets;
-  if (secrets) {
-    for (const [key, value] of Object.entries(secrets)) {
-      if (value.object == "keyPair") {
-        (secrets[key] as any).privateKey = undefined;
-        (secrets[key] as any).redacted = true;
-      }
-    }
-  }
-  return { ...info, secrets };
-}
 
 // create new product
 router.post("/", async (ctx) => {

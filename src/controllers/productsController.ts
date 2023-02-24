@@ -33,6 +33,20 @@ const ZSecrets = z.record(
   ]),
 );
 
+// a function to sanitize secrets
+export function sanitize(info: PartialProductInfo) {
+  const secrets = info.secrets;
+  if (secrets) {
+    for (const [key, value] of Object.entries(secrets)) {
+      if (value.object == "keyPair") {
+        (secrets[key] as any).privateKey = undefined;
+        (secrets[key] as any).redacted = true;
+      }
+    }
+  }
+  return { ...info, secrets };
+}
+
 export const ZProductInfo = z.object({
   name: z.string(),
   identifiers: z.array(z.string()), // a product can have multiple identifiers
