@@ -41,7 +41,7 @@ app.context.getLocation = function (name: string, params?: any) {
 };
 
 // body parser that only accepts JSON
-const jsonBodyParser = bodyParser({
+const parseJsonBody = bodyParser({
   enableTypes: ["json"],
   onerror: () => {
     throw new ApiError(400, "Invalid JSON");
@@ -58,7 +58,7 @@ app.use(rootRouter.allowedMethods());
 app.use(authorize);
 app.use(processPagination());
 app.use(enforceJson);
-app.use(jsonBodyParser);
+app.use(parseJsonBody);
 app.use(mainRouter.routes());
 app.use(mainRouter.allowedMethods());
 
