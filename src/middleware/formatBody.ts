@@ -1,4 +1,5 @@
 import { Context, Next } from "koa";
+import { z } from "zod";
 import { ApiError } from "../errors";
 
 // replace _id with id
@@ -11,6 +12,18 @@ function replaceId(obj: any) {
   }
   return obj;
 }
+
+// generic schema for all responses. this is used to format
+// all responses to the client. it will ensure that the response
+// has an id key, an object key, and a livemode key. it will also
+// ensure that those keys and certain other keys are in a consistent
+// order.
+const ZResponseSchema = z.object({
+  id: z.string(),
+  object: z.string(),
+  livemode: z.boolean(),
+  created: z.date().optional(),
+});
 
 // modify all response bodies.
 // also, add livemode key
@@ -42,25 +55,6 @@ export async function formatBody(ctx: Context, next: Next) {
   // set livemode key
   newBody.livemode = ctx.state.auth.kind === "live";
 
-  // re-build the object so that the keys are in a consistent order
-  // the id key should always be first, followed by the object key,
-  // followed by the livemode key, followed by the created and updated keys,
-  // followed by any other keys
-  const orderedBody: Record<string, unknown> = {};
-  if (newBody.id) {
-    orderedBody.id = newBody.id;
-    delete newBody.id;
-  }
-  if (newBody.object) {
-    orderedBody.object = newBody.object;
-    delete newBody.object;
-  }
-  if (newBody.created) {
-    orderedBody.created = newBody.created;
-    delete newBody.created;
-  }
-  Object.assign(orderedBody, newBody);
-
   // assign new body
-  ctx.body = orderedBody;
+  ctx.body = ZResponseSchema.passthrough().parse(newBody);
 }
