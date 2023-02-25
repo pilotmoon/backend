@@ -112,7 +112,7 @@ export async function listProducts(
   { limit, offset, order, orderBy }: PaginateState,
   auth: AuthContext,
 ): Promise<ProductRecord[]> {
-  assertScope("products:read", auth);
+  assertScope("products:list", auth);
   const cursor = dbc(auth.kind).find()
     .sort({ [orderBy]: order })
     .skip(offset)
