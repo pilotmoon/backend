@@ -5,6 +5,7 @@ import {
   encryptString,
 } from "../../src/secrets";
 import test from "ava";
+import { Binary } from "mongodb";
 
 test("encrypt and decrypt", (t) => {
   const message = "hello world";
@@ -51,20 +52,20 @@ test("encrypt and decrypt record in place", (t) => {
   const record = {
     foo: "bar",
     baz: "qux",
-    encrypted: "hello world",
+    encrypted: { secret: true, message: "hello world" },
   };
   const original = { ...record };
   // encrypt the record
-  encryptInPlace(record, "test", ["encrypted"]);
+  encryptInPlace(record, "test");
 
   // verify that the encrypted value is different
   t.notDeepEqual(record, original);
-  t.assert(typeof record.encrypted === "object");
+  t.assert(record.encrypted instanceof Binary);
 
   // verify that the non-encrypted keys didn't change
   t.like(record, { foo: "bar", baz: "qux" });
 
   // verify that the encrypted value is decrypted correctly
-  decryptInPlace(record, "test", ["encrypted"]);
+  decryptInPlace(record, "test");
   t.deepEqual(record, original);
 });

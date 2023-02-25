@@ -32,32 +32,64 @@ export async function init() {
 
 /*** Schemas ***/
 
-// a type to store secrets indexed by name
-export const ZSecret = z.discriminatedUnion("object", [
+// Registries store arbitrary objects, such as key pairs, secrets, etc.
+//
+// The registry itself has a description, and a list of identifiers.
+// The registry can be looked up by any of the identifiers. Identifiers
+// must be unique across all registries.
+//
+// All objects stored in the registry are encrypted with the application's
+// encryption key.
+//
+// Upon retreival, the objects are decrypted and returned to the client.
+// By default the secret data is redacted, but the client can request
+// the secret data to be returned.
+//
+// Which parts of the object are secret is determined by the object's
+// type. For example, a key pair object has a public key and a private
+// key. The public key is not secret, but the private key is.
+
+// schema for a generic record, secret or not
+export const ZRecord = z.object({
+  object: z.literal("record"),
+  secret: z.boolean(),
+  record: z.record(z.string(), z.unknown()),
+});
+
+// types that can be stored as an object in the registry
+export const ZObject = z.discriminatedUnion("object", [
+  ZRecord,
   ZPortableKeyPair,
 ]);
-export type Secret = z.infer<typeof ZSecret>;
 
-// a function to sanitize secrets by removing private keys
-// and adding a "redacted" flag
-export function sanitize(info: RegistryInfoUpdate) {
-  const secrets = info.secrets;
-  if (secrets) {
-    for (const [key, value] of Object.entries(secrets)) {
-      if (value.object == "keyPair") {
-        (secrets[key] as any).privateKey = undefined;
-        (secrets[key] as any).redacted = true;
+// a function to redact secrets by removing the secret data.
+// a redated flag is added.
+export function redact(info: RegistryInfoUpdate) {
+  const objects = info.objects;
+  if (objects) {
+    for (const [key, value] of Object.entries(objects)) {
+      switch (value.object) {
+        case "keyPair":
+          (objects[key] as any).privateKey = undefined;
+          (objects[key] as any).redacted = true;
+          break;
+        case "record":
+          if (value.secret) {
+            (objects[key] as any).record = undefined;
+            (objects[key] as any).redacted = true;
+          }
+          break;
       }
     }
   }
-  return { ...info, secrets };
+  return { ...info, secrets: objects };
 }
 
 // schema for the parts of the info that must be provided at creation time
 export const ZRegistryInfo = z.object({
   description: ZSaneString,
   identifiers: z.array(ZIdentifier).nonempty(),
-  secrets: z.record(ZSaneString, ZSecret).optional(),
+  objects: z.record(ZSaneString, ZObject).optional(),
 });
 export type RegistryInfo = z.infer<typeof ZRegistryInfo>;
 
@@ -75,19 +107,13 @@ export type RegistryRecord = z.infer<typeof ZRegistryRecord>;
 
 /*** C.R.U.D. Operations ***/
 
-// Create a new registry. The auth context must have the "registries:create" scope.
-// The registry info may contain secrets, which will be encrypted in the database.
-// The registry info must contain an array of client-provided identifiers, which
-// will be used to look up the registry later. The identifiers must be unique
-// across all registries. At least one identifier must be provided. A canonical
-// ID will also be generated for the registry, with the "reg" prefix, which will be
-// the primary identifier used to look up the registry.
+// Create a new registry.
 export async function createRegistry(
   info: RegistryInfo,
   auth: AuthContext,
 ): Promise<RegistryRecord> {
   assertScope("registries:create", auth);
-  const document = {
+  const document: RegistryRecord = {
     _id: randomIdentifier("reg"),
     object: "registry" as const,
     created: new Date(),
@@ -95,10 +121,9 @@ export async function createRegistry(
   };
 
   try {
-    ZRegistryRecord.parse(document);
-    encryptInPlace(document.secrets, auth.kind);
+    encryptInPlace(document.objects, auth.kind);
     await dbc(auth.kind).insertOne(document);
-    decryptInPlace(document.secrets, auth.kind);
+    decryptInPlace(document.objects, auth.kind);
     return document;
   } catch (error) {
     handleControllerError(error);
@@ -106,8 +131,7 @@ export async function createRegistry(
   }
 }
 
-// List registries. The auth context must have the "registries:read" scope.
-// The paginate state must contain the limit and offset for the query.
+// List registries.
 export async function listRegistries(
   { limit, offset, order, orderBy }: PaginateState,
   auth: AuthContext,
@@ -121,7 +145,7 @@ export async function listRegistries(
 
   try {
     return documents.map((document) => {
-      decryptInPlace(document.secrets, auth.kind);
+      decryptInPlace(document.objects, auth.kind);
       return ZRegistryRecord.parse(document);
     });
   } catch (error) {
@@ -130,8 +154,8 @@ export async function listRegistries(
   }
 }
 
-// Read a registry by its canonical ID or one of its other identifiers. The auth
-// context must have the "registries:read" scope.
+// Read a registry by its canonical ID or one of its other identifiers.
+// Returns null if the registry does not exist.
 export async function readRegistry(
   id: string,
   auth: AuthContext,
@@ -143,7 +167,7 @@ export async function readRegistry(
 
   if (!document) return null;
   try {
-    decryptInPlace(document.secrets, auth.kind);
+    decryptInPlace(document.objects, auth.kind);
     return ZRegistryRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
@@ -151,9 +175,8 @@ export async function readRegistry(
   }
 }
 
-// Update a registry by its canonical ID or one of its other identifiers. The auth
-// context must have the "registries:update" scope. The registry info may contain
-// secrets, which will be encrypted in the database.
+// Update a registry by its canonical ID or one of its other identifiers.
+// Returns true if the registry was updated, false if it was not found.
 export async function updateRegistry(
   id: string,
   info: RegistryInfoUpdate,
@@ -161,7 +184,7 @@ export async function updateRegistry(
 ) {
   assertScope("registries:update", auth);
   try {
-    encryptInPlace(info.secrets, auth.kind);
+    encryptInPlace(info.objects, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
       { $or: [{ _id: id }, { identifiers: id }] },
       { $set: info },
@@ -174,9 +197,8 @@ export async function updateRegistry(
   }
 }
 
-// Delete a registry by its canonical ID or one of its other identifiers. The auth
-// context must have the "registries:delete" scope. Returns true if the registry was
-// deleted, false if it was not found.
+// Delete a registry by its canonical ID or one of its other identifiers.
+// Returns true if the registry was deleted, false if it was not found.
 export async function deleteRegistry(
   id: string,
   auth: AuthContext,

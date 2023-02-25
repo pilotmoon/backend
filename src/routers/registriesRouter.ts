@@ -6,11 +6,11 @@ import {
   deleteRegistry,
   listRegistries,
   readRegistry,
-  sanitize,
+  redact,
   updateRegistry,
+  ZObject,
   ZRegistryInfo,
   ZRegistryInfoUpdate,
-  ZSecret,
 } from "../controllers/registriesController";
 import { assertScope } from "../controllers/authController";
 
@@ -24,7 +24,7 @@ const matchId = {
 router.post("/", async (ctx) => {
   const suppliedData = ZRegistryInfo.strict().parse(ctx.request.body);
   const document = await createRegistry(suppliedData, ctx.state.auth);
-  ctx.body = sanitize(document);
+  ctx.body = redact(document);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
@@ -32,14 +32,14 @@ router.post("/", async (ctx) => {
 // list registries
 router.get("/", async (ctx) => {
   const documents = await listRegistries(ctx.state.paginate, ctx.state.auth);
-  ctx.body = documents.map(sanitize);
+  ctx.body = documents.map(redact);
 });
 
 // read a registry
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = sanitize(document);
+    ctx.body = redact(document);
   }
 });
 
@@ -58,34 +58,37 @@ router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
-// add or update a named secret using a dedicated url
-router.put(matchId.pattern + "/secrets/:secretId", async (ctx) => {
-  const suppliedSecret = ZSecret.parse(ctx.request.body);
+// add or update a named object using a dedicated url
+router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
+  const suppliedObject = ZObject.parse(ctx.request.body);
+  const auth = ctx.state.auth;
+  const id = ctx.params.id;
+  const objectId = ctx.params.objectId;
 
   // get current document
-  const document = await readRegistry(ctx.params.id, ctx.state.auth);
+  const document = await readRegistry(id, auth);
   if (!document) return;
 
   // insert the new secret
-  document.secrets = {
-    ...document.secrets,
-    [ctx.params.secretId]: suppliedSecret,
+  document.objects = {
+    ...document.objects,
+    [objectId]: suppliedObject,
   };
 
   // update the document
-  if (await updateRegistry(ctx.params.id, document, ctx.state.auth)) {
+  if (await updateRegistry(id, document, auth)) {
     ctx.status = 204;
   }
 });
 
-// read a named secret using a dedicated url
-router.get(matchId.pattern + "/secrets/:secretId", async (ctx) => {
+// read a named objects using a dedicated url
+router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
   assertScope("secrets:read", ctx.state.auth); // special scope for unredacted secrets
 
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
-  if (!document?.secrets) return;
+  if (!document?.objects) return;
 
-  const secret = document.secrets[ctx.params.secretId];
+  const secret = document.objects[ctx.params.objectId];
   if (secret) {
     ctx.body = secret; // note: no sanitization
   }
@@ -95,6 +98,6 @@ router.get(matchId.pattern + "/secrets/:secretId", async (ctx) => {
 router.get(`/byIdentifier/:identifier(${genericIdPattern})`, async (ctx) => {
   const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
   if (document) {
-    ctx.body = sanitize(document);
+    ctx.body = redact(document);
   }
 });

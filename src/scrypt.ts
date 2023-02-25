@@ -22,7 +22,7 @@ export async function verifyPassword(
       await scryptAsync(suppliedPassword, salt, 64) as Buffer,
     );
   } catch (e) {
-    loge("verifyPassword", e);
+    // do nothing
   }
   return result;
 }
