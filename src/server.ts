@@ -4,9 +4,6 @@ import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
 import { ApiError } from "./errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { init as initAuth } from "./controllers/authController";
-import { init as initProducts } from "./controllers/productsController";
-import { init as initLicenseKeys } from "./controllers/licenseKeysController";
 import { log } from "./logger";
 import { asciiHello } from "./static";
 import { authorize } from "./middleware/authorize";
@@ -98,9 +95,9 @@ process.on("SIGINT", async () => {
   log("Calling startup routines".green);
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
-    initAuth(),
-    initProducts(),
-    initLicenseKeys(),
+    require("./controllers/authController").init(),
+    require("./controllers/productsController").init(),
+    require("./controllers/licenseKeysController").init(),
   ]);
   log("Startup complete".green);
   startServer();
