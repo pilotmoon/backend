@@ -64,7 +64,7 @@ export const ZObject = z.discriminatedUnion("object", [
 
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
-export function redact(info: RegistryInfoUpdate) {
+export function redact(info: RegistryInfo) {
   const objects = { ...info.objects };
   Object.values(objects).forEach(redactObjectInPlace);
   return { ...info, objects };
