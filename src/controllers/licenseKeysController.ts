@@ -12,7 +12,7 @@ import {
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { AquaticPrime } from "@pilotmoon/aquatic-prime";
-import { sha256 } from "../sha256";
+import { sha256Hex } from "../sha256";
 
 /*
 
@@ -172,11 +172,11 @@ export const ZLicenseKeyInfo = z.object({
   email: z.string().trim().email().max(100).optional(),
   // original order number from originator, any format (e.g. "244001-443922")
   order: ZSaneString.optional(),
+  // origin of the purchase, such as reseller e.g. "DIGITALYCHEE" or "FastSpring"
+  origin: ZSaneString.optional(),
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
   date: z.coerce.date().optional(),
-  // origin of the purchase, such as reseller e.g. "DIGITALYCHEE" or "FastSpring"
-  origin: ZSaneString.optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
   product: z.string().regex(genericIdRegex).max(100),
   // number of users/seats covered by the license key
@@ -200,8 +200,8 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
   object: z.literal("licenseKey"),
   // date of creation of record
   created: z.date(),
-  // sha256 hash of the email address, for lookups
-  emailHash: z.string().optional(),
+  // sha256 hash of the email address, in hex
+  emailHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
@@ -230,13 +230,13 @@ export async function createLicenseKey(
 ): Promise<LicenseKeyRecord> {
   assertScope("licenseKeys:create", auth);
   if (!info.date) info.date = new Date();
-  const record = {
+  const record: LicenseKeyRecord = {
     _id: randomIdentifier("lk"),
     object: "licenseKey" as const,
     created: new Date(),
-    ...info,
-    emailHash: info.email ? sha256(info.email) : undefined,
+    ...ZLicenseKeyInfo.parse(info), // parse again for ordering
   };
+  if (info.email) record.emailHash = sha256Hex(info.email);
 
   try {
     ZLicenseKeyRecord.parse(record);
