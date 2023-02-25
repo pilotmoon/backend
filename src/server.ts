@@ -18,7 +18,7 @@ import { enforceJson } from "./middleware/enforceJson";
 const mainRouter = makeRouter();
 mainRouter.use(require("./routers/healthRouter").router.routes());
 mainRouter.use(require("./routers/apiKeysRouter").router.routes());
-mainRouter.use(require("./routers/productsRouter").router.routes());
+mainRouter.use(require("./routers/registriesRouter").router.routes());
 mainRouter.use(require("./routers/licenseKeysRouter").router.routes());
 
 // the root router simply serves a title screen, bypassing auth
@@ -96,7 +96,7 @@ process.on("SIGINT", async () => {
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
     require("./controllers/authController").init(),
-    require("./controllers/productsController").init(),
+    require("./controllers/registriesController").init(),
     require("./controllers/licenseKeysController").init(),
   ]);
   log("Startup complete".green);

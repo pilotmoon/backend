@@ -6,10 +6,10 @@ function bundleId(id: string) {
   return id + "-" + uniqueSuffix;
 }
 let uniqueSuffix: string;
-let fooProduct: any;
-let fooProductId: string;
-let barProduct: any;
-let barProductId: string;
+let fooRegistry: any;
+let fooRegistryId: string;
+let barRegistry: any;
+let barRegistryId: string;
 
 const testAquaticPrimeKeyPair = {
   publicKey:
@@ -22,164 +22,164 @@ const testAquaticPrimeKeyPair = {
 
 test.before(() => {
   uniqueSuffix = randomString({ length: 8 });
-  fooProduct = {
+  fooRegistry = {
     description: "foo",
     identifiers: [bundleId("com.example.foo")],
   };
-  barProduct = {
+  barRegistry = {
     description: "bar",
     identifiers: [bundleId("com.example.bar")],
   };
 });
 
-test("create product, missing payload", async (t) => {
-  const res = await rolo().post("products", "", {
+test("create registry, missing payload", async (t) => {
+  const res = await rolo().post("registries", "", {
     headers: { "Content-Type": "application/json" },
   });
   t.is(res.status, 400);
 });
 
-test("create product, no scope", async (t) => {
-  const res = await rolo("noscope").post("products", fooProduct);
+test("create registry, no scope", async (t) => {
+  const res = await rolo("noscope").post("registries", fooRegistry);
   t.is(res.status, 403);
 });
 
-test("create product, missing identifiers array", async (t) => {
-  const res = await rolo().post("products", {
+test("create registry, missing identifiers array", async (t) => {
+  const res = await rolo().post("registries", {
     description: "foo",
   });
   t.is(res.status, 400);
 });
 
-test("create product, empty identifiers", async (t) => {
-  const res = await rolo().post("products", {
+test("create registry, empty identifiers", async (t) => {
+  const res = await rolo().post("registries", {
     description: "foo",
     identifiers: [],
   });
   t.is(res.status, 400);
 });
 
-test("create product", async (t) => {
-  const res = await rolo().post("products", fooProduct);
+test("create registry", async (t) => {
+  const res = await rolo().post("registries", fooRegistry);
   t.is(res.status, 201);
-  t.like(res.data, fooProduct);
-  t.is(res.headers.location, `/products/${res.data.id}`);
-  fooProductId = res.data.id;
+  t.like(res.data, fooRegistry);
+  t.is(res.headers.location, `/registries/${res.data.id}`);
+  fooRegistryId = res.data.id;
 });
 
-test("create product, duplicate", async (t) => {
-  const res = await rolo().post("products", fooProduct);
+test("create registry, duplicate", async (t) => {
+  const res = await rolo().post("registries", fooRegistry);
   t.is(res.status, 409);
 });
 
-test("create product, unexpected key", async (t) => {
-  const res = await rolo().post("products", {
-    ...barProduct,
+test("create registry, unexpected key", async (t) => {
+  const res = await rolo().post("registries", {
+    ...barRegistry,
     unexpected: "foo",
   });
   t.is(res.status, 400);
 });
 
-test("create product, aquatic prime", async (t) => {
-  const res = await rolo().post("products", {
-    ...barProduct,
+test("create registry, aquatic prime", async (t) => {
+  const res = await rolo().post("registries", {
+    ...barRegistry,
     secrets: {
       "aquaticPrime": testAquaticPrimeKeyPair,
     },
   });
   t.is(res.status, 201);
-  t.like(res.data, barProduct);
-  t.is(res.headers.location, `/products/${res.data.id}`);
-  barProductId = res.data.id;
+  t.like(res.data, barRegistry);
+  t.is(res.headers.location, `/registries/${res.data.id}`);
+  barRegistryId = res.data.id;
 });
 
-test("get product", async (t) => {
-  const res = await rolo().get(`/products/${fooProductId}`);
+test("get registry", async (t) => {
+  const res = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res.status, 200);
-  t.like(res.data, fooProduct);
+  t.like(res.data, fooRegistry);
 });
 
-test("get product, not found", async (t) => {
-  const res = await rolo().get("/products/123");
+test("get registry, not found", async (t) => {
+  const res = await rolo().get("/registries/123");
   t.is(res.status, 404);
 });
 
-test("update product", async (t) => {
-  const res = await rolo().patch(`/products/${fooProductId}`, {
+test("update registry", async (t) => {
+  const res = await rolo().patch(`/registries/${fooRegistryId}`, {
     description: "foo2",
   });
-  fooProduct.description = "foo2";
+  fooRegistry.description = "foo2";
   t.is(res.status, 204);
   t.is(res.data, "");
 });
 
-test("update product, not found", async (t) => {
-  const res = await rolo().patch("/products/123", { description: "123" });
+test("update registry, not found", async (t) => {
+  const res = await rolo().patch("/registries/123", { description: "123" });
   t.is(res.status, 404);
 });
 
-test("update product, bad edition", async (t) => {
-  const res = await rolo().patch(`/products/${fooProductId}`, {
+test("update registry, bad edition", async (t) => {
+  const res = await rolo().patch(`/registries/${fooRegistryId}`, {
     edition: "foo",
   });
   t.is(res.status, 400);
 });
 
-test("update product, violating unique constraint", async (t) => {
+test("update registry, violating unique constraint", async (t) => {
   // try to update bar to foo's bundleId
-  const res2 = await rolo().patch(`/products/${barProductId}`, {
-    identifiers: [...barProduct.identifiers, fooProduct.identifiers[0]],
+  const res2 = await rolo().patch(`/registries/${barRegistryId}`, {
+    identifiers: [...barRegistry.identifiers, fooRegistry.identifiers[0]],
   });
   t.is(res2.status, 409);
 });
 
-test("update product, no update access", async (t) => {
-  const res = await rolo("readonly").patch(`/products/${fooProductId}`, {
+test("update registry, no update access", async (t) => {
+  const res = await rolo("readonly").patch(`/registries/${fooRegistryId}`, {
     description: "foo4",
   });
   t.is(res.status, 403);
 });
 
-test("list products", async (t) => {
-  const res = await rolo().get("/products?limit=2");
+test("list registries", async (t) => {
+  const res = await rolo().get("/registries?limit=2");
   t.is(res.status, 200);
   t.is(res.data.items.length, 2);
   t.is(res.data.object, "list");
-  t.like(res.data.items[1], fooProduct);
-  t.like(res.data.items[0], barProduct);
+  t.like(res.data.items[1], fooRegistry);
+  t.like(res.data.items[0], barRegistry);
 });
 
 test("add an object to the foo prduct that is not in the schema", async (t) => {
-  const res = await rolo().patch(`/products/${fooProductId}`, {
+  const res = await rolo().patch(`/registries/${fooRegistryId}`, {
     foo: "bar",
   });
   t.is(res.status, 400);
   // check that it was not added
-  const res2 = await rolo().get(`/products/${fooProductId}`);
+  const res2 = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res2.status, 200);
   t.is(res2.data.foo, undefined);
 });
 
 test("verify that foo does not have an aquaticprime key pair", async (t) => {
-  const res = await rolo().get(`/products/${fooProductId}`);
+  const res = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res.status, 200);
   t.is(res.data.aquaticPrimeKeyPair, undefined);
 });
 
-test("add a key pair to the foo product", async (t) => {
-  // first get the foo product
-  const res = await rolo().get(`/products/${fooProductId}`);
+test("add a key pair to the foo registry", async (t) => {
+  // first get the foo registry
+  const res = await rolo().get(`/registries/${fooRegistryId}`);
 
   // add the aquaticprime key pair with a new name
   const secrets = { blah: testAquaticPrimeKeyPair };
 
-  // update the foo product
-  const res2 = await rolo().patch(`/products/${fooProductId}`, { secrets });
+  // update the foo registry
+  const res2 = await rolo().patch(`/registries/${fooRegistryId}`, { secrets });
   t.is(res2.status, 204);
 });
 
 test("retrieve the aquaticprime key pairs and check private key is redacted", async (t) => {
-  const res = await rolo().get(`/products/${fooProductId}`);
+  const res = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res.status, 200);
   t.is(
     res.data.secrets.blah.publicKey,
@@ -189,16 +189,16 @@ test("retrieve the aquaticprime key pairs and check private key is redacted", as
   t.is(res.data.secrets.blah.redacted, true);
 });
 
-test("add a key pair to the foo product using the put endpoint", async (t) => {
+test("add a key pair to the foo registry using the put endpoint", async (t) => {
   // add the aquaticprime key pair with a new name
   const res = await rolo().put(
-    `/products/${fooProductId}/secrets/mysecret`,
+    `/registries/${fooRegistryId}/secrets/mysecret`,
     testAquaticPrimeKeyPair,
   );
   t.is(res.status, 204);
 
   // retrieve the aquaticprime key pairs and check private key is redacted
-  const res2 = await rolo().get(`/products/${fooProductId}`);
+  const res2 = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res2.status, 200);
   t.is(res2.data.secrets.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
   t.deepEqual(res2.data.secrets.mysecret.privateKey, undefined);
@@ -206,7 +206,7 @@ test("add a key pair to the foo product using the put endpoint", async (t) => {
 });
 
 test("try top get a secret using its own endpoint", async (t) => {
-  const res = await rolo().get(`/products/${fooProductId}/secrets/mysecret`);
+  const res = await rolo().get(`/registries/${fooRegistryId}/secrets/mysecret`);
   t.is(res.status, 200);
   // this time the private key should be returned
   t.is(res.data.publicKey, testAquaticPrimeKeyPair.publicKey);
@@ -215,44 +215,44 @@ test("try top get a secret using its own endpoint", async (t) => {
 
 test("try to get a secret that does not exist", async (t) => {
   const res = await rolo().get(
-    `/products/${fooProductId}/secrets/doesnotexist`,
+    `/registries/${fooRegistryId}/secrets/doesnotexist`,
   );
   t.is(res.status, 404);
 });
 
 test("try to get a secret withou the right permissions", async (t) => {
   const res = await rolo("readonly").get(
-    `/products/${fooProductId}/secrets/mysecret`,
+    `/registries/${fooRegistryId}/secrets/mysecret`,
   );
   t.is(res.status, 403);
 });
 
-test("create a product without secrets and then add one", async (t) => {
-  const res = await rolo().post("/products", {
+test("create a registry without secrets and then add one", async (t) => {
+  const res = await rolo().post("/registries", {
     description: "baz",
     identifiers: [bundleId("com.example.baz")],
   });
   t.is(res.status, 201);
 
   const res2 = await rolo().put(
-    `/products/${res.data.id}/secrets/mysecret`,
+    `/registries/${res.data.id}/secrets/mysecret`,
     testAquaticPrimeKeyPair,
   );
   t.is(res2.status, 204);
 
-  const res3 = await rolo().get(`/products/${res.data.id}`);
+  const res3 = await rolo().get(`/registries/${res.data.id}`);
   t.is(res3.status, 200);
   t.is(res3.data.secrets.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
   t.deepEqual(res3.data.secrets.mysecret.privateKey, undefined);
 });
 
-test("delete product", async (t) => {
-  const res2 = await rolo().delete(`/products/${barProductId}`);
+test("delete registry", async (t) => {
+  const res2 = await rolo().delete(`/registries/${barRegistryId}`);
   t.is(res2.status, 204);
   t.is(res2.data, "");
 });
 
-test("delete product, not found", async (t) => {
-  const res = await rolo().delete("/products/123");
+test("delete registry, not found", async (t) => {
+  const res = await rolo().delete("/registries/123");
   t.is(res.status, 404);
 });
