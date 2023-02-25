@@ -172,7 +172,7 @@ export const ZLicenseKeyInfo = z.object({
   email: z.string().trim().email().max(100).optional(),
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
-  date: z.coerce.date().optional(),
+  date: z.coerce.date().min(new Date("2010-01-01")).optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
   product: z.string().regex(genericIdRegex).max(100),
   // number of users/seats covered by the license key
