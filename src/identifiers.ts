@@ -14,7 +14,7 @@ export type KeyKind = typeof keyKinds[number];
 export const collections = ["apiKeys", "registries", "licenseKeys"] as const;
 export const objectTypes = ["apiKey", "registry", "licenseKey"] as const;
 export const objectTypesWithoutId = ["health", "keyPair"] as const;
-export const idPrefixes = ["ak", "pr", "lk"] as const;
+export const idPrefixes = ["ak", "reg", "lk"] as const;
 
 // base definitions for keys and identifiers
 const secretKeyPrefix = "sk";

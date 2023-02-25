@@ -80,7 +80,7 @@ export type RegistryRecord = z.infer<typeof ZRegistryRecord>;
 // The registry info must contain an array of client-provided identifiers, which
 // will be used to look up the registry later. The identifiers must be unique
 // across all registries. At least one identifier must be provided. A canonical
-// ID will also be generated for the registry, with the "pr" prefix, which will be
+// ID will also be generated for the registry, with the "reg" prefix, which will be
 // the primary identifier used to look up the registry.
 export async function createRegistry(
   info: RegistryInfo,
@@ -88,7 +88,7 @@ export async function createRegistry(
 ): Promise<RegistryRecord> {
   assertScope("registries:create", auth);
   const document = {
-    _id: randomIdentifier("pr"),
+    _id: randomIdentifier("reg"),
     object: "registry" as const,
     created: new Date(),
     ...info,

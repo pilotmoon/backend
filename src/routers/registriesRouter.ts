@@ -16,7 +16,7 @@ import { assertScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "pr"),
+  pattern: makeIdentifierPattern("id", "reg"),
   uuid: randomUUID(),
 };
 
