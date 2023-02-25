@@ -34,6 +34,10 @@ test.before(() => {
     description: "bar",
     identifiers: [bundleId("com.example.bar")],
   };
+  bazRegistry = {
+    description: "baz",
+    identifiers: [bundleId("com.example.baz")],
+  };
 });
 
 test("create registry, missing payload", async (t) => {
@@ -144,16 +148,7 @@ test("update registry, no update access", async (t) => {
   t.is(res.status, 403);
 });
 
-test("list registries", async (t) => {
-  const res = await rolo().get("/registries?limit=2");
-  t.is(res.status, 200);
-  t.is(res.data.items.length, 2);
-  t.is(res.data.object, "list");
-  t.like(res.data.items[0], barRegistry);
-  t.like(res.data.items[1], fooRegistry);
-});
-
-test("add an object to the foo prduct that is not in the schema", async (t) => {
+test("add an object to the foo product that is not in the schema", async (t) => {
   const res = await rolo().patch(`/registries/${fooRegistryId}`, {
     foo: "bar",
   });
@@ -224,18 +219,17 @@ test("try to get a secret that does not exist", async (t) => {
   t.is(res.status, 404);
 });
 
-test("try to get a secret withou the right permissions", async (t) => {
+test("try to get a secret without the right permissions", async (t) => {
   const res = await rolo("readonly").get(
     `/registries/${fooRegistryId}/objects/mysecret`,
   );
-  t.is(res.status, 403);
+  t.is(res.status, 200);
+  // this time the private key should not be returned
+  t.is(res.data.publicKey, testAquaticPrimeKeyPair.publicKey);
+  t.is(res.data.privateKey, undefined);
 });
 
 test("create a registry without objects and then add one", async (t) => {
-  bazRegistry = {
-    description: "baz",
-    identifiers: [bundleId("com.example.baz")],
-  };
   const res = await rolo().post("/registries", bazRegistry);
   t.is(res.status, 201);
   bazRegistryId = res.data.id;
@@ -252,13 +246,79 @@ test("create a registry without objects and then add one", async (t) => {
   t.deepEqual(res3.data.objects.mysecret.privateKey, undefined);
 });
 
-// test("delete registry", async (t) => {
-//   const res2 = await rolo().delete(`/registries/${barRegistryId}`);
-//   t.is(res2.status, 204);
-//   t.is(res2.data, "");
-// });
+test("list registries", async (t) => {
+  const res = await rolo().get("/registries?limit=3");
+  t.is(res.status, 200);
+  t.is(res.data.items.length, 3);
+  t.is(res.data.object, "list");
+  t.like(res.data.items[0], bazRegistry);
+  t.like(res.data.items[1], barRegistry);
+  t.like(res.data.items[2], fooRegistry);
+});
 
-// test("delete registry, not found", async (t) => {
-//   const res = await rolo().delete("/registries/123");
-//   t.is(res.status, 404);
-// });
+test("delete registry, not found", async (t) => {
+  const res = await rolo().delete("/registries/123");
+  t.is(res.status, 404);
+});
+
+test("delete a registry", async (t) => {
+  const res2 = await rolo().delete(`/registries/${bazRegistryId}`);
+  t.is(res2.status, 204);
+  t.is(res2.data, "");
+});
+
+test("list registries again, expecting last one deleted", async (t) => {
+  const res = await rolo().get("/registries?limit=1");
+  t.is(res.status, 200);
+  t.is(res.data.items.length, 1);
+  t.is(res.data.object, "list");
+  t.like(res.data.items[0], barRegistry);
+});
+
+test("add a non-secret record to the foo registry", async (t) => {
+  const res = await rolo().put(
+    `/registries/${fooRegistryId}/objects/config`,
+    {
+      object: "record",
+      secret: false,
+      record: {
+        foo: "bar",
+      },
+    },
+  );
+  t.is(res.status, 204);
+});
+
+test("get the non-secret record", async (t) => {
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}/objects/config`,
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "record");
+  t.is(res.data.secret, false);
+  t.like(res.data.record, { foo: "bar" });
+});
+
+test("add a secret record to the foo registry", async (t) => {
+  const res = await rolo().put(
+    `/registries/${fooRegistryId}/objects/config2`,
+    {
+      object: "record",
+      secret: true,
+      record: {
+        foo: "bar",
+      },
+    },
+  );
+  t.is(res.status, 204);
+});
+
+test("get the secret record", async (t) => {
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}/objects/config2`,
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "record");
+  t.is(res.data.secret, true);
+  t.like(res.data.record, { foo: "bar" });
+});

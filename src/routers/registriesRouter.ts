@@ -7,12 +7,13 @@ import {
   listRegistries,
   readRegistry,
   redact,
+  redactObjectInPlace,
   updateRegistry,
   ZObject,
   ZRegistryInfo,
   ZRegistryInfoUpdate,
 } from "../controllers/registriesController";
-import { assertScope } from "../controllers/authController";
+import { checkScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {
@@ -83,14 +84,15 @@ router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
 
 // read a named objects using a dedicated url
 router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
-  assertScope("secrets:read", ctx.state.auth); // special scope for unredacted secrets
-
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
   if (!document?.objects) return;
 
-  const secret = document.objects[ctx.params.objectId];
-  if (secret) {
-    ctx.body = secret; // note: no sanitization
+  const object = document.objects[ctx.params.objectId];
+  if (object) {
+    if (!checkScope("secrets:read", ctx.state.auth)) {
+      redactObjectInPlace(object);
+    }
+    ctx.body = object;
   }
 });
 

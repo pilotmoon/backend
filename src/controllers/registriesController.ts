@@ -65,24 +65,23 @@ export const ZObject = z.discriminatedUnion("object", [
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
 export function redact(info: RegistryInfoUpdate) {
-  const objects = info.objects;
-  if (objects) {
-    for (const [key, value] of Object.entries(objects)) {
-      switch (value.object) {
-        case "keyPair":
-          (objects[key] as any).privateKey = undefined;
-          (objects[key] as any).redacted = true;
-          break;
-        case "record":
-          if (value.secret) {
-            (objects[key] as any).record = undefined;
-            (objects[key] as any).redacted = true;
-          }
-          break;
+  const objects = { ...info.objects };
+  Object.values(objects).forEach(redactObjectInPlace);
+  return { ...info, objects };
+}
+export function redactObjectInPlace(object: z.infer<typeof ZObject>) {
+  switch (object.object) {
+    case "keyPair":
+      (object as any).privateKey = undefined;
+      (object as any).redacted = true;
+      break;
+    case "record":
+      if (object.secret) {
+        (object as any).record = undefined;
+        (object as any).redacted = true;
       }
-    }
+      break;
   }
-  return { ...info, secrets: objects };
 }
 
 // schema for the parts of the info that must be provided at creation time

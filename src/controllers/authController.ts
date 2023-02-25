@@ -57,6 +57,12 @@ export function assertScope(
     throw new ApiError(403, "Missing required scope: " + scope);
   }
 }
+export function checkScope(
+  scope: Scope,
+  authContext: AuthContext,
+) {
+  return authContext.scopes.includes(scope);
+}
 
 /*** Database ***/
 
