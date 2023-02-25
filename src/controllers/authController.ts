@@ -1,4 +1,4 @@
-import { deterministic, randomKey } from "../identifiers";
+import { deterministic, randomKey, ZSaneString } from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
@@ -15,7 +15,7 @@ import { allScopes, Scope, Scopes } from "../scopes";
 // Schema for the parts of the info that must be provided at creation time
 export const ZAuthContextInfo = z.object({
   scopes: Scopes,
-  description: z.string(),
+  description: ZSaneString,
 });
 type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
 

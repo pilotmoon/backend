@@ -11,6 +11,7 @@ import {
   ZAuthContext,
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
+import { sha256 } from "../sha256";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
@@ -35,9 +36,7 @@ function parseSecretKey(key: string): SecretKeyParts {
   // in the cache without exposing the secret key to the cache.
   // include the unique keyId as a prefix so that there is no
   // chance of a collision between different keys.
-  const hash = createHash("sha256");
-  hash.update(key);
-  const cacheKey = id + ":" + hash.digest("hex");
+  const cacheKey = id + ":" + sha256(key);
 
   return { key, kind, id, cacheKey };
 }

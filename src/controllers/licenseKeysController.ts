@@ -7,12 +7,12 @@ import {
   KeyKind,
   keyKinds,
   randomIdentifier,
+  ZSaneString,
 } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
-import { decryptInPlace, encryptInPlace } from "../secrets";
 import { AquaticPrime } from "@pilotmoon/aquatic-prime";
-const plist = require("plist");
+import { sha256 } from "../sha256";
 
 /*
 
@@ -27,24 +27,24 @@ which corresponds to a license key record in the database.
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Date</key>
-	<string>2021-10-02</string>
-	<key>Email</key>
-	<string>kuntau17@gmail.com</string>
-	<key>Name</key>
-	<string>Kuntau</string>
-	<key>Order</key>
-	<string>244001-443922 (DIGITALYCHEE)</string>
-	<key>Product</key>
-	<string>com.pilotmoon.popclip/Special license</string>
-  <key>Quantity</key>
-	<string>3</string>
-	<key>Signature</key>
-	<data>
-	G120nhjyBQ6qV8cbReR7P1aWQ+VZ1a/uKjEiqvqZBElevebmT5zi0C7JG7K1OEzY5y9f
-	HbFaq91jjgOo2UmbfljxZVq3MQm0xsEtc8JK803tCTHLpSJL36RwJ48pHp9Dn5ng/54V
-	GTQzxsWHS1SIvS3dijNdbnqFstKEXUCH48k=
-	</data>
+    <key>Date</key>
+    <string>2021-10-02</string>
+    <key>Email</key>
+    <string>kuntau17@gmail.com</string>
+    <key>Name</key>
+    <string>Kuntau</string>
+    <key>Order</key>
+    <string>244001-443922 (DIGITALYCHEE)</string>
+    <key>Product</key>
+    <string>com.pilotmoon.popclip/Special license</string>
+    <key>Quantity</key>
+    <string>3</string>
+    <key>Signature</key>
+    <data>
+    G120nhjyBQ6qV8cbReR7P1aWQ+VZ1a/uKjEiqvqZBElevebmT5zi0C7JG7K1OEzY5y9f
+    HbFaq91jjgOo2UmbfljxZVq3MQm0xsEtc8JK803tCTHLpSJL36RwJ48pHp9Dn5ng/54V
+    GTQzxsWHS1SIvS3dijNdbnqFstKEXUCH48k=
+    </data>
 </dict>
 </plist>
 
@@ -99,21 +99,11 @@ using the Europe/London timezone. (Since the server is in the UK, this
 is the timezone that is used for all dates when they are represented
 without a timezone.)
 
-The license key record is not encrypted. It is stored in the database in
-plain text.
-
-The license key record in the database contains the following fields:
-- _id: unique identifier for the license key, with prefix "lk_"
-- object: literal string "licenseKey"
-- created: date of creation of record
-- name: name of the license key owner
-- email: email address of the license key owner
-- order: original order number from originator (e.g. "244001-443922")
-- date: date of purchase as a JavaScript/MongoDB date object
-- originator: originator of the purchase, such as reseller e.g. "DIGITALYCHEE", "FastSpring"
-- product: licensed product identifier (e.g. "com.pilotmoon.popclip")
-- quantity: number of users/seats covered by the license key
-- description: description of the license key e.g. "Special license"
+Most of the field are stored in the database in plain text. The only
+sensitive fields are the name and email address, which are encrypted
+using the application key. A sha256 hash of the email address is also
+stored in the database, to allow the email address to be looked up
+without decrypting it.
 
 ## Endpoints
 
@@ -173,23 +163,26 @@ export async function init() {
 
 /*** Schemas ***/
 
+// Schema for the parts of the license key record that can be provided at
+// creation time. Note that only the name and product fields are required
 export const ZLicenseKeyInfo = z.object({
   // name of the license key owner
-  name: z.string().min(1).max(100),
+  name: ZSaneString,
   // email address of the license key owner
-  email: z.string().email().max(100).optional(),
+  email: z.string().trim().email().max(100).optional(),
   // original order number from originator (e.g. "244001-443922")
-  order: z.string().min(1).max(100).optional(),
-  // date of purchase as a javascript Date object
-  date: z.date().optional(),
+  order: ZSaneString.optional(),
+  // date of purchase (set automatically when license key is created,
+  // but can be set manualy for imported license keys)
+  date: z.coerce.date().optional(),
   // originator of the purchase, such as reseller e.g. "DIGITALYCHEE"
-  originator: z.string().min(1).max(100).optional(),
+  originator: ZSaneString.optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
   product: z.string().regex(genericIdRegex).max(100),
   // number of users/seats covered by the license key
   quantity: z.number().int().positive().optional(),
   // description of the license key e.g. "Special license"
-  description: z.string().max(100).optional(),
+  description: ZSaneString.optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 
@@ -207,6 +200,8 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
   object: z.literal("licenseKey"),
   // date of creation of record
   created: z.date(),
+  // sha256 hash of the email address, for lookups
+  emailHash: z.string().optional(),
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
@@ -219,3 +214,36 @@ export const ZLicenseKey = ZLicenseKeyRecord.extend({
   filename: z.string(),
 });
 export type LicenseKey = z.infer<typeof ZLicenseKey>;
+
+/*** C.R.U.D. Operations ***/
+
+// Create a new license key using the given info. The info must include
+// the name and product fields. The other fields are optional.
+// If no date is provided, the current date is used. The record is stored
+// in the database, and the license key file is generated on demand. The
+// record is returned to the client. The client can then download the
+// license key file using the /licenseKeys/:id/file endpoint.
+// The auth context must have the "licenseKeys:create" scope.
+export async function createLicenseKey(
+  info: LicenseKeyInfo,
+  auth: AuthContext,
+): Promise<LicenseKeyRecord> {
+  assertScope("licenseKeys:create", auth);
+  if (!info.date) info.date = new Date();
+  const record = {
+    _id: randomIdentifier("lk"),
+    object: "licenseKey" as const,
+    created: new Date(),
+    ...info,
+    emailHash: info.email ? sha256(info.email) : undefined,
+  };
+
+  try {
+    ZLicenseKeyRecord.parse(record);
+    await dbc(auth.kind).insertOne(record);
+    return record;
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
+  }
+}

@@ -13,7 +13,6 @@ import {
   ZSecret,
 } from "../controllers/productsController";
 import { assertScope } from "../controllers/authController";
-import { log } from "../logger";
 
 export const router = makeRouter({ prefix: "/products" });
 const matchId = {

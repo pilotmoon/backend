@@ -1,5 +1,5 @@
 import test from "ava";
-import { keys, rolo } from "./setup";
+import { rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
 
 function bundleId(id: string) {

@@ -7,6 +7,8 @@ import {
   KeyKind,
   keyKinds,
   randomIdentifier,
+  ZIdentifier,
+  ZSaneString,
 } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
@@ -51,14 +53,11 @@ export function sanitize(info: ProductInfoUpdate) {
   return { ...info, secrets };
 }
 
-// schema for the legal identifiers of a product
-const ZIdentifier = z.string().regex(genericIdRegex).max(100);
-
 // schema for the parts of the info that must be provided at creation time
 export const ZProductInfo = z.object({
-  name: z.string().min(1).max(100),
+  name: ZSaneString,
   identifiers: z.array(ZIdentifier).nonempty(),
-  secrets: z.record(z.string().min(1).max(100), ZSecret).optional(),
+  secrets: z.record(ZSaneString, ZSecret).optional(),
 });
 export type ProductInfo = z.infer<typeof ZProductInfo>;
 

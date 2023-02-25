@@ -2,10 +2,15 @@ import Prando from "prando";
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config";
 import { logw } from "./logger";
+import { z } from "zod";
 
+// Key "kinds" refer to the test and live variations of the api keys.
+// all operations initiated by the api key happen against the corresponding
+// database, and the api key is only valid for that database.
 export const keyKinds = ["test", "live"] as const;
 export type KeyKind = typeof keyKinds[number];
 
+// base definitions for keys and identifiers
 const keyPrefix = "sk";
 const keyLength = 24;
 const idLength = 16;
@@ -17,6 +22,10 @@ export const keyRegex = new RegExp(
     base62(keyLength)
   }$`,
 );
+
+// general purpose identifier and string schemas
+export const ZIdentifier = z.string().trim().regex(genericIdRegex).max(100);
+export const ZSaneString = z.string().trim().min(1).max(100);
 
 // generate a random identifier with the given prefix
 export function randomIdentifier(prefix: string): string {
