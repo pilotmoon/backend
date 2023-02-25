@@ -1,7 +1,7 @@
 import { ApiError } from "../errors";
 import { Context, Next } from "koa";
 import { log } from "../logger";
-import { KeyKind, keyRegex } from "../identifiers";
+import { KeyKind, secretKeyRegex } from "../identifiers";
 import { verifyPassword } from "../scrypt";
 import { createHash } from "node:crypto";
 import {
@@ -25,7 +25,7 @@ interface SecretKeyParts {
 function parseSecretKey(key: string): SecretKeyParts {
   // example key format
   // key_test_1J2k3L4m5N6o7P8q9R0s1T2u3V4w5X6y7Z8ty37q
-  const match = key.match(keyRegex);
+  const match = key.match(secretKeyRegex);
   if (!match) {
     throw new ApiError(401, "Invalid API key (bad format)");
   }

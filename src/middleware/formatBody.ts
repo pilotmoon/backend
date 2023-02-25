@@ -1,6 +1,7 @@
 import { Context, Next } from "koa";
 import { z } from "zod";
 import { ApiError } from "../errors";
+import { idRegex, objectTypes, objectTypesWithoutId } from "../identifiers";
 
 // replace _id with id
 function replaceId(obj: any) {
@@ -13,17 +14,28 @@ function replaceId(obj: any) {
   return obj;
 }
 
-// generic schema for all responses. this is used to format
-// all responses to the client. it will ensure that the response
-// has an id key, an object key, and a livemode key. it will also
-// ensure that those keys and certain other keys are in a consistent
-// order.
-const ZResponseSchema = z.object({
-  id: z.string(),
-  object: z.string(),
-  livemode: z.boolean(),
+// schema for objects in responses
+const ZObject = z.object({
+  id: z.string().regex(idRegex),
+  object: z.enum(objectTypes),
   created: z.date().optional(),
-});
+}).passthrough();
+
+// schema for lists in responses
+const ZList = z.object({
+  object: z.literal("list"),
+  items: z.array(ZObject),
+}).passthrough();
+
+// generic schema for all responses. this is used to validate and format
+// all responses to the client.
+const ZResponse = z.union([
+  ZObject,
+  ZList,
+  z.object({
+    object: z.enum(objectTypesWithoutId),
+  }).passthrough(),
+]);
 
 // modify all response bodies.
 // also, add livemode key
@@ -56,5 +68,10 @@ export async function formatBody(ctx: Context, next: Next) {
   newBody.livemode = ctx.state.auth.kind === "live";
 
   // assign new body
-  ctx.body = ZResponseSchema.passthrough().parse(newBody);
+  try {
+    ctx.body = ZResponse.parse(newBody);
+  } catch (err) {
+    console.error(err);
+    throw new ApiError(500, "Response validation failed");
+  }
 }
