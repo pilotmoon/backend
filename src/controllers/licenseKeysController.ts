@@ -170,10 +170,6 @@ export const ZLicenseKeyInfo = z.object({
   name: ZSaneString,
   // email address of the licensee
   email: z.string().trim().email().max(100).optional(),
-  // original order number from originator, any format (e.g. "244001-443922")
-  order: ZSaneString.optional(),
-  // origin of the purchase, such as reseller e.g. "DIGITALYCHEE" or "FastSpring"
-  origin: ZSaneString.optional(),
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
   date: z.coerce.date().optional(),
@@ -183,6 +179,10 @@ export const ZLicenseKeyInfo = z.object({
   quantity: z.number().int().positive().optional(),
   // description of the license key e.g. "Special license"
   description: ZSaneString.optional(),
+  // name of entity that created license, e.g. "DIGITALYCHEE" or "FastSpring"
+  origin: z.string().trim().max(100).optional(),
+  // order number supplied by origin, e.g. "123456789"
+  order: z.string().trim().max(100).optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 
