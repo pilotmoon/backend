@@ -53,4 +53,8 @@ test("create license key, with email, date, order and quantity fields", async (t
   });
   t.is(res.status, 201);
   t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
+
+  const res2 = await rolo().get(`licenseKeys/${res.data.id}`);
+  t.is(res2.status, 200);
+  t.like(res2.data, res.data);
 });

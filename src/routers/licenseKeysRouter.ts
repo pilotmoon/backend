@@ -3,8 +3,10 @@ import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
 import {
   createLicenseKey,
+  readLicenseKey,
   ZLicenseKeyInfo,
 } from "../controllers/licenseKeysController";
+import { log } from "../logger";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -23,8 +25,9 @@ router.post("/", async (ctx) => {
 
 // Get a license key by id
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
-  // const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
-  // if (document) {
-  //   ctx.body = document;
-  // }
+  log("GET /licenseKeys/:id", ctx.params.id);
+  const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
+  if (document) {
+    ctx.body = document;
+  }
 });

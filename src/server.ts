@@ -16,10 +16,10 @@ import { enforceJson } from "./middleware/enforceJson";
 
 // set up main router
 const mainRouter = makeRouter();
-mainRouter.use(require("./routers/health").router.routes());
-mainRouter.use(require("./routers/apiKeys").router.routes());
-mainRouter.use(require("./routers/products").router.routes());
-mainRouter.use(require("./routers/licenseKeys").router.routes());
+mainRouter.use(require("./routers/healthRouter").router.routes());
+mainRouter.use(require("./routers/apiKeysRouter").router.routes());
+mainRouter.use(require("./routers/productsRouter").router.routes());
+mainRouter.use(require("./routers/licenseKeysRouter").router.routes());
 
 // the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();

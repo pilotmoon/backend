@@ -217,31 +217,44 @@ export type LicenseKey = z.infer<typeof ZLicenseKey>;
 
 /*** C.R.U.D. Operations ***/
 
-// Create a new license key using the given info. The info must include
-// the name and product fields. The other fields are optional.
-// If no date is provided, the current date is used. The record is stored
-// in the database, and the license key file is generated on demand. The
-// record is returned to the client. The client can then download the
-// license key file using the /licenseKeys/:id/file endpoint.
+// Create a new license key using the given info.
 // The auth context must have the "licenseKeys:create" scope.
 export async function createLicenseKey(
   info: LicenseKeyInfo,
   auth: AuthContext,
 ): Promise<LicenseKeyRecord> {
+  const now = new Date();
   assertScope("licenseKeys:create", auth);
-  if (!info.date) info.date = new Date();
+  if (!info.date) info.date = now;
   const record: LicenseKeyRecord = {
     _id: randomIdentifier("lk"),
     object: "licenseKey" as const,
-    created: new Date(),
-    ...ZLicenseKeyInfo.parse(info), // parse again for ordering
+    created: now,
+    ...info,
   };
   if (info.email) record.emailHash = sha256Hex(info.email);
 
   try {
-    ZLicenseKeyRecord.parse(record);
-    await dbc(auth.kind).insertOne(record);
+    await dbc(auth.kind).insertOne(ZLicenseKeyRecord.parse(record));
     return record;
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
+  }
+}
+
+// Get a license key record by ID.
+// The auth context must have the "licenseKeys:read" scope.
+export async function readLicenseKey(
+  id: string,
+  auth: AuthContext,
+): Promise<LicenseKeyRecord | null> {
+  assertScope("licenseKeys:read", auth);
+  const document = await dbc(auth.kind).findOne({ _id: id });
+  if (!document) return null;
+
+  try {
+    return ZLicenseKeyRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw (error);

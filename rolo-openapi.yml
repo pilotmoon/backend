@@ -1,0 +1,94 @@
+openapi: '3.0.2'
+info:
+  title: Pilotmoon API
+  contact:
+    email: nick@pilotmoon.com
+    name:  Nick Moore
+  version: 'v2'
+  description: Backend for pilotmoon.com services.
+tags:
+  - name: admin
+  - name: ops
+servers:
+  - url: https://api.pilotmoon.com/v2
+  - url: http://localhost:1234
+
+components:
+  securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        description: Token looks like `sk_{live|test}_{40 hex chars}`
+
+  schemas:
+    LicenseKeyInfo:
+      type: object
+      example:
+        name: Fred Bloggs
+        product: com.example.product
+      properties:
+        name:
+          type: string
+        product:
+          type: string
+      required:
+        - name
+        - product
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      operationId: health
+      description: Get server health information.
+      tags: [admin]
+      responses:
+        '200':
+          description: OK
+
+  /licenseKeys:
+    description: Represents the collection of license keys.
+    post:
+      operationId: createLicenseKey
+      description: Create a new license key from the supplied information.
+      tags: [ops]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenseKeyInfo'
+      responses:
+        '201':
+          description: License key was created.
+          headers:
+            Location:
+              description: Location of the newly created resource.
+              schema:
+                type: string
+  /licenseKeys/{id}:
+    description: Represents a license key.
+    get:
+      operationId: readLicenseKey
+      description: Retreive a license key by its id.
+      tags: [ops]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: lk_rzmhagDluQujj1c0
+      responses:
+        '200':
+          description: OK
+
+
+
+
+
+
+
+
