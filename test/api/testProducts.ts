@@ -23,11 +23,11 @@ const testAquaticPrimeKeyPair = {
 test.before(() => {
   uniqueSuffix = randomString({ length: 8 });
   fooProduct = {
-    name: "foo",
+    description: "foo",
     identifiers: [bundleId("com.example.foo")],
   };
   barProduct = {
-    name: "bar",
+    description: "bar",
     identifiers: [bundleId("com.example.bar")],
   };
 });
@@ -46,14 +46,14 @@ test("create product, no scope", async (t) => {
 
 test("create product, missing identifiers array", async (t) => {
   const res = await rolo().post("products", {
-    name: "foo",
+    description: "foo",
   });
   t.is(res.status, 400);
 });
 
 test("create product, empty identifiers", async (t) => {
   const res = await rolo().post("products", {
-    name: "foo",
+    description: "foo",
     identifiers: [],
   });
   t.is(res.status, 400);
@@ -106,15 +106,15 @@ test("get product, not found", async (t) => {
 
 test("update product", async (t) => {
   const res = await rolo().patch(`/products/${fooProductId}`, {
-    name: "foo2",
+    description: "foo2",
   });
-  fooProduct.name = "foo2";
+  fooProduct.description = "foo2";
   t.is(res.status, 204);
   t.is(res.data, "");
 });
 
 test("update product, not found", async (t) => {
-  const res = await rolo().patch("/products/123", { name: "123" });
+  const res = await rolo().patch("/products/123", { description: "123" });
   t.is(res.status, 404);
 });
 
@@ -135,7 +135,7 @@ test("update product, violating unique constraint", async (t) => {
 
 test("update product, no update access", async (t) => {
   const res = await rolo("readonly").patch(`/products/${fooProductId}`, {
-    name: "foo4",
+    description: "foo4",
   });
   t.is(res.status, 403);
 });
@@ -229,7 +229,7 @@ test("try to get a secret withou the right permissions", async (t) => {
 
 test("create a product without secrets and then add one", async (t) => {
   const res = await rolo().post("/products", {
-    name: "baz",
+    description: "baz",
     identifiers: [bundleId("com.example.baz")],
   });
   t.is(res.status, 201);

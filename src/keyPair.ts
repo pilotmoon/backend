@@ -6,15 +6,9 @@ export const ZPortableKeyPair = z.object({
   publicKey: z.string().max(1024),
   privateKey: z.string().max(1024),
   keyFormat: z.enum(["hex", "base64"]),
+  description: z.string().optional(),
 });
 export type PortableKeyPair = z.infer<typeof ZPortableKeyPair>;
-
-// a standardized format for importing/exporting a key pair
-// export type PortableKeyPair = {
-//   publicKey: string;
-//   privateKey: string;
-//   keyFormat: "hex" | "base64";
-// };
 
 // internal representation of a key pair
 export type KeyPair = {

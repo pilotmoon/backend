@@ -55,7 +55,7 @@ export function sanitize(info: ProductInfoUpdate) {
 
 // schema for the parts of the info that must be provided at creation time
 export const ZProductInfo = z.object({
-  name: ZSaneString,
+  description: ZSaneString,
   identifiers: z.array(ZIdentifier).nonempty(),
   secrets: z.record(ZSaneString, ZSecret).optional(),
 });
