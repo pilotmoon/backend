@@ -56,8 +56,8 @@ Noe that the Product field is a combination of the product identifier and the
 description, separated by a forward slash. If there is no description, the
 Product field is just the product identifier.
 
-The Order field is a combination of the order number and the originator, at the end
-of the string and enclosed in parentheses. If there is no originator,
+The Order field is a combination of the order number and the origin, at the end
+of the string and enclosed in parentheses. If there is no origin,
 the Order field is just the order number.
 
 The date is a string in one of two formats:
@@ -168,15 +168,15 @@ export async function init() {
 export const ZLicenseKeyInfo = z.object({
   // name of the license key owner
   name: ZSaneString,
-  // email address of the license key owner
+  // email address of the licensee
   email: z.string().trim().email().max(100).optional(),
-  // original order number from originator (e.g. "244001-443922")
+  // original order number from originator, any format (e.g. "244001-443922")
   order: ZSaneString.optional(),
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
   date: z.coerce.date().optional(),
-  // originator of the purchase, such as reseller e.g. "DIGITALYCHEE"
-  originator: ZSaneString.optional(),
+  // origin of the purchase, such as reseller e.g. "DIGITALYCHEE" or "FastSpring"
+  origin: ZSaneString.optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
   product: z.string().regex(genericIdRegex).max(100),
   // number of users/seats covered by the license key
