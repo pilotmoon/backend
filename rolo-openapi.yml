@@ -35,6 +35,22 @@ components:
         - name
         - product
 
+    RegistryInfo:
+      type: object
+      example:
+        description: My registry
+        identifiers: [unique.123]
+      properties:
+        description:
+          type: string
+        identifiers:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+        - description
+        - identifiers
 security:
   - BearerAuth: []
 
@@ -47,6 +63,22 @@ paths:
       responses:
         '200':
           description: OK
+
+  /registries:
+    description: Representions the collection of configuration registries.
+    post:
+      operationId: createRegistry
+      description: Create a new registry.
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistryInfo'
+      responses:
+        '201':
+          description: License key was created.
 
   /licenseKeys:
     description: Represents the collection of license keys.
@@ -63,11 +95,7 @@ paths:
       responses:
         '201':
           description: License key was created.
-          headers:
-            Location:
-              description: Location of the newly created resource.
-              schema:
-                type: string
+
   /licenseKeys/{id}:
     description: Represents a license key.
     get:
