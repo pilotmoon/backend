@@ -23,7 +23,7 @@ export const idPrefixes = ["ak", "reg", "lk"] as const;
 // base definitions for keys and identifiers
 const secretKeyPrefix = "sk";
 const secretKeyLength = 24;
-const idLength = 16;
+const idLength = 12;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const secretKeyRegex = new RegExp(
   `^${secretKeyPrefix}_(${keyKinds.join("|")})_(${base62(idLength)})${
