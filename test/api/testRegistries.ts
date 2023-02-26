@@ -176,15 +176,10 @@ test("add a key pair to the foo registry", async (t) => {
   t.is(res2.status, 204);
 });
 
-test("retrieve the aquaticprime key pairs and check private key is redacted", async (t) => {
+test("retrieve the aquaticprime key pairs and check redacted", async (t) => {
   const res = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res.status, 200);
-  t.is(
-    res.data.objects.blah.publicKey,
-    testAquaticPrimeKeyPair.publicKey,
-  );
-  t.deepEqual(res.data.objects.blah.privateKey, undefined);
-  t.is(res.data.objects.blah.redacted, true);
+  t.deepEqual(res.data.objects.blah, { object: "keyPair", redacted: true });
 });
 
 test("add a key pair to the foo registry using the put endpoint", async (t) => {
@@ -198,9 +193,10 @@ test("add a key pair to the foo registry using the put endpoint", async (t) => {
   // retrieve the aquaticprime key pairs and check private key is redacted
   const res2 = await rolo().get(`/registries/${fooRegistryId}`);
   t.is(res2.status, 200);
-  t.is(res2.data.objects.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
-  t.deepEqual(res2.data.objects.mysecret.privateKey, undefined);
-  t.is(res2.data.objects.mysecret.redacted, true);
+  t.deepEqual(res2.data.objects.mysecret, {
+    object: "keyPair",
+    redacted: true,
+  });
 });
 
 test("try to get a secret using its own endpoint", async (t) => {
@@ -222,10 +218,7 @@ test("try to get a secret without the right permissions", async (t) => {
   const res = await rolo("readonly").get(
     `/registries/${fooRegistryId}/objects/mysecret`,
   );
-  t.is(res.status, 200);
-  // this time the private key should not be returned
-  t.is(res.data.publicKey, testAquaticPrimeKeyPair.publicKey);
-  t.is(res.data.privateKey, undefined);
+  t.is(res.status, 403);
 });
 
 test("create a registry without objects and then add one", async (t) => {
@@ -241,8 +234,10 @@ test("create a registry without objects and then add one", async (t) => {
 
   const res3 = await rolo().get(`/registries/${res.data.id}`);
   t.is(res3.status, 200);
-  t.is(res3.data.objects.mysecret.publicKey, testAquaticPrimeKeyPair.publicKey);
-  t.deepEqual(res3.data.objects.mysecret.privateKey, undefined);
+  t.deepEqual(res3.data.objects.mysecret, {
+    object: "keyPair",
+    redacted: true,
+  });
 });
 
 test("list registries", async (t) => {
@@ -274,11 +269,11 @@ test("list registries again, expecting last one deleted", async (t) => {
   t.like(res.data.items[0], barRegistry);
 });
 
-test("add a non-secret record to the foo registry", async (t) => {
+test("add a record to the foo registry", async (t) => {
   const res = await rolo().put(
     `/registries/${fooRegistryId}/objects/config`,
     {
-      object: "vars",
+      object: "record",
       record: {
         foo: "bar",
       },
@@ -287,20 +282,20 @@ test("add a non-secret record to the foo registry", async (t) => {
   t.is(res.status, 204);
 });
 
-test("get the non-secret record", async (t) => {
+test("get the record", async (t) => {
   const res = await rolo().get(
     `/registries/${fooRegistryId}/objects/config`,
   );
   t.is(res.status, 200);
-  t.is(res.data.object, "vars");
+  t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
 });
 
-test("add a secret record to the foo registry", async (t) => {
+test("add another record to the foo registry", async (t) => {
   const res = await rolo().put(
     `/registries/${fooRegistryId}/objects/config2`,
     {
-      object: "secrets",
+      object: "record",
       record: {
         foo: "bar",
       },
@@ -309,11 +304,11 @@ test("add a secret record to the foo registry", async (t) => {
   t.is(res.status, 204);
 });
 
-test("get the secret record", async (t) => {
+test("get the second record", async (t) => {
   const res = await rolo().get(
     `/registries/${fooRegistryId}/objects/config2`,
   );
   t.is(res.status, 200);
-  t.is(res.data.object, "secrets");
+  t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
 });

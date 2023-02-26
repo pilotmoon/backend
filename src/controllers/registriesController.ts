@@ -51,7 +51,7 @@ export async function init() {
 
 // schema for a generic record
 export const ZRecord = z.object({
-  object: z.enum(["vars", "secrets"]),
+  object: z.enum(["record"]),
   record: z.record(z.string(), z.unknown()),
 });
 
@@ -64,21 +64,13 @@ export const ZObject = z.discriminatedUnion("object", [
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
 export function redact(info: RegistryInfo) {
-  const objects = { ...info.objects };
-  Object.values(objects).forEach(redactObjectInPlace);
-  return { ...info, objects };
-}
-export function redactObjectInPlace(object: z.infer<typeof ZObject>) {
-  switch (object.object) {
-    case "keyPair":
-      (object as any).privateKey = undefined;
-      (object as any).redacted = true;
-      break;
-    case "secrets":
-      (object as any).record = undefined;
-      (object as any).redacted = true;
-      break;
-  }
+  if (!info.objects) return info;
+  const redactedObjects = Object.fromEntries(
+    Object.entries(info.objects).map(([key, obj]) => {
+      return [key, { object: obj.object, redacted: true }];
+    }),
+  );
+  return { ...info, objects: redactedObjects };
 }
 
 // schema for the parts of the info that must be provided at creation time

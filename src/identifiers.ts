@@ -16,8 +16,7 @@ export const objectTypes = ["apiKey", "registry", "licenseKey"] as const;
 export const objectTypesWithoutId = [
   "health",
   "keyPair",
-  "vars",
-  "secrets",
+  "record",
 ] as const;
 export const idPrefixes = ["ak", "reg", "lk"] as const;
 
