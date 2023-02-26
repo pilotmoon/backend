@@ -52,11 +52,11 @@ test("encrypt and decrypt record in place", (t) => {
   const record = {
     foo: "bar",
     baz: "qux",
-    encrypted: { secret: true, message: "hello world" },
+    encrypted: { message: "hello world" },
   };
   const original = { ...record };
   // encrypt the record
-  encryptInPlace(record, "test");
+  encryptInPlace(record, "test", ["encrypted"]);
 
   // verify that the encrypted value is different
   t.notDeepEqual(record, original);

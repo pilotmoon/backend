@@ -34,25 +34,31 @@ function getSecretKey(kind: KeyKind) {
 // encrypt a string to a buffer using the specified key kind
 export function encryptString(message: string, kind: KeyKind): Buffer {
   const key = getSecretKey(kind);
-  const iv = randomBytes(16);
+  const iv = randomBytes(12);
 
-  const cipher = createCipheriv("aes256", key, iv);
-
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
   return Buffer.concat([
     iv,
     cipher.update(marker, "utf8"),
     cipher.update(message, "utf8"),
     cipher.final(),
+    cipher.getAuthTag(),
   ]);
 }
 
 // decrypt a buffer to a string using the specified key kind
 export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
   const key = getSecretKey(kind);
-  const iv = encryptedMessage.subarray(0, 16);
-  const encryptedMessageWithoutIv = encryptedMessage.subarray(16);
+  // encryptedMessage consis of:
+  // - 12 byte initialization vector
+  // - encrypted message
+  // - 16 byte authentication tag
+  const iv = encryptedMessage.subarray(0, 12);
+  const encryptedMessageWithoutIv = encryptedMessage.subarray(12, -16);
+  const authTag = encryptedMessage.subarray(-16);
 
-  const decipher = createDecipheriv("aes256", key, iv);
+  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(authTag);
   const plainText = Buffer.concat([
     decipher.update(encryptedMessageWithoutIv),
     decipher.final(),
