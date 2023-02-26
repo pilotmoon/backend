@@ -49,10 +49,9 @@ export async function init() {
 // type. For example, a key pair object has a public key and a private
 // key. The public key is not secret, but the private key is.
 
-// schema for a generic record, secret or not
+// schema for a generic record
 export const ZRecord = z.object({
-  object: z.literal("record"),
-  secret: z.boolean(),
+  object: z.enum(["vars", "secrets"]),
   record: z.record(z.string(), z.unknown()),
 });
 
@@ -75,11 +74,9 @@ export function redactObjectInPlace(object: z.infer<typeof ZObject>) {
       (object as any).privateKey = undefined;
       (object as any).redacted = true;
       break;
-    case "record":
-      if (object.secret) {
-        (object as any).record = undefined;
-        (object as any).redacted = true;
-      }
+    case "secrets":
+      (object as any).record = undefined;
+      (object as any).redacted = true;
       break;
   }
 }

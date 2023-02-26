@@ -13,7 +13,12 @@ export type KeyKind = typeof keyKinds[number];
 // the collection names, object types and corresponding key prefixes
 export const collections = ["apiKeys", "registries", "licenseKeys"] as const;
 export const objectTypes = ["apiKey", "registry", "licenseKey"] as const;
-export const objectTypesWithoutId = ["health", "keyPair", "record"] as const;
+export const objectTypesWithoutId = [
+  "health",
+  "keyPair",
+  "vars",
+  "secrets",
+] as const;
 export const idPrefixes = ["ak", "reg", "lk"] as const;
 
 // base definitions for keys and identifiers

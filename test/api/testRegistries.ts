@@ -21,7 +21,6 @@ const testAquaticPrimeKeyPair: PortableKeyPair = {
     "7E1114F56721BAC8F17B4805211DB9247940B1E0F0C6EE386473084B3DEB0475B5BC86BC5841E7DB46047E5ACFA09D88C41FD2B519D79BF7BE7D644F65FA29E9E9AFDC9AF918D1870264F8CCDDD1BEF46359582C3A18BC5E138121D6C9FF60AFBCA679F165B826D27A778348A11CBDF66F91651F91FE52B0EC7BA9B590266E63",
   keyFormat: "hex",
   object: "keyPair",
-  secret: true,
 };
 
 test.before(() => {
@@ -279,8 +278,7 @@ test("add a non-secret record to the foo registry", async (t) => {
   const res = await rolo().put(
     `/registries/${fooRegistryId}/objects/config`,
     {
-      object: "record",
-      secret: false,
+      object: "vars",
       record: {
         foo: "bar",
       },
@@ -294,8 +292,7 @@ test("get the non-secret record", async (t) => {
     `/registries/${fooRegistryId}/objects/config`,
   );
   t.is(res.status, 200);
-  t.is(res.data.object, "record");
-  t.is(res.data.secret, false);
+  t.is(res.data.object, "vars");
   t.like(res.data.record, { foo: "bar" });
 });
 
@@ -303,8 +300,7 @@ test("add a secret record to the foo registry", async (t) => {
   const res = await rolo().put(
     `/registries/${fooRegistryId}/objects/config2`,
     {
-      object: "record",
-      secret: true,
+      object: "secrets",
       record: {
         foo: "bar",
       },
@@ -318,7 +314,6 @@ test("get the secret record", async (t) => {
     `/registries/${fooRegistryId}/objects/config2`,
   );
   t.is(res.status, 200);
-  t.is(res.data.object, "record");
-  t.is(res.data.secret, true);
+  t.is(res.data.object, "secrets");
   t.like(res.data.record, { foo: "bar" });
 });

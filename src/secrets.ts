@@ -69,7 +69,7 @@ function isPlainObject(value: unknown) {
   return (
     typeof value === "object" &&
     value !== null &&
-    value.constructor === Object
+    Object.getPrototypeOf(value) === Object.prototype
   );
 }
 function shouldEncrypt(value: unknown) {
