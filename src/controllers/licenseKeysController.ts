@@ -13,7 +13,7 @@ import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { AquaticPrime } from "@pilotmoon/aquatic-prime";
 import { sha256Hex } from "../sha256";
-
+import { decryptInPlace, encryptInPlace } from "../secrets";
 /*
 
 # License Keys
@@ -185,6 +185,7 @@ export const ZLicenseKeyInfo = z.object({
   order: z.string().trim().max(100).optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
+const encryptedFields = ["name", "email"] as const;
 
 // schema for the parts of the info that can be updated later
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
@@ -226,17 +227,19 @@ export async function createLicenseKey(
   const now = new Date();
   assertScope("licenseKeys:create", auth);
   if (!info.date) info.date = now;
-  const record: LicenseKeyRecord = {
+  const document: LicenseKeyRecord = {
     _id: randomIdentifier("lk"),
     object: "licenseKey" as const,
     created: now,
     ...info,
   };
-  if (info.email) record.emailHash = sha256Hex(info.email);
+  if (info.email) document.emailHash = sha256Hex(info.email);
 
   try {
-    await dbc(auth.kind).insertOne(ZLicenseKeyRecord.parse(record));
-    return record;
+    encryptInPlace(document, auth.kind, encryptedFields);
+    await dbc(auth.kind).insertOne(document);
+    decryptInPlace(document, auth.kind);
+    return document;
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -254,6 +257,7 @@ export async function readLicenseKey(
   if (!document) return null;
 
   try {
+    decryptInPlace(document, auth.kind);
     return ZLicenseKeyRecord.parse(document);
   } catch (error) {
     handleControllerError(error);

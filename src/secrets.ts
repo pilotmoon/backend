@@ -64,32 +64,49 @@ export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
   return plainText.slice(marker.length);
 }
 
+// function to check if the value is a plain object
+function isPlainObject(value: unknown) {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    value.constructor === Object
+  );
+}
+function shouldEncrypt(value: unknown) {
+  return typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    isPlainObject(value);
+}
+
 // The encryptInPlace and decryptInPlace functions
 // modify the record in place.  This is intended for encrypting
 // and decrypting records as the last step immediately before inserting,
 // or first step immediately after retrieving from the database.
-// The operations are not type-safe, since the values are modified
-// in place so the modifications are not reflected in the type system.
-// The caller must ensure that the requested values are JSON
-// serializable. If the keys are not present in the record, then
-// they are ignored.
-// The MongoDB Binary type is used to store the encrypted values
-// since it will be stored directly in the database.
 
-// encrypt all values who have a key called "secret" with the value true.
+// encrypt values in the object. only strings, numbers, booleans and
+// plain objects are encrypted.
+// if keys is specified, only encrypt values for those keys. otherwise,
+// encrypt all values except "_id" and "object".
+// the binary format has the subtype 0x81 as a marker.
+// (Subtypes 0x80 to 0xFF are user defined, ehttps://bsonspec.org/spec.html)
 export function encryptInPlace(
   record: Record<string, unknown> | undefined,
   kind: KeyKind,
+  keys?: readonly string[],
 ) {
   if (!record) return;
+  if (!keys) {
+    keys = Object.keys(record).filter((key) =>
+      key !== "_id" && key !== "object"
+    );
+  }
   for (const [key, value] of Object.entries(record)) {
-    if (
-      typeof value === "object" && value !== null &&
-      "secret" in value && value["secret"] === true
-    ) {
-      record[key] = new Binary(
-        encryptString(JSON.stringify(record[key]), kind),
-      );
+    if (keys && !keys.includes(key)) continue;
+    if (!shouldEncrypt(value)) continue;
+    const string = JSON.stringify(value);
+    if (string) {
+      record[key] = new Binary(encryptString(string, kind), 0x81);
     }
   }
 }
@@ -101,7 +118,10 @@ export function decryptInPlace(
 ) {
   if (!record) return;
   for (const key of Object.keys(record)) {
-    if (key in record && record[key] instanceof Binary) {
+    const value = record[key];
+    if (
+      value instanceof Binary && value.sub_type === 0x81
+    ) {
       record[key] = JSON.parse(
         decryptString(Buffer.from((record[key] as Binary).buffer), kind),
       );
