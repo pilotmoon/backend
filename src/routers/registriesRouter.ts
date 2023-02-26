@@ -83,7 +83,6 @@ router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
 
 // read a named objects using a dedicated url
 router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
-  assertScope("secrets:read", ctx.state.auth);
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
   if (!document?.objects) return;
 

@@ -13,7 +13,6 @@ const constScopes = [
   "registries:list",
   "registries:update",
   "registries:delete",
-  "secrets:read",
   "licenseKeys:create",
   "licenseKeys:read",
   "licenseKeys:list",
