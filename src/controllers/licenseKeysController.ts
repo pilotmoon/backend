@@ -14,6 +14,7 @@ import { ZPortableKeyPair } from "../keyPair";
 import { AquaticPrime } from "@pilotmoon/aquatic-prime";
 import { sha256Hex } from "../sha256";
 import { decryptInPlace, encryptInPlace } from "../secrets";
+import { canonicalizeEmail } from "../canonicalizeEmail";
 /*
 
 # License Keys
@@ -233,7 +234,7 @@ export async function createLicenseKey(
     created: now,
     ...info,
   };
-  if (info.email) document.emailHash = sha256Hex(info.email);
+  if (info.email) document.emailHash = sha256Hex(canonicalizeEmail(info.email));
 
   try {
     encryptInPlace(document, auth.kind, encryptedFields);
