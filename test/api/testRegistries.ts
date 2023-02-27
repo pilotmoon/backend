@@ -215,7 +215,7 @@ test("try to get a secret that does not exist", async (t) => {
 });
 
 test("try to get a secret without the right permissions", async (t) => {
-  const res = await rolo("readonly").get(
+  const res = await rolo("updateonly").get(
     `/registries/${fooRegistryId}/objects/mysecret`,
   );
   t.is(res.status, 403);
