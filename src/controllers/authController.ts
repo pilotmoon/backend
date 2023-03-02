@@ -200,7 +200,7 @@ export async function listApiKeys(
   { limit, offset, order, orderBy }: PaginateState,
   auth: Auth,
 ): Promise<ApiKeySchema[]> {
-  auth.assertAccess(collectionName, undefined, "create");
+  auth.assertAccess(collectionName, undefined, "read");
   const cursor = await dbc(auth.kind)
     .find()
     .sort({ [orderBy]: order })

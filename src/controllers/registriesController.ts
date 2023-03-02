@@ -125,7 +125,7 @@ export async function listRegistries(
   { limit, offset, order, orderBy }: PaginateState,
   auth: Auth,
 ): Promise<RegistryRecord[]> {
-  auth.assertAccess(collectionName, undefined, "list");
+  auth.assertAccess(collectionName, undefined, "read");
   const cursor = dbc(auth.kind).find()
     .sort({ [orderBy]: order })
     .skip(offset)
