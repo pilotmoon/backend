@@ -66,10 +66,10 @@ type TokenData = z.infer<typeof ZTokenData>;
 // In that case the list of scopes should contain the character $ in place of the resource
 // indicated by the URL path.
 export function generateEncryptedToken(
-  { keyKind, scopes, expiration, resource }: {
+  { keyKind, scopes, expires: expiration, resource }: {
     keyKind: KeyKind;
     scopes: string[];
-    expiration?: Date;
+    expires?: Date;
     resource?: string;
   },
 ): string {

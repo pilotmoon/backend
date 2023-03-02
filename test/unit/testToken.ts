@@ -7,7 +7,7 @@ test("generate and deciper encrypted token", (t) => {
   const tokenString = token.generateEncryptedToken({
     keyKind: "test",
     scopes,
-    expiration,
+    expires: expiration,
   });
   t.log(tokenString);
 
@@ -43,7 +43,7 @@ test("generate and decipher api key token with resource", (t) => {
   const tokenString = token.generateEncryptedToken({
     keyKind: "test",
     scopes,
-    expiration,
+    expires: expiration,
     resource,
   });
   t.log(tokenString);

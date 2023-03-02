@@ -16,8 +16,12 @@ interface State extends Koa.DefaultState {
 }
 
 interface Context extends Koa.DefaultContext {
-  // function to generate Location header
-  getLocation(name: string, params?: any): string;
+  // function to generate a URL for the Location header or other purposes
+  // name: name of the route
+  // params: parameters to pass to the route
+  // query: query parameters to add to the URL
+  // full: if true, return a full URL including the app's base URL
+  getLocation(name: string, params?: any, query?: {}, full?: boolean): string;
 }
 
 export function makeServer() {
