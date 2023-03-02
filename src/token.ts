@@ -14,8 +14,9 @@
 //    sco - the list of scopes as an array of strings
 //    exp - the expiration date as a unix timestamp in milliseconds (optional)
 //  encrypted scopes with associated resource - the data is as above, but the encrypted data
-//    has additional authenticated data, which is the path part of the URL without the preceding forward
+//    has additional authenticated data, which is the first two components the path, separated by a
 //    slash. This is used to ensure that the token is only valid for the resource indicated by the URL.
+//    A further purpose is that the generated token is significantly shorter with this format.
 //    In the list of scopes, the character $ is used in place of the resource indicated
 //    by the URL path.
 //    e.g. `$:read` with a path of `users/u_1234` would indicate the scope: `users/u_1234:read`
