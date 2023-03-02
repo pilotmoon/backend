@@ -99,7 +99,7 @@ export async function authorize(ctx: Context, next: Next) {
         .join("/");
       log("Resource: " + resource);
 
-      const { keyKind: kind, secretKey, scopes } = decipherToken(
+      const { keyKind: kind, secretKey, scopes, expires } = decipherToken(
         token,
         resource,
       );
@@ -110,18 +110,19 @@ export async function authorize(ctx: Context, next: Next) {
         ctx.state.auth = new Auth({
           kind,
           scopes,
+          expires,
           description: "Token",
         });
       } else {
         throw new ApiError(401, "Invalid token (no key or scopes)");
       }
     } catch (err) {
+      if (err instanceof ApiError) throw err;
       throw new ApiError(401, "Invalid token");
     }
   } else {
     throw new ApiError(401, "API key or access token is required");
   }
-  // TODO: add support for expiring tokens
 
   await next();
 }

@@ -1,6 +1,7 @@
 import test from "ava";
 import { keys, rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
+import { generateEncryptedToken } from "../../src/token";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
@@ -23,6 +24,26 @@ test("unknown api key", async (t) => {
   t.is(res.status, 401);
 });
 
+test("expired api key", async (t) => {
+  const res = await rolo("expired").get("health");
+  t.is(res.status, 401);
+});
+
+test("expired token", async (t) => {
+  // access with no auth header
+  const res = await rolo().get("health", {
+    params: {
+      token: generateEncryptedToken({
+        keyKind: "test",
+        expires: new Date(Date.now() - 1000),
+        scopes: ["*"],
+      }),
+    },
+    headers: { "Authorization": null },
+  });
+  t.log(res.data);
+  t.is(res.status, 401);
+});
 test("create api key, missing payload", async (t) => {
   const res = await rolo().post("apiKeys", "", {
     headers: { "Content-Type": "application/json" },
@@ -295,7 +316,7 @@ test("list api keys, limit and offset", async (t) => {
   t.like(res.data.paginate, { limit: 3, offset: 2, order: -1 });
   t.is(res.data.items[0].id, keys()["subject"].id);
   t.is(res.data.items[1].id, keys()["noscope"].id);
-  t.is(res.data.items[2].id, keys()["runner"].id);
+  t.is(res.data.items[2].id, keys()["expired"].id);
 });
 
 test("list api keys, duplicated limit", async (t) => {

@@ -19,6 +19,7 @@ import { PaginateState } from "../middleware/processPagination";
 // Schema for the parts of the info that must be provided at creation time
 export const ZAuthContextInfo = z.object({
   scopes: z.array(z.string()),
+  expires: z.date().optional(),
   description: ZSaneString,
 });
 type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
@@ -54,12 +55,27 @@ export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 export class Auth implements AuthContext {
   scopes: string[];
   kind: KeyKind;
+  expires?: Date;
   description: string;
 
   constructor(public readonly authContext: AuthContext) {
     this.scopes = authContext.scopes;
     this.kind = authContext.kind;
     this.description = authContext.description;
+    this.expires = authContext.expires;
+    this.assertValid();
+  }
+
+  assertValid() {
+    if (!keyKinds.includes(this.kind)) {
+      throw new ApiError(500, "Invalid key kind");
+    }
+    if (this.expires && this.expires < new Date()) {
+      throw new ApiError(401, "Expired token or key");
+    }
+    if (!this.scopes.length) {
+      throw new ApiError(403, "Insufficient scope");
+    }
   }
 
   // check whether the context is authorized to perform the given action with the given resource.

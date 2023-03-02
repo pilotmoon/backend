@@ -6,7 +6,14 @@ export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
   runner: {
     scopes: ["*"],
+    expires: new Date(Date.now() + 60 * 60 * 1000),
     description: "test all-scopes runner key (deterministically generated)",
+  },
+  expired: {
+    scopes: ["*"],
+    // date 1 hour in the past
+    expires: new Date(Date.now() - 60 * 60 * 1000),
+    description: "test expired key (deterministically generated)",
   },
   noscope: {
     scopes: [],
