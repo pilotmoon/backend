@@ -141,13 +141,13 @@ export function decipherToken(token: string, resource: string): {
     return { keyKind, secretKey };
   }
 
-  // convert base62 data to an array of numbers
-  const encryptedData = baseDecode(base62Data, alphabets.base62);
+  // convert base62 data to buffer
+  const encryptedData = Buffer.from(baseDecode(base62Data, alphabets.base62));
 
   // encrypted scopes
   if (tokenType === "2") {
     const tokenData = ZTokenData.parse(
-      JSON.parse(decryptString(Buffer.from(encryptedData), keyKind)),
+      JSON.parse(decryptString(encryptedData, keyKind)),
     );
     const scopes = tokenData.sco;
     const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
@@ -157,7 +157,7 @@ export function decipherToken(token: string, resource: string): {
   // encrypted scopes with resource
   if (tokenType === "3") {
     const tokenData = ZTokenData.parse(
-      JSON.parse(decryptString(Buffer.from(encryptedData), keyKind, resource)),
+      JSON.parse(decryptString(encryptedData, keyKind, resource)),
     );
     const scopes = tokenData.sco.map((scope) => scope.replace("$", resource));
     const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
