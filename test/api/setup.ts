@@ -5,7 +5,7 @@ import { config } from "../../src/config";
 export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
   runner: {
-    scopes: "#all#",
+    scopes: ["*"],
     description: "test all-scopes runner key (deterministically generated)",
   },
   noscope: {

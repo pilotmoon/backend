@@ -1,20 +1,24 @@
-import { deterministic, randomKey, ZSaneString } from "../identifiers";
+import {
+  collectionNames,
+  deterministic,
+  randomKey,
+  ZSaneString,
+} from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
 import { ApiError, handleControllerError } from "../errors";
 import { log } from "../logger";
-import { collectionNames, KeyKind, keyKinds } from "../identifiers";
+import { KeyKind, keyKinds } from "../identifiers";
 import { hashPassword } from "../scrypt";
 import { TestKey, testKeys } from "../../test/api/setup";
 import { PaginateState } from "../middleware/processPagination";
-import { actions, allCollectionScopes, Scopes } from "../scopes";
 
 /*** Schemas ***/
 
 // Schema for the parts of the info that must be provided at creation time
 export const ZAuthContextInfo = z.object({
-  scopes: Scopes,
+  scopes: z.array(z.string()),
   description: ZSaneString,
 });
 type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
@@ -48,12 +52,12 @@ export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
 // auth class extends AuthContext by adding functions to validate access
 export class Auth implements AuthContext {
-  scopes: Scopes;
+  scopes: string[];
   kind: KeyKind;
   description: string;
 
   constructor(public readonly authContext: AuthContext) {
-    this.scopes = authContext.scopes as Scopes;
+    this.scopes = authContext.scopes;
     this.kind = authContext.kind;
     this.description = authContext.description;
   }
@@ -62,11 +66,18 @@ export class Auth implements AuthContext {
   assertAccess(
     collectionName: typeof collectionNames[number],
     resource: string | undefined,
-    action: typeof actions[number],
+    action: "create" | "read" | "update" | "delete",
   ) {
-    const acceptedScopes = [`${collectionName}:${action}`];
+    const acceptedScopes = [
+      `${collectionName}:${action}`,
+      `${collectionName}:*`,
+      `*`,
+    ];
     if (resource) {
-      acceptedScopes.push(`${collectionName}/${resource}:${action}`);
+      acceptedScopes.push(
+        `${collectionName}/${resource}:${action}`,
+        `${collectionName}/${resource}:*`,
+      );
     }
     if (!this.scopes.some((scope) => acceptedScopes.includes(scope))) {
       throw new ApiError(403, "Insufficient scope");
@@ -105,7 +116,7 @@ export async function init() {
     if (count == 0) {
       log("No API keys found, creating bootstrap key", kind.blue);
       const settableAuthContext = {
-        scopes: allCollectionScopes,
+        scopes: ["*"],
         description: "bootstrap key (randomly generated)",
       };
       const document = await createApiKey(
@@ -122,7 +133,6 @@ export async function init() {
     for (
       const [name, keyDef] of Object.entries<TestKey>(testKeys)
     ) {
-      if (keyDef.scopes === "#all#") keyDef.scopes = allCollectionScopes;
       keyDef.description = `[${name}] ` + keyDef.description;
       await createApiKey(
         ZAuthContextInfo.parse(keyDef),
