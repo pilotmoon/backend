@@ -28,7 +28,7 @@
 
 import { decryptString, encryptString } from "./secrets";
 import { KeyKind } from "./identifiers";
-import { alphabets, baseConvert, baseEncode } from "@pilotmoon/chewit";
+import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
 import { log } from "./logger";
 
@@ -112,26 +112,6 @@ export function generateApiKeyToken(secretKey: string): string {
   const keyKind = secretKey.startsWith("sk_live_") ? "live" : "test";
   const key = secretKey.replace(/^sk_(live|test)_/, "");
   return `1${characterForKeyKind(keyKind)}${key}`;
-}
-
-export function baseDecode(
-  string: string,
-  alphabet: string,
-  { trim = true }: { trim?: boolean } = {},
-) {
-  const converted = baseConvert(
-    string.split("").map((char) => alphabet.indexOf(char)),
-    alphabet.length,
-    256,
-  );
-  if (trim) {
-    // trim off any leading zeros
-    while (converted[0] === 0) {
-      converted.shift();
-    }
-  }
-
-  return converted;
 }
 
 // Given an access token and resource path, decipher it and return an object with the following properties:
