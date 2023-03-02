@@ -12,7 +12,6 @@ import {
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
-import { Scope } from "../scopes";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {

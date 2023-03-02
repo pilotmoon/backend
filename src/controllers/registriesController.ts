@@ -16,9 +16,10 @@ import { decryptInPlace, encryptInPlace } from "../secrets";
 
 /*** Database ***/
 
+const collectionName = "registries";
 // helper function to get the database collection for a given key kind
 function dbc(kind: KeyKind) {
-  return getDb(kind).collection<RegistryRecord>("registries");
+  return getDb(kind).collection<RegistryRecord>(collectionName);
 }
 
 // called at server startup to create indexes
@@ -100,7 +101,7 @@ export async function createRegistry(
   info: RegistryInfo,
   auth: Auth,
 ): Promise<RegistryRecord> {
-  auth.assertScope("registries:create");
+  auth.assertAccess(collectionName, undefined, "create");
   const document: RegistryRecord = {
     _id: randomIdentifier("reg"),
     object: "registry" as const,
@@ -124,7 +125,7 @@ export async function listRegistries(
   { limit, offset, order, orderBy }: PaginateState,
   auth: Auth,
 ): Promise<RegistryRecord[]> {
-  auth.assertScope("registries:list");
+  auth.assertAccess(collectionName, undefined, "list");
   const cursor = dbc(auth.kind).find()
     .sort({ [orderBy]: order })
     .skip(offset)
@@ -148,7 +149,7 @@ export async function readRegistry(
   id: string,
   auth: Auth,
 ): Promise<RegistryRecord | null> {
-  auth.assertScope("registries:read");
+  auth.assertAccess(collectionName, id, "read");
   const document = await dbc(auth.kind).findOne(
     { $or: [{ _id: id }, { identifiers: id }] },
   );
@@ -170,7 +171,7 @@ export async function updateRegistry(
   info: RegistryInfoUpdate,
   auth: Auth,
 ) {
-  auth.assertScope("registries:update");
+  auth.assertAccess(collectionName, id, "update");
   try {
     encryptInPlace(info.objects, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
@@ -191,7 +192,7 @@ export async function deleteRegistry(
   id: string,
   auth: Auth,
 ) {
-  auth.assertScope("registries:delete");
+  auth.assertAccess(collectionName, id, "delete");
   const result = await dbc(auth.kind).deleteOne(
     { $or: [{ _id: id }, { identifiers: id }] },
   );

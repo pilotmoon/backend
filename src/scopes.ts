@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// all the possible scopes
-const constScopes = [
+// all the possible collection scopes
+export const allCollectionScopes = [
   "health:read",
   "apiKeys:create",
   "apiKeys:read",
@@ -18,10 +18,10 @@ const constScopes = [
   "licenseKeys:list",
   "licenseKeys:update",
   "licenseKeys:delete",
-] as const;
+];
+
+export const actions = ["create", "read", "list", "update", "delete"] as const;
 
 // scope type
-export const Scopes = z.array(z.enum(constScopes));
-export type Scopes = z.infer<typeof Scopes>;
-export type Scope = Scopes[number];
-export const allScopes: Scopes = constScopes as any;
+export const Scopes = z.array(z.string());
+export type Scopes = Array<string>;

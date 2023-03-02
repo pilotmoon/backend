@@ -149,9 +149,10 @@ access the license key file content using an API call.
 
 /*** Database ***/
 
+const collectionName = "licenseKeys";
 // helper function to get the database collection for a given key kind
 function dbc(kind: KeyKind) {
-  return getDb(kind).collection<LicenseKeyRecord>("licenseKeys");
+  return getDb(kind).collection<LicenseKeyRecord>(collectionName);
 }
 
 // called at server startup to create indexes
@@ -226,7 +227,7 @@ export async function createLicenseKey(
   auth: Auth,
 ): Promise<LicenseKeyRecord> {
   const now = new Date();
-  auth.assertScope("licenseKeys:create");
+  auth.assertAccess(collectionName, undefined, "create");
   if (!info.date) info.date = now;
   const document: LicenseKeyRecord = {
     _id: randomIdentifier("lk"),
@@ -253,7 +254,7 @@ export async function readLicenseKey(
   id: string,
   auth: Auth,
 ): Promise<LicenseKeyRecord | null> {
-  auth.assertScope("licenseKeys:read");
+  auth.assertAccess(collectionName, id, "read");
   const document = await dbc(auth.kind).findOne({ _id: id });
   if (!document) return null;
 

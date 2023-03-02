@@ -4,11 +4,11 @@ import { getDb } from "../database";
 import { Binary } from "mongodb";
 import { ApiError, handleControllerError } from "../errors";
 import { log } from "../logger";
-import { KeyKind, keyKinds } from "../identifiers";
+import { collectionNames, KeyKind, keyKinds } from "../identifiers";
 import { hashPassword } from "../scrypt";
 import { TestKey, testKeys } from "../../test/api/setup";
 import { PaginateState } from "../middleware/processPagination";
-import { allScopes, Scope, Scopes } from "../scopes";
+import { actions, allCollectionScopes, Scopes } from "../scopes";
 
 /*** Schemas ***/
 
@@ -48,19 +48,27 @@ export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
 // auth class extends AuthContext by adding functions to validate access
 export class Auth implements AuthContext {
-  scopes: Scope[];
+  scopes: Scopes;
   kind: KeyKind;
   description: string;
 
   constructor(public readonly authContext: AuthContext) {
-    this.scopes = authContext.scopes;
+    this.scopes = authContext.scopes as Scopes;
     this.kind = authContext.kind;
     this.description = authContext.description;
   }
 
-  // check that the auth context has the given scope
-  assertScope(scope: Scope) {
-    if (!this.scopes.includes(scope)) {
+  // check whether the context is authorized to perform the given action with the given resource.
+  assertAccess(
+    collectionName: typeof collectionNames[number],
+    resource: string | undefined,
+    action: typeof actions[number],
+  ) {
+    const acceptedScopes = [`${collectionName}:${action}`];
+    if (resource) {
+      acceptedScopes.push(`${collectionName}/${resource}:${action}`);
+    }
+    if (!this.scopes.some((scope) => acceptedScopes.includes(scope))) {
       throw new ApiError(403, "Insufficient scope");
     }
   }
@@ -68,9 +76,11 @@ export class Auth implements AuthContext {
 
 /*** Database ***/
 
+const collectionName = "apiKeys";
+
 // helper function to get the database collection for a given key kind
 export function dbc(kind: KeyKind) {
-  return getDb(kind).collection<ApiKeySchema>("apiKeys");
+  return getDb(kind).collection<ApiKeySchema>(collectionName);
 }
 
 // helper to make a dummy context for inserting and reading keys
@@ -95,7 +105,7 @@ export async function init() {
     if (count == 0) {
       log("No API keys found, creating bootstrap key", kind.blue);
       const settableAuthContext = {
-        scopes: allScopes,
+        scopes: allCollectionScopes,
         description: "bootstrap key (randomly generated)",
       };
       const document = await createApiKey(
@@ -112,7 +122,7 @@ export async function init() {
     for (
       const [name, keyDef] of Object.entries<TestKey>(testKeys)
     ) {
-      if (keyDef.scopes === "#all#") keyDef.scopes = allScopes;
+      if (keyDef.scopes === "#all#") keyDef.scopes = allCollectionScopes;
       keyDef.description = `[${name}] ` + keyDef.description;
       await createApiKey(
         ZAuthContextInfo.parse(keyDef),
@@ -136,7 +146,7 @@ export async function createApiKey(
   auth: Auth,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
-  auth.assertScope("apiKeys:create");
+  auth.assertAccess(collectionName, undefined, "create");
   const { id, key } = randomKey(auth.kind, "ak");
   const document = {
     _id: id,
@@ -168,7 +178,7 @@ export async function readApiKey(
   id: string,
   auth: Auth,
 ): Promise<ApiKeySchema | null> {
-  auth.assertScope("apiKeys:read");
+  auth.assertAccess(collectionName, id, "read");
   const document = await dbc(auth.kind).findOne({ _id: id });
   if (!document) return null;
   try {
@@ -190,7 +200,7 @@ export async function listApiKeys(
   { limit, offset, order, orderBy }: PaginateState,
   auth: Auth,
 ): Promise<ApiKeySchema[]> {
-  auth.assertScope("apiKeys:list");
+  auth.assertAccess(collectionName, undefined, "create");
   const cursor = await dbc(auth.kind)
     .find()
     .sort({ [orderBy]: order })
@@ -214,7 +224,7 @@ export async function updateApiKey(
   params: AuthContextInfoUpdate,
   auth: Auth,
 ): Promise<boolean> {
-  auth.assertScope("apiKeys:update");
+  auth.assertAccess(collectionName, id, "update");
   try {
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
@@ -234,7 +244,7 @@ export async function deleteApiKey(
   id: string,
   auth: Auth,
 ): Promise<boolean> {
-  auth.assertScope("apiKeys:delete");
+  auth.assertAccess(collectionName, id, "delete");
   const result = await dbc(auth.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }

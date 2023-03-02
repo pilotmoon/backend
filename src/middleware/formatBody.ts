@@ -1,7 +1,7 @@
 import { Context, Next } from "koa";
 import { z } from "zod";
 import { ApiError } from "../errors";
-import { idRegex, objectTypes, objectTypesWithoutId } from "../identifiers";
+import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers";
 
 // replace _id with id
 function replaceId(obj: any) {
@@ -17,7 +17,7 @@ function replaceId(obj: any) {
 // schema for objects in responses
 const ZObject = z.object({
   id: z.string().regex(idRegex),
-  object: z.enum(objectTypes),
+  object: z.enum(objectNames),
   created: z.date().optional(),
 }).passthrough();
 
@@ -33,7 +33,7 @@ const ZResponse = z.union([
   ZObject,
   ZList,
   z.object({
-    object: z.enum(objectTypesWithoutId),
+    object: z.enum(objectNamesWithoutId),
   }).passthrough(),
 ]);
 

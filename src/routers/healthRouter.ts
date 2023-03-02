@@ -6,7 +6,7 @@ export const router = makeRouter();
 
 // health check endpoint
 router.get("/health", async (ctx) => {
-  ctx.state.auth.assertScope("health:read");
+  ctx.state.auth.assertAccess("health", undefined, "read");
 
   // add object identifier to response
   const health = { "object": "health" } as any;

@@ -12,7 +12,6 @@ import {
   ZRegistryInfo,
   ZRegistryInfoUpdate,
 } from "../controllers/registriesController";
-import { assertScope } from "../controllers/authController";
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {
