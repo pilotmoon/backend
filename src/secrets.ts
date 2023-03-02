@@ -36,17 +36,19 @@ function getSecretKey(kind: KeyKind) {
 export function encryptString(
   message: string,
   kind: KeyKind,
-  aad?: string,
+  associatedString?: string,
 ): Buffer {
   const key = getSecretKey(kind);
   const iv = randomBytes(12);
 
   const cipher = createCipheriv("aes-256-gcm", key, iv);
+  if (associatedString) {
+    cipher.setAAD(Buffer.from(associatedString));
+  }
   return Buffer.concat([
     iv,
     cipher.update(marker, "utf8"),
     cipher.update(message, "utf8"),
-    aad ? cipher.update(aad, "utf8") : Buffer.alloc(0),
     cipher.final(),
     cipher.getAuthTag(),
   ]);
@@ -56,7 +58,7 @@ export function encryptString(
 export function decryptString(
   encryptedMessage: Buffer,
   kind: KeyKind,
-  aad?: string,
+  associatedString?: string,
 ): string {
   const key = getSecretKey(kind);
   // encryptedMessage consis of:
@@ -69,9 +71,11 @@ export function decryptString(
 
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
+  if (associatedString) {
+    decipher.setAAD(Buffer.from(associatedString));
+  }
   const plainText = Buffer.concat([
     decipher.update(encryptedMessageWithoutIv),
-    aad ? decipher.update(aad, "utf8") : Buffer.alloc(0),
     decipher.final(),
   ]).toString("utf8");
 
