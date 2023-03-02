@@ -30,7 +30,6 @@ import { decryptString, encryptString } from "./secrets";
 import { KeyKind } from "./identifiers";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
-import { log } from "./logger";
 
 function characterForKeyKind(databaseKind: string): string {
   switch (databaseKind) {
@@ -87,8 +86,6 @@ export function generateEncryptedToken(
     tokenData.exp = expiration.getTime();
   }
 
-  log("encrypting token data", { tokenData, keyKind, resource });
-
   const encryptedData = encryptString(
     JSON.stringify(tokenData),
     keyKind,
@@ -119,13 +116,13 @@ export function generateApiKeyToken(secretKey: string): string {
 //  secretKey - the secret key (only present if the token type is "1")
 //  scopes - the decrypted scopes (only present if the token type is "2" or "3")
 //              in the case of "3", the character $ in the list of scopes is replaced with the resource
-//  expiration - the expiration date (only present if the token type is "2" or "3")
+//  expires - the expiration date (only present if the token type is "2" or "3")
 // If the token is invalid, throws an error. Should never print a token to the console or put it in an error message.
 export function decipherToken(token: string, resource: string): {
   keyKind: KeyKind;
   secretKey?: string;
   scopes?: string[];
-  expiration?: Date;
+  expires?: Date;
 } {
   // verify that the string is at least 3 characters long
   if (token.length < 3) {
@@ -153,7 +150,7 @@ export function decipherToken(token: string, resource: string): {
     );
     const scopes = tokenData.sco;
     const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
-    return { keyKind, scopes, expiration };
+    return { keyKind, scopes, expires: expiration };
   }
 
   // encrypted scopes with resource
@@ -163,7 +160,7 @@ export function decipherToken(token: string, resource: string): {
     );
     const scopes = tokenData.sco.map((scope) => scope.replace("$", resource));
     const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
-    return { keyKind, scopes, expiration };
+    return { keyKind, scopes, expires: expiration };
   }
 
   throw new Error("Invalid token (unknown token type)");

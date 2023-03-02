@@ -15,7 +15,7 @@ test("generate and deciper encrypted token", (t) => {
   const {
     keyKind,
     scopes: decipheredScopes,
-    expiration: decipheredExpiration,
+    expires: decipheredExpiration,
   } = token.decipherToken(
     tokenString,
     "anyResourceWillDoForDecipheringThisToken",
@@ -52,7 +52,7 @@ test("generate and decipher api key token with resource", (t) => {
   const {
     keyKind,
     scopes: decipheredScopes,
-    expiration: decipheredExpiration,
+    expires: decipheredExpiration,
   } = token.decipherToken(tokenString, resource);
   t.is(keyKind, "test");
   t.deepEqual(decipheredScopes, scopes);

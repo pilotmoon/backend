@@ -1,7 +1,8 @@
 import test from "ava";
-import { rolo } from "./setup";
+import { keys, rolo, testKeys } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
 import { PortableKeyPair } from "../../src/keyPair";
+import { generateApiKeyToken, generateEncryptedToken } from "../../src/token";
 
 function bundleId(id: string) {
   return id + "-" + uniqueSuffix;
@@ -307,6 +308,115 @@ test("add another record to the foo registry", async (t) => {
 test("get the second record", async (t) => {
   const res = await rolo().get(
     `/registries/${fooRegistryId}/objects/config2`,
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "record");
+  t.like(res.data.record, { foo: "bar" });
+});
+
+test("list the registries using a token with read permissions", async (t) => {
+  // first generate a token with read permissions
+  const token = generateEncryptedToken({
+    keyKind: "test",
+    scopes: ["registries:read"],
+  });
+
+  // now use that token to list the records
+  const res = await rolo().get(
+    `/registries`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "list");
+});
+
+test("list the registries using a token with read permissions and a resource", async (t) => {
+  // first generate a token with read permissions
+  const token = generateEncryptedToken({
+    keyKind: "test",
+    scopes: ["registries:read"],
+    resource: "registries",
+  });
+
+  // now use that token to list the records
+  const res = await rolo().get(
+    `/registries`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "list");
+});
+
+// list the objects of the foo registry using a token with read permissions
+test("read the foo registry using a token with read permissions and a resource", async (t) => {
+  const token = generateEncryptedToken({
+    keyKind: "test",
+    scopes: ["registries:read"],
+    resource: `registries/${fooRegistryId}`,
+  });
+
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "registry");
+});
+
+// list the objects of the foo registry using a token with read permissions
+test("read the foo registry using a token with read permissions for a different resource", async (t) => {
+  const token = generateEncryptedToken({
+    keyKind: "test",
+    scopes: ["registries:read"],
+    resource: `registries/blahblah`,
+  });
+
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
+  );
+  t.is(res.status, 401);
+});
+
+test("get an object from the foo registry using a token with read permissions", async (t) => {
+  const token = generateEncryptedToken({
+    keyKind: "test",
+    scopes: ["registries:read"],
+    resource: `registries/${fooRegistryId}`,
+  });
+
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}/objects/config`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
+  );
+  t.is(res.status, 200);
+  t.is(res.data.object, "record");
+  t.like(res.data.record, { foo: "bar" });
+});
+
+test("get an object from the foo registry using a token of the api key type", async (t) => {
+  const token = generateApiKeyToken(keys().runner.key);
+  const res = await rolo().get(
+    `/registries/${fooRegistryId}/objects/config`,
+    {
+      headers: { Authorization: undefined },
+      params: { token },
+    },
   );
   t.is(res.status, 200);
   t.is(res.data.object, "record");

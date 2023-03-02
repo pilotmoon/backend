@@ -12,6 +12,7 @@ import {
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
+import { decipherToken } from "../token";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
@@ -66,22 +67,66 @@ const ttl = minute * 10;
 const revalidateTime = minute * 5;
 const authCache = new TTLCache<string, Auth>({ max: 100000, ttl });
 
-// authorization middleware
+// authorization middleware.
+// this middleware checks the authorization header or token.
+// token is expected to be in the query string with the name "token".
+// if the header or token is valid, the auth object is added to the
+// context and the request is passed on to the next middleware.
+// if the header or token is invalid, an error is thrown.
+// if both a header and token are present, the header takes precedence
+// and the token is ignored.
 export async function authorize(ctx: Context, next: Next) {
-  // get the authorization header
+  // get the authorization header and token
   const authorization = ctx.request.headers["authorization"];
-  if (typeof authorization !== "string") {
-    throw new ApiError(401, "Authorization header is required");
-  }
+  const token = ctx.request.query.token;
 
-  // get the actual key
-  const bearerPrefix = "Bearer ";
-  const prefix = authorization.substring(0, bearerPrefix.length);
-  const key = authorization.substring(bearerPrefix.length);
-  if (prefix !== bearerPrefix || !key) {
-    throw new ApiError(401, "Bearer token is required");
-  }
+  if (typeof authorization === "string") {
+    // get the actual key
+    const bearerPrefix = "Bearer ";
+    const prefix = authorization.substring(0, bearerPrefix.length);
+    const key = authorization.substring(bearerPrefix.length);
+    if (prefix !== bearerPrefix || !key) {
+      throw new ApiError(401, "Bearer token is required");
+    }
+    await authorizeKey(key, ctx);
+  } else if (typeof token === "string") {
+    // decipher the token
+    try {
+      // extract resource from the first two path segments.
+      const resource = ctx.path
+        .split("/")
+        .slice(1, 3)
+        .join("/");
+      log("Resource: " + resource);
 
+      const { keyKind: kind, secretKey, scopes } = decipherToken(
+        token,
+        resource,
+      );
+      if (secretKey) {
+        await authorizeKey(secretKey, ctx);
+      } else if (scopes) {
+        log("Token scopes: " + scopes.join(", "));
+        ctx.state.auth = new Auth({
+          kind,
+          scopes,
+          description: "Token",
+        });
+      } else {
+        throw new ApiError(401, "Invalid token (no key or scopes)");
+      }
+    } catch (err) {
+      throw new ApiError(401, "Invalid token");
+    }
+  } else {
+    throw new ApiError(401, "API key or access token is required");
+  }
+  // TODO: add support for expiring tokens
+
+  await next();
+}
+
+async function authorizeKey(key: string, ctx: Context) {
   // check the cache
   const keyParts = parseSecretKey(key);
   let auth = authCache.get(keyParts.cacheKey);
@@ -109,5 +154,5 @@ export async function authorize(ctx: Context, next: Next) {
   log("New auth cache size: " + authCache.size);
   ctx.state.auth = auth;
   ctx.state.apiKeyId = keyParts.id;
-  await next();
+  log("Key ID: " + keyParts.id);
 }
