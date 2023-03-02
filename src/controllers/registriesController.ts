@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getDb } from "../database";
-import { assertScope, AuthContext } from "./authController";
+import { Auth } from "./authController";
 import { handleControllerError } from "../errors";
 import {
   genericIdRegex,
@@ -98,9 +98,9 @@ export type RegistryRecord = z.infer<typeof ZRegistryRecord>;
 // Create a new registry.
 export async function createRegistry(
   info: RegistryInfo,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<RegistryRecord> {
-  assertScope("registries:create", auth);
+  auth.assertScope("registries:create");
   const document: RegistryRecord = {
     _id: randomIdentifier("reg"),
     object: "registry" as const,
@@ -122,9 +122,9 @@ export async function createRegistry(
 // List registries.
 export async function listRegistries(
   { limit, offset, order, orderBy }: PaginateState,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<RegistryRecord[]> {
-  assertScope("registries:list", auth);
+  auth.assertScope("registries:list");
   const cursor = dbc(auth.kind).find()
     .sort({ [orderBy]: order })
     .skip(offset)
@@ -146,9 +146,9 @@ export async function listRegistries(
 // Returns null if the registry does not exist.
 export async function readRegistry(
   id: string,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<RegistryRecord | null> {
-  assertScope("registries:read", auth);
+  auth.assertScope("registries:read");
   const document = await dbc(auth.kind).findOne(
     { $or: [{ _id: id }, { identifiers: id }] },
   );
@@ -168,9 +168,9 @@ export async function readRegistry(
 export async function updateRegistry(
   id: string,
   info: RegistryInfoUpdate,
-  auth: AuthContext,
+  auth: Auth,
 ) {
-  assertScope("registries:update", auth);
+  auth.assertScope("registries:update");
   try {
     encryptInPlace(info.objects, auth.kind);
     const result = await dbc(auth.kind).findOneAndUpdate(
@@ -189,9 +189,9 @@ export async function updateRegistry(
 // Returns true if the registry was deleted, false if it was not found.
 export async function deleteRegistry(
   id: string,
-  auth: AuthContext,
+  auth: Auth,
 ) {
-  assertScope("registries:delete", auth);
+  auth.assertScope("registries:delete");
   const result = await dbc(auth.kind).deleteOne(
     { $or: [{ _id: id }, { identifiers: id }] },
   );

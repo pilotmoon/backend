@@ -3,15 +3,16 @@ import { Context, Next } from "koa";
 import { log } from "../logger";
 import { KeyKind, secretKeyRegex } from "../identifiers";
 import { verifyPassword } from "../scrypt";
-import { createHash } from "node:crypto";
+
 import {
-  AuthContext,
+  Auth,
   readApiKey,
   specialContext,
   ZAuthContext,
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
+import { Scope } from "../scopes";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
@@ -64,7 +65,7 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
 const minute = 1000 * 60;
 const ttl = minute * 10;
 const revalidateTime = minute * 5;
-const authCache = new TTLCache<string, AuthContext>({ max: 100000, ttl });
+const authCache = new TTLCache<string, Auth>({ max: 100000, ttl });
 
 // authorization middleware
 export async function authorize(ctx: Context, next: Next) {
@@ -84,12 +85,12 @@ export async function authorize(ctx: Context, next: Next) {
 
   // check the cache
   const keyParts = parseSecretKey(key);
-  let authContext = authCache.get(keyParts.cacheKey);
+  let auth = authCache.get(keyParts.cacheKey);
 
   // if not in the cache, perform full validation
-  if (!authContext) {
-    authContext = await validateSecretKey(keyParts);
-    authCache.set(keyParts.cacheKey, authContext);
+  if (!auth) {
+    auth = new Auth(await validateSecretKey(keyParts));
+    authCache.set(keyParts.cacheKey, auth);
   } else {
     // revalidate in background if sufficiently old
     const ttlRemaining = authCache.getRemainingTTL(keyParts.cacheKey);
@@ -97,7 +98,7 @@ export async function authorize(ctx: Context, next: Next) {
       log("Revalidating API key in background");
       validateSecretKey(keyParts)
         .then((authContext) => {
-          authCache.set(keyParts.cacheKey, authContext);
+          authCache.set(keyParts.cacheKey, new Auth(authContext));
         })
         .catch((err) => {
           log("Error revalidating API key: " + err.message);
@@ -107,7 +108,7 @@ export async function authorize(ctx: Context, next: Next) {
   }
 
   log("New auth cache size: " + authCache.size);
-  ctx.state.auth = authContext;
+  ctx.state.auth = auth;
   ctx.state.apiKeyId = keyParts.id;
   await next();
 }

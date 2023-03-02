@@ -46,22 +46,24 @@ export const ZApiKeySchema = ZAuthContext.extend({
 });
 export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
-/*** Scope Assessment ****/
+// auth class extends AuthContext by adding functions to validate access
+export class Auth implements AuthContext {
+  scopes: Scope[];
+  kind: KeyKind;
+  description: string;
 
-// Function to check that the given auth context has the given scope.
-export function assertScope(
-  scope: Scope,
-  authContext: AuthContext,
-) {
-  if (!authContext.scopes.includes(scope)) {
-    throw new ApiError(403, "Missing required scope: " + scope);
+  constructor(public readonly authContext: AuthContext) {
+    this.scopes = authContext.scopes;
+    this.kind = authContext.kind;
+    this.description = authContext.description;
   }
-}
-export function checkScope(
-  scope: Scope,
-  authContext: AuthContext,
-) {
-  return authContext.scopes.includes(scope);
+
+  // check that the auth context has the given scope
+  assertScope(scope: Scope) {
+    if (!this.scopes.includes(scope)) {
+      throw new ApiError(403, "Insufficient scope");
+    }
+  }
 }
 
 /*** Database ***/
@@ -72,12 +74,12 @@ export function dbc(kind: KeyKind) {
 }
 
 // helper to make a dummy context for inserting and reading keys
-export function specialContext(kind: KeyKind): AuthContext {
-  return {
+export function specialContext(kind: KeyKind): Auth {
+  return new Auth({
     kind: kind,
     scopes: ["apiKeys:create", "apiKeys:read"],
     description: "",
-  };
+  });
 }
 
 // called at startup to prepare the database
@@ -131,10 +133,10 @@ export async function init() {
 // with a the deterministic key generator, e.g. in tests.)
 export async function createApiKey(
   params: AuthContextInfo,
-  auth: AuthContext,
+  auth: Auth,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
-  assertScope("apiKeys:create", auth);
+  auth.assertScope("apiKeys:create");
   const { id, key } = randomKey(auth.kind, "ak");
   const document = {
     _id: id,
@@ -164,9 +166,9 @@ export async function createApiKey(
 // not match the schema.
 export async function readApiKey(
   id: string,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<ApiKeySchema | null> {
-  assertScope("apiKeys:read", auth);
+  auth.assertScope("apiKeys:read");
   const document = await dbc(auth.kind).findOne({ _id: id });
   if (!document) return null;
   try {
@@ -186,9 +188,9 @@ export async function readApiKey(
 // does not match the schema.
 export async function listApiKeys(
   { limit, offset, order, orderBy }: PaginateState,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<ApiKeySchema[]> {
-  assertScope("apiKeys:list", auth);
+  auth.assertScope("apiKeys:list");
   const cursor = await dbc(auth.kind)
     .find()
     .sort({ [orderBy]: order })
@@ -210,9 +212,9 @@ export async function listApiKeys(
 export async function updateApiKey(
   id: string,
   params: AuthContextInfoUpdate,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<boolean> {
-  assertScope("apiKeys:update", auth);
+  auth.assertScope("apiKeys:update");
   try {
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
@@ -230,9 +232,9 @@ export async function updateApiKey(
 // does not exist.
 export async function deleteApiKey(
   id: string,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<boolean> {
-  assertScope("apiKeys:delete", auth);
+  auth.assertScope("apiKeys:delete");
   const result = await dbc(auth.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;
 }

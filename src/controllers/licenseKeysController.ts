@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getDb } from "../database";
-import { assertScope, AuthContext } from "../controllers/authController";
+import { Auth } from "../controllers/authController";
 import { handleControllerError } from "../errors";
 import {
   genericIdRegex,
@@ -223,10 +223,10 @@ export type LicenseKey = z.infer<typeof ZLicenseKey>;
 // The auth context must have the "licenseKeys:create" scope.
 export async function createLicenseKey(
   info: LicenseKeyInfo,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<LicenseKeyRecord> {
   const now = new Date();
-  assertScope("licenseKeys:create", auth);
+  auth.assertScope("licenseKeys:create");
   if (!info.date) info.date = now;
   const document: LicenseKeyRecord = {
     _id: randomIdentifier("lk"),
@@ -251,9 +251,9 @@ export async function createLicenseKey(
 // The auth context must have the "licenseKeys:read" scope.
 export async function readLicenseKey(
   id: string,
-  auth: AuthContext,
+  auth: Auth,
 ): Promise<LicenseKeyRecord | null> {
-  assertScope("licenseKeys:read", auth);
+  auth.assertScope("licenseKeys:read");
   const document = await dbc(auth.kind).findOne({ _id: id });
   if (!document) return null;
 
