@@ -31,6 +31,15 @@ test("encrypt and decrypt with bad aad", (t) => {
   );
 });
 
+test("encrypt and decrypt with missing aad", (t) => {
+  const message = "hello world";
+  const aad = "foo";
+  const encrypted = encryptString(message, "test", aad);
+  t.log(
+    t.throws(() => decryptString(encrypted, "test"))?.message,
+  );
+});
+
 test("bad key kind", (t) => {
   const message = "hello world";
   t.log(t.throws(() => encryptString(message, "foo" as any))?.message);
