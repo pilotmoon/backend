@@ -32,7 +32,12 @@ function getSecretKey(kind: KeyKind) {
 }
 
 // encrypt a string to a buffer using the specified key kind
-export function encryptString(message: string, kind: KeyKind): Buffer {
+// optionally set additional authenticated data (AAD)
+export function encryptString(
+  message: string,
+  kind: KeyKind,
+  aad?: string,
+): Buffer {
   const key = getSecretKey(kind);
   const iv = randomBytes(12);
 
@@ -41,13 +46,18 @@ export function encryptString(message: string, kind: KeyKind): Buffer {
     iv,
     cipher.update(marker, "utf8"),
     cipher.update(message, "utf8"),
+    aad ? cipher.update(aad, "utf8") : Buffer.alloc(0),
     cipher.final(),
     cipher.getAuthTag(),
   ]);
 }
 
 // decrypt a buffer to a string using the specified key kind
-export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
+export function decryptString(
+  encryptedMessage: Buffer,
+  kind: KeyKind,
+  aad?: string,
+): string {
   const key = getSecretKey(kind);
   // encryptedMessage consis of:
   // - 12 byte initialization vector
@@ -61,6 +71,7 @@ export function decryptString(encryptedMessage: Buffer, kind: KeyKind): string {
   decipher.setAuthTag(authTag);
   const plainText = Buffer.concat([
     decipher.update(encryptedMessageWithoutIv),
+    aad ? decipher.update(aad, "utf8") : Buffer.alloc(0),
     decipher.final(),
   ]).toString("utf8");
 
