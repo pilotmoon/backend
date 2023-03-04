@@ -11,6 +11,7 @@ import { canonicalizeEmail } from "../canonicalizeEmail";
 import { AuthKind, authKinds } from "../auth";
 import {
   getRegistryObject,
+  getRegistryObjectInternal,
   readRegistry,
   ZRecord,
 } from "./registriesController";
@@ -212,27 +213,6 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
-// schema for what is returned to the client, comprising the full record
-// plus the license key file content and generated filename
-export const ZLicenseKey = ZLicenseKeyRecord.extend({
-  // license key file content, as a Base64-encoded string
-  data: z.string(),
-  // license key filename, e.g. "John_Doe.popcliplicense"
-  filename: z.string(),
-});
-export type LicenseKey = z.infer<typeof ZLicenseKey>;
-
-// schema for the wrapper for the license key file
-export const ZLicenseKeyFile = z.object({
-  // literal string "licenseKeyFile"
-  object: z.literal("licenseKeyFile"),
-  // license key file content, as a Base64-encoded string
-  data: z.string(),
-  // license key filename, e.g. "John_Doe.popcliplicense"
-  filename: z.string(),
-});
-export type LicenseKeyFile = z.infer<typeof ZLicenseKeyFile>;
-
 /*** C.R.U.D. Operations ***/
 
 // Create a new license key using the given info.
@@ -308,7 +288,7 @@ type LicenseKeysConfig = z.infer<typeof ZLicenceKeysConfig>;
 export async function generateLicenseFile(
   document: LicenseKeyRecord,
   auth: Auth,
-): Promise<LicenseKeyFile> {
+): Promise<{ plist: string; filename: string }> {
   // first look up the key pair for the product.
   // it will be stored in a registry with the product id
   // as its identifier, and the object name will be aquaticPrimeKeyPair.
@@ -351,8 +331,7 @@ export async function generateLicenseFile(
     config.licenseFileExtension;
 
   return {
-    object: "licenseKeyFile",
-    data: Buffer.from(licensePlist).toString("base64"),
+    plist: licensePlist,
     filename,
   };
 }
@@ -370,10 +349,10 @@ async function getAquaticPrimeKeyPair(
   productId: string,
   auth: Auth,
 ): Promise<PortableKeyPair> {
-  const keyPair = await getRegistryObject(
+  const keyPair = await getRegistryObjectInternal(
     productId,
     "aquaticPrimeKeyPair",
-    auth,
+    auth.kind,
   );
   return ZPortableKeyPair.parse(keyPair);
 }
@@ -382,6 +361,10 @@ async function getLicenseKeysConfig(
   productId: string,
   auth: Auth,
 ): Promise<LicenseKeysConfig> {
-  const config = await getRegistryObject(productId, "config", auth);
+  const config = await getRegistryObjectInternal(
+    productId,
+    "config",
+    auth.kind,
+  );
   return ZLicenceKeysConfig.parse(ZRecord.parse(config).record);
 }

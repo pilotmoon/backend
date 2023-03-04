@@ -4,6 +4,7 @@ import { genericIdPattern, makeIdentifierPattern } from "../identifiers";
 import {
   createRegistry,
   deleteRegistry,
+  getRegistryObject,
   listRegistries,
   readRegistry,
   redact,
@@ -82,12 +83,13 @@ router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
 
 // read a named objects using a dedicated url
 router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
-  const document = await readRegistry(ctx.params.id, ctx.state.auth);
-  if (!document?.objects) return;
-
-  const object = document.objects[ctx.params.objectId];
-  if (object) {
-    ctx.body = object;
+  const document = await getRegistryObject(
+    ctx.params.id,
+    ctx.params.objectId,
+    ctx.state.auth,
+  );
+  if (document) {
+    ctx.body = document;
   }
 });
 

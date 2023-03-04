@@ -193,14 +193,32 @@ export async function deleteRegistry(
   return result.deletedCount === 1;
 }
 
+// Get an object from a registry by its canonical ID or one of its other identifiers.
+// Returns null if the registry or object does not exist.
 export async function getRegistryObject(
   productId: string,
   objectName: string,
   auth: Auth,
-): Promise<RegistryObject> {
+): Promise<RegistryObject | null> {
   const registry = await readRegistry(productId, auth);
-  if (!registry) throw new Error(`No registry found for product ${productId}`);
+  if (!registry) return null;
   const object = registry.objects?.[objectName];
-  if (!object) throw new Error(`No object found for product ${productId}`);
+  if (!object) return null;
   return object;
+}
+
+// get object for internal application use
+export async function getRegistryObjectInternal(
+  identifier: string,
+  object: string,
+  kind: AuthKind,
+): Promise<Record<string, unknown> | null> {
+  return await getRegistryObject(
+    identifier,
+    object,
+    new Auth({
+      scopes: ["*"],
+      kind: kind,
+    }),
+  );
 }

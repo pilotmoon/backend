@@ -27,7 +27,7 @@ export function getDb(kind: AuthKind | "logs"): Db {
 // called at startup to connect to the database
 export async function connect() {
   if (!client) {
-    log("Connecting to database");
+    log("Connecting to database...");
     client = new MongoClient(config.DATABASE_URL, {
       serverApi: ServerApiVersion.v1,
     });

@@ -95,12 +95,12 @@ const housekeepingTimer = setInterval(housekeep, hours(1));
 // server startup and shutdown
 const abortController = new AbortController();
 function startServer() {
-  log("Starting server");
+  log("Starting server...");
   app.listen({
     port: config.APP_PORT,
     signal: abortController.signal,
   }, () => {
-    log(`Server listening on port ${config.APP_PORT}`.bgCyan);
+    log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
   });
 }
 function closeServer() {

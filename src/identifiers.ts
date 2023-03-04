@@ -18,6 +18,7 @@ export const objectNamesWithoutId = [
   "health",
   "keyPair",
   "record",
+  "licenseKeyFile",
 ] as const;
 
 // base definitions for keys and identifiers

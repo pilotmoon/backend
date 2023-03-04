@@ -127,13 +127,12 @@ test("create registry for license keys", async (t) => {
       },
     },
   });
-  t.log(res.data);
   t.log(res.status);
   t.is(res.status, 201);
   t.is(res.headers.location, `/registries/${res.data.id}`);
 });
 
-test.only("create license key, download license file", async (t) => {
+test("create license key, download license file", async (t) => {
   // then we create a license key
   const res2 = await rolo().post("licenseKeys", testLicenseData);
   t.is(res2.status, 201);
@@ -147,8 +146,7 @@ test.only("create license key, download license file", async (t) => {
     `attachment; filename="${testLicenseFileName}"`,
   );
   // base64 decode the license file
-  const licenseFile = Buffer.from(res3.data, "base64").toString("utf8");
-  t.is(trimLines(licenseFile), trimLines(testLicenseKey));
+  t.is(trimLines(res3.data), trimLines(testLicenseKey));
 });
 
 // function to return a string with every line trimmed
@@ -158,3 +156,53 @@ function trimLines(str: string) {
     .map((line) => line.trim())
     .join("\n");
 }
+
+// download the license file as json
+test("create license key, download license file as json", async (t) => {
+  // then we create a license key
+  const res2 = await rolo().post("licenseKeys", testLicenseData);
+  t.is(res2.status, 201);
+
+  // then we download the license file
+  const res3 = await rolo().get(`licenseKeys/${res2.data.id}/file`, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  t.is(res3.status, 200);
+  t.is(res3.headers["content-type"], "application/json; charset=utf-8");
+  t.like(res3.data, {
+    filename: testLicenseFileName,
+    object: "licenseKeyFile",
+  });
+  // compare trimmed license file contents
+  const licenseFile = Buffer.from(res3.data.data, "base64").toString("utf8");
+  t.is(
+    trimLines(licenseFile),
+    trimLines(testLicenseKey),
+    "license file contents",
+  );
+});
+
+// create a license key, download with the link in the response
+test("create license key, download license file with link", async (t) => {
+  // then we create a license key
+  const res2 = await rolo().post("licenseKeys", testLicenseData);
+  t.is(res2.status, 201);
+  t.log("downloadUrl:", res2.data.downloadUrl);
+
+  // then we download the license file
+  const res3 = await rolo().get(res2.data.downloadUrl, {
+    headers: {
+      Authorization: null,
+    },
+  });
+  t.is(res3.status, 200);
+  t.is(res3.headers["content-type"], "application/octet-stream");
+  t.is(
+    res3.headers["content-disposition"],
+    `attachment; filename="${testLicenseFileName}"`,
+  );
+  // base64 decode the license file
+  t.is(trimLines(res3.data), trimLines(testLicenseKey));
+});

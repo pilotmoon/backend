@@ -11,6 +11,7 @@ import {
 import { generateEncryptedToken } from "../token";
 import { log } from "../logger";
 import TTLCache = require("@isaacs/ttlcache");
+import { z } from "zod";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -71,6 +72,17 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
+// schema for the json wrapper for the license key file
+export const ZLicenseKeyFile = z.object({
+  // literal string "licenseKeyFile"
+  object: z.literal("licenseKeyFile"),
+  // license key file content, as a Base64-encoded string
+  data: z.string(),
+  // license key filename, e.g. "John_Doe.popcliplicense"
+  filename: z.string(),
+});
+export type LicenseKeyFile = z.infer<typeof ZLicenseKeyFile>;
+
 // Get a license key file by id
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
@@ -78,15 +90,20 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
     const licenseFile = await generateLicenseFile(document, ctx.state.auth);
     // if client accepts octet-stream, return the file as-is
     if (ctx.accepts("application/octet-stream")) {
-      ctx.body = licenseFile.data;
+      // decode the base64-encoded file
+      ctx.body = licenseFile.plist;
       ctx.set("Content-Type", "application/octet-stream");
       ctx.set(
         "Content-Disposition",
         `attachment; filename="${licenseFile.filename}"`,
       );
     } else {
-      // otherwise, return the license file directly
-      ctx.body = licenseFile;
+      // otherwise, return the license file object
+      ctx.body = ZLicenseKeyFile.parse({
+        object: "licenseKeyFile",
+        data: Buffer.from(licenseFile.plist).toString("base64"),
+        filename: licenseFile.filename,
+      });
     }
   }
 });

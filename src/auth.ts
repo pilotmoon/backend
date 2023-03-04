@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "./errors";
 import { collectionNames } from "./identifiers";
+import { log } from "./logger";
 
 // Auth "kinds" refer to the test and live variations of the api keys.
 // all operations initiated by the api key happen against the corresponding
@@ -45,7 +46,7 @@ export class Auth implements AuthInfo {
       throw new ApiError(401, "Expired token or key");
     }
     if (!this.scopes.length) {
-      throw new ApiError(403, "Insufficient scope");
+      throw new ApiError(403, "No scope");
     }
   }
 
