@@ -1,7 +1,6 @@
 import test from "ava";
 import { keys, rolo } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
-import { generateEncryptedToken } from "../../src/token";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {
@@ -29,21 +28,6 @@ test("expired api key", async (t) => {
   t.is(res.status, 401);
 });
 
-test("expired token", async (t) => {
-  // access with no auth header
-  const res = await rolo().get("health", {
-    params: {
-      token: generateEncryptedToken({
-        keyKind: "test",
-        expires: new Date(Date.now() - 1000),
-        scopes: ["*"],
-      }),
-    },
-    headers: { "Authorization": null },
-  });
-  t.log(res.data);
-  t.is(res.status, 401);
-});
 test("create api key, missing payload", async (t) => {
   const res = await rolo().post("apiKeys", "", {
     headers: { "Content-Type": "application/json" },

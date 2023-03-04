@@ -68,28 +68,37 @@ const revalidateTime = minute * 5;
 const authCache = new TTLCache<string, Auth>({ max: 100000, ttl });
 
 // authorization middleware.
-// this middleware checks the authorization header or token.
-// token is expected to be in the query string with the name "token".
-// if the header or token is valid, the auth object is added to the
+// this middleware checks the provided api key or token.
+// the api key is expected to be in the authorization header with the
+// prefix "Bearer ".
+// the token is expected to be in the query string with the name "token".
+// if the header or token is valid, an auth object is added to the
 // context and the request is passed on to the next middleware.
-// if the header or token is invalid, an error is thrown.
-// if both a header and token are present, the header takes precedence
-// and the token is ignored.
+// a 401 error is thrown if:
+// - no authorization header or token is provided
+// - both authorization header and token are provided
+// - the query contains multiple tokens
+// - the api key or token is invalid
 export async function authorize(ctx: Context, next: Next) {
   // get the authorization header and token
   const authorization = ctx.request.headers["authorization"];
   const token = ctx.request.query.token;
-
-  if (typeof authorization === "string") {
+  if (Array.isArray(token)) {
+    throw new ApiError(401, "Multiple tokens provided");
+  }
+  if (authorization && token) {
+    throw new ApiError(401, "API key and token cannot be used together");
+  }
+  if (authorization) {
     // get the actual key
     const bearerPrefix = "Bearer ";
     const prefix = authorization.substring(0, bearerPrefix.length);
     const key = authorization.substring(bearerPrefix.length);
     if (prefix !== bearerPrefix || !key) {
-      throw new ApiError(401, "Bearer token is required");
+      throw new ApiError(401, "Authorization header should be 'Bearer <key>'");
     }
     await authorizeKey(key, ctx);
-  } else if (typeof token === "string") {
+  } else if (token) {
     // decipher the token
     try {
       // extract resource from the first two path segments.
