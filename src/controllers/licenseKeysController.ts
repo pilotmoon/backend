@@ -270,12 +270,12 @@ type LicenseFileFields = z.infer<typeof ZLicenseFileFields>;
 export const ZLicenseFileObject = z.object({
   // literal string "licenseKeyFile"
   object: z.literal("licenseKeyFile"),
+  // license key filename, e.g. "John_Doe.popcliplicense"
+  name: z.string(),
   // license file content as plist string
   plist: z.string(),
   // license key file content, as a Base64-encoded string
   data: z.string(),
-  // license key filename, e.g. "John_Doe.popcliplicense"
-  name: z.string(),
 });
 export type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
@@ -325,12 +325,12 @@ export async function generateLicenseFile(
   const name = sanitizedName(document.name) + "." +
     config.licenseFileExtension;
 
-  return {
+  return ZLicenseFileObject.parse({
     object: "licenseKeyFile",
     plist,
     data: Buffer.from(plist).toString("base64"),
     name,
-  };
+  });
 }
 
 // sanitize a name for use in a license file name
