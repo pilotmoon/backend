@@ -52,12 +52,12 @@ function generateToken(id: string, kind: AuthKind) {
 // common routine to get full response body
 async function getCommonBody(document: LicenseKeyRecord, ctx: Context) {
   const license = await generateLicenseFile(document, ctx.state.auth.kind);
+  const url = ctx.getLocation(matchFile.uuid, { id: document._id }, {
+    token: generateToken(document._id, ctx.state.auth.kind),
+  }, true);
   return {
-    ...document,
-    downloadUrl: ctx.getLocation(matchFile.uuid, { id: document._id }, {
-      token: generateToken(document._id, ctx.state.auth.kind),
-    }, true),
-    file: omit(license, "plist"),
+    ...omit(document, "emailHash"),
+    file: { ...omit(license, "plist"), url },
   };
 }
 
@@ -90,24 +90,27 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 // Get a license key file by id
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
-  if (document) {
-    // generate license key file object
-    const license = await generateLicenseFile(document, ctx.state.auth.kind);
+  if (!document) return;
 
-    // if client accepts octet-stream, return the file as-is
-    if (ctx.accepts("application/octet-stream")) {
-      // decode the base64-encoded file
-      ctx.body = license.plist;
-      ctx.set("Content-Type", "application/octet-stream");
-      ctx.set(
-        "Content-Disposition",
-        `attachment; filename="${license.filename}"`,
-      );
-    } else {
-      throw new ApiError(
-        406,
-        "Client does not accept application/octet-stream",
-      );
-    }
+  // generate license key file object
+  const licenseFile = await generateLicenseFile(
+    document,
+    ctx.state.auth.kind,
+  );
+
+  // if client accepts octet-stream, return the file as-is
+  if (ctx.accepts("application/octet-stream")) {
+    // decode the base64-encoded file
+    ctx.body = licenseFile.plist;
+    ctx.set("Content-Type", "application/octet-stream");
+    ctx.set(
+      "Content-Disposition",
+      `attachment; filename="${licenseFile.name}"`,
+    );
+  } else {
+    throw new ApiError(
+      406,
+      "Client does not accept application/octet-stream",
+    );
   }
 });

@@ -275,7 +275,7 @@ export const ZLicenseFileObject = z.object({
   // license key file content, as a Base64-encoded string
   data: z.string(),
   // license key filename, e.g. "John_Doe.popcliplicense"
-  filename: z.string(),
+  name: z.string(),
 });
 export type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
@@ -322,14 +322,14 @@ export async function generateLicenseFile(
   const plist = aqp.generateLicense(ZLicenseFileFields.parse(details));
 
   // generate the license file name
-  const filename = sanitizedName(document.name) + "." +
+  const name = sanitizedName(document.name) + "." +
     config.licenseFileExtension;
 
   return {
     object: "licenseKeyFile",
     plist,
     data: Buffer.from(plist).toString("base64"),
-    filename,
+    name,
   };
 }
 

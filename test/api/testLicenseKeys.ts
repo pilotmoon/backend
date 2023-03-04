@@ -171,7 +171,7 @@ test("create license key, download license file with link", async (t) => {
   t.log("downloadUrl:", res2.data.downloadUrl);
 
   // then we download the license file
-  const res3 = await rolo().get(res2.data.downloadUrl, {
+  const res3 = await rolo().get(res2.data.file.url, {
     headers: {
       Authorization: null,
     },
