@@ -28,7 +28,7 @@
 // is left to the caller.
 
 import { decryptString, encryptString } from "./secrets";
-import { AuthKind } from "./identifiers";
+import { AuthKind } from "./auth";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
 

@@ -15,9 +15,8 @@
 import { Context, Next } from "koa";
 import { getDb } from "../database";
 import { z } from "zod";
-import { AuthKind } from "../identifiers";
 import { union } from "lodash";
-import { ZAuthInfo } from "../controllers/authController";
+import { ZAuthInfo } from "../auth";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),

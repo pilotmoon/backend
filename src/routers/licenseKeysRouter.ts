@@ -1,6 +1,7 @@
 import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
-import { AuthKind, makeIdentifierPattern } from "../identifiers";
+import { AuthKind } from "../auth";
+import { makeIdentifierPattern } from "../identifiers";
 import {
   createLicenseKey,
   readLicenseKey,

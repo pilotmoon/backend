@@ -6,7 +6,7 @@ import {
   updateApiKey,
   ZApiKeyInfo,
   ZApiKeyInfoUpdate,
-} from "../controllers/authController";
+} from "../controllers/apiKeysController";
 import { makeRouter } from "../koaWrapper";
 import { ApiError } from "../errors";
 import { randomUUID } from "node:crypto";

@@ -1,14 +1,8 @@
 import { z } from "zod";
 import { getDb } from "../database";
-import { Auth } from "./authController";
+import { Auth, AuthKind, authKinds } from "../auth";
 import { handleControllerError } from "../errors";
-import {
-  AuthKind,
-  authKinds,
-  randomIdentifier,
-  ZIdentifier,
-  ZSaneString,
-} from "../identifiers";
+import { randomIdentifier, ZIdentifier, ZSaneString } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { decryptInPlace, encryptInPlace } from "../secrets";

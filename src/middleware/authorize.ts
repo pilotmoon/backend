@@ -1,15 +1,10 @@
 import { ApiError } from "../errors";
 import { Context, Next } from "koa";
 import { log } from "../logger";
-import { AuthKind, secretKeyRegex } from "../identifiers";
+import { Auth, AuthKind, ZAuthInfo } from "../auth";
+import { secretKeyRegex } from "../identifiers";
 import { verifyPassword } from "../scrypt";
-
-import {
-  Auth,
-  readApiKey,
-  specialContext,
-  ZAuthInfo,
-} from "../controllers/authController";
+import { readApiKey, specialContext } from "../controllers/apiKeysController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
 import { decipherToken } from "../token";

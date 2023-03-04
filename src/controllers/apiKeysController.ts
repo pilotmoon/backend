@@ -1,27 +1,21 @@
-import {
-  collectionNames,
-  deterministic,
-  randomKey,
-  ZSaneString,
-} from "../identifiers";
+import { deterministic, randomKey, ZSaneString } from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
-import { ApiError, handleControllerError } from "../errors";
+import { handleControllerError } from "../errors";
 import { log } from "../logger";
-import { AuthKind, authKinds } from "../identifiers";
+import {
+  Auth,
+  AuthKind,
+  authKinds,
+  ZAuthInfo,
+  ZSettableAuthContext,
+} from "../auth";
 import { hashPassword } from "../scrypt";
 import { TestKey, testKeys } from "../../test/api/setup";
 import { PaginateState } from "../middleware/processPagination";
 
 /*** Schemas ***/
-
-// schema for the part of the auth context that can be set by the client
-export const ZSettableAuthContext = z.object({
-  scopes: z.array(z.string()),
-  expires: z.date().optional(),
-});
-type SettableAuthContext = z.infer<typeof ZSettableAuthContext>;
 
 // Schema for the parts of the info that must be provided at creation time
 export const ZApiKeyInfo = ZSettableAuthContext.extend({
@@ -32,15 +26,6 @@ type ApiKeyInfo = z.infer<typeof ZApiKeyInfo>;
 // Schema for the parts of the info that can be updated later
 export const ZApiKeyInfoUpdate = ZApiKeyInfo.partial();
 type ApiKeyInfoUpdate = z.infer<typeof ZApiKeyInfoUpdate>;
-
-// Schema for the pertinent auth info of a key, including the key kind (test or live)
-// which is derived from the auth context used to create the key.
-// It is not possible to create a test key with a live auth context,
-// or vice versa.
-export const ZAuthInfo = ZSettableAuthContext.extend({
-  kind: z.enum(authKinds),
-});
-type AuthInfo = z.infer<typeof ZAuthInfo>;
 
 // Schema for the full API key record to be stored in the database
 // This includes the secret key itself, which is stored hashed.
@@ -55,54 +40,6 @@ export const ZApiKeySchema = ZApiKeyInfo.merge(ZAuthInfo).merge(z.object({
   created: z.date(),
 }));
 export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
-
-// auth class extends AuthContext by adding functions to validate access
-export class Auth implements AuthInfo {
-  scopes: string[];
-  kind: AuthKind;
-  expires?: Date;
-
-  constructor(public readonly authContext: AuthInfo) {
-    this.scopes = authContext.scopes;
-    this.kind = authContext.kind;
-    this.expires = authContext.expires;
-    this.assertValid();
-  }
-
-  assertValid() {
-    if (!authKinds.includes(this.kind)) {
-      throw new ApiError(500, "Invalid key kind");
-    }
-    if (this.expires && this.expires < new Date()) {
-      throw new ApiError(401, "Expired token or key");
-    }
-    if (!this.scopes.length) {
-      throw new ApiError(403, "Insufficient scope");
-    }
-  }
-
-  // check whether the context is authorized to perform the given action with the given resource.
-  assertAccess(
-    collectionName: typeof collectionNames[number],
-    resource: string | undefined,
-    action: "create" | "read" | "update" | "delete",
-  ) {
-    const acceptedScopes = [
-      `${collectionName}:${action}`,
-      `${collectionName}:*`,
-      `*`,
-    ];
-    if (resource) {
-      acceptedScopes.push(
-        `${collectionName}/${resource}:${action}`,
-        `${collectionName}/${resource}:*`,
-      );
-    }
-    if (!this.scopes.some((scope) => acceptedScopes.includes(scope))) {
-      throw new ApiError(403, "Insufficient scope");
-    }
-  }
-}
 
 /*** Database ***/
 

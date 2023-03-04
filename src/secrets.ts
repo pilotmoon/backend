@@ -13,7 +13,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { Binary } from "mongodb";
 import { config } from "./config";
-import { AuthKind } from "./identifiers";
+import { AuthKind } from "./auth";
 
 const marker = "#utf8#";
 

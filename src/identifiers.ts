@@ -3,12 +3,7 @@ import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config";
 import { logw } from "./logger";
 import { z } from "zod";
-
-// Auth "kinds" refer to the test and live variations of the api keys.
-// all operations initiated by the api key happen against the corresponding
-// database, and the api key is only valid for that database.
-export const authKinds = ["test", "live"] as const;
-export type AuthKind = typeof authKinds[number];
+import { AuthKind, authKinds } from "./auth";
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = ["ak", "reg", "lk"] as const;

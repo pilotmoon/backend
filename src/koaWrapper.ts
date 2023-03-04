@@ -3,7 +3,7 @@ Wrap Koa's types to inject our own state type.
 */
 import Koa = require("koa");
 import Router = require("@koa/router");
-import { Auth } from "./controllers/authController";
+import { Auth } from "./auth";
 import { PaginateState } from "./middleware/processPagination";
 
 interface State extends Koa.DefaultState {
