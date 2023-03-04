@@ -10,10 +10,16 @@
 // on the key kind.
 // The key is a 32 byte (256 bit) hex string.
 
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import {
+  BinaryLike,
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+} from "crypto";
 import { Binary } from "mongodb";
 import { config } from "./config";
 import { AuthKind } from "./auth";
+import { decode, encode } from "@shelacek/ubjson";
 
 const marker = "#utf8#";
 
@@ -36,7 +42,7 @@ export function encryptString(
   message: string,
   kind: AuthKind,
   associatedString?: string,
-): Buffer {
+): Uint8Array {
   const associatedData = associatedString
     ? Buffer.from(associatedString)
     : undefined;
@@ -44,23 +50,25 @@ export function encryptString(
 }
 
 export function decryptString(
-  encryptedMessage: Buffer,
+  encryptedMessage: Uint8Array,
   kind: AuthKind,
   associatedString?: string,
 ): string {
   const associatedData = associatedString
     ? Buffer.from(associatedString)
     : undefined;
-  return decrypt(encryptedMessage, kind, associatedData).toString("utf8");
+  return Buffer.from(decrypt(encryptedMessage, kind, associatedData)).toString(
+    "utf8",
+  );
 }
 
 // encrypt a string to a buffer using the specified key kind
 // optionally set additional authenticated data (AAD)
 export function encrypt(
-  message: Buffer,
+  message: Uint8Array,
   kind: AuthKind,
-  associatedData?: Buffer,
-): Buffer {
+  associatedData?: Uint8Array,
+): Uint8Array {
   const key = getSecretKey(kind);
   const iv = randomBytes(12);
 
@@ -78,10 +86,10 @@ export function encrypt(
 
 // decrypt a buffer to a string using the specified key kind
 export function decrypt(
-  encryptedMessage: Buffer,
+  encryptedMessage: Uint8Array,
   kind: AuthKind,
-  associatedData?: Buffer,
-): Buffer {
+  associatedData?: Uint8Array,
+): Uint8Array {
   const key = getSecretKey(kind);
   // encryptedMessage consis of:
   // - 12 byte initialization vector
@@ -142,10 +150,7 @@ export function encryptInPlace(
   for (const [key, value] of Object.entries(record)) {
     if (keys && !keys.includes(key)) continue;
     if (!shouldEncrypt(value)) continue;
-    const string = JSON.stringify(value);
-    if (string) {
-      record[key] = new Binary(encryptString(string, kind), 0x81);
-    }
+    record[key] = new Binary(encrypt(Buffer.from(encode(value)), kind), 0x81);
   }
 }
 
@@ -160,8 +165,8 @@ export function decryptInPlace(
     if (
       value instanceof Binary && value.sub_type === 0x81
     ) {
-      record[key] = JSON.parse(
-        decryptString(Buffer.from((record[key] as Binary).buffer), kind),
+      record[key] = decode(
+        decrypt((record[key] as Binary).buffer, kind),
       );
     }
   }
