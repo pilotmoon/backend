@@ -13,6 +13,7 @@ import { formatBody } from "./middleware/formatBody";
 import { checkAccess } from "./middleware/checkAccess";
 import { measureResponseTime } from "./middleware/measureResponseTime";
 import { enforceJson } from "./middleware/enforceJson";
+import { logAccess } from "./middleware/logAccess";
 
 // set up main router
 const mainRouter = makeRouter();
@@ -58,6 +59,7 @@ const parseJsonBody = bodyParser({
 
 // add all middleware
 app.use(measureResponseTime);
+app.use(logAccess);
 app.use(handleError);
 app.use(formatBody);
 app.use(checkAccess);
@@ -106,6 +108,7 @@ process.on("SIGINT", async () => {
   log("Calling startup routines".green);
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
+    require("./middleware/logAccess").init(),
     require("./controllers/authController").init(),
     require("./controllers/registriesController").init(),
     require("./controllers/licenseKeysController").init(),

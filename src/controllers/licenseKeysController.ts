@@ -3,9 +3,9 @@ import { getDb } from "../database";
 import { Auth } from "../controllers/authController";
 import { handleControllerError } from "../errors";
 import {
+  AuthKind,
+  authKinds,
   genericIdRegex,
-  KeyKind,
-  keyKinds,
   randomIdentifier,
   ZSaneString,
 } from "../identifiers";
@@ -151,13 +151,13 @@ access the license key file content using an API call.
 
 const collectionName = "licenseKeys";
 // helper function to get the database collection for a given key kind
-function dbc(kind: KeyKind) {
+function dbc(kind: AuthKind) {
   return getDb(kind).collection<LicenseKeyRecord>(collectionName);
 }
 
 // called at server startup to create indexes
 export async function init() {
-  for (const kind of keyKinds) {
+  for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
   }

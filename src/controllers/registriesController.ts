@@ -3,9 +3,9 @@ import { getDb } from "../database";
 import { Auth } from "./authController";
 import { handleControllerError } from "../errors";
 import {
+  AuthKind,
+  authKinds,
   genericIdRegex,
-  KeyKind,
-  keyKinds,
   randomIdentifier,
   ZIdentifier,
   ZSaneString,
@@ -18,13 +18,13 @@ import { decryptInPlace, encryptInPlace } from "../secrets";
 
 const collectionName = "registries";
 // helper function to get the database collection for a given key kind
-function dbc(kind: KeyKind) {
+function dbc(kind: AuthKind) {
   return getDb(kind).collection<RegistryRecord>(collectionName);
 }
 
 // called at server startup to create indexes
 export async function init() {
-  for (const kind of keyKinds) {
+  for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ identifiers: 1 }, { unique: true });
     collection.createIndex({ created: 1 });

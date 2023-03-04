@@ -9,7 +9,7 @@ import { getDb } from "../database";
 import { Binary } from "mongodb";
 import { ApiError, handleControllerError } from "../errors";
 import { log } from "../logger";
-import { KeyKind, keyKinds } from "../identifiers";
+import { AuthKind, authKinds } from "../identifiers";
 import { hashPassword } from "../scrypt";
 import { TestKey, testKeys } from "../../test/api/setup";
 import { PaginateState } from "../middleware/processPagination";
@@ -33,7 +33,7 @@ type AuthContextInfoUpdate = z.infer<typeof ZAuthContextInfoUpdate>;
 // It is not possible to create a test key with a live auth context,
 // or vice versa.
 export const ZAuthContext = ZAuthContextInfo.extend({
-  kind: z.enum(keyKinds),
+  kind: z.enum(authKinds),
 });
 export type AuthContext = z.infer<typeof ZAuthContext>;
 
@@ -54,7 +54,7 @@ export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 // auth class extends AuthContext by adding functions to validate access
 export class Auth implements AuthContext {
   scopes: string[];
-  kind: KeyKind;
+  kind: AuthKind;
   expires?: Date;
   description: string;
 
@@ -67,7 +67,7 @@ export class Auth implements AuthContext {
   }
 
   assertValid() {
-    if (!keyKinds.includes(this.kind)) {
+    if (!authKinds.includes(this.kind)) {
       throw new ApiError(500, "Invalid key kind");
     }
     if (this.expires && this.expires < new Date()) {
@@ -106,12 +106,12 @@ export class Auth implements AuthContext {
 const collectionName = "apiKeys";
 
 // helper function to get the database collection for a given key kind
-export function dbc(kind: KeyKind) {
+export function dbc(kind: AuthKind) {
   return getDb(kind).collection<ApiKeySchema>(collectionName);
 }
 
 // helper to make a dummy context for inserting and reading keys
-export function specialContext(kind: KeyKind): Auth {
+export function specialContext(kind: AuthKind): Auth {
   return new Auth({
     kind: kind,
     scopes: ["apiKeys:create", "apiKeys:read"],
@@ -121,7 +121,7 @@ export function specialContext(kind: KeyKind): Auth {
 
 // called at startup to prepare the database
 export async function init() {
-  for (const kind of keyKinds) {
+  for (const kind of authKinds) {
     const collection = dbc(kind);
 
     // create indexes

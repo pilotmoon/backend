@@ -28,7 +28,7 @@
 // is left to the caller.
 
 import { decryptString, encryptString } from "./secrets";
-import { KeyKind } from "./identifiers";
+import { AuthKind } from "./identifiers";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
 
@@ -43,7 +43,7 @@ function characterForKeyKind(databaseKind: string): string {
   }
 }
 
-function keyKindForCharacter(character: string): KeyKind {
+function keyKindForCharacter(character: string): AuthKind {
   switch (character) {
     case "5":
       return "live";
@@ -68,7 +68,7 @@ type TokenData = z.infer<typeof ZTokenData>;
 // indicated by the URL path.
 export function generateEncryptedToken(
   { keyKind, scopes, expires: expiration, resource }: {
-    keyKind: KeyKind;
+    keyKind: AuthKind;
     scopes: string[];
     expires?: Date;
     resource?: string;
@@ -120,7 +120,7 @@ export function generateApiKeyToken(secretKey: string): string {
 //  expires - the expiration date (only present if the token type is "2" or "3")
 // If the token is invalid, throws an error. Should never print a token to the console or put it in an error message.
 export function decipherToken(token: string, resource: string): {
-  keyKind: KeyKind;
+  keyKind: AuthKind;
   secretKey?: string;
   scopes?: string[];
   expires?: Date;

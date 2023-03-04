@@ -1,12 +1,12 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
 import { config } from "./config";
 import { log } from "./logger";
-import { KeyKind } from "./identifiers";
+import { AuthKind } from "./identifiers";
 
 let client: MongoClient;
 
 // Get the database connection
-export function getDb(kind: KeyKind): Db {
+export function getDb(kind: AuthKind | "logs"): Db {
   if (!client) {
     throw new Error(
       "No database connection established. Please connect first.",
@@ -17,6 +17,8 @@ export function getDb(kind: KeyKind): Db {
       return client.db(config.DATABASE_NAME_TEST);
     case "live":
       return client.db(config.DATABASE_NAME_LIVE);
+    case "logs":
+      return client.db(config.DATABASE_NAME_LOGS);
     default:
       throw new Error("Unknown database kind: " + kind);
   }

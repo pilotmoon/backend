@@ -1,7 +1,7 @@
 import { ApiError } from "../errors";
 import { Context, Next } from "koa";
 import { log } from "../logger";
-import { KeyKind, secretKeyRegex } from "../identifiers";
+import { AuthKind, secretKeyRegex } from "../identifiers";
 import { verifyPassword } from "../scrypt";
 
 import {
@@ -17,7 +17,7 @@ import { decipherToken } from "../token";
 // container for a deconstructed secret key
 interface SecretKeyParts {
   key: string;
-  kind: KeyKind;
+  kind: AuthKind;
   id: string;
   cacheKey: string;
 }
@@ -30,7 +30,7 @@ function parseSecretKey(key: string): SecretKeyParts {
   if (!match) {
     throw new ApiError(401, "Invalid API key (bad format)");
   }
-  const kind = match[1] as KeyKind;
+  const kind = match[1] as AuthKind;
   const id = "ak_" + match[2];
 
   // generate sha256 hashed version of the key so we can store it

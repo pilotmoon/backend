@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper";
 import { randomUUID } from "node:crypto";
-import { KeyKind, makeIdentifierPattern } from "../identifiers";
+import { AuthKind, makeIdentifierPattern } from "../identifiers";
 import {
   createLicenseKey,
   readLicenseKey,
@@ -24,7 +24,7 @@ const cachedTokens = new TTLCache({
   max: 1000,
   ttl: 60 * 60 * 1000, // 1 hour
 });
-function generateToken(id: string, kind: KeyKind) {
+function generateToken(id: string, kind: AuthKind) {
   // generate a URL to download the license key file, with an access token
   // that doesn't expire. token is cached so that the same token is returned
   // on subsequent requests. this is mainly to help testing.

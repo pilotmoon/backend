@@ -8,6 +8,7 @@ interface Config {
   DATABASE_URL: string;
   DATABASE_NAME_TEST: string;
   DATABASE_NAME_LIVE: string;
+  DATABASE_NAME_LOGS: string;
   APP_SECRET_TEST: string;
   APP_SECRET_LIVE: string;
   COMMIT_HASH: string;
@@ -21,6 +22,7 @@ export const config = loadConfig([
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
+  { key: "DATABASE_NAME_LOGS" },
   { key: "APP_SECRET_TEST", secret: true },
   { key: "APP_SECRET_LIVE", secret: true, optional: true },
   { key: "BOOTSTRAP_SEED" },

@@ -4,11 +4,11 @@ import { config } from "./config";
 import { logw } from "./logger";
 import { z } from "zod";
 
-// Key "kinds" refer to the test and live variations of the api keys.
+// Auth "kinds" refer to the test and live variations of the api keys.
 // all operations initiated by the api key happen against the corresponding
 // database, and the api key is only valid for that database.
-export const keyKinds = ["test", "live"] as const;
-export type KeyKind = typeof keyKinds[number];
+export const authKinds = ["test", "live"] as const;
+export type AuthKind = typeof authKinds[number];
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = ["ak", "reg", "lk"] as const;
@@ -31,7 +31,7 @@ const secretKeyLength = 24;
 const idLength = 12;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const secretKeyRegex = new RegExp(
-  `^${secretKeyPrefix}_(${keyKinds.join("|")})_(${base62(idLength)})${
+  `^${secretKeyPrefix}_(${authKinds.join("|")})_(${base62(idLength)})${
     base62(secretKeyLength)
   }$`,
 );
@@ -52,7 +52,7 @@ export function randomIdentifier(prefix: string): string {
 
 // generate a key with the given kind, and its identifier
 export function randomKey(
-  kind: KeyKind,
+  kind: AuthKind,
   idPrefix: string,
 ) {
   const keyChars = randomString({

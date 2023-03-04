@@ -13,11 +13,11 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { Binary } from "mongodb";
 import { config } from "./config";
-import { KeyKind } from "./identifiers";
+import { AuthKind } from "./identifiers";
 
 const marker = "#utf8#";
 
-function getSecretKey(kind: KeyKind) {
+function getSecretKey(kind: AuthKind) {
   let hexKey;
   switch (kind) {
     case "live":
@@ -35,7 +35,7 @@ function getSecretKey(kind: KeyKind) {
 // optionally set additional authenticated data (AAD)
 export function encryptString(
   message: string,
-  kind: KeyKind,
+  kind: AuthKind,
   associatedString?: string,
 ): Buffer {
   const key = getSecretKey(kind);
@@ -57,7 +57,7 @@ export function encryptString(
 // decrypt a buffer to a string using the specified key kind
 export function decryptString(
   encryptedMessage: Buffer,
-  kind: KeyKind,
+  kind: AuthKind,
   associatedString?: string,
 ): string {
   const key = getSecretKey(kind);
@@ -113,7 +113,7 @@ function shouldEncrypt(value: unknown) {
 // (Subtypes 0x80 to 0xFF are user defined, ehttps://bsonspec.org/spec.html)
 export function encryptInPlace(
   record: Record<string, unknown> | undefined,
-  kind: KeyKind,
+  kind: AuthKind,
   keys?: readonly string[],
 ) {
   if (!record) return;
@@ -135,7 +135,7 @@ export function encryptInPlace(
 // decrypt all binary values in the record
 export function decryptInPlace(
   record: Record<string, unknown> | undefined,
-  kind: KeyKind,
+  kind: AuthKind,
 ) {
   if (!record) return;
   for (const key of Object.keys(record)) {
