@@ -31,35 +31,57 @@ function getSecretKey(kind: AuthKind) {
   return Buffer.from(hexKey, "hex");
 }
 
-// encrypt a string to a buffer using the specified key kind
-// optionally set additional authenticated data (AAD)
+// string wrappers for encrypt and decrypt
 export function encryptString(
   message: string,
   kind: AuthKind,
   associatedString?: string,
 ): Buffer {
+  const associatedData = associatedString
+    ? Buffer.from(associatedString)
+    : undefined;
+  return encrypt(Buffer.from(message), kind, associatedData);
+}
+
+export function decryptString(
+  encryptedMessage: Buffer,
+  kind: AuthKind,
+  associatedString?: string,
+): string {
+  const associatedData = associatedString
+    ? Buffer.from(associatedString)
+    : undefined;
+  return decrypt(encryptedMessage, kind, associatedData).toString("utf8");
+}
+
+// encrypt a string to a buffer using the specified key kind
+// optionally set additional authenticated data (AAD)
+export function encrypt(
+  message: Buffer,
+  kind: AuthKind,
+  associatedData?: Buffer,
+): Buffer {
   const key = getSecretKey(kind);
   const iv = randomBytes(12);
 
   const cipher = createCipheriv("aes-256-gcm", key, iv);
-  if (associatedString) {
-    cipher.setAAD(Buffer.from(associatedString));
+  if (associatedData) {
+    cipher.setAAD(associatedData);
   }
   return Buffer.concat([
     iv,
-    cipher.update(marker, "utf8"),
-    cipher.update(message, "utf8"),
+    cipher.update(message),
     cipher.final(),
     cipher.getAuthTag(),
   ]);
 }
 
 // decrypt a buffer to a string using the specified key kind
-export function decryptString(
+export function decrypt(
   encryptedMessage: Buffer,
   kind: AuthKind,
-  associatedString?: string,
-): string {
+  associatedData?: Buffer,
+): Buffer {
   const key = getSecretKey(kind);
   // encryptedMessage consis of:
   // - 12 byte initialization vector
@@ -71,18 +93,13 @@ export function decryptString(
 
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
-  if (associatedString) {
-    decipher.setAAD(Buffer.from(associatedString));
+  if (associatedData) {
+    decipher.setAAD(associatedData);
   }
-  const plainText = Buffer.concat([
+  return Buffer.concat([
     decipher.update(encryptedMessageWithoutIv),
     decipher.final(),
-  ]).toString("utf8");
-
-  if (!plainText.startsWith(marker)) {
-    throw new Error("Unable to decrypt string");
-  }
-  return plainText.slice(marker.length);
+  ]);
 }
 
 // function to check if the value is a plain object
