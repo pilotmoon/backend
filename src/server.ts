@@ -15,12 +15,22 @@ import { measureResponseTime } from "./middleware/measureResponseTime";
 import { enforceJson } from "./middleware/enforceJson";
 import { logAccess } from "./middleware/logAccess";
 
+import { init as initRegistriesController } from "./controllers/registriesController";
+import { init as initLicenseKeysController } from "./controllers/licenseKeysController";
+import { init as initApiKeysController } from "./controllers/apiKeysController";
+import { init as initLogAccess } from "./middleware/logAccess";
+
+import { router as healthRouter } from "./routers/healthRouter";
+import { router as apiKeysRouter } from "./routers/apiKeysRouter";
+import { router as registriesRouter } from "./routers/registriesRouter";
+import { router as licenseKeysRouter } from "./routers/licenseKeysRouter";
+
 // set up main router
 const mainRouter = makeRouter();
-mainRouter.use(require("./routers/healthRouter").router.routes());
-mainRouter.use(require("./routers/apiKeysRouter").router.routes());
-mainRouter.use(require("./routers/registriesRouter").router.routes());
-mainRouter.use(require("./routers/licenseKeysRouter").router.routes());
+mainRouter.use(healthRouter.routes());
+mainRouter.use(apiKeysRouter.routes());
+mainRouter.use(registriesRouter.routes());
+mainRouter.use(licenseKeysRouter.routes());
 
 // the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();
@@ -108,10 +118,10 @@ process.on("SIGINT", async () => {
   log("Calling startup routines".green);
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
-    require("./middleware/logAccess").init(),
-    require("./controllers/authController").init(),
-    require("./controllers/registriesController").init(),
-    require("./controllers/licenseKeysController").init(),
+    initLogAccess(),
+    initApiKeysController(),
+    initRegistriesController(),
+    initLicenseKeysController(),
   ]);
   log("Startup complete".green);
   startServer();
