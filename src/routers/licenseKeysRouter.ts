@@ -4,6 +4,7 @@ import { AuthKind } from "../auth";
 import { makeIdentifierPattern } from "../identifiers";
 import {
   createLicenseKey,
+  generateLicenseFile,
   readLicenseKey,
   ZLicenseKeyInfo,
 } from "../controllers/licenseKeysController";
@@ -72,5 +73,20 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 
 // Get a license key file by id
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
-  // todo
+  const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
+  if (document) {
+    const licenseFile = await generateLicenseFile(document, ctx.state.auth);
+    // if client accepts octet-stream, return the file as-is
+    if (ctx.accepts("application/octet-stream")) {
+      ctx.body = licenseFile.data;
+      ctx.set("Content-Type", "application/octet-stream");
+      ctx.set(
+        "Content-Disposition",
+        `attachment; filename="${licenseFile.filename}"`,
+      );
+    } else {
+      // otherwise, return the license file directly
+      ctx.body = licenseFile;
+    }
+  }
 });

@@ -3,13 +3,17 @@ import { getDb } from "../database";
 import { Auth } from "../auth";
 import { handleControllerError } from "../errors";
 import { genericIdRegex, randomIdentifier, ZSaneString } from "../identifiers";
-import { PaginateState } from "../middleware/processPagination";
-import { ZPortableKeyPair } from "../keyPair";
-import { AquaticPrime } from "@pilotmoon/aquatic-prime";
+import { PortableKeyPair, ZPortableKeyPair } from "../keyPair";
+import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { sha256Hex } from "../sha256";
 import { decryptInPlace, encryptInPlace } from "../secrets";
 import { canonicalizeEmail } from "../canonicalizeEmail";
 import { AuthKind, authKinds } from "../auth";
+import {
+  getRegistryObject,
+  readRegistry,
+  ZRecord,
+} from "./registriesController";
 /*
 
 # License Keys
@@ -25,6 +29,8 @@ which corresponds to a license key record in the database.
 <dict>
     <key>Date</key>
     <string>2021-10-02</string>
+    <key>Expiry Date</key>
+    <string>2024-10-02</string>
     <key>Email</key>
     <string>kuntau17@gmail.com</string>
     <key>Name</key>
@@ -56,7 +62,7 @@ The Order field is a combination of the order number and the origin, at the end
 of the string and enclosed in parentheses. If there is no origin,
 the Order field is just the order number.
 
-The date is a string in one of two formats:
+The Date and Expiry Date fields are strings in one of two formats:
 - YYYY-MM-DD (preferred)
 - 1 or 2 digit date, 3 letter month, and full year e.g. "2 Oct 2021"
 Licenses should be generated with the preferred format, but the other format
@@ -134,7 +140,8 @@ returns the license key file content directly, with the appropriate
 Content-Type header and filename indicated in the Content-Disposition
 header. This allows the browser to download the file directly.
 
-Otherwise, the endpoint returns JSON with two fields:
+Otherwise, the endpoint returns JSON with three fields:
+- object: "licenseKeyFile"
 - filename: the filename of the license key file
 - data: the license key file content, as a Base64-encoded string
 This is useful for testing, and for external servers that want to
@@ -170,6 +177,8 @@ export const ZLicenseKeyInfo = z.object({
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
   date: z.coerce.date().min(new Date("2010-01-01")).optional(),
+  // expiry date of license key (optional)
+  expiryDate: z.coerce.date().min(new Date("2010-01-01")).optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
   product: z.string().regex(genericIdRegex).max(100),
   // number of users/seats covered by the license key
@@ -212,6 +221,17 @@ export const ZLicenseKey = ZLicenseKeyRecord.extend({
   filename: z.string(),
 });
 export type LicenseKey = z.infer<typeof ZLicenseKey>;
+
+// schema for the wrapper for the license key file
+export const ZLicenseKeyFile = z.object({
+  // literal string "licenseKeyFile"
+  object: z.literal("licenseKeyFile"),
+  // license key file content, as a Base64-encoded string
+  data: z.string(),
+  // license key filename, e.g. "John_Doe.popcliplicense"
+  filename: z.string(),
+});
+export type LicenseKeyFile = z.infer<typeof ZLicenseKeyFile>;
 
 /*** C.R.U.D. Operations ***/
 
@@ -260,4 +280,108 @@ export async function readLicenseKey(
     handleControllerError(error);
     throw (error);
   }
+}
+
+// how the fields should be set out in a standard license key file
+// (note - alphabertical order, to match License Utility)
+const ZLicenseFileFields = z.object({
+  Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  Email: z.string().trim().email().max(100).optional(),
+  "Expiry Date": z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  Name: z.string(),
+  Order: z.string().optional(),
+  Product: z.string(),
+  Quantity: z.string().optional(),
+});
+type LicenseFileFields = z.infer<typeof ZLicenseFileFields>;
+
+// configuration for generating license key files
+const ZLicenceKeysConfig = z.object({
+  // name of the product, e.g. "PopClip"
+  productName: ZSaneString,
+  // file extension for the license key file, e.g. "popcliplicense"
+  licenseFileExtension: ZSaneString,
+});
+type LicenseKeysConfig = z.infer<typeof ZLicenceKeysConfig>;
+
+// generate license file content and file name for a license key
+export async function generateLicenseFile(
+  document: LicenseKeyRecord,
+  auth: Auth,
+): Promise<LicenseKeyFile> {
+  // first look up the key pair for the product.
+  // it will be stored in a registry with the product id
+  // as its identifier, and the object name will be aquaticPrimeKeyPair.
+  const keyPair = await getAquaticPrimeKeyPair(document.product, auth);
+  const config = await getLicenseKeysConfig(document.product, auth);
+
+  const aqp = new AquaticPrime(keyPair);
+  const details: LicenseFileFields = {
+    Name: document.name,
+    Product: document.product,
+  };
+  if (document.email) {
+    details.Email = document.email;
+  }
+  if (document.date) {
+    details.Date = document.date.toISOString().slice(0, 10);
+  }
+  if (document.expiryDate) {
+    details["Expiry Date"] = document.expiryDate.toISOString().slice(0, 10);
+  }
+  if (document.quantity && document.quantity > 1) {
+    details.Quantity = document.quantity.toString();
+  }
+  if (document.order) {
+    if (document.origin) {
+      details.Order = `${document.order} (${document.origin})`;
+    } else {
+      details.Order = document.order;
+    }
+  }
+  if (document.description) {
+    details.Product = `${document.product}/${document.description}`;
+  }
+
+  // generate the license file content
+  const licensePlist = aqp.generateLicense(ZLicenseFileFields.parse(details));
+
+  // generate the license file name
+  const filename = sanitizedName(document.name) + "." +
+    config.licenseFileExtension;
+
+  return {
+    object: "licenseKeyFile",
+    data: Buffer.from(licensePlist).toString("base64"),
+    filename,
+  };
+}
+
+function sanitizedName(name: string) {
+  let result = name.replace(/[^\w]/g, "_");
+  // then replace multiple underscores with a single underscore
+  result = result.replace(/_+/g, "_");
+  // then trim leading and trailing underscores
+  result = result.replace(/^_+|_+$/g, "");
+  return result;
+}
+
+async function getAquaticPrimeKeyPair(
+  productId: string,
+  auth: Auth,
+): Promise<PortableKeyPair> {
+  const keyPair = await getRegistryObject(
+    productId,
+    "aquaticPrimeKeyPair",
+    auth,
+  );
+  return ZPortableKeyPair.parse(keyPair);
+}
+
+async function getLicenseKeysConfig(
+  productId: string,
+  auth: Auth,
+): Promise<LicenseKeysConfig> {
+  const config = await getRegistryObject(productId, "config", auth);
+  return ZLicenceKeysConfig.parse(ZRecord.parse(config).record);
 }

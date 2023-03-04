@@ -1,10 +1,10 @@
 import test from "ava";
 import { keys, rolo, testKeys } from "./setup";
 import { randomString } from "@pilotmoon/chewit";
-import { PortableKeyPair } from "../../src/keyPair";
 import { generateApiKeyToken, generateEncryptedToken } from "../../src/token";
+import { testAquaticPrimeKeyPair } from "./testLicenseKeys";
 
-function bundleId(id: string) {
+export function uniqueId(id: string) {
   return id + "-" + uniqueSuffix;
 }
 let uniqueSuffix: string;
@@ -15,28 +15,19 @@ let barRegistryId: string;
 let bazRegistry: any;
 let bazRegistryId: string;
 
-const testAquaticPrimeKeyPair: PortableKeyPair = {
-  publicKey:
-    "BD199F701AB2982D6A38EC07B1AC95B6B5E10AD1692A655496AC8C70DCE086B0909ACA1A8462DBC8E906BD883770EC4D262FBC0FA6C369F39DBC167718F73EE0969CC6EEE7517F1DD5BCC80AB0030ADC0D3A82F8F3B803767EDEF87B616B6D94854DAA5A7D59A73B1F01EC0D15D50BD6D8D5A4A596EE63A88ED1F07450B22C89",
-  privateKey:
-    "7E1114F56721BAC8F17B4805211DB9247940B1E0F0C6EE386473084B3DEB0475B5BC86BC5841E7DB46047E5ACFA09D88C41FD2B519D79BF7BE7D644F65FA29E9E9AFDC9AF918D1870264F8CCDDD1BEF46359582C3A18BC5E138121D6C9FF60AFBCA679F165B826D27A778348A11CBDF66F91651F91FE52B0EC7BA9B590266E63",
-  keyFormat: "hex",
-  object: "keyPair",
-};
-
 test.before(() => {
   uniqueSuffix = randomString({ length: 8 });
   fooRegistry = {
     description: "foo",
-    identifiers: [bundleId("com.example.foo")],
+    identifiers: [uniqueId("com.example.foo")],
   };
   barRegistry = {
     description: "bar",
-    identifiers: [bundleId("com.example.bar")],
+    identifiers: [uniqueId("com.example.bar")],
   };
   bazRegistry = {
     description: "baz",
-    identifiers: [bundleId("com.example.baz")],
+    identifiers: [uniqueId("com.example.baz")],
   };
 });
 

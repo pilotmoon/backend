@@ -12,7 +12,7 @@ import { decryptInPlace, encryptInPlace } from "../secrets";
 const collectionName = "registries";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
-  return getDb(kind).collection<RegistryRecord>(collectionName);
+  return getDb(kind).collection<RegistrySchema>(collectionName);
 }
 
 // called at server startup to create indexes
@@ -54,6 +54,7 @@ export const ZObject = z.discriminatedUnion("object", [
   ZRecord,
   ZPortableKeyPair,
 ]);
+export type RegistryObject = z.infer<typeof ZObject>;
 
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
@@ -80,12 +81,12 @@ export const ZRegistryInfoUpdate = ZRegistryInfo.partial();
 export type RegistryInfoUpdate = z.infer<typeof ZRegistryInfoUpdate>;
 
 // schema for the full registry record stored in database
-export const ZRegistryRecord = ZRegistryInfo.extend({
+export const ZRegistrySchema = ZRegistryInfo.extend({
   _id: z.string(),
   object: z.literal("registry"),
   created: z.date(),
 });
-export type RegistryRecord = z.infer<typeof ZRegistryRecord>;
+export type RegistrySchema = z.infer<typeof ZRegistrySchema>;
 
 /*** C.R.U.D. Operations ***/
 
@@ -93,9 +94,9 @@ export type RegistryRecord = z.infer<typeof ZRegistryRecord>;
 export async function createRegistry(
   info: RegistryInfo,
   auth: Auth,
-): Promise<RegistryRecord> {
+): Promise<RegistrySchema> {
   auth.assertAccess(collectionName, undefined, "create");
-  const document: RegistryRecord = {
+  const document: RegistrySchema = {
     _id: randomIdentifier("reg"),
     object: "registry" as const,
     created: new Date(),
@@ -117,7 +118,7 @@ export async function createRegistry(
 export async function listRegistries(
   { limit, offset, order, orderBy }: PaginateState,
   auth: Auth,
-): Promise<RegistryRecord[]> {
+): Promise<RegistrySchema[]> {
   auth.assertAccess(collectionName, undefined, "read");
   const cursor = dbc(auth.kind).find()
     .sort({ [orderBy]: order })
@@ -128,7 +129,7 @@ export async function listRegistries(
   try {
     return documents.map((document) => {
       decryptInPlace(document.objects, auth.kind);
-      return ZRegistryRecord.parse(document);
+      return ZRegistrySchema.parse(document);
     });
   } catch (error) {
     handleControllerError(error);
@@ -141,7 +142,7 @@ export async function listRegistries(
 export async function readRegistry(
   id: string,
   auth: Auth,
-): Promise<RegistryRecord | null> {
+): Promise<RegistrySchema | null> {
   auth.assertAccess(collectionName, id, "read");
   const document = await dbc(auth.kind).findOne(
     { $or: [{ _id: id }, { identifiers: id }] },
@@ -150,7 +151,7 @@ export async function readRegistry(
   if (!document) return null;
   try {
     decryptInPlace(document.objects, auth.kind);
-    return ZRegistryRecord.parse(document);
+    return ZRegistrySchema.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw (error);
@@ -190,4 +191,16 @@ export async function deleteRegistry(
     { $or: [{ _id: id }, { identifiers: id }] },
   );
   return result.deletedCount === 1;
+}
+
+export async function getRegistryObject(
+  productId: string,
+  objectName: string,
+  auth: Auth,
+): Promise<RegistryObject> {
+  const registry = await readRegistry(productId, auth);
+  if (!registry) throw new Error(`No registry found for product ${productId}`);
+  const object = registry.objects?.[objectName];
+  if (!object) throw new Error(`No object found for product ${productId}`);
+  return object;
 }
