@@ -57,9 +57,9 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
 }
 
 // auth cache
-const minute = 1000 * 60;
-const ttl = minute * 10;
-const revalidateTime = minute * 5;
+const minutes = (n: number) => 1000 * 60 * n;
+const ttl = minutes(10);
+const revalidateTime = minutes(5);
 const authCache = new TTLCache<string, Auth>({ max: 100000, ttl });
 
 // authorization middleware.
