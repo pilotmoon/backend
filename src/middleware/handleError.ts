@@ -78,7 +78,7 @@ function formatResponse(info: ErrorInfo) {
 export async function handleError(ctx: Context, next: Next) {
   let info;
   try {
-    log("\n" + `${ctx.method} ${ctx.url}`.bgBlue);
+    log("\n" + `${ctx.method} ${ctx.path}`.bgBlue);
     await next();
   } catch (error) {
     info = getErrorInfo(error);
