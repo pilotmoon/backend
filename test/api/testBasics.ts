@@ -60,7 +60,6 @@ test("token", async (t) => {
     },
     headers: { "Authorization": null },
   });
-  t.log(res.data);
   t.is(res.status, 200);
 });
 
@@ -76,7 +75,6 @@ test("token with partial wildcard scope", async (t) => {
     },
     headers: { "Authorization": null },
   });
-  t.log(res.data);
   t.is(res.status, 200);
 });
 
@@ -92,7 +90,6 @@ test("token with wildcard scope", async (t) => {
     },
     headers: { "Authorization": null },
   });
-  t.log(res.data);
   t.is(res.status, 200);
 });
 
@@ -107,7 +104,6 @@ test("no expiry token", async (t) => {
     },
     headers: { "Authorization": null },
   });
-  t.log(res.data);
   t.is(res.status, 200);
 });
 
@@ -138,6 +134,7 @@ test("token and auth header", async (t) => {
       }),
     },
   });
+  t.log(res.data);
   t.is(res.status, 401);
 });
 
@@ -150,11 +147,9 @@ test("two tokens", async (t) => {
     scopes: ["*"],
   });
   // access with two tokens
-  const res = await rolo().get("health", {
-    params: {
-      token: [token, token],
-    },
+  const res = await rolo().get(`health?token=${token}&token=${token}`, {
     headers: { "Authorization": null },
   });
+  t.log(res.data);
   t.is(res.status, 401);
 });
