@@ -16,48 +16,53 @@ import { PaginateState } from "../middleware/processPagination";
 
 /*** Schemas ***/
 
-// Schema for the parts of the info that must be provided at creation time
-export const ZAuthContextInfo = z.object({
+// schema for the part of the auth context that can be set by the client
+export const ZSettableAuthContext = z.object({
   scopes: z.array(z.string()),
   expires: z.date().optional(),
+});
+type SettableAuthContext = z.infer<typeof ZSettableAuthContext>;
+
+// Schema for the parts of the info that must be provided at creation time
+export const ZApiKeyInfo = ZSettableAuthContext.extend({
   description: ZSaneString.optional(),
 });
-type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
+type ApiKeyInfo = z.infer<typeof ZApiKeyInfo>;
 
 // Schema for the parts of the info that can be updated later
-export const ZAuthContextInfoUpdate = ZAuthContextInfo.partial();
-type AuthContextInfoUpdate = z.infer<typeof ZAuthContextInfoUpdate>;
+export const ZApiKeyInfoUpdate = ZApiKeyInfo.partial();
+type ApiKeyInfoUpdate = z.infer<typeof ZApiKeyInfoUpdate>;
 
-// Schema for the full info of a key, including the key kind (test or live)
+// Schema for the pertinent auth info of a key, including the key kind (test or live)
 // which is derived from the auth context used to create the key.
 // It is not possible to create a test key with a live auth context,
 // or vice versa.
-export const ZAuthContext = ZAuthContextInfo.extend({
+export const ZAuthInfo = ZSettableAuthContext.extend({
   kind: z.enum(authKinds),
 });
-export type AuthContext = z.infer<typeof ZAuthContext>;
+type AuthInfo = z.infer<typeof ZAuthInfo>;
 
 // Schema for the full API key record to be stored in the database
 // This includes the secret key itself, which is stored hashed.
 // The secret key is only returned to the client once, when the api key is created.
 // The plain text key is never stored in the database. (It is removed from
 // the document before it is stored.)
-export const ZApiKeySchema = ZAuthContext.extend({
+export const ZApiKeySchema = ZApiKeyInfo.merge(ZAuthInfo).merge(z.object({
   _id: z.string(),
   object: z.literal("apiKey"),
   key: z.string().optional(),
   hashedKey: z.custom<Binary>((v) => v instanceof Binary),
   created: z.date(),
-});
+}));
 export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
 // auth class extends AuthContext by adding functions to validate access
-export class Auth implements AuthContext {
+export class Auth implements AuthInfo {
   scopes: string[];
   kind: AuthKind;
   expires?: Date;
 
-  constructor(public readonly authContext: AuthContext) {
+  constructor(public readonly authContext: AuthInfo) {
     this.scopes = authContext.scopes;
     this.kind = authContext.kind;
     this.expires = authContext.expires;
@@ -113,7 +118,6 @@ export function specialContext(kind: AuthKind): Auth {
   return new Auth({
     kind: kind,
     scopes: ["apiKeys:create", "apiKeys:read"],
-    description: "",
   });
 }
 
@@ -149,7 +153,7 @@ export async function init() {
     ) {
       keyDef.description = `[${name}] ` + keyDef.description;
       await createApiKey(
-        ZAuthContextInfo.parse(keyDef),
+        ZApiKeyInfo.parse(keyDef),
         specialContext("test"),
         { replace: true },
       );
@@ -166,7 +170,7 @@ export async function init() {
 // existing key with the same id. (This only happens when the key is created
 // with a the deterministic key generator, e.g. in tests.)
 export async function createApiKey(
-  params: AuthContextInfo,
+  params: ApiKeyInfo,
   auth: Auth,
   { replace = false }: { replace?: boolean } = {},
 ): Promise<ApiKeySchema> {
@@ -245,7 +249,7 @@ export async function listApiKeys(
 // are updated.
 export async function updateApiKey(
   id: string,
-  params: AuthContextInfoUpdate,
+  params: ApiKeyInfoUpdate,
   auth: Auth,
 ): Promise<boolean> {
   auth.assertAccess(collectionName, id, "update");

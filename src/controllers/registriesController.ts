@@ -5,7 +5,6 @@ import { handleControllerError } from "../errors";
 import {
   AuthKind,
   authKinds,
-  genericIdRegex,
   randomIdentifier,
   ZIdentifier,
   ZSaneString,

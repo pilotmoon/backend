@@ -8,7 +8,7 @@ import {
   Auth,
   readApiKey,
   specialContext,
-  ZAuthContext,
+  ZAuthInfo,
 } from "../controllers/authController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
@@ -58,7 +58,7 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
   }
 
   // parsing again returns a more specific type
-  return ZAuthContext.parse(document);
+  return ZAuthInfo.parse(document);
 }
 
 // auth cache
@@ -120,7 +120,6 @@ export async function authorize(ctx: Context, next: Next) {
           kind,
           scopes,
           expires,
-          description: "Token",
         });
       } else {
         throw new ApiError(401, "Invalid token (no key or scopes)");

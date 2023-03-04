@@ -17,7 +17,7 @@ import { getDb } from "../database";
 import { z } from "zod";
 import { AuthKind } from "../identifiers";
 import { union } from "lodash";
-import { ZAuthContext } from "../controllers/authController";
+import { ZAuthInfo } from "../controllers/authController";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),
@@ -28,7 +28,7 @@ const ZLogSchema = z.object({
   status: z.number(),
   duration: z.number(),
   apiKeyId: z.string().optional(),
-  auth: ZAuthContext.optional(),
+  auth: ZAuthInfo.optional(),
 });
 export type LogSchema = z.infer<typeof ZLogSchema>;
 
