@@ -18,6 +18,7 @@ export const objectNamesWithoutId = [
   "health",
   "keyPair",
   "record",
+  "productConfig",
   "licenseKeyFile",
 ] as const;
 

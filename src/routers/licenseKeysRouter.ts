@@ -5,13 +5,17 @@ import { makeIdentifierPattern } from "../identifiers";
 import {
   createLicenseKey,
   generateLicenseFile,
+  getProductConfig,
+  LicenseKeyRecord,
   readLicenseKey,
   ZLicenseKeyInfo,
 } from "../controllers/licenseKeysController";
 import { generateEncryptedToken } from "../token";
 import { log } from "../logger";
 import TTLCache = require("@isaacs/ttlcache");
-import { z } from "zod";
+import { omit } from "lodash";
+import { Context } from "koa";
+import { ApiError } from "../errors";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -45,16 +49,32 @@ function generateToken(id: string, kind: AuthKind) {
   return result;
 }
 
-// Create a new license key
-router.post("/", async (ctx) => {
-  const suppliedData = ZLicenseKeyInfo.strict().parse(ctx.request.body);
-  const document = await createLicenseKey(suppliedData, ctx.state.auth);
-  ctx.body = {
+// common routine to get full response body
+async function getCommonBody(document: LicenseKeyRecord, ctx: Context) {
+  const license = await generateLicenseFile(document, ctx.state.auth.kind);
+  return {
     ...document,
     downloadUrl: ctx.getLocation(matchFile.uuid, { id: document._id }, {
       token: generateToken(document._id, ctx.state.auth.kind),
     }, true),
+    file: omit(license, "plist"),
   };
+}
+
+// Create a new license key
+router.post("/", async (ctx) => {
+  const data = ZLicenseKeyInfo.strict().parse(ctx.request.body);
+
+  // check that the product id is valid
+  try {
+    const config = await getProductConfig(data.product, ctx.state.auth.kind);
+    log("Creating license key for " + config.productName);
+  } catch (err) {
+    throw new ApiError(400, `Invalid product '${data.product}'`);
+  }
+
+  const document = await createLicenseKey(data, ctx.state.auth);
+  ctx.body = await getCommonBody(document, ctx);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
@@ -63,47 +83,31 @@ router.post("/", async (ctx) => {
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = {
-      ...document,
-      downloadUrl: ctx.getLocation(matchFile.uuid, { id: document._id }, {
-        token: generateToken(document._id, ctx.state.auth.kind),
-      }, true),
-    };
+    ctx.body = await getCommonBody(document, ctx);
   }
 });
-
-// schema for the json wrapper for the license key file
-export const ZLicenseKeyFile = z.object({
-  // literal string "licenseKeyFile"
-  object: z.literal("licenseKeyFile"),
-  // license key file content, as a Base64-encoded string
-  data: z.string(),
-  // license key filename, e.g. "John_Doe.popcliplicense"
-  filename: z.string(),
-});
-export type LicenseKeyFile = z.infer<typeof ZLicenseKeyFile>;
 
 // Get a license key file by id
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
   if (document) {
-    const licenseFile = await generateLicenseFile(document, ctx.state.auth);
+    // generate license key file object
+    const license = await generateLicenseFile(document, ctx.state.auth.kind);
+
     // if client accepts octet-stream, return the file as-is
     if (ctx.accepts("application/octet-stream")) {
       // decode the base64-encoded file
-      ctx.body = licenseFile.plist;
+      ctx.body = license.plist;
       ctx.set("Content-Type", "application/octet-stream");
       ctx.set(
         "Content-Disposition",
-        `attachment; filename="${licenseFile.filename}"`,
+        `attachment; filename="${license.filename}"`,
       );
     } else {
-      // otherwise, return the license file object
-      ctx.body = ZLicenseKeyFile.parse({
-        object: "licenseKeyFile",
-        data: Buffer.from(licenseFile.plist).toString("base64"),
-        filename: licenseFile.filename,
-      });
+      throw new ApiError(
+        406,
+        "Client does not accept application/octet-stream",
+      );
     }
   }
 });

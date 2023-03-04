@@ -46,6 +46,33 @@ const testLicenseKey = `<?xml version="1.0" encoding="UTF-8"?>
 </dict>
 </plist>`;
 
+// test full license file generation
+test("create registry for example product", async (t) => {
+  // first find and delete the existing registry if it exists
+  const res0 = await rolo().get("registries/byIdentifier/com.example.product");
+  if (res0.status === 200) {
+    const res1 = await rolo().delete(`registries/${res0.data.id}`);
+    t.is(res1.status, 204);
+  }
+
+  // first we create a registry
+  const res = await rolo().post("registries", {
+    description: "example product registry",
+    identifiers: ["com.example.product"],
+    objects: {
+      aquaticPrimeKeyPair: testAquaticPrimeKeyPair,
+      config: {
+        object: "productConfig",
+        productName: "Example Product",
+        licenseFileExtension: "examplelicense",
+      },
+    },
+  });
+  t.log(res.status);
+  t.is(res.status, 201);
+  t.is(res.headers.location, `/registries/${res.data.id}`);
+});
+
 test("create license key, missing payload", async (t) => {
   const res = await rolo().post("licenseKeys", "");
   t.is(res.status, 400);
@@ -66,21 +93,29 @@ test("create license key, missing product", async (t) => {
   t.is(res.status, 400);
 });
 
+test("create license key, invalid product", async (t) => {
+  const res = await rolo().post("licenseKeys", {
+    product: "foo-invalid",
+    name: "name",
+  });
+  t.is(res.status, 400);
+});
+
 test("create license key, missing name", async (t) => {
   const res = await rolo().post("licenseKeys", {
-    product: "product",
+    product: "com.example.product",
   });
   t.is(res.status, 400);
 });
 
 test("create license key", async (t) => {
   const res = await rolo().post("licenseKeys", {
-    product: "product",
+    product: "com.example.product",
     name: "name",
   });
   t.is(res.status, 201);
   t.like(res.data, {
-    product: "product",
+    product: "com.example.product",
     name: "name",
   });
   t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
@@ -101,35 +136,6 @@ test("create license key, with email, date, order and quantity fields", async (t
   const res2 = await rolo().get(`licenseKeys/${res.data.id}`);
   t.is(res2.status, 200);
   t.like(res2.data, res.data);
-});
-
-// test full license file generation
-test("create registry for license keys", async (t) => {
-  // first find and delete the existing registry if it exists
-  const res0 = await rolo().get("registries/byIdentifier/com.example.product");
-  if (res0.status === 200) {
-    const res1 = await rolo().delete(`registries/${res0.data.id}`);
-    t.is(res1.status, 204);
-  }
-
-  // first we create a registry
-  const res = await rolo().post("registries", {
-    description: "example product registry",
-    identifiers: ["com.example.product"],
-    objects: {
-      aquaticPrimeKeyPair: testAquaticPrimeKeyPair,
-      config: {
-        object: "record",
-        record: {
-          productName: "Example Product",
-          licenseFileExtension: "examplelicense",
-        },
-      },
-    },
-  });
-  t.log(res.status);
-  t.is(res.status, 201);
-  t.is(res.headers.location, `/registries/${res.data.id}`);
 });
 
 test("create license key, download license file", async (t) => {
@@ -156,33 +162,6 @@ function trimLines(str: string) {
     .map((line) => line.trim())
     .join("\n");
 }
-
-// download the license file as json
-test("create license key, download license file as json", async (t) => {
-  // then we create a license key
-  const res2 = await rolo().post("licenseKeys", testLicenseData);
-  t.is(res2.status, 201);
-
-  // then we download the license file
-  const res3 = await rolo().get(`licenseKeys/${res2.data.id}/file`, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
-  t.is(res3.status, 200);
-  t.is(res3.headers["content-type"], "application/json; charset=utf-8");
-  t.like(res3.data, {
-    filename: testLicenseFileName,
-    object: "licenseKeyFile",
-  });
-  // compare trimmed license file contents
-  const licenseFile = Buffer.from(res3.data.data, "base64").toString("utf8");
-  t.is(
-    trimLines(licenseFile),
-    trimLines(testLicenseKey),
-    "license file contents",
-  );
-});
 
 // create a license key, download with the link in the response
 test("create license key, download license file with link", async (t) => {

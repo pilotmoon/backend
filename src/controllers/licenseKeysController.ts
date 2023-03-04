@@ -10,11 +10,10 @@ import { decryptInPlace, encryptInPlace } from "../secrets";
 import { canonicalizeEmail } from "../canonicalizeEmail";
 import { AuthKind, authKinds } from "../auth";
 import {
-  getRegistryObject,
-  getRegistryObjectInternal,
-  readRegistry,
+  getRegistryObjectInternal as getreg,
   ZRecord,
 } from "./registriesController";
+import { ProductConfig, ZProductConfig } from "../product";
 /*
 
 # License Keys
@@ -135,18 +134,10 @@ Deletes a license key.
 ### GET /licenseKeys/:id/file
 
 Returns a license key file in Apple Property List format (Plist).
-
 If the Accept header allows "application/octet-stream", the endpoint
-returns the license key file content directly, with the appropriate
+returns the license key file content, with the appropriate
 Content-Type header and filename indicated in the Content-Disposition
 header. This allows the browser to download the file directly.
-
-Otherwise, the endpoint returns JSON with three fields:
-- object: "licenseKeyFile"
-- filename: the filename of the license key file
-- data: the license key file content, as a Base64-encoded string
-This is useful for testing, and for external servers that want to
-access the license key file content using an API call.
 
 */
 
@@ -263,10 +254,10 @@ export async function readLicenseKey(
 }
 
 // how the fields should be set out in a standard license key file
-// (note - alphabertical order, to match License Utility)
+// (note - alphabetical order, to match License Utility)
 const ZLicenseFileFields = z.object({
   Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  Email: z.string().trim().email().max(100).optional(),
+  Email: z.string().optional(),
   "Expiry Date": z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   Name: z.string(),
   Order: z.string().optional(),
@@ -275,25 +266,29 @@ const ZLicenseFileFields = z.object({
 });
 type LicenseFileFields = z.infer<typeof ZLicenseFileFields>;
 
-// configuration for generating license key files
-const ZLicenceKeysConfig = z.object({
-  // name of the product, e.g. "PopClip"
-  productName: ZSaneString,
-  // file extension for the license key file, e.g. "popcliplicense"
-  licenseFileExtension: ZSaneString,
+// schema for the json wrapper for the license key file
+export const ZLicenseFileObject = z.object({
+  // literal string "licenseKeyFile"
+  object: z.literal("licenseKeyFile"),
+  // license file content as plist string
+  plist: z.string(),
+  // license key file content, as a Base64-encoded string
+  data: z.string(),
+  // license key filename, e.g. "John_Doe.popcliplicense"
+  filename: z.string(),
 });
-type LicenseKeysConfig = z.infer<typeof ZLicenceKeysConfig>;
+export type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
 // generate license file content and file name for a license key
 export async function generateLicenseFile(
   document: LicenseKeyRecord,
-  auth: Auth,
-): Promise<{ plist: string; filename: string }> {
+  authKind: AuthKind,
+): Promise<LicenseFileObject> {
   // first look up the key pair for the product.
   // it will be stored in a registry with the product id
   // as its identifier, and the object name will be aquaticPrimeKeyPair.
-  const keyPair = await getAquaticPrimeKeyPair(document.product, auth);
-  const config = await getLicenseKeysConfig(document.product, auth);
+  const keyPair = await getAquaticPrimeKeyPair(document.product, authKind);
+  const config = await getProductConfig(document.product, authKind);
 
   const aqp = new AquaticPrime(keyPair);
   const details: LicenseFileFields = {
@@ -324,18 +319,21 @@ export async function generateLicenseFile(
   }
 
   // generate the license file content
-  const licensePlist = aqp.generateLicense(ZLicenseFileFields.parse(details));
+  const plist = aqp.generateLicense(ZLicenseFileFields.parse(details));
 
   // generate the license file name
   const filename = sanitizedName(document.name) + "." +
     config.licenseFileExtension;
 
   return {
-    plist: licensePlist,
+    object: "licenseKeyFile",
+    plist,
+    data: Buffer.from(plist).toString("base64"),
     filename,
   };
 }
 
+// sanitize a name for use in a license file name
 function sanitizedName(name: string) {
   let result = name.replace(/[^\w]/g, "_");
   // then replace multiple underscores with a single underscore
@@ -345,26 +343,22 @@ function sanitizedName(name: string) {
   return result;
 }
 
+// get the aquatic prime key pair for a product
 async function getAquaticPrimeKeyPair(
-  productId: string,
-  auth: Auth,
+  product: string,
+  authKind: AuthKind,
 ): Promise<PortableKeyPair> {
-  const keyPair = await getRegistryObjectInternal(
-    productId,
-    "aquaticPrimeKeyPair",
-    auth.kind,
-  );
+  const keyPair = await getreg(product, "aquaticPrimeKeyPair", authKind);
+  if (!keyPair) throw new Error(`No key pair found for product ${product}`);
   return ZPortableKeyPair.parse(keyPair);
 }
 
-async function getLicenseKeysConfig(
-  productId: string,
-  auth: Auth,
-): Promise<LicenseKeysConfig> {
-  const config = await getRegistryObjectInternal(
-    productId,
-    "config",
-    auth.kind,
-  );
-  return ZLicenceKeysConfig.parse(ZRecord.parse(config).record);
+// get the product config for a product
+export async function getProductConfig(
+  product: string,
+  authKind: AuthKind,
+): Promise<ProductConfig> {
+  const config = await getreg(product, "config", authKind);
+  if (!config) throw new Error(`No config found for product ${product}`);
+  return ZProductConfig.parse(config);
 }

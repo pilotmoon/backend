@@ -6,6 +6,7 @@ import { randomIdentifier, ZIdentifier, ZSaneString } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
 import { ZPortableKeyPair } from "../keyPair";
 import { decryptInPlace, encryptInPlace } from "../secrets";
+import { ZProductConfig } from "../product";
 
 /*** Database ***/
 
@@ -52,6 +53,7 @@ export const ZRecord = z.object({
 // types that can be stored as an object in the registry
 export const ZObject = z.discriminatedUnion("object", [
   ZRecord,
+  ZProductConfig,
   ZPortableKeyPair,
 ]);
 export type RegistryObject = z.infer<typeof ZObject>;
