@@ -10,7 +10,7 @@
 //  '7' - test
 // The format of the base62-encoded data depends on the token type:
 //  API key - the data is the secret key with the sk_[test|live]_ prefix removed
-//  encrypted scopes - the data is an encrypted ubJSON object with the following properties:
+//  encrypted scopes - the data is an encrypted CBOR object with the following properties:
 //    s - the list of scopes as an array of strings
 //    e - the expiration date as a unix timestamp in milliseconds (optional)
 //  encrypted scopes with associated resource - the data is as above, but the encrypted data
@@ -31,7 +31,7 @@ import { decrypt, encrypt } from "./secrets";
 import { AuthKind } from "./auth";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
-import { decode as ubjDecode, encode as ubjEncode } from "@shelacek/ubjson";
+import { decodeFirstSync, encode } from "cbor";
 
 const encoder = new TextEncoder();
 const textEncode = encoder.encode.bind(encoder);
@@ -92,7 +92,7 @@ export function generateEncryptedToken(
   }
 
   const encryptedData = encrypt(
-    new Uint8Array(ubjEncode(tokenData)),
+    encode(tokenData),
     keyKind,
     textEncode(resource),
   );
@@ -146,12 +146,14 @@ export function decipherToken(token: string, resource: string): {
   }
 
   // convert base62 data to buffer
-  const encryptedData = Buffer.from(baseDecode(base62Data, alphabets.base62));
+  const encryptedData = Uint8Array.from(
+    baseDecode(base62Data, alphabets.base62),
+  );
 
   // encrypted scopes
   if (tokenType === "2") {
     const tokenData = ZTokenData.parse(
-      ubjDecode(decrypt(encryptedData, keyKind)),
+      decodeFirstSync(decrypt(encryptedData, keyKind)),
     );
     const scopes = tokenData.s;
     const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
@@ -161,7 +163,7 @@ export function decipherToken(token: string, resource: string): {
   // encrypted scopes with resource
   if (tokenType === "3") {
     const tokenData = ZTokenData.parse(
-      ubjDecode(decrypt(encryptedData, keyKind, textEncode(resource))),
+      decodeFirstSync(decrypt(encryptedData, keyKind, textEncode(resource))),
     );
     const scopes = tokenData.s.map((scope) => scope.replace("$", resource));
     const expiration = tokenData.e ? new Date(tokenData.e) : undefined;

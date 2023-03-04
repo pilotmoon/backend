@@ -1,11 +1,37 @@
 import {
+  decrypt,
   decryptInPlace,
-  decryptString,
+  encrypt,
   encryptInPlace,
-  encryptString,
 } from "../../src/secrets";
 import test from "ava";
 import { Binary } from "mongodb";
+import { AuthKind } from "../../src/auth";
+
+// string wrappers for encrypt and decrypt
+export function encryptString(
+  message: string,
+  kind: AuthKind,
+  associatedString?: string,
+): Uint8Array {
+  const associatedData = associatedString
+    ? Buffer.from(associatedString)
+    : undefined;
+  return encrypt(Buffer.from(message), kind, associatedData);
+}
+
+export function decryptString(
+  encryptedMessage: Uint8Array,
+  kind: AuthKind,
+  associatedString?: string,
+): string {
+  const associatedData = associatedString
+    ? Buffer.from(associatedString)
+    : undefined;
+  return Buffer.from(decrypt(encryptedMessage, kind, associatedData)).toString(
+    "utf8",
+  );
+}
 
 test("encrypt and decrypt", (t) => {
   const message = "hello world";

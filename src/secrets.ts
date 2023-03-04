@@ -10,18 +10,11 @@
 // on the key kind.
 // The key is a 32 byte (256 bit) hex string.
 
-import {
-  BinaryLike,
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-} from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { Binary } from "mongodb";
 import { config } from "./config";
 import { AuthKind } from "./auth";
-import { decode, encode } from "@shelacek/ubjson";
-
-const marker = "#utf8#";
+import { decodeFirstSync, encode } from "cbor";
 
 function getSecretKey(kind: AuthKind) {
   let hexKey;
@@ -35,31 +28,6 @@ function getSecretKey(kind: AuthKind) {
     throw new Error(`No secret key for kind '${kind}'`);
   }
   return Buffer.from(hexKey, "hex");
-}
-
-// string wrappers for encrypt and decrypt
-export function encryptString(
-  message: string,
-  kind: AuthKind,
-  associatedString?: string,
-): Uint8Array {
-  const associatedData = associatedString
-    ? Buffer.from(associatedString)
-    : undefined;
-  return encrypt(Buffer.from(message), kind, associatedData);
-}
-
-export function decryptString(
-  encryptedMessage: Uint8Array,
-  kind: AuthKind,
-  associatedString?: string,
-): string {
-  const associatedData = associatedString
-    ? Buffer.from(associatedString)
-    : undefined;
-  return Buffer.from(decrypt(encryptedMessage, kind, associatedData)).toString(
-    "utf8",
-  );
 }
 
 // encrypt a string to a buffer using the specified key kind
@@ -151,7 +119,7 @@ export function encryptInPlace(
     if (keys && !keys.includes(key)) continue;
     if (!shouldEncrypt(value)) continue;
     record[key] = new Binary(
-      encrypt(new Uint8Array(encode(value)), kind),
+      encrypt(encode(value), kind),
       0x81,
     );
   }
@@ -168,7 +136,7 @@ export function decryptInPlace(
     if (
       value instanceof Binary && value.sub_type === 0x81
     ) {
-      record[key] = decode(
+      record[key] = decodeFirstSync(
         decrypt((record[key] as Binary).buffer, kind),
       );
     }
