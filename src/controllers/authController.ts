@@ -20,7 +20,7 @@ import { PaginateState } from "../middleware/processPagination";
 export const ZAuthContextInfo = z.object({
   scopes: z.array(z.string()),
   expires: z.date().optional(),
-  description: ZSaneString,
+  description: ZSaneString.optional(),
 });
 type AuthContextInfo = z.infer<typeof ZAuthContextInfo>;
 
@@ -56,12 +56,10 @@ export class Auth implements AuthContext {
   scopes: string[];
   kind: AuthKind;
   expires?: Date;
-  description: string;
 
   constructor(public readonly authContext: AuthContext) {
     this.scopes = authContext.scopes;
     this.kind = authContext.kind;
-    this.description = authContext.description;
     this.expires = authContext.expires;
     this.assertValid();
   }

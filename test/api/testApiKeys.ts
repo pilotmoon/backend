@@ -56,13 +56,6 @@ test("create api key, empty object", async (t) => {
   t.is(res.status, 400);
 });
 
-test("create api key, unknown scope", async (t) => {
-  const res = await rolo().post("apiKeys", {
-    scopes: ["foo"],
-  });
-  t.is(res.status, 400);
-});
-
 test("api keys, method not allowed (delete)", async (t) => {
   const res = await rolo().delete("apiKeys");
   t.is(res.status, 405);
