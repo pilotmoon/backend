@@ -10,9 +10,9 @@
 //  '7' - test
 // The format of the base62-encoded data depends on the token type:
 //  API key - the data is the secret key with the sk_[test|live]_ prefix removed
-//  encrypted scopes - the data is an encrypted JSON object with the following properties:
-//    sco - the list of scopes as an array of strings
-//    exp - the expiration date as a unix timestamp in milliseconds (optional)
+//  encrypted scopes - the data is an encrypted ubJSON object with the following properties:
+//    s - the list of scopes as an array of strings
+//    e - the expiration date as a unix timestamp in milliseconds (optional)
 //  encrypted scopes with associated resource - the data is as above, but the encrypted data
 //    has additional authenticated data, which is the first two components the path, separated by a
 //    slash. This is used to ensure that the token is only valid for the resource indicated by the URL.
@@ -27,10 +27,14 @@
 // The access token is validated by decrypting the data. Verification of the scopes and expiration
 // is left to the caller.
 
-import { decryptString, encryptString } from "./secrets";
+import { decrypt, encrypt } from "./secrets";
 import { AuthKind } from "./auth";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
 import { z } from "zod";
+import { decode as ubjDecode, encode as ubjEncode } from "@shelacek/ubjson";
+
+const encoder = new TextEncoder();
+const textEncode = encoder.encode.bind(encoder);
 
 function characterForKeyKind(databaseKind: string): string {
   switch (databaseKind) {
@@ -55,8 +59,8 @@ function keyKindForCharacter(character: string): AuthKind {
 }
 
 const ZTokenData = z.object({
-  exp: z.number().optional(),
-  sco: z.array(z.string()),
+  e: z.number().optional(),
+  s: z.array(z.string()),
 });
 type TokenData = z.infer<typeof ZTokenData>;
 
@@ -82,15 +86,15 @@ export function generateEncryptedToken(
   }
 
   // create the token data
-  const tokenData: TokenData = { sco: scopes };
+  const tokenData: TokenData = { s: scopes };
   if (expiration) {
-    tokenData.exp = expiration.getTime();
+    tokenData.e = expiration.getTime();
   }
 
-  const encryptedData = encryptString(
-    JSON.stringify(tokenData),
+  const encryptedData = encrypt(
+    new Uint8Array(ubjEncode(tokenData)),
     keyKind,
-    resource,
+    textEncode(resource),
   );
   // convert the buffer to an array of numbers
   const encryptedDataArray = Array.from(encryptedData);
@@ -147,20 +151,20 @@ export function decipherToken(token: string, resource: string): {
   // encrypted scopes
   if (tokenType === "2") {
     const tokenData = ZTokenData.parse(
-      JSON.parse(decryptString(encryptedData, keyKind)),
+      ubjDecode(decrypt(encryptedData, keyKind)),
     );
-    const scopes = tokenData.sco;
-    const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
+    const scopes = tokenData.s;
+    const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
     return { keyKind, scopes, expires: expiration };
   }
 
   // encrypted scopes with resource
   if (tokenType === "3") {
     const tokenData = ZTokenData.parse(
-      JSON.parse(decryptString(encryptedData, keyKind, resource)),
+      ubjDecode(decrypt(encryptedData, keyKind, textEncode(resource))),
     );
-    const scopes = tokenData.sco.map((scope) => scope.replace("$", resource));
-    const expiration = tokenData.exp ? new Date(tokenData.exp) : undefined;
+    const scopes = tokenData.s.map((scope) => scope.replace("$", resource));
+    const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
     return { keyKind, scopes, expires: expiration };
   }
 

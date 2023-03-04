@@ -150,7 +150,10 @@ export function encryptInPlace(
   for (const [key, value] of Object.entries(record)) {
     if (keys && !keys.includes(key)) continue;
     if (!shouldEncrypt(value)) continue;
-    record[key] = new Binary(encrypt(Buffer.from(encode(value)), kind), 0x81);
+    record[key] = new Binary(
+      encrypt(new Uint8Array(encode(value)), kind),
+      0x81,
+    );
   }
 }
 
