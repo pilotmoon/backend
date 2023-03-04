@@ -8,6 +8,7 @@ import { readApiKey, specialContext } from "../controllers/apiKeysController";
 import TTLCache = require("@isaacs/ttlcache");
 import { sha256Hex } from "../sha256";
 import { decipherToken } from "../token";
+import { minutes } from "./timeIntervals";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
@@ -56,11 +57,9 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
   return ZAuthInfo.parse(document);
 }
 
-// auth cache
-const minutes = (n: number) => 1000 * 60 * n;
 const ttl = minutes(10);
 const revalidateTime = minutes(5);
-const authCache = new TTLCache<string, Auth>({ max: 100000, ttl });
+const authCache = new TTLCache<string, Auth>({ max: 100_000, ttl });
 
 // authorization middleware.
 // this middleware checks the provided api key or token.

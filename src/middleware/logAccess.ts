@@ -17,6 +17,7 @@ import { getDb } from "../database";
 import { z } from "zod";
 import { union } from "lodash";
 import { ZAuthInfo } from "../auth";
+import { days } from "./timeIntervals";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),
@@ -63,4 +64,13 @@ export async function logAccess(ctx: Context, next: Next) {
   // no need to await this because it does no harm if it fails
   // and we don't want to slow down the response
   gc().insertOne(ZLogSchema.parse(log));
+}
+
+async function deleteLogsOlderThan(date: Date) {
+  await gc().deleteMany({ timestamp: { $lt: date } });
+}
+
+export async function housekeep() {
+  // delete logs older than 30 days
+  await deleteLogsOlderThan(new Date(Date.now() - days(30)));
 }

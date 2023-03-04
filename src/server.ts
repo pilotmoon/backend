@@ -15,6 +15,8 @@ import { measureResponseTime } from "./middleware/measureResponseTime";
 import { enforceJson } from "./middleware/enforceJson";
 import { logAccess } from "./middleware/logAccess";
 
+import { housekeep as housekeepLogAccess } from "./middleware/logAccess";
+
 import { init as initRegistriesController } from "./controllers/registriesController";
 import { init as initLicenseKeysController } from "./controllers/licenseKeysController";
 import { init as initApiKeysController } from "./controllers/apiKeysController";
@@ -24,6 +26,7 @@ import { router as healthRouter } from "./routers/healthRouter";
 import { router as apiKeysRouter } from "./routers/apiKeysRouter";
 import { router as registriesRouter } from "./routers/registriesRouter";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter";
+import { hours } from "./middleware/timeIntervals";
 
 // set up main router
 const mainRouter = makeRouter();
@@ -82,6 +85,13 @@ app.use(parseJsonBody);
 app.use(mainRouter.routes());
 app.use(mainRouter.allowedMethods());
 
+// housekeeping tasks
+function housekeep() {
+  log(`Housekeeping ${new Date().getTime()}`.bgYellow);
+  housekeepLogAccess();
+}
+const housekeepingTimer = setInterval(housekeep, hours(1));
+
 // server startup and shutdown
 const abortController = new AbortController();
 function startServer() {
@@ -106,6 +116,7 @@ process.on("SIGINT", async () => {
     closing = true;
     log("Calling shutdown routines".green);
     await Promise.all([ // run all shutdown routines in parallel
+      clearInterval(housekeepingTimer),
       closeServer(),
       closeDb(),
     ]);
@@ -118,6 +129,7 @@ process.on("SIGINT", async () => {
   log("Calling startup routines".green);
   await connectDb(); // connect to database first
   await Promise.all([ // run all other startup routines in parallel
+    housekeep(), // run housekeeping once at startup
     initLogAccess(),
     initApiKeysController(),
     initRegistriesController(),
