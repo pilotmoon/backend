@@ -14,6 +14,7 @@ import {
   ZRecord,
 } from "./registriesController";
 import { ProductConfig, ZProductConfig } from "../product";
+import { sanitizeName } from "../sanitizeName";
 /*
 
 # License Keys
@@ -322,7 +323,7 @@ export async function generateLicenseFile(
   const plist = aqp.generateLicense(ZLicenseFileFields.parse(details));
 
   // generate the license file name
-  const name = sanitizedName(document.name) + "." +
+  let name = sanitizeName(document.name, "License") + "." +
     config.licenseFileExtension;
 
   return ZLicenseFileObject.parse({
@@ -331,16 +332,6 @@ export async function generateLicenseFile(
     data: Buffer.from(plist).toString("base64"),
     name,
   });
-}
-
-// sanitize a name for use in a license file name
-function sanitizedName(name: string) {
-  let result = name.replace(/[^\w]/g, "_");
-  // then replace multiple underscores with a single underscore
-  result = result.replace(/_+/g, "_");
-  // then trim leading and trailing underscores
-  result = result.replace(/^_+|_+$/g, "");
-  return result;
 }
 
 // get the aquatic prime key pair for a product
