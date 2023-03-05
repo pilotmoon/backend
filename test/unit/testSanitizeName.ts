@@ -8,5 +8,5 @@ test("sanitizeName", (t) => {
   t.is(sanitizeName(""), "");
   t.is(sanitizeName("", "Fallback"), "Fallback");
   t.is(sanitizeName("___.", "Fallback"), "Fallback");
-  t.is(sanitizeName("123-.HF", "Fallback"), "123-_HF");
+  t.is(sanitizeName("123-.HF", "Fallback"), "123_HF");
 });
