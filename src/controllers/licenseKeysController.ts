@@ -180,11 +180,13 @@ export const ZLicenseKeyInfo = z.object({
   description: ZSaneString.optional(),
   // name of entity that created license, e.g. "DIGITALYCHEE" or "FastSpring"
   origin: z.string().trim().max(100).optional(),
+  // other data supplied by the origin e.g. additional transction info
+  originData: z.unknown().optional(),
   // order number supplied by origin, e.g. "123456789"
   order: z.string().trim().max(100).optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
-const encryptedFields = ["name", "email"] as const;
+const encryptedFields = ["name", "email", "originData"] as const;
 
 // schema for the parts of the info that can be updated later
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
