@@ -16,6 +16,7 @@ import TTLCache = require("@isaacs/ttlcache");
 import { omit } from "lodash";
 import { Context } from "koa";
 import { ApiError } from "../errors";
+import { create as createCDH } from "content-disposition-header";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -105,7 +106,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
     ctx.set("Content-Type", "application/octet-stream");
     ctx.set(
       "Content-Disposition",
-      `attachment; filename="${licenseFile.name}"`,
+      createCDH(licenseFile.name),
     );
   } else {
     throw new ApiError(
