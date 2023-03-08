@@ -1,10 +1,10 @@
-import "./globals";
+import "colors";
 import { makeRouter, makeServer } from "./koaWrapper";
 import bodyParser = require("koa-bodyparser");
 import { config } from "./config";
-import { ApiError } from "./errors";
+import { ApiError } from "../errors";
 import { close as closeDb, connect as connectDb } from "./database";
-import { log } from "./logger";
+import { log } from "../logger";
 import { asciiHello } from "./static";
 import { authorize } from "./middleware/authorize";
 import { processPagination } from "./middleware/processPagination";

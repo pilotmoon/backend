@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { getDb } from "../database";
 import { Auth, AuthKind, authKinds } from "../auth";
-import { handleControllerError } from "../errors";
+import { handleControllerError } from "../../errors";
 import { randomIdentifier, ZIdentifier, ZSaneString } from "../identifiers";
 import { PaginateState } from "../middleware/processPagination";
-import { ZPortableKeyPair } from "../keyPair";
+import { ZPortableKeyPair } from "../../keyPair";
 import { decryptInPlace, encryptInPlace } from "../secrets";
-import { ZProductConfig } from "../product";
+import { ZProductConfig } from "../../product";
 
 /*** Database ***/
 

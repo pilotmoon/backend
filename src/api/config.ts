@@ -1,4 +1,4 @@
-import { log, logw } from "./logger";
+import { log, logw } from "../logger";
 import { repeat } from "lodash";
 
 // app configuration

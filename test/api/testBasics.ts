@@ -1,5 +1,5 @@
 import test from "ava";
-import { generateEncryptedToken } from "../../src/token";
+import { generateEncryptedToken } from "../../src/api/token";
 import { rolo } from "./setup";
 
 test("health", async (t) => {

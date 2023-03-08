@@ -2,8 +2,8 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { Context, Next } from "koa";
 import { STATUS_CODES } from "node:http";
-import { ApiError } from "../errors";
-import { log } from "../logger";
+import { ApiError } from "../../errors";
+import { log } from "../../logger";
 
 // type to represent information about an error
 interface ErrorInfo {

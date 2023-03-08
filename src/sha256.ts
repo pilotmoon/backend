@@ -1,4 +1,3 @@
-import { Binary } from "mongodb";
 import { createHash } from "node:crypto";
 
 // simple sha256 wrapper that generates a hex string

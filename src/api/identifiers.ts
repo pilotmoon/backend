@@ -1,7 +1,7 @@
 import Prando from "prando";
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config";
-import { logw } from "./logger";
+import { logw } from "../logger";
 import { z } from "zod";
 import { AuthKind, authKinds } from "./auth";
 

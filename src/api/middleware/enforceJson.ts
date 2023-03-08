@@ -1,5 +1,5 @@
 import { Context, Next } from "koa";
-import { ApiError } from "../errors";
+import { ApiError } from "../../errors";
 
 // error if content-type is not application/json
 export async function enforceJson(ctx: Context, next: Next) {

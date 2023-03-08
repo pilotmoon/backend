@@ -11,11 +11,11 @@ import {
   ZLicenseKeyInfo,
 } from "../controllers/licenseKeysController";
 import { generateEncryptedToken } from "../token";
-import { log } from "../logger";
+import { log } from "../../logger";
 import TTLCache = require("@isaacs/ttlcache");
 import { omit } from "lodash";
 import { Context } from "koa";
-import { ApiError } from "../errors";
+import { ApiError } from "../../errors";
 import { create as createCDH } from "content-disposition-header";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });

@@ -1,6 +1,6 @@
 import { config } from "../config";
-import { ApiError } from "../errors";
-import { log } from "../logger";
+import { ApiError } from "../../errors";
+import { log } from "../../logger";
 import { intersection, union } from "lodash";
 import { Context, Next } from "koa";
 

@@ -1,5 +1,5 @@
 import { Context, Next } from "koa";
-import { log } from "../logger";
+import { log } from "../../logger";
 
 export async function measureResponseTime(ctx: Context, next: Next) {
   const start = Date.now();

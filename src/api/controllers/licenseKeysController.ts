@@ -1,20 +1,20 @@
 import { z } from "zod";
 import { getDb } from "../database";
 import { Auth } from "../auth";
-import { handleControllerError } from "../errors";
+import { handleControllerError } from "../../errors";
 import { genericIdRegex, randomIdentifier, ZSaneString } from "../identifiers";
-import { PortableKeyPair, ZPortableKeyPair } from "../keyPair";
+import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair";
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
-import { sha256Hex } from "../sha256";
+import { sha256Hex } from "../../sha256";
 import { decryptInPlace, encryptInPlace } from "../secrets";
-import { canonicalizeEmail } from "../canonicalizeEmail";
+import { canonicalizeEmail } from "../../canonicalizeEmail";
 import { AuthKind, authKinds } from "../auth";
 import {
   getRegistryObjectInternal as getreg,
   ZRecord,
 } from "./registriesController";
-import { ProductConfig, ZProductConfig } from "../product";
-import { sanitizeName } from "../sanitizeName";
+import { ProductConfig, ZProductConfig } from "../../product";
+import { sanitizeName } from "../../sanitizeName";
 /*
 
 # License Keys

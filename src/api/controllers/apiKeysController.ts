@@ -2,8 +2,8 @@ import { deterministic, randomKey, ZSaneString } from "../identifiers";
 import { z } from "zod";
 import { getDb } from "../database";
 import { Binary } from "mongodb";
-import { handleControllerError } from "../errors";
-import { log } from "../logger";
+import { handleControllerError } from "../../errors";
+import { log } from "../../logger";
 import {
   Auth,
   AuthKind,
@@ -11,8 +11,8 @@ import {
   ZAuthInfo,
   ZSettableAuthContext,
 } from "../auth";
-import { hashPassword } from "../scrypt";
-import { TestKey, testKeys } from "../../test/api/setup";
+import { hashPassword } from "../../scrypt";
+import { TestKey, testKeys } from "../../../test/api/setup";
 import { PaginateState } from "../middleware/processPagination";
 
 /*** Schemas ***/

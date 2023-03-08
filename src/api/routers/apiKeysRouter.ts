@@ -8,7 +8,7 @@ import {
   ZApiKeyInfoUpdate,
 } from "../controllers/apiKeysController";
 import { makeRouter } from "../koaWrapper";
-import { ApiError } from "../errors";
+import { ApiError } from "../../errors";
 import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers";
 import { omit } from "lodash";
