@@ -21,6 +21,21 @@ components:
         description: Token looks like `sk_{live|test}_{40 hex chars}`
 
   schemas:
+    ApiKeyInfo:
+      type: object
+      example:
+        description: Blah blah
+        scopes: [licenseKeys:create]
+      properties:
+        description:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+      required:
+        - scopes
+
     LicenseKeyInfo:
       type: object
       example:
@@ -63,6 +78,22 @@ paths:
       responses:
         '200':
           description: OK
+
+  /apiKeys:
+    description: API keys.
+    post:
+      operationId: createApiKey
+      description: Create a new API key.
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyInfo'
+      responses:
+        '201':
+          description: API key was created.
 
   /registries:
     description: Representions the collection of configuration registries.
