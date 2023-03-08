@@ -4,13 +4,22 @@
     {
       "name": "fmt",
       "description": "formatter",
-      "command": "deno fmt --watch"
+      "command": "deno fmt --watch",
+      "execute": true,
+      "focus": false
     },
     {
       "name": "server",
       "description": "typescript watcher",
       "command": "npm run dev",
       "execute": true,
+      "focus": false
+    },
+    {
+      "name": "test",
+      "description": "test runner",
+      "command": "npm run test-unit",
+      "execute": false,
       "focus": true
     }
   ]

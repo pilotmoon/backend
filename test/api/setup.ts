@@ -34,7 +34,7 @@ export const testKeys = {
   createLicenseKey: {
     scopes: ["licenseKeys:create"],
     description: "test createLicenseKey key (deterministically generated)",
-  }
+  },
 };
 
 const instances = new Map<string, AxiosInstance>();

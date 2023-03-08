@@ -292,9 +292,18 @@ test("list api keys, limit and offset", async (t) => {
   t.is(res.status, 200);
   t.is(res.data.items.length, 3);
   t.like(res.data.paginate, { limit: 3, offset: 2, order: -1 });
-  t.is(res.data.items[0].id, (keys() as any)[Object.keys(keys()).at(-3) as string].id);
-  t.is(res.data.items[1].id, (keys() as any)[Object.keys(keys()).at(-4) as string].id);
-  t.is(res.data.items[2].id, (keys() as any)[Object.keys(keys()).at(-5) as string].id);
+  t.is(
+    res.data.items[0].id,
+    (keys() as any)[Object.keys(keys()).at(-3) as string].id,
+  );
+  t.is(
+    res.data.items[1].id,
+    (keys() as any)[Object.keys(keys()).at(-4) as string].id,
+  );
+  t.is(
+    res.data.items[2].id,
+    (keys() as any)[Object.keys(keys()).at(-5) as string].id,
+  );
 });
 
 test("list api keys, duplicated limit", async (t) => {
