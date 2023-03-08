@@ -1,4 +1,4 @@
-import "./api/testBasics";
-import "./api/testApiKeys";
-import "./api/testRegistries";
-import "./api/testLicenseKeys";
+import "./api/testBasics.js";
+import "./api/testApiKeys.js";
+import "./api/testRegistries.js";
+import "./api/testLicenseKeys.js";

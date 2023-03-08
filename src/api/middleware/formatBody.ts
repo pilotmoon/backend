@@ -1,7 +1,7 @@
 import { Context, Next } from "koa";
 import { z } from "zod";
-import { ApiError } from "../../errors";
-import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers";
+import { ApiError } from "../../errors.js";
+import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers.js";
 
 // replace _id with id
 function replaceId(obj: any) {

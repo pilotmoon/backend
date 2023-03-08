@@ -12,8 +12,8 @@
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { Binary } from "mongodb";
-import { config } from "./config";
-import { AuthKind } from "./auth";
+import { config } from "./config.js";
+import { AuthKind } from "./auth.js";
 import { decodeFirstSync, encode } from "cbor";
 
 function getSecretKey(kind: AuthKind) {

@@ -1,5 +1,5 @@
 import test from "ava";
-import { canonicalizeEmail } from "../../src/canonicalizeEmail";
+import { canonicalizeEmail } from "../../src/canonicalizeEmail.js";
 
 test("test email addresses", (t) => {
   t.is(canonicalizeEmail("email@example.com"), "email@example.com");

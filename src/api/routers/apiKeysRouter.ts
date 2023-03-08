@@ -6,12 +6,12 @@ import {
   updateApiKey,
   ZApiKeyInfo,
   ZApiKeyInfoUpdate,
-} from "../controllers/apiKeysController";
-import { makeRouter } from "../koaWrapper";
-import { ApiError } from "../../errors";
+} from "../controllers/apiKeysController.js";
+import { makeRouter } from "../koaWrapper.js";
+import { ApiError } from "../../errors.js";
 import { randomUUID } from "node:crypto";
-import { makeIdentifierPattern } from "../identifiers";
-import { omit } from "lodash";
+import { makeIdentifierPattern } from "../identifiers.js";
+import _ from "lodash";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {
@@ -21,7 +21,7 @@ const matchId = {
 const matchIdAndCurrent = makeIdentifierPattern("id", "ak", ["current"]);
 
 function sanitize(document: Record<string, unknown>) {
-  return omit(document, "hashedKey");
+  return _.omit(document, "hashedKey");
 }
 
 router.post("/", async (ctx) => {

@@ -1,7 +1,7 @@
 import test from "ava";
-import { rolo } from "./setup";
+import { rolo } from "./setup.js";
 import { faker } from "@faker-js/faker";
-import { PortableKeyPair } from "../../src/keyPair";
+import { PortableKeyPair } from "../../src/keyPair.js";
 
 export const testAquaticPrimeKeyPair: PortableKeyPair = {
   publicKey:

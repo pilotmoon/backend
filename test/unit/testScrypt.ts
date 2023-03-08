@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword } from "../../src/scrypt";
+import { hashPassword, verifyPassword } from "../../src/scrypt.js";
 import test from "ava";
 
 test("hash and verify", async (t) => {

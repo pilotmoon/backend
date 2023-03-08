@@ -1,5 +1,5 @@
 import { Context, Next } from "koa";
-import { ApiError } from "../../errors";
+import { ApiError } from "../../errors.js";
 
 export type PaginateOptions = {
   maximumLimit?: number;

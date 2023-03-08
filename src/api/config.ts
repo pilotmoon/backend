@@ -1,5 +1,4 @@
-import { log, logw } from "../logger";
-import { repeat } from "lodash";
+import { log, logw } from "../logger.js";
 
 // app configuration
 interface Config {
@@ -29,7 +28,8 @@ export const config = loadConfig([
   {
     key: "COMMIT_HASH",
     optional: true,
-    transform: (val) => val.length === 40 ? val : repeat("?", 40),
+    // repeat ? character 4 times
+    transform: (val) => val.length === 40 ? val : "?".repeat(40),
   },
   { key: "ACCESS_ALLOWLIST", transform: commaListTransform, optional: true },
   { key: "APP_TEST_URL", optional: true },

@@ -3,10 +3,10 @@ import {
   decryptInPlace,
   encrypt,
   encryptInPlace,
-} from "../../src/api/secrets";
+} from "../../src/api/secrets.js";
 import test from "ava";
 import { Binary } from "mongodb";
-import { AuthKind } from "../../src/api/auth";
+import { AuthKind } from "../../src/api/auth.js";
 
 // string wrappers for encrypt and decrypt
 export function encryptString(

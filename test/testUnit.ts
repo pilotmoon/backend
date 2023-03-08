@@ -1,5 +1,5 @@
-import "./unit/testSecrets";
-import "./unit/testScrypt";
-import "./unit/testCanonicalizeEmail";
-import "./unit/testToken";
-import "./unit/testSanitizeName";
+import "./unit/testSecrets.js";
+import "./unit/testScryp.js";
+import "./unit/testCanonicalizeEmail.js";
+import "./unit/testToken.js";
+import "./unit/testSanitizeName.js";

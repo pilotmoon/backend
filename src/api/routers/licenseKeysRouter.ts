@@ -1,7 +1,7 @@
-import { makeRouter } from "../koaWrapper";
+import { makeRouter } from "../koaWrapper.js";
 import { randomUUID } from "node:crypto";
-import { AuthKind } from "../auth";
-import { makeIdentifierPattern } from "../identifiers";
+import { AuthKind } from "../auth.js";
+import { makeIdentifierPattern } from "../identifiers.js";
 import {
   createLicenseKey,
   generateLicenseFile,
@@ -9,13 +9,13 @@ import {
   LicenseKeyRecord,
   readLicenseKey,
   ZLicenseKeyInfo,
-} from "../controllers/licenseKeysController";
-import { generateEncryptedToken } from "../token";
-import { log } from "../../logger";
-import TTLCache = require("@isaacs/ttlcache");
-import { omit } from "lodash";
+} from "../controllers/licenseKeysController.js";
+import { generateEncryptedToken } from "../token.js";
+import { log } from "../../logger.js";
+import TTLCache from "@isaacs/ttlcache";
+import _ from "lodash";
 import { Context } from "koa";
-import { ApiError } from "../../errors";
+import { ApiError } from "../../errors.js";
 import { create as createCDH } from "content-disposition-header";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
@@ -57,8 +57,8 @@ async function getCommonBody(document: LicenseKeyRecord, ctx: Context) {
     token: generateToken(document._id, ctx.state.auth.kind),
   }, true);
   return {
-    ...omit(document, "emailHash"),
-    file: { ...omit(license, "plist"), url },
+    ..._.omit(document, "emailHash"),
+    file: { ..._.omit(license, "plist"), url },
   };
 }
 

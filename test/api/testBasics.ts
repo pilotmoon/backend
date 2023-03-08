@@ -1,6 +1,6 @@
 import test from "ava";
-import { generateEncryptedToken } from "../../src/api/token";
-import { rolo } from "./setup";
+import { generateEncryptedToken } from "../../src/api/token.js";
+import { rolo } from "./setup.js";
 
 test("health", async (t) => {
   const res = await rolo().get("health");

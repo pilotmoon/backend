@@ -1,4 +1,4 @@
-import { sanitizeName } from "../../src/sanitizeName";
+import { sanitizeName } from "../../src/sanitizeName.js";
 import test from "ava";
 
 test("sanitizeName", (t) => {

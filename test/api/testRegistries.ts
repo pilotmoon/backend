@@ -1,11 +1,11 @@
 import test from "ava";
-import { keys, rolo, testKeys } from "./setup";
+import { keys, rolo, testKeys } from "./setup.js";
 import { randomString } from "@pilotmoon/chewit";
 import {
   generateApiKeyToken,
   generateEncryptedToken,
-} from "../../src/api/token";
-import { testAquaticPrimeKeyPair } from "./testLicenseKeys";
+} from "../../src/api/token.js";
+import { testAquaticPrimeKeyPair } from "./testLicenseKeys.js";
 
 export function uniqueId(id: string) {
   return id + "-" + uniqueSuffix;

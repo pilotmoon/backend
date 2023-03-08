@@ -1,10 +1,10 @@
 {
   "name": "rolo",
-  "version": "0.0.0",
-  "main": "main.js",
+  "private": true,
+  "type": "module",
   "scripts": {
     "start": "node ./dist/src/api/server.js",
-    "build": "./scripts/build",
+    "build": "tsc",
     "dev": "./scripts/dev",
     "deploy": "./scripts/deploy",
     "test-unit": "./scripts/test-unit",
@@ -12,7 +12,6 @@
     "test-prod": "./scripts/test-prod",
     "test-prodx": "./scripts/test-prodx"
   },
-  "private": true,
   "engines": {
     "node": "16.19.0",
     "npm": "9.5.1"

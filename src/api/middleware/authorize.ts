@@ -1,14 +1,17 @@
-import { ApiError } from "../../errors";
+import { ApiError } from "../../errors.js";
 import { Context, Next } from "koa";
-import { log } from "../../logger";
-import { Auth, AuthKind, ZAuthInfo } from "../auth";
-import { secretKeyRegex } from "../identifiers";
-import { verifyPassword } from "../../scrypt";
-import { readApiKey, specialContext } from "../controllers/apiKeysController";
-import TTLCache = require("@isaacs/ttlcache");
-import { sha256Hex } from "../../sha256";
-import { decipherToken } from "../token";
-import { minutes } from "./timeIntervals";
+import { log } from "../../logger.js";
+import { Auth, AuthKind, ZAuthInfo } from "../auth.js";
+import { secretKeyRegex } from "../identifiers.js";
+import { verifyPassword } from "../../scrypt.js";
+import {
+  readApiKey,
+  specialContext,
+} from "../controllers/apiKeysController.js";
+import TTLCache from "@isaacs/ttlcache";
+import { sha256Hex } from "../../sha256.js";
+import { decipherToken } from "../token.js";
+import { minutes } from "./timeIntervals.js";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {

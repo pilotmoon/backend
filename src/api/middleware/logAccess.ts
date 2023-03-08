@@ -13,11 +13,11 @@
 //   - authScopes: the auth scopes of the request, if applicable
 //   - authExpires: the auth expiration of the request, if applicable
 import { Context, Next } from "koa";
-import { getDb } from "../database";
+import { getDb } from "../database.js";
 import { z } from "zod";
-import { union } from "lodash";
-import { ZAuthInfo } from "../auth";
-import { days } from "./timeIntervals";
+import _ from "lodash";
+import { ZAuthInfo } from "../auth.js";
+import { days } from "./timeIntervals.js";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),
@@ -54,7 +54,7 @@ export async function logAccess(ctx: Context, next: Next) {
     timestamp: new Date(),
     method,
     path,
-    ips: union(ips, [ctx.ip]),
+    ips: _.union(ips, [ctx.ip]),
     userAgent,
     status,
     duration,

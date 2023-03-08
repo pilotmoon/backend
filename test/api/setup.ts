@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
-import { deterministic, randomKey } from "../../src/api/identifiers";
-import { config } from "../../src/api/config";
+import { deterministic, randomKey } from "../../src/api/identifiers.js";
+import { config } from "../../src/api/config.js";
 
 export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {

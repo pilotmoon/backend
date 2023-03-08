@@ -1,5 +1,5 @@
 import test from "ava";
-import { keys, rolo } from "./setup";
+import { keys, rolo } from "./setup.js";
 import { randomString } from "@pilotmoon/chewit";
 
 test("missing api key", async (t) => {

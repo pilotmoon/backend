@@ -1,32 +1,32 @@
 import "colors";
-import { makeRouter, makeServer } from "./koaWrapper";
-import bodyParser = require("koa-bodyparser");
-import { config } from "./config";
-import { ApiError } from "../errors";
-import { close as closeDb, connect as connectDb } from "./database";
-import { log } from "../logger";
-import { asciiHello } from "./static";
-import { authorize } from "./middleware/authorize";
-import { processPagination } from "./middleware/processPagination";
-import { handleError } from "./middleware/handleError";
-import { formatBody } from "./middleware/formatBody";
-import { checkAccess } from "./middleware/checkAccess";
-import { measureResponseTime } from "./middleware/measureResponseTime";
-import { enforceJson } from "./middleware/enforceJson";
-import { logAccess } from "./middleware/logAccess";
+import { makeRouter, makeServer } from "./koaWrapper.js";
+import bodyParser from "koa-bodyparser";
+import { config } from "./config.js";
+import { ApiError } from "../errors.js";
+import { close as closeDb, connect as connectDb } from "./database.js";
+import { log } from "../logger.js";
+import { asciiHello } from "./static.js";
+import { authorize } from "./middleware/authorize.js";
+import { processPagination } from "./middleware/processPagination.js";
+import { handleError } from "./middleware/handleError.js";
+import { formatBody } from "./middleware/formatBody.js";
+import { checkAccess } from "./middleware/checkAccess.js";
+import { measureResponseTime } from "./middleware/measureResponseTime.js";
+import { enforceJson } from "./middleware/enforceJson.js";
+import { logAccess } from "./middleware/logAccess.js";
 
-import { housekeep as housekeepLogAccess } from "./middleware/logAccess";
+import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
 
-import { init as initRegistriesController } from "./controllers/registriesController";
-import { init as initLicenseKeysController } from "./controllers/licenseKeysController";
-import { init as initApiKeysController } from "./controllers/apiKeysController";
-import { init as initLogAccess } from "./middleware/logAccess";
+import { init as initRegistriesController } from "./controllers/registriesController.js";
+import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
+import { init as initApiKeysController } from "./controllers/apiKeysController.js";
+import { init as initLogAccess } from "./middleware/logAccess.js";
 
-import { router as healthRouter } from "./routers/healthRouter";
-import { router as apiKeysRouter } from "./routers/apiKeysRouter";
-import { router as registriesRouter } from "./routers/registriesRouter";
-import { router as licenseKeysRouter } from "./routers/licenseKeysRouter";
-import { hours } from "./middleware/timeIntervals";
+import { router as healthRouter } from "./routers/healthRouter.js";
+import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
+import { router as registriesRouter } from "./routers/registriesRouter.js";
+import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
+import { hours } from "./middleware/timeIntervals.js";
 
 // set up main router
 const mainRouter = makeRouter();

@@ -1,20 +1,24 @@
 import { z } from "zod";
-import { getDb } from "../database";
-import { Auth } from "../auth";
-import { handleControllerError } from "../../errors";
-import { genericIdRegex, randomIdentifier, ZSaneString } from "../identifiers";
-import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair";
+import { getDb } from "../database.js";
+import { Auth } from "../auth.js";
+import { handleControllerError } from "../../errors.js";
+import {
+  genericIdRegex,
+  randomIdentifier,
+  ZSaneString,
+} from "../identifiers.js";
+import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
-import { sha256Hex } from "../../sha256";
-import { decryptInPlace, encryptInPlace } from "../secrets";
-import { canonicalizeEmail } from "../../canonicalizeEmail";
-import { AuthKind, authKinds } from "../auth";
+import { sha256Hex } from "../../sha256.js";
+import { decryptInPlace, encryptInPlace } from "../secrets.js";
+import { canonicalizeEmail } from "../../canonicalizeEmail.js";
+import { AuthKind, authKinds } from "../auth.js";
 import {
   getRegistryObjectInternal as getreg,
   ZRecord,
-} from "./registriesController";
-import { ProductConfig, ZProductConfig } from "../../product";
-import { sanitizeName } from "../../sanitizeName";
+} from "./registriesController.js";
+import { ProductConfig, ZProductConfig } from "../../product.js";
+import { sanitizeName } from "../../sanitizeName.js";
 /*
 
 # License Keys

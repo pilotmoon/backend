@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSaneString } from "./api/identifiers";
+import { ZSaneString } from "./api/identifiers.js";
 
 // configuration for products
 export const ZProductConfig = z.object({

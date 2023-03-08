@@ -1,5 +1,5 @@
 import test from "ava";
-import * as token from "../../src/api/token";
+import * as token from "../../src/api/token.js";
 
 test("generate and deciper encrypted token", (t) => {
   const scopes = ["foo:read", "bar:*"];
