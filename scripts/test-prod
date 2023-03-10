@@ -7,5 +7,10 @@ if [ ! -z ${APP_PORT+x} ]; then
 fi
 ./scripts/env
 source .env-rolo
-export APP_TEST_URL=${APP_URL_ALT}
+# if 1st parameter is "pub" use the canonical URL
+if [ "$1" = "pub" ]; then
+  export APP_TEST_URL=${APP_URL_CANONICAL}
+else
+  export APP_TEST_URL=${APP_URL_ALT}
+fi
 npx ava dist/test/testApi.js --serial
