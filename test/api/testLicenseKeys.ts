@@ -187,7 +187,7 @@ test("create license key, download license file with link", async (t) => {
   t.is(trimLines(res3.data), trimLines(testLicenseKey));
 });
 
-test.only("create license key with chinese characters", async (t) => {
+test("create license key with chinese characters", async (t) => {
   const res = await rolo().post("licenseKeys", {
     product: "com.example.product",
     name: "张三",
