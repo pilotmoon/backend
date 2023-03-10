@@ -1,3 +1,10 @@
 #!/bin/zsh
 set -e
-[[ -f .env ]] || op inject -i .env-template -o .env
+
+function inject() {
+  local component=$1
+  [[ -f .env-$component ]] || op inject -i .env-$component-template -o .env-$component
+}
+
+inject rolo
+inject twix

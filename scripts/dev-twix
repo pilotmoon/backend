@@ -1,6 +1,6 @@
 #!/bin/zsh
 set -e
 ./scripts/env
-source .env-rolo
+source .env-twix
 export COMMIT_HASH=$(./scripts/commit-hash)
-npx tsc-watch --onSuccess "npm run start"
+npx tsc-watch --onSuccess "npm run start-twix"

@@ -6,7 +6,7 @@ if [ ! -z ${APP_PORT+x} ]; then
   exit 1
 fi
 ./scripts/env
-source .env
+source .env-rolo
 export APP_URL=${APP_URL_CANONICAL}
-export APP_TEST_URL=${APP_URL_CANONICAL}
+export APP_TEST_URL=${APP_URL_ALT}
 npx ava dist/test/testApi.js --serial
