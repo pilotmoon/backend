@@ -186,3 +186,29 @@ test("create license key, download license file with link", async (t) => {
   // base64 decode the license file
   t.is(trimLines(res3.data), trimLines(testLicenseKey));
 });
+
+test.only("create license key with chinese characters", async (t) => {
+  const res = await rolo().post("licenseKeys", {
+    product: "com.example.product",
+    name: "张三",
+  });
+  t.is(res.status, 201);
+  t.like(res.data, {
+    product: "com.example.product",
+    name: "张三",
+  });
+  t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
+
+  // then we download the license file
+  const res3 = await rolo().get(res.data.file.url, {
+    headers: {
+      Authorization: null,
+    },
+  });
+  t.is(res3.status, 200);
+  t.is(res3.headers["content-type"], "application/octet-stream");
+  t.is(
+    res3.headers["content-disposition"],
+    `attachment; filename="??.examplelicense"; filename*=UTF-8''%E5%BC%A0%E4%B8%89.examplelicense`,
+  );
+});
