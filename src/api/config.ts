@@ -7,7 +7,6 @@ import {
 // app configuration
 export interface Config {
   APP_PORT: number;
-  APP_URL: string;
   DATABASE_URL: string;
   DATABASE_NAME_TEST: string;
   DATABASE_NAME_LIVE: string;
@@ -21,7 +20,6 @@ export interface Config {
 }
 export const config = loadConfig<Config>([
   { key: "APP_PORT", transform: decimalIntegerTransform },
-  { key: "APP_URL" },
   { key: "DATABASE_URL", secret: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
