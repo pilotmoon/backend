@@ -4,7 +4,5 @@ if [ -z ${APP_PORT+x} ]; then
   echo "generating .env file"
   ./scripts/env
   source .env-rolo
-  source .env-twix
 fi
 npx ava dist/test/testApi.js --serial
-npx ava dist/test/testWebhooks.js --serial

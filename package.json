@@ -3,17 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node ./dist/src/api/server.js",
+    "start-rolo": "node ./dist/src/api/server.js",
     "start-twix": "node ./dist/src/webhooks/server.js",
     "build": "tsc",
-    "dev": "./scripts/dev",
+    "dev-rolo": "./scripts/dev-rolo",
     "dev-twix": "./scripts/dev-twix",
     "deploy": "./scripts/deploy",
     "test-unit": "./scripts/test-unit",
+    "test-rolo-local": "./scripts/test-rolo-local",
     "test-twix-local": "./scripts/test-twix-local",
     "test-local": "./scripts/test-local",
-    "test-prod": "./scripts/test-prod",
-    "test-prodx": "./scripts/test-prodx"
+    "test-prod": "./scripts/test-prod"
   },
   "engines": {
     "node": "16.19.0",

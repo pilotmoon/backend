@@ -57,13 +57,13 @@ jobs:
     - name: Run rolo E2E tests
       uses: BerniWittmann/background-server-action@v1
       with:
-        command: npm run test-local
-        start: npm run start
+        command: npm run test-rolo-local
+        start: npm run start-rolo
         wait-on: '${{ vars.APP_TEST_URL }}'
     - name: Run twix E2E tests
       uses: BerniWittmann/background-server-action@v1
       with:
-        command: npm run test-local & npm run test-twix-local
-        start: npm run start-twix
+        command: npm run test-twix-local
+        start: npm run start-rolo & npm run start-twix
         wait-on: '${{ vars.APP_TEST_URL }}, ${{ vars.TWIX_TEST_URL }}'
 
