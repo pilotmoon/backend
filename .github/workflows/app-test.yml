@@ -27,6 +27,7 @@ env:
   APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
   ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
   ROLO_APIKEY_LIVE: ""
+  PADDLE_PUBKEY: "${{ secrets.PADDLE_PUBKEY }}"
 
 jobs:
   test:
