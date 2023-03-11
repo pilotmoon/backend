@@ -10,29 +10,30 @@ async function setup() {
 }
 
 const samplePaddle = {
-  email: "blackhole+640cdd5197baf@paddle.com",
-  event_time: "2023-03-11 19:58:09",
-  marketing_consent: "0",
+  p_order_id: "573252",
+  p_quantity: "1",
+  email: "blackhole+640ce526cddee@paddle.com",
   name: "Test User",
+  product: "com.example.product",
+  event_time: "2023-03-11 20:31:34",
+  marketing_consent: "0",
+  mode: "test",
   p_country: "US",
   p_coupon: "",
   p_coupon_savings: "0",
   p_currency: "USD",
   p_custom_data: "",
-  p_earnings: '{"9710":"14.0200"}',
-  p_order_id: "573239",
-  p_paddle_fee: "1.26",
-  p_price: "15.28",
+  p_earnings: '{"9710":"5.0300"}',
+  p_paddle_fee: "0.79",
+  p_price: "5.82",
   p_product_id: "47023",
-  p_quantity: "1",
-  p_sale_gross: "15.28",
+  p_sale_gross: "5.82",
   p_tax_amount: "0",
   p_used_price_override: "1",
   passthrough: "Example passthrough",
-  product: "com.example.product",
   quantity: "1",
   p_signature:
-    "UIWGXJsxIvfKlqRDZXTBzmtl0z+iVApe8VVBKaAvPwGlu/6aJMwo2IxWs1IYS3/KtLXJ5RwCWSKAaHGghzx4eOf1NcivTVC2hHCDKCCEaCyw6DEtVPbgd/8nAeQ8KoLm+FukJA5Utid340QCYurzGsFHoBOo2rxZVNTuWaFyGJ43R7zH0KaLHfacaMVbqg5Ev7Y1w/vR8geP/ovzWGvdFcFT7kiLfOlgVlSKAuzm0nNkV0vWsqpVFWC2f6XIL8x5DSmsUSSqxKbcxOJg4LGD5ZJ4MT/s6wXABYxI/TXSPeHhyNTMyRUQRPWm/XX9xDvMx1ADjFIel9/+MOoncxlG+VRTLSMNvpcSR6Z4xfBRt3rhTjCesmIoGRhlgOy53bW/BEP297Rfl75lmNBnvUOf6M881ro+dX6HzhfiWN6UFMd4T9QQkcrXjiq4MysxLmTulgY/qnuMle7I5fAHJnV/jjKueBLqSmk9JGA2N56YyHWmLWMiWi46aRTBb0+cQxzEVX9MrebiJX2iCuUTK4BiO2mdxnDxisnGE2eJJ6cpyC0sw4s3GgvQ+O2lpCOX5G8uxpQ1C9CALV6woCEmuHhACoo9xp2AeWJ4DmkVO2U3k8Cs47veWjfEY3auL3pBzt1pTmv1PQIfJQWdF7vVoEUDEbV930sBVfmax/OUQv5Im70=",
+    "mAVS3H63h4zcrQ91CnfJKC/mJlK7VqzuLf0OlKUyG6prKzQjtpcASW2LjlNAN7gjCvd3LByLxRehqYXdl/6MMvYnMLFUFYnJjfdGpGorom3pbdOx1bWtN4zAYfxB4SU11HQI3ilbYAG+ffExREfc7C3PigDjwqBU+DditilySVJgZQgvytUfvu4tYEVPSTQ7FptTRC6CNO1JR8YM1fDPhBSgjXW65XMgMfebtwkthllSa1QF8wkP/2g6mliX2g1RKH8casCVRSo8zPPKrMSQHLxIuuyw8MLRGOyV4jQxFlRebASnV1WqsXiHli8/8//IpLD4nVyAlCmBddYH1Lw5AeFEK/Sg4HZ0Y3+ZSfxs/xFw80d0FAGvQBDe1R7XR4Fe9OuaaV9gkCB02i8ZZ7xH4W5tXaQMRVcuPDGOBvDXxM6NEMj9I21AUWHXRwls7h0BJHZU2Tvta87khOrQ2fMFCQ++FhUooOXLliVJGEfX02bXJc+/fTK2eG57GqRm1IjqJIcI0bniMpGTxamgokb4hnd4zBjjCyZQ4/H1Ig4ce229JkI+xKA7fdRukbgDm4KF0d4YLpM9OTBYYlmXy1WgquX+PPoug0wUFOsZwMzWg5nusYNz0lAuPJWOZaSUCLMHe2gfiqOh5zGgVrTz1c2uKyeX20aYz9jjZAITyfQUfSU=",
 };
 
 test.before(setup);
