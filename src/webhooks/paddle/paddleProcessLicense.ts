@@ -1,6 +1,7 @@
 import { z } from "zod";
 import axios from "axios";
 import { config } from "../config.js";
+import _ from "lodash";
 
 const ZPaddleArgs = z.object({
   p_order_id: z.string(),
@@ -31,7 +32,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   // create license
   console.log("mode: ", mode);
   console.log("create license with args: ", args);
-  const paddleArgs = ZPaddleArgs.parse(args);
+  const paddleArgs = ZPaddleArgs.passthrough().parse(args);
   console.log("paddleArgs: ", paddleArgs);
 
   const api = getApi(mode);
@@ -42,7 +43,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     quantity: parseInt(paddleArgs.p_quantity),
     order: paddleArgs.p_order_id,
     origin: "Paddle",
-    originData: args,
+    originData: _.omit(paddleArgs, "p_signature"),
   };
   console.log("info: ", info);
   const { data } = await api.post("/licenseKeys", info);
