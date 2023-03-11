@@ -13,7 +13,7 @@ interface ConfigItem {
   key: string;
   loader?: Loader;
   transform?: Transformer;
-  secret?: boolean;
+  hidden?: boolean;
   optional?: boolean;
 }
 interface Loader {
@@ -49,7 +49,7 @@ function setConfigItem(
     key,
     loader = envLoader,
     transform = trimTransform,
-    secret = false,
+    hidden: hidden = false,
     optional = false,
   }: ConfigItem,
   config: any,
@@ -68,7 +68,7 @@ function setConfigItem(
   const transformed = transform(value);
   log(
     `Loaded config variable ${key.blue} with value ${
-      secret ? "<secret>".yellow : JSON.stringify(transformed).cyan
+      hidden ? "<hidden>".yellow : JSON.stringify(transformed).cyan
     }`,
   );
   config[key] = transformed;

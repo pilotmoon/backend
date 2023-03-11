@@ -1,6 +1,10 @@
-import { ApiError } from "../errors.js";
-import { processLicense } from "./paddleProcessLicense";
-import { validatePaddleWebhook } from "./paddleValidateWebhook";
+import { ApiError } from "../../errors.js";
+import { processLicense } from "./paddleProcessLicense.js";
+import { validatePaddleWebhook } from "./paddleValidateWebhook.js";
+import Router from "@koa/router";
+import { config } from "../config.js";
+
+export const router = new Router();
 
 // Paddle IP Allowlist
 const ipAllowedSandbox = [
@@ -35,16 +39,9 @@ function checkAccess(ips: string[]): "test" | "live" {
   throw new ApiError(403, "IP address not allowed");
 }
 
-// export async function main(args: any) {
-//   return doMain(args, async (ctx) => {
-//     const mode = checkAccess(ctx.req.ips);
-//     if (ctx.req.path === "/license") {
-//       if (ctx.req.method !== "POST") {
-//         throw new ApiError(405, "Method not allowed");
-//       }
-//       validatePaddleWebhook(ctx.req.args);
-//       const file = await processLicense(ctx.req.args, mode);
-//       ctx.res.body = `[${file.name}](${file.url})`;
-//     }
-//   });
-// }
+router.post("/webhooks/paddle/generateLicense", async (ctx) => {
+  const mode = checkAccess(ctx.ips);
+  validatePaddleWebhook(ctx.request.body, config.PADDLE_PUBKEY);
+  const file = await processLicense(ctx.request.body, mode);
+  ctx.body = `[${file.name}](${config.ROLO_URL_CANONICAL}${file.url})`;
+});

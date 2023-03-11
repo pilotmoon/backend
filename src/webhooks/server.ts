@@ -2,20 +2,36 @@ import "colors";
 import Koa from "koa";
 import Router from "@koa/router";
 import { config } from "./config.js";
+import { router as paddleRouter } from "./paddle/paddleRouter.js";
+import { log } from "../logger.js";
+import bodyParser from "koa-bodyparser";
+import { ApiError } from "../errors.js";
+import { logAccess } from "../api/middleware/logAccess.js";
+import { handleError } from "../api/middleware/handleError.js";
+
 const router = new Router();
+router.use(paddleRouter.routes());
 
-const app = new Koa({ proxy: true });
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-function log(...args: any[]) {
-  console.log(...args);
-}
-
+// serve a title screen
 router.get("/", (ctx) => {
-  console.log("GET /");
   ctx.body = "twix " + config.COMMIT_HASH;
 });
+
+const app = new Koa({ proxy: true });
+
+// body parser that accepts JSON and form data
+const parseJsonBody = bodyParser({
+  enableTypes: ["json", "form"],
+  onerror: () => {
+    throw new ApiError(400, "Invalid JSON");
+  },
+});
+
+// add all middleware
+app.use(handleError);
+app.use(parseJsonBody);
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 // server startup and shutdown
 const abortController = new AbortController();

@@ -20,12 +20,12 @@ export interface Config {
 }
 export const config = loadConfig<Config>([
   { key: "APP_PORT", transform: decimalIntegerTransform },
-  { key: "DATABASE_URL", secret: true },
+  { key: "DATABASE_URL", hidden: true },
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
   { key: "DATABASE_NAME_LOGS" },
-  { key: "APP_SECRET_TEST", secret: true },
-  { key: "APP_SECRET_LIVE", secret: true, optional: true },
+  { key: "APP_SECRET_TEST", hidden: true },
+  { key: "APP_SECRET_LIVE", hidden: true, optional: true },
   { key: "BOOTSTRAP_SEED" },
   {
     key: "COMMIT_HASH",

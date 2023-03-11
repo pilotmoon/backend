@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/api/identifiers.js";
-import { config } from "../../src/api/config.js";
 
 export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
@@ -55,14 +54,14 @@ export function keys() {
 export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
   if (!keyName) {
     return axios.create({
-      baseURL: config.APP_TEST_URL,
+      baseURL: process.env.APP_TEST_URL,
       validateStatus: () => true,
     });
   }
   let instance = instances.get(keyName);
   if (!instance) {
     instance = axios.create({
-      baseURL: config.APP_TEST_URL,
+      baseURL: process.env.APP_TEST_URL,
       headers: {
         "Authorization": `Bearer ${(keys())[keyName].key}`,
       },

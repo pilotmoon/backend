@@ -34,9 +34,10 @@ Planned capabilities:
 There are two server components, running as separate apps:
 
 - `src/api/`: **Rolo**, the main API server.
-- `src/webhooks/`: **Twix**, a companion server that acts as an adapter interface
-  for external services.
+- `src/webhooks/`: **Twix**, a companion server that acts as an adapter
+  interface for external services.
 
 ## Infrastructure
 
-The components are deployed on DigitalOcean App Platform under Node 16.x, fronted by an nginx reverse proxy.
+The components are deployed on DigitalOcean App Platform under Node 16.x,
+fronted by an nginx reverse proxy.

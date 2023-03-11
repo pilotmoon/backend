@@ -20,9 +20,13 @@ env:
   DATABASE_NAME_LOGS: "${{ vars.DATABASE_NAME_LOGS }}"
   TWIX_PORT: "${{ vars.TWIX_PORT }}"
   TWIX_TEST_URL: "${{ vars.TWIX_TEST_URL }}"
+  ROLO_URL: "${{ vars.APP_TEST_URL }}"
+  ROLO_URL_CANONICAL: "${{ vars.ROLO_URL_CANONICAL }}"
   # secrets
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
   APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
+  ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
+  ROLO_APIKEY_LIVE: ""
 
 jobs:
   test:
