@@ -8,10 +8,10 @@ import { log } from "../logger.js";
 import { asciiHello } from "./static.js";
 import { authorize } from "./middleware/authorize.js";
 import { processPagination } from "./middleware/processPagination.js";
-import { handleError } from "./middleware/handleError.js";
+import { handleError } from "../handleError.js";
 import { formatBody } from "./middleware/formatBody.js";
 import { checkAccess } from "./middleware/checkAccess.js";
-import { measureResponseTime } from "./middleware/measureResponseTime.js";
+import { measureResponseTime } from "../measureResponseTime.js";
 import { enforceJson } from "./middleware/enforceJson.js";
 import { logAccess } from "./middleware/logAccess.js";
 
@@ -26,7 +26,7 @@ import { router as healthRouter } from "./routers/healthRouter.js";
 import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
 import { router as registriesRouter } from "./routers/registriesRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
-import { hours } from "./middleware/timeIntervals.js";
+import { hours } from "../timeIntervals.js";
 
 // set up main router
 const mainRouter = makeRouter();

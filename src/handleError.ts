@@ -1,10 +1,6 @@
 import { Context, Next } from "koa";
-import { log } from "../../logger.js";
-import {
-  formatResponse,
-  getErrorInfo,
-  prettyFormatStatus,
-} from "../../errors.js";
+import { log } from "./logger.js";
+import { formatResponse, getErrorInfo, prettyFormatStatus } from "./errors.js";
 
 export async function handleError(ctx: Context, next: Next) {
   let info;

@@ -1,7 +1,6 @@
 import { z } from "zod";
-import axios from "axios";
-import { config } from "../config.js";
 import _ from "lodash";
+import { getApi } from "../getApi.js";
 
 const ZPaddleArgs = z.object({
   p_order_id: z.string(),
@@ -10,23 +9,6 @@ const ZPaddleArgs = z.object({
   name: z.string(),
   product: z.string(),
 });
-
-function getApi(kind: "test" | "live") {
-  let apiKey;
-  if (kind === "test") {
-    apiKey = config.ROLO_APIKEY_TEST;
-  } else if (kind === "live") {
-    apiKey = config.ROLO_APIKEY_LIVE;
-  } else {
-    throw new Error(`Invalid kind '${kind}'`);
-  }
-  return axios.create({
-    baseURL: config.ROLO_URL,
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-    },
-  });
-}
 
 export async function processLicense(args: unknown, mode: "test" | "live") {
   // create license

@@ -3,14 +3,15 @@ import Koa from "koa";
 import Router from "@koa/router";
 import { config } from "./config.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
+import { router as lizhiRouter } from "./lizhi/lizhiRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../errors.js";
-import { logAccess } from "../api/middleware/logAccess.js";
-import { handleError } from "../api/middleware/handleError.js";
+import { handleError } from "../handleError.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
+router.use(lizhiRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {

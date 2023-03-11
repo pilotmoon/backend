@@ -17,7 +17,7 @@ import { getDb } from "../database.js";
 import { z } from "zod";
 import _ from "lodash";
 import { ZAuthInfo } from "../auth.js";
-import { days } from "./timeIntervals.js";
+import { days } from "../../timeIntervals.js";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),

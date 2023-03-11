@@ -11,7 +11,7 @@ import {
 import TTLCache from "@isaacs/ttlcache";
 import { sha256Hex } from "../../sha256.js";
 import { decipherToken } from "../token.js";
-import { minutes } from "./timeIntervals.js";
+import { minutes } from "../../timeIntervals.js";
 
 // container for a deconstructed secret key
 interface SecretKeyParts {
