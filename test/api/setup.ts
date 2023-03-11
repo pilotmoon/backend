@@ -52,7 +52,13 @@ export function keys() {
   return keyStore;
 }
 
-export function rolo(keyName: KeyName = "runner"): AxiosInstance {
+export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
+  if (!keyName) {
+    return axios.create({
+      baseURL: config.APP_TEST_URL,
+      validateStatus: () => true,
+    });
+  }
   let instance = instances.get(keyName);
   if (!instance) {
     instance = axios.create({

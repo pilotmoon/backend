@@ -316,12 +316,9 @@ test("list the registries using a token with read permissions", async (t) => {
   });
 
   // now use that token to list the records
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries`,
-    {
-      headers: { Authorization: undefined },
-      params: { token },
-    },
+    { params: { token } },
   );
   t.is(res.status, 200);
   t.is(res.data.object, "list");
@@ -336,12 +333,9 @@ test("list the registries using a token with read permissions and a resource", a
   });
 
   // now use that token to list the records
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries`,
-    {
-      headers: { Authorization: undefined },
-      params: { token },
-    },
+    { params: { token } },
   );
   t.is(res.status, 200);
   t.is(res.data.object, "list");
@@ -355,10 +349,9 @@ test("read the foo registry using a token with read permissions and a resource",
     resource: `registries/${fooRegistryId}`,
   });
 
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries/${fooRegistryId}`,
     {
-      headers: { Authorization: undefined },
       params: { token },
     },
   );
@@ -374,10 +367,9 @@ test("read the foo registry using a token with read permissions for a different 
     resource: `registries/blahblah`,
   });
 
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries/${fooRegistryId}`,
     {
-      headers: { Authorization: undefined },
       params: { token },
     },
   );
@@ -391,10 +383,9 @@ test("get an object from the foo registry using a token with read permissions", 
     resource: `registries/${fooRegistryId}`,
   });
 
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries/${fooRegistryId}/objects/config`,
     {
-      headers: { Authorization: undefined },
       params: { token },
     },
   );
@@ -406,10 +397,9 @@ test("get an object from the foo registry using a token with read permissions", 
 test("get an object from the foo registry using a token of the api key type", async (t) => {
   const token = generateApiKeyToken(keys().runner.key);
   t.log("token", token);
-  const res = await rolo().get(
+  const res = await rolo(null).get(
     `/registries/${fooRegistryId}/objects/config`,
     {
-      headers: { Authorization: undefined },
       params: { token },
     },
   );
