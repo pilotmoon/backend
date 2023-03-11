@@ -11,6 +11,7 @@ test.before(async (t) => {
     headers: {
       "Content-Type": "application/json",
     },
+    validateStatus: () => true,
   });
 });
 
