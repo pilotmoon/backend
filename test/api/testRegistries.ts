@@ -404,6 +404,7 @@ test("get an object from the foo registry using a token of the api key type", as
     },
   );
   t.log(res.data);
+  t.log(res.status);
   t.is(res.status, 200);
   t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
