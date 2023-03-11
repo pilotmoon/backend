@@ -10,6 +10,7 @@
     "dev-twix": "./scripts/dev-twix",
     "deploy": "./scripts/deploy",
     "test-unit": "./scripts/test-unit",
+    "test-twix-local": "./scripts/test-twix-local",
     "test-local": "./scripts/test-local",
     "test-prod": "./scripts/test-prod",
     "test-prodx": "./scripts/test-prodx"

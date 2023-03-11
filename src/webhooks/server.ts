@@ -13,13 +13,13 @@ function log(...args: any[]) {
 }
 
 router.get("/", (ctx) => {
-  ctx.body = "Hello World";
+  ctx.body = "twix " + config.COMMIT_HASH;
 });
 
 // server startup and shutdown
 const abortController = new AbortController();
 function startServer() {
-  const port = config.TWIX_APP_PORT;
+  const port = config.TWIX_PORT;
   log("Starting server...");
   app.listen({ port, signal: abortController.signal }, () => {
     log(`Server listening on port ${port}`.bgMagenta);

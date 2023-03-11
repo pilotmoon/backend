@@ -11,14 +11,16 @@ on:
     - v*
 
 env:
+  # vars
   APP_PORT: "${{ vars.APP_PORT }}"
-  APP_URL: "${{ vars.APP_URL }}"
-  APP_TEST_URL: "${{ vars.APP_URL }}"
+  APP_TEST_URL: "${{ vars.APP_TEST_URL }}"
   DATABASE_URL: "${{ vars.DATABASE_URL }}"
   DATABASE_NAME_LIVE: "${{ vars.DATABASE_NAME_LIVE }}"
   DATABASE_NAME_TEST: "${{ vars.DATABASE_NAME_TEST }}"
   DATABASE_NAME_LOGS: "${{ vars.DATABASE_NAME_LOGS }}"
-  COMMIT_HASH: ""
+  TWIX_PORT: "${{ vars.TWIX_PORT }}"
+  TWIX_TEST_URL: $"${{ vars.TWIX_TEST_URL }}"
+  # secrets
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
   APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
 
@@ -46,10 +48,16 @@ jobs:
       with:
         mongodb-version: ${{ matrix.mongodb-version }}
         mongodb-replica-set: rs0
-    - name: Run E2E Tests
+    - name: Run rolo E2E tests
       uses: BerniWittmann/background-server-action@v1
       with:
         command: npm run test-local
         start: npm run start
-        wait-on: '${{ vars.APP_URL }}'
+        wait-on: '${{ vars.APP_TEST_URL }}'
+    - name: Run twix E2E tests
+      uses: BerniWittmann/background-server-action@v1
+      with:
+        command: npm run test-twix-local
+        start: npm run start-twix
+        wait-on: '${{ vars.TWIX_TEST_URL }}'
 
