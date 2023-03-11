@@ -63,7 +63,7 @@ jobs:
     - name: Run twix E2E tests
       uses: BerniWittmann/background-server-action@v1
       with:
-        command: npm run test-twix-local
+        command: npm run test-local & npm run test-twix-local
         start: npm run start-twix
-        wait-on: '${{ vars.TWIX_TEST_URL }}'
+        wait-on: '${{ vars.APP_TEST_URL }}, ${{ vars.TWIX_TEST_URL }}'
 
