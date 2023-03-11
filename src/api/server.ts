@@ -111,7 +111,7 @@ process.on("SIGINT", async () => {
   if (!closing) {
     closing = true;
     log("Calling shutdown routines".green);
-    await Promise.all([ // run all shutdown routines in parallel
+    await Promise.allSettled([ // run all shutdown routines in parallel
       clearInterval(housekeepingTimer),
       closeServer(),
       closeDb(),
