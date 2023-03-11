@@ -405,6 +405,7 @@ test("get an object from the foo registry using a token with read permissions", 
 
 test("get an object from the foo registry using a token of the api key type", async (t) => {
   const token = generateApiKeyToken(keys().runner.key);
+  t.log("token", token);
   const res = await rolo().get(
     `/registries/${fooRegistryId}/objects/config`,
     {
@@ -412,6 +413,7 @@ test("get an object from the foo registry using a token of the api key type", as
       params: { token },
     },
   );
+  t.log(res.data);
   t.is(res.status, 200);
   t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
