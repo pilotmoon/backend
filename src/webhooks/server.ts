@@ -13,6 +13,7 @@ function log(...args: any[]) {
 }
 
 router.get("/", (ctx) => {
+  console.log("GET /");
   ctx.body = "twix " + config.COMMIT_HASH;
 });
 
