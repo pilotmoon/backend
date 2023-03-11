@@ -1,5 +1,5 @@
 import test from "ava";
-import { keys, rolo, testKeys } from "./setup.js";
+import { keys, rolo } from "./setup.js";
 import { randomString } from "@pilotmoon/chewit";
 import {
   generateApiKeyToken,
