@@ -101,7 +101,7 @@ export function generateEncryptedToken(
 
   // base62-encode the encrypted data, and prepend the token type and database kind
   return `${tokenType}${characterForKeyKind(keyKind)}${
-    baseEncode(encryptedDataArray, alphabets.base62)
+    baseEncode(encryptedDataArray, alphabets.base62, { trim: false })
   }`;
 }
 
