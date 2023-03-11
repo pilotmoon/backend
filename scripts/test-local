@@ -6,5 +6,4 @@ if [ -z ${APP_PORT+x} ]; then
   source .env-rolo
   source .env-twix
 fi
-npx ava dist/test/testApi.js --serial
-npx ava dist/test/testWebhooks.js --serial
+npx ava dist/test/testE2E.js --serial
