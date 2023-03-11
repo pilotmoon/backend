@@ -1,4 +1,4 @@
-# Rolo
+# Backend
 
 ```text
                      ,--,
@@ -15,8 +15,7 @@ Pilotmoon API ==== ,--.'| ===========
 ==================  ---`-' ======= v2
 ```
 
-This API server is the back-end for Pilotmoon's apps and websites. It is written
-in TypeScript and is built around Koa. Data is stored on a MongoDB cluster.
+Back-end components for Pilotmoon's apps and websites.
 
 Current capabilities:
 
@@ -30,18 +29,14 @@ Planned capabilities:
 - Sign and store extensions
 - Synchronise extensions and settings
 
-Rolo is named after a brand of chocolate-covered caramels.
-
 ## Components
 
-There are two components, running as separate apps:
+There are two server components, running as separate apps:
 
-- `src/api/`: Rolo, the main API server.
-- `src/webhooks/`: Twix, a companion server that acts as an adapter interface
+- `src/api/`: **Rolo**, the main API server.
+- `src/webhooks/`: **Twix**, a companion server that acts as an adapter interface
   for external services.
 
 ## Infrastructure
 
-The apps are designed to be deployed the DigitalOcean App Platform under Node
-16.x, fronted by a reverse proxy (with rate-limiting) for access via a public
-domain name.
+The components are deployed on DigitalOcean App Platform under Node 16.x, fronted by an nginx reverse proxy.
