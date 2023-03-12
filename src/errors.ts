@@ -2,6 +2,7 @@ import { ZodError } from "zod";
 import { MongoServerError } from "mongodb";
 import { fromZodError } from "zod-validation-error";
 import { STATUS_CODES } from "node:http";
+import { AxiosError } from "axios";
 
 export class ApiError extends Error {
   status: number;
@@ -31,8 +32,18 @@ interface ErrorInfo {
 export function getErrorInfo(error: unknown): ErrorInfo {
   // get some kind of message
   let message;
+  let type = "UnknownError";
   if (error instanceof ZodError) {
+    type = "ZodError";
     message = fromZodError(error).message;
+  } else if (error instanceof AxiosError) {
+    type = "AxiosError";
+    message = error.message;
+    if (error.response && error.response.data) {
+      message = error.message + " / " + error.response.data;
+    } else {
+      message = error.message;
+    }
   } else if (error instanceof Error) {
     message = error.message;
   } else {
@@ -40,8 +51,8 @@ export function getErrorInfo(error: unknown): ErrorInfo {
   }
 
   // try to get type name from error
-  let type = "UnknownError";
   if (
+    !type &&
     typeof error === "object" && error !== null &&
     "name" in error && typeof error.name === "string"
   ) {
