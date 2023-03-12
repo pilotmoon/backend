@@ -59,7 +59,7 @@ test("post /generateLicense with sample body and invalid signature", async (t) =
     ...samplePaddle,
     p_signature: "invalid",
   });
-  t.is(res.status, 403);
+  t.is(res.status, 400);
 });
 
 test("post /generateLicense with sample body and invalid passthrough", async (t) => {
@@ -67,7 +67,7 @@ test("post /generateLicense with sample body and invalid passthrough", async (t)
     ...samplePaddle,
     passthrough: "invalid",
   });
-  t.is(res.status, 403);
+  t.is(res.status, 400);
 });
 
 test("post /generateLicense with sample body", async (t) => {

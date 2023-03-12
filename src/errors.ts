@@ -32,17 +32,16 @@ interface ErrorInfo {
 export function getErrorInfo(error: unknown): ErrorInfo {
   // get some kind of message
   let message;
-  let type = "UnknownError";
+  let type;
   if (error instanceof ZodError) {
     type = "ZodError";
     message = fromZodError(error).message;
   } else if (error instanceof AxiosError) {
     type = "AxiosError";
     message = error.message;
-    if (error.response && error.response.data) {
-      message = error.message + " / " + error.response.data;
-    } else {
-      message = error.message;
+    const innerError = error.response?.headers["x-error-message"];
+    if (typeof innerError === "string") {
+      message += " / " + innerError;
     }
   } else if (error instanceof Error) {
     message = error.message;
@@ -51,12 +50,15 @@ export function getErrorInfo(error: unknown): ErrorInfo {
   }
 
   // try to get type name from error
-  if (
-    !type &&
-    typeof error === "object" && error !== null &&
-    "name" in error && typeof error.name === "string"
-  ) {
-    type = error.name;
+  if (!type) {
+    if (
+      typeof error === "object" && error !== null &&
+      "name" in error && typeof error.name === "string"
+    ) {
+      type = error.name;
+    } else {
+      type = "UnknownError";
+    }
   }
 
   // adjust status code for known errors
