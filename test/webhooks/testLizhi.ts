@@ -44,7 +44,7 @@ test("lizhi post /generateLicense with sample body no qty", async (t) => {
     product: "com.example.product",
     order: "123456",
   });
-  t.is(res.status, 200);
+  t.is(res.status, 201);
   // parse url from the returned markdown link
   t.log(res.data);
   t.assert(
@@ -62,7 +62,7 @@ test("lizhi post /generateLicense with sample body with qty", async (t) => {
     order: "123456",
     quantity: 10,
   });
-  t.is(res.status, 200);
+  t.is(res.status, 201);
   // parse url from the returned markdown link
   t.assert(
     res.data.web_url.startsWith("https://api.pilotmoon.com/v2"),

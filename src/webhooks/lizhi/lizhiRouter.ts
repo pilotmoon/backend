@@ -21,5 +21,5 @@ router.post("/webhooks/lizhi/generateLicense", async (ctx) => {
     file_name: license.file.name,
     file_data: license.file.data,
   };
-  ctx.state = 201;
+  ctx.status = 201;
 });
