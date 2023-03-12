@@ -24,7 +24,7 @@ export async function processLicense(
     email: lizhiArgs.email,
     name: lizhiArgs.name,
     product: lizhiArgs.product,
-    quantity: lizhiArgs.quantity ?? "1",
+    quantity: lizhiArgs.quantity ?? 1,
     order: lizhiArgs.order,
     origin,
   };
