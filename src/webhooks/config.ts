@@ -10,6 +10,7 @@ export interface Config {
   ROLO_URL_CANONICAL: string;
   ROLO_APIKEY_TEST: string;
   ROLO_APIKEY_LIVE: string;
+  LIZHI_APIKEYS: string;
 }
 export const config = loadConfig<Config>([
   { key: "TWIX_PORT", transform: decimalIntegerTransform },
@@ -24,4 +25,5 @@ export const config = loadConfig<Config>([
   { key: "ROLO_URL_CANONICAL" },
   { key: "ROLO_APIKEY_TEST", hidden: true },
   { key: "ROLO_APIKEY_LIVE", hidden: true },
+  { key: "LIZHI_APIKEYS", hidden: true },
 ]);

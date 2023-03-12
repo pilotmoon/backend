@@ -1,17 +1,17 @@
-import { ApiError } from "../../errors.js";
 import { serialize } from "php-serialize";
 import { createVerify } from "node:crypto";
 import { z } from "zod";
 import _ from "lodash";
+import { Context } from "koa";
 
 const ZPaddleWebhookData = z.object({
   p_signature: z.string(),
 }).passthrough();
 
 // validate webhook signature (based on paddle docs)
-export function validatePaddleWebhook(args: unknown, pubKey: string): boolean {
+export function validatePaddleWebhook(ctx: Context, pubKey: string): boolean {
   try {
-    const data = ZPaddleWebhookData.parse(args);
+    const data = ZPaddleWebhookData.parse(ctx.request.body);
     // sort args by key and replace non-string values with stringified values
     const sorted = {} as any;
     for (

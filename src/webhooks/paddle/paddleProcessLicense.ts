@@ -1,6 +1,7 @@
 import { z } from "zod";
 import _ from "lodash";
 import { getApi } from "../getApi.js";
+import { ZLicenseExternal } from "../../licenseFileObject.js";
 
 const ZPaddleArgs = z.object({
   p_order_id: z.string(),
@@ -25,11 +26,5 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     originData: _.omit(paddleArgs, "p_signature"),
   };
   const { data } = await api.post("/licenseKeys", info);
-  if (
-    data.object === "licenseKey" && data.file?.object === "licenseKeyFile"
-  ) {
-    return data.file;
-  } else {
-    throw new Error("invalid response from api");
-  }
+  return ZLicenseExternal.parse(data);
 }

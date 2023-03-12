@@ -13,11 +13,11 @@ router.post("/webhooks/paddle/generateLicense", async (ctx) => {
     { pubkey: config.PADDLE_PUBKEY_SANDBOX, mode: "test" as const },
   ];
   const signed = signers.find((signer) =>
-    validatePaddleWebhook(ctx.request.body, signer.pubkey)
+    validatePaddleWebhook(ctx, signer.pubkey)
   );
   if (!signed) {
     throw new ApiError(400, "Invalid signature");
   }
-  const file = await processLicense(ctx.request.body, signed.mode);
+  const { file } = await processLicense(ctx.request.body, signed.mode);
   ctx.body = `[${file.name}](${config.ROLO_URL_CANONICAL}${file.url})`;
 });

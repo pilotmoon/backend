@@ -40,8 +40,6 @@ export const genericIdPattern = `[0-9a-zA-Z-_.]+`; // no ^ or $ for use in route
 
 // general purpose identifier and string schemas
 export const ZIdentifier = z.string().trim().regex(genericIdRegex).max(100);
-export const ZSaneString = z.string().trim().min(1).max(100);
-
 // generate a random identifier with the given prefix
 export function randomIdentifier(prefix: string): string {
   return `${prefix}_${randomString({ length: idLength, rng: rng() })}`;

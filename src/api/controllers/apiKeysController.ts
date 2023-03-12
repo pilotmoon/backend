@@ -1,4 +1,5 @@
-import { deterministic, randomKey, ZSaneString } from "../identifiers.js";
+import { deterministic, randomKey } from "../identifiers.js";
+import { ZSaneString } from "../../saneString.js";
 import { z } from "zod";
 import { getDb } from "../database.js";
 import { Binary } from "mongodb";

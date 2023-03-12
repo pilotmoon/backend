@@ -2,23 +2,21 @@ import { z } from "zod";
 import { getDb } from "../database.js";
 import { Auth } from "../auth.js";
 import { handleControllerError } from "../../errors.js";
-import {
-  genericIdRegex,
-  randomIdentifier,
-  ZSaneString,
-} from "../identifiers.js";
+import { genericIdRegex, randomIdentifier } from "../identifiers.js";
+import { ZSaneString } from "../../saneString.js";
 import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { sha256Hex } from "../../sha256.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 import { canonicalizeEmail } from "../../canonicalizeEmail.js";
 import { AuthKind, authKinds } from "../auth.js";
-import {
-  getRegistryObjectInternal as getreg,
-  ZRecord,
-} from "./registriesController.js";
+import { getRegistryObjectInternal as getreg } from "./registriesController.js";
 import { ProductConfig, ZProductConfig } from "../../product.js";
 import { sanitizeName } from "../../sanitizeName.js";
+import {
+  LicenseFileObject,
+  ZLicenseFileObject,
+} from "../../licenseFileObject.js";
 /*
 
 # License Keys
@@ -272,19 +270,6 @@ const ZLicenseFileFields = z.object({
   Quantity: z.string().optional(),
 });
 type LicenseFileFields = z.infer<typeof ZLicenseFileFields>;
-
-// schema for the json wrapper for the license key file
-export const ZLicenseFileObject = z.object({
-  // literal string "licenseKeyFile"
-  object: z.literal("licenseKeyFile"),
-  // license key filename, e.g. "John_Doe.popcliplicense"
-  name: z.string(),
-  // license file content as plist string
-  plist: z.string(),
-  // license key file content, as a Base64-encoded string
-  data: z.string(),
-});
-export type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
 // generate license file content and file name for a license key
 export async function generateLicenseFile(
