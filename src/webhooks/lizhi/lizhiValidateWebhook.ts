@@ -8,11 +8,12 @@ const ZKeyDef = z.object({
   kind: z.enum(["test", "live"]),
 });
 
+const keys = z.array(ZKeyDef).parse(JSON.parse(config.LIZHI_APIKEYS));
+
 // validate the webhook header
 export function validateLizhiWebhook(ctx: Context) {
   try {
     const apiKey = ctx.request.get("x-api-key");
-    const keys = z.array(ZKeyDef).parse(JSON.parse(config.LIZHI_APIKEYS));
     const key = keys.find((key) => key.key === apiKey);
     console.log("key", key);
     if (!key) return null;
