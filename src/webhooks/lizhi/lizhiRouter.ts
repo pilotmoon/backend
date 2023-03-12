@@ -12,9 +12,6 @@ router.post("/webhooks/lizhi/generateLicense", async (ctx) => {
     throw new ApiError(401, "Missing or invalid API key");
   }
   const license = await processLicense(ctx.request.body, key.name, key.kind);
-  if (!license) {
-    throw new ApiError(500, "Error generating license");
-  }
   ctx.body = {
     web_url: config.ROLO_URL_CANONICAL + license.file.url,
     license_id: license.id,
