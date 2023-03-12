@@ -8,18 +8,16 @@ import { ApiError } from "../../errors.js";
 export const router = new Router();
 
 router.post("/webhooks/paddle/generateLicense", async (ctx) => {
-  const productionSigned = validatePaddleWebhook(
-    ctx.request.body,
-    config.PADDLE_PUBKEY_PRODUCTION,
+  const signers = [
+    { pubkey: config.PADDLE_PUBKEY_PRODUCTION, mode: "live" as const },
+    { pubkey: config.PADDLE_PUBKEY_SANDBOX, mode: "test" as const },
+  ];
+  const signed = signers.find((signer) =>
+    validatePaddleWebhook(ctx.request.body, signer.pubkey)
   );
-  const sandboxSigned = validatePaddleWebhook(
-    ctx.request.body,
-    config.PADDLE_PUBKEY_SANDBOX,
-  );
-  if (!sandboxSigned && !productionSigned) {
+  if (!signed) {
     throw new ApiError(400, "Invalid signature");
   }
-  const mode = productionSigned ? "live" : "test";
-  const file = await processLicense(ctx.request.body, mode);
+  const file = await processLicense(ctx.request.body, signed.mode);
   ctx.body = `[${file.name}](${config.ROLO_URL_CANONICAL}${file.url})`;
 });
