@@ -19,5 +19,6 @@ router.post("/webhooks/paddle/generateLicense", async (ctx) => {
     throw new ApiError(400, "Invalid signature");
   }
   const { file } = await processLicense(ctx.request.body, signed.mode);
-  ctx.body = `[${file.name}](${config.ROLO_URL_CANONICAL}${file.url})`;
+  const escapedName = file.name.replaceAll("_", "\\_");
+  ctx.body = `[${escapedName}](${config.ROLO_URL_CANONICAL}${file.url})`;
 });
