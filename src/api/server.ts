@@ -121,16 +121,14 @@ process.on("SIGINT", async () => {
 });
 
 // app startup
-(async () => {
-  log("Calling startup routines".green);
-  await connectDb(); // connect to database first
-  await Promise.all([ // run all other startup routines in parallel
-    housekeep(), // run housekeeping once at startup
-    initLogAccess(),
-    initApiKeysController(),
-    initRegistriesController(),
-    initLicenseKeysController(),
-  ]);
-  log("Startup complete".green);
-  startServer();
-})();
+log("Calling startup routines".green);
+await connectDb(); // connect to database first
+await Promise.allSettled([ // run all other startup routines in parallel
+  housekeep(), // run housekeeping once at startup
+  initLogAccess(),
+  initApiKeysController(),
+  initRegistriesController(),
+  initLicenseKeysController(),
+]);
+log("Startup complete".green);
+startServer();
