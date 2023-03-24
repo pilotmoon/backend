@@ -13,13 +13,13 @@ export const couponPrefixes: Record<string, { prefix: string }> = {
     prefix: "STU",
   },
   "Student App Centre - test": {
-    prefix: "TST",
+    prefix: "STT",
   },
   "internal test": {
     prefix: "TST",
   },
 };
-export const coupons = {
+export const couponOffers = {
   "popclip30": {
     product: paddleCatalog.popclip,
     discountPercent: 30,

@@ -203,16 +203,16 @@ test("webhook, store, generateLicense, quantity is NaN", async (t) => {
 
 test("webhook, store, generateCoupon, example30", async (t) => {
   const res = await webhooks.post("/store/generateCoupon", {
-    coupon_id: "example30",
+    offer: "example30",
   });
   t.is(res.status, 201);
   t.log(res.data);
   t.assert(res.data.startsWith("TST"));
 });
 
-test("webhook, store, generateCoupon, invalid coupon_id", async (t) => {
+test("webhook, store, generateCoupon, invalid offer", async (t) => {
   const res = await webhooks.post("/store/generateCoupon", {
-    coupon_id: "invalid",
+    offer: "invalid",
   });
   t.log(res.data);
   t.is(res.status, 400);
@@ -220,7 +220,7 @@ test("webhook, store, generateCoupon, invalid coupon_id", async (t) => {
 
 test("webhook, store, generateCoupon, coupon id for wrong mode", async (t) => {
   const res = await webhooks.post("/store/generateCoupon", {
-    coupon_id: "popclip30",
+    offer: "popclip30",
   });
   t.log(res.data);
   t.is(res.status, 400);

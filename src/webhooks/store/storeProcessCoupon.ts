@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
 import { getPaddle } from "../paddle.js";
-import { couponPrefixes, coupons } from "./coupons.js";
+import { couponOffers, couponPrefixes } from "./coupons.js";
 
 const ZCouponArgs = z.object({
-  coupon_id: z.enum(Object.keys(coupons) as [keyof typeof coupons]),
+  offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),
 });
 
 export async function processCoupon(
@@ -16,13 +16,13 @@ export async function processCoupon(
   console.log("mode: ", mode);
 
   const couponArgs = ZCouponArgs.parse(args);
-  const coupon = coupons[couponArgs.coupon_id];
+  const offer = couponOffers[couponArgs.offer];
 
   // check coupon is in correct mode
-  if (coupon.product.mode !== mode) {
+  if (offer.product.mode !== mode) {
     throw new ApiError(
       400,
-      `'${couponArgs.coupon_id}' only allowed in ${coupon.product.mode} mode`,
+      `'${couponArgs.offer}' only allowed in ${offer.product.mode} mode`,
     );
   }
 
@@ -41,11 +41,11 @@ export async function processCoupon(
 
   // create coupon
   const { data } = await paddle.post("2.1/product/create_coupon", {
-    product_ids: coupon.product.productIds.join(","),
-    description: `${couponArgs.coupon_id} for ${origin}`,
+    product_ids: offer.product.productIds.join(","),
+    description: `${couponArgs.offer} for ${origin}`,
     coupon_type: "product",
     discount_type: "percentage",
-    discount_amount: coupon.discountPercent,
+    discount_amount: offer.discountPercent,
     coupon_prefix: couponPrefix,
     num_coupons: 1,
     allowed_uses: 1,
