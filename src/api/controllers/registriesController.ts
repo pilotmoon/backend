@@ -3,7 +3,7 @@ import { getDb } from "../database.js";
 import { Auth, AuthKind, authKinds } from "../auth.js";
 import { handleControllerError } from "../../errors.js";
 import { randomIdentifier } from "../identifiers.js";
-import { ZSaneString, ZSaneIdentifier } from "../../saneString.js";
+import { ZSaneIdentifier, ZSaneString } from "../../saneString.js";
 import { PaginateState } from "../middleware/processPagination.js";
 import { ZPortableKeyPair } from "../../keyPair.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";

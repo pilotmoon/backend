@@ -94,9 +94,12 @@ router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
 });
 
 // read a registry using one of its identifiers, using `byIdentifier` url
-router.get('/byIdentifier' + makeGenericIdPattern('identifier'), async (ctx) => {
-  const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
-  if (document) {
-    ctx.body = redact(document);
-  }
-});
+router.get(
+  "/byIdentifier" + makeGenericIdPattern("identifier"),
+  async (ctx) => {
+    const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
+    if (document) {
+      ctx.body = redact(document);
+    }
+  },
+);
