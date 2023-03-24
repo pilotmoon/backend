@@ -3,26 +3,14 @@ import { validatePaddleWebhook } from "./paddleValidateWebhook.js";
 import Router from "@koa/router";
 import { config } from "../config.js";
 import { ApiError } from "../../errors.js";
-import { z } from "zod";
-
-const ZCred = z.object({
-  vendorId: z.string(),
-  vendorSecret: z.string(),
-  publicKey: z.string(),
-});
-const ZCreds = z.object({
-  production: ZCred,
-  sandbox: ZCred,
-});
-
-const creds = ZCreds.parse(JSON.parse(config.PADDLE_CREDENTIALS));
+import { paddleCredentials } from "../paddle.js";
 
 export const router = new Router();
 
 router.post("/webhooks/paddle/generateLicense", async (ctx) => {
   const signers = [
-    { pubkey: creds.production.publicKey, mode: "live" as const },
-    { pubkey: creds.sandbox.publicKey, mode: "test" as const },
+    { pubkey: paddleCredentials.production.publicKey, mode: "live" as const },
+    { pubkey: paddleCredentials.sandbox.publicKey, mode: "test" as const },
   ];
   const signed = signers.find((signer) =>
     validatePaddleWebhook(ctx, signer.pubkey)

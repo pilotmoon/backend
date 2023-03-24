@@ -206,7 +206,8 @@ test("webhook, store, generateCoupon, example30", async (t) => {
     coupon_id: "example30",
   });
   t.is(res.status, 201);
-  t.is(res.data, "FOO");
+  t.log(res.data);
+  t.assert(res.data.startsWith("TST"));
 });
 
 test("webhook, store, generateCoupon, invalid coupon_id", async (t) => {

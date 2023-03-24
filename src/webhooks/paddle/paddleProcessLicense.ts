@@ -1,6 +1,6 @@
 import { z } from "zod";
 import _ from "lodash";
-import { getApi } from "../getApi.js";
+import { getRolo } from "../rolo.js";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
 
 const ZPaddleArgs = z.object({
@@ -15,7 +15,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   // create license
   console.log("mode: ", mode);
   const paddleArgs = ZPaddleArgs.passthrough().parse(args);
-  const api = getApi(mode);
+  const api = getRolo(mode);
   const info = {
     email: paddleArgs.email,
     name: paddleArgs.name,

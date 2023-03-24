@@ -1,7 +1,7 @@
 import axios from "axios";
 import { config } from "./config.js";
 
-export function getApi(kind: "test" | "live") {
+export function getRolo(kind: "test" | "live") {
   let apiKey;
   if (kind === "test") {
     apiKey = config.ROLO_APIKEY_TEST;

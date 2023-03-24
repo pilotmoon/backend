@@ -1,40 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
-import { ZSaneString } from "../../saneString.js";
-
-const paddleCatalog = {
-  popclip: {
-    mode: "live",
-    productId: "818494",
-  },
-  example: {
-    mode: "test",
-    productId: "47023",
-  },
-};
-
-const couponPrefix: Record<string, { prefix: string }> = {
-  "Student App Centre": {
-    prefix: "STU",
-  },
-  "Student App Centre - test": {
-    prefix: "TST",
-  },
-  "internal test": {
-    prefix: "TST",
-  },
-};
-
-const coupons = {
-  "popclip30": {
-    product: paddleCatalog.popclip,
-    discountPercent: 30,
-  },
-  "example30": {
-    product: paddleCatalog.example,
-    discountPercent: 30,
-  },
-};
+import { getPaddle } from "../paddle.js";
+import { couponPrefixes, coupons } from "./coupons.js";
 
 const ZCouponArgs = z.object({
   coupon_id: z.enum(Object.keys(coupons) as [keyof typeof coupons]),
@@ -60,11 +27,31 @@ export async function processCoupon(
   }
 
   // check we have a coupon prefix for this origin
-  const couponPrefixForOrigin = couponPrefix[origin]?.prefix;
-  if (!couponPrefixForOrigin) {
+  const couponPrefix = couponPrefixes[origin]?.prefix;
+  if (!couponPrefix) {
     throw new ApiError(403, `Not allowed for origin '${origin}'`);
   }
 
-  // create coupon code
-  return "FOO";
+  // get the api endpoint
+  const paddle = getPaddle(mode);
+
+  // calculate date 28 days from now
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + 28);
+
+  // create coupon
+  const { data } = await paddle.post("2.1/product/create_coupon", {
+    product_ids: coupon.product.productIds.join(","),
+    description: `${couponArgs.coupon_id} for ${origin}`,
+    coupon_type: "product",
+    discount_type: "percentage",
+    discount_amount: coupon.discountPercent,
+    coupon_prefix: couponPrefix,
+    num_coupons: 1,
+    allowed_uses: 1,
+    expires: expiryDate.toISOString().slice(0, 10),
+    group: origin,
+  });
+  console.log(data);
+  return data.response.coupon_codes[0];
 }

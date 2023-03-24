@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
 import { ZSaneEmail, ZSaneQuantity, ZSaneString } from "../../saneString.js";
-import { getApi } from "../getApi.js";
+import { getRolo } from "../rolo.js";
 
 const ZLicenseArgs = z.object({
   name: ZSaneString,
@@ -19,7 +19,7 @@ export async function processLicense(
   // create license
   console.log("mode: ", mode);
   const licenseArgs = ZLicenseArgs.parse(args);
-  const api = getApi(mode);
+  const api = getRolo(mode);
   const info = {
     email: licenseArgs.email,
     name: licenseArgs.name,
