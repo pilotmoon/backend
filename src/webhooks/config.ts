@@ -4,8 +4,7 @@ import { decimalIntegerTransform, loadConfig } from "../loadConfig.js";
 export interface Config {
   TWIX_PORT: number;
   COMMIT_HASH: string;
-  PADDLE_PUBKEY_SANDBOX: string;
-  PADDLE_PUBKEY_PRODUCTION: string;
+  PADDLE_CREDENTIALS: string;
   ROLO_URL: string;
   ROLO_URL_CANONICAL: string;
   ROLO_APIKEY_TEST: string;
@@ -19,8 +18,7 @@ export const config = loadConfig<Config>([
     optional: true,
     transform: (val) => val.length === 40 ? val : "?".repeat(40),
   },
-  { key: "PADDLE_PUBKEY_SANDBOX", hidden: true },
-  { key: "PADDLE_PUBKEY_PRODUCTION", hidden: true },
+  { key: "PADDLE_CREDENTIALS", hidden: true },
   { key: "ROLO_URL" },
   { key: "ROLO_URL_CANONICAL" },
   { key: "ROLO_APIKEY_TEST", hidden: true },

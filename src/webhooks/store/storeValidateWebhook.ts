@@ -19,7 +19,7 @@ export function validateStoreWebhook(ctx: Context) {
     if (!key) return null;
     return key;
   } catch (e) {
-    console.log("Error validating Lizhi webhook", e);
+    console.log("Error validating Store webhook", e);
     return null;
   }
 }
