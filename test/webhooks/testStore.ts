@@ -1,12 +1,12 @@
 import test from "ava";
 import axios, { AxiosInstance } from "axios";
 
-let paddle: AxiosInstance;
+let webhooks: AxiosInstance;
 async function setup() {
   const keys = JSON.parse(process.env.TWIX_APIKEYS ?? "");
   const key = keys.find((key: any) => key.name === "internal test");
 
-  paddle = axios.create({
+  webhooks = axios.create({
     baseURL: process.env.TWIX_TEST_URL + "/webhooks",
     validateStatus: () => true, // don't throw on non-200 status
     headers: {
@@ -18,17 +18,16 @@ async function setup() {
 test.before(setup);
 
 test("lizhi get blank", async (t) => {
-  const res = await paddle.get("");
+  const res = await webhooks.get("");
   t.is(res.status, 404);
 });
--
-test("lizhi get /generateLizense", async (t) => {
-  const res = await paddle.get("/store/generateLicense");
+-test("lizhi get /generateLizense", async (t) => {
+  const res = await webhooks.get("/store/generateLicense");
   t.is(res.status, 405);
 });
 
 test("lizhi post /generateLicense bad api key", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {}, {
+  const res = await webhooks.post("/store/generateLicense", {}, {
     headers: {
       "X-Api-Key": "dff",
     },
@@ -38,7 +37,7 @@ test("lizhi post /generateLicense bad api key", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body no qty", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -55,7 +54,7 @@ test("lizhi post /generateLicense with sample body no qty", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body with qty", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -72,7 +71,7 @@ test("lizhi post /generateLicense with sample body with qty", async (t) => {
 });
 
 test("post license with sample body to /store/generateLicense", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -82,7 +81,7 @@ test("post license with sample body to /store/generateLicense", async (t) => {
 });
 
 test("quantity must be integer", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "fgfg@foo.com",
     product: "com.example.product",
@@ -93,7 +92,7 @@ test("quantity must be integer", async (t) => {
 });
 
 test("quantity must be positive", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.example.product",
@@ -104,7 +103,7 @@ test("quantity must be positive", async (t) => {
 });
 
 test("quantity must not be zero", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.example.product",
@@ -115,7 +114,7 @@ test("quantity must not be zero", async (t) => {
 });
 
 test("email must be valid", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo",
     product: "com.example.product",
@@ -125,7 +124,7 @@ test("email must be valid", async (t) => {
 });
 
 test("product must be valid", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.invalid.product",
@@ -135,7 +134,7 @@ test("product must be valid", async (t) => {
 });
 
 test("webhook, store, generateLicense, missing name", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     email: "foo@foo.com",
     product: "com.example.product",
     order: "789012",
@@ -144,7 +143,7 @@ test("webhook, store, generateLicense, missing name", async (t) => {
 });
 
 test("webhook, store, generateLicense, missing email", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     product: "com.example.product",
     order: "789012",
@@ -153,7 +152,7 @@ test("webhook, store, generateLicense, missing email", async (t) => {
 });
 
 test("webhook, store, generateLicense, missing product", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     order: "789012",
@@ -162,7 +161,7 @@ test("webhook, store, generateLicense, missing product", async (t) => {
 });
 
 test("webhook, store, generateLicense, missing order", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.example.product",
@@ -171,7 +170,7 @@ test("webhook, store, generateLicense, missing order", async (t) => {
 });
 
 test("webhook, store, generateLicense, empty name", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "",
     email: "foo@foo.com",
     product: "com.example.product",
@@ -181,7 +180,7 @@ test("webhook, store, generateLicense, empty name", async (t) => {
 });
 
 test("webhook, store, generateLicense, quantity is string", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.example.product",
@@ -192,12 +191,36 @@ test("webhook, store, generateLicense, quantity is string", async (t) => {
 });
 
 test("webhook, store, generateLicense, quantity is NaN", async (t) => {
-  const res = await paddle.post("/store/generateLicense", {
+  const res = await webhooks.post("/store/generateLicense", {
     name: "test",
     email: "foo@foo.com",
     product: "com.example.product",
     order: "789012",
     quantity: NaN,
   });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateCoupon, example30", async (t) => {
+  const res = await webhooks.post("/store/generateCoupon", {
+    coupon_id: "example30",
+  });
+  t.is(res.status, 201);
+  t.is(res.data, "FOO");
+});
+
+test("webhook, store, generateCoupon, invalid coupon_id", async (t) => {
+  const res = await webhooks.post("/store/generateCoupon", {
+    coupon_id: "invalid",
+  });
+  t.log(res.data);
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateCoupon, coupon id for wrong mode", async (t) => {
+  const res = await webhooks.post("/store/generateCoupon", {
+    coupon_id: "popclip30",
+  });
+  t.log(res.data);
   t.is(res.status, 400);
 });

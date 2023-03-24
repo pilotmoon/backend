@@ -1,6 +1,7 @@
 import Router from "@koa/router";
 import { ApiError } from "../../errors.js";
 import { config } from "../config.js";
+import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
 
@@ -18,5 +19,14 @@ router.post("/webhooks/store/generateLicense", async (ctx) => {
     file_name: license.file.name,
     file_data: license.file.data,
   };
+  ctx.status = 201;
+});
+
+router.post("/webhooks/store/generateCoupon", async (ctx) => {
+  const key = validateStoreWebhook(ctx);
+  if (!key) {
+    throw new ApiError(401, "Missing or invalid API key");
+  }
+  ctx.body = await processCoupon(ctx.request.body, key.name, key.kind);
   ctx.status = 201;
 });
