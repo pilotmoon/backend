@@ -80,3 +80,124 @@ test("post license with sample body to /store/generateLicense", async (t) => {
   });
   t.is(res.status, 201);
 });
+
+test("quantity must be integer", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "fgfg@foo.com",
+    product: "com.example.product",
+    order: "789012",
+    quantity: 1.5,
+  });
+  t.is(res.status, 400);
+});
+
+test("quantity must be positive", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+    quantity: -1,
+  });
+  t.is(res.status, 400);
+});
+
+test("quantity must not be zero", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+    quantity: 0,
+  });
+  t.is(res.status, 400);
+});
+
+test("email must be valid", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo",
+    product: "com.example.product",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("product must be valid", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.invalid.product",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, missing name", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, missing email", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    product: "com.example.product",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, missing product", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, missing order", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.example.product",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, empty name", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "",
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, quantity is string", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+    quantity: "1",
+  });
+  t.is(res.status, 400);
+});
+
+test("webhook, store, generateLicense, quantity is NaN", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "foo@foo.com",
+    product: "com.example.product",
+    order: "789012",
+    quantity: NaN,
+  });
+  t.is(res.status, 400);
+});
