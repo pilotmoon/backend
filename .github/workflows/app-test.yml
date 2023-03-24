@@ -29,7 +29,7 @@ env:
   ROLO_APIKEY_LIVE: ""
   PADDLE_PUBKEY_SANDBOX: "${{ secrets.PADDLE_PUBKEY }}"
   PADDLE_PUBKEY_PRODUCTION: ""
-  LIZHI_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
+  TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
 
 jobs:
   test:

@@ -3,7 +3,7 @@ import Koa from "koa";
 import Router from "@koa/router";
 import { config } from "./config.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
-import { router as lizhiRouter } from "./lizhi/lizhiRouter.js";
+import { router as storeRouter } from "./store/storeRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../errors.js";
@@ -11,7 +11,7 @@ import { handleError } from "../handleError.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
-router.use(lizhiRouter.routes());
+router.use(storeRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {

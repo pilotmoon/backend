@@ -3,11 +3,11 @@ import axios, { AxiosInstance } from "axios";
 
 let paddle: AxiosInstance;
 async function setup() {
-  const keys = JSON.parse(process.env.LIZHI_APIKEYS ?? "");
+  const keys = JSON.parse(process.env.TWIX_APIKEYS ?? "");
   const key = keys.find((key: any) => key.name === "internal test");
 
   paddle = axios.create({
-    baseURL: process.env.TWIX_TEST_URL + "/webhooks/lizhi",
+    baseURL: process.env.TWIX_TEST_URL + "/webhooks",
     validateStatus: () => true, // don't throw on non-200 status
     headers: {
       "X-Api-Key": key.key,
@@ -23,12 +23,12 @@ test("lizhi get blank", async (t) => {
 });
 
 test("lizhi get /generateLizense", async (t) => {
-  const res = await paddle.get("/generateLicense");
+  const res = await paddle.get("/lizhi/generateLicense");
   t.is(res.status, 405);
 });
 
 test("lizhi post /generateLicense no api key", async (t) => {
-  const res = await paddle.post("/generateLicense", {}, {
+  const res = await paddle.post("/lizhi/generateLicense", {}, {
     headers: {
       "X-Api-Key": "dff",
     },
@@ -38,7 +38,7 @@ test("lizhi post /generateLicense no api key", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body no qty", async (t) => {
-  const res = await paddle.post("/generateLicense", {
+  const res = await paddle.post("/lizhi/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -55,7 +55,7 @@ test("lizhi post /generateLicense with sample body no qty", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body with qty", async (t) => {
-  const res = await paddle.post("/generateLicense", {
+  const res = await paddle.post("/lizhi/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -69,4 +69,14 @@ test("lizhi post /generateLicense with sample body with qty", async (t) => {
     "link prefix",
   );
   t.is(res.data.file_name, "test.examplelicense");
+});
+
+test("post license with sample body to /store/generateLicense", async (t) => {
+  const res = await paddle.post("/store/generateLicense", {
+    name: "test",
+    email: "test@example.com",
+    product: "com.example.product",
+    order: "789012",
+  });
+  t.is(res.status, 201);
 });
