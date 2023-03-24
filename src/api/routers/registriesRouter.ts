@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper.js";
 import { randomUUID } from "node:crypto";
-import { genericIdPattern, makeIdentifierPattern } from "../identifiers.js";
+import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
 import {
   createRegistry,
   deleteRegistry,
@@ -94,7 +94,7 @@ router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
 });
 
 // read a registry using one of its identifiers, using `byIdentifier` url
-router.get(`/byIdentifier/:identifier(${genericIdPattern})`, async (ctx) => {
+router.get('/byIdentifier' + makeGenericIdPattern('identifier'), async (ctx) => {
   const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
   if (document) {
     ctx.body = redact(document);

@@ -2,8 +2,8 @@ import { z } from "zod";
 import { getDb } from "../database.js";
 import { Auth } from "../auth.js";
 import { handleControllerError } from "../../errors.js";
-import { genericIdRegex, randomIdentifier } from "../identifiers.js";
-import { ZSaneString } from "../../saneString.js";
+import { randomIdentifier } from "../identifiers.js";
+import { ZSaneDate, ZSaneEmail, ZSaneIdentifier, ZSaneQuantity, ZSaneString } from "../../saneString.js";
 import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { sha256Hex } from "../../sha256.js";
@@ -168,24 +168,24 @@ export const ZLicenseKeyInfo = z.object({
   // name of the license key owner
   name: ZSaneString,
   // email address of the licensee
-  email: z.string().trim().email().max(100).optional(),
+  email: ZSaneEmail.optional(),
   // date of purchase (set automatically when license key is created,
   // but can be set manualy for imported license keys)
-  date: z.coerce.date().min(new Date("2010-01-01")).optional(),
+  date: ZSaneDate.optional(),
   // expiry date of license key (optional)
-  expiryDate: z.coerce.date().min(new Date("2010-01-01")).optional(),
+  expiryDate: ZSaneDate.optional(),
   // licensed product identifier (e.g. "com.pilotmoon.popclip")
-  product: z.string().regex(genericIdRegex).max(100),
+  product: ZSaneIdentifier,
   // number of users/seats covered by the license key
-  quantity: z.number().int().positive().optional(),
+  quantity: ZSaneQuantity.optional(),
   // description of the license key e.g. "Special license"
   description: ZSaneString.optional(),
   // name of entity that created license, e.g. "DIGITALYCHEE" or "FastSpring"
-  origin: z.string().trim().max(100).optional(),
+  origin: ZSaneString.optional(),
   // other data supplied by the origin e.g. additional transction info
   originData: z.unknown().optional(),
   // order number supplied by origin, e.g. "123456789"
-  order: z.string().trim().max(100).optional(),
+  order: ZSaneString.optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 const encryptedFields = ["name", "email", "originData"] as const;

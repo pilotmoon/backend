@@ -2,8 +2,8 @@ import Prando from "prando";
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import { config } from "./config.js";
 import { logw } from "../logger.js";
-import { z } from "zod";
 import { AuthKind, authKinds } from "./auth.js";
+import { genericIdPattern } from "../saneString.js";
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = ["ak", "reg", "lk"] as const;
@@ -35,11 +35,6 @@ export const secretKeyRegex = new RegExp(
 export const idRegex = new RegExp(
   `(${idPrefixes.join("|")})_${base62(idLength)}`,
 );
-export const genericIdRegex = /^[0-9a-zA-Z-_.]+$/;
-export const genericIdPattern = `[0-9a-zA-Z-_.]+`; // no ^ or $ for use in routes
-
-// general purpose identifier and string schemas
-export const ZIdentifier = z.string().trim().regex(genericIdRegex).max(100);
 // generate a random identifier with the given prefix
 export function randomIdentifier(prefix: string): string {
   return `${prefix}_${randomString({ length: idLength, rng: rng() })}`;

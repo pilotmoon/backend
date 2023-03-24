@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
-import { ZSaneString } from "../../saneString.js";
+import { ZSaneEmail, ZSaneQuantity, ZSaneString } from "../../saneString.js";
 import { getApi } from "../getApi.js";
 
-const ZLizhiArgs = z.object({
+const ZLicenseArgs = z.object({
   name: ZSaneString,
-  email: ZSaneString,
+  email: ZSaneEmail,
   order: ZSaneString,
-  product: ZSaneString,
-  quantity: z.number().optional(),
+  product: z.enum(["com.pilotmoon.popclip", "com.example.product"]),
+  quantity: ZSaneQuantity.optional(),
 });
 
 export async function processLicense(
@@ -18,14 +18,14 @@ export async function processLicense(
 ) {
   // create license
   console.log("mode: ", mode);
-  const lizhiArgs = ZLizhiArgs.parse(args);
+  const licenseArgs = ZLicenseArgs.parse(args);
   const api = getApi(mode);
   const info = {
-    email: lizhiArgs.email,
-    name: lizhiArgs.name,
-    product: lizhiArgs.product,
-    quantity: lizhiArgs.quantity ?? 1,
-    order: lizhiArgs.order,
+    email: licenseArgs.email,
+    name: licenseArgs.name,
+    product: licenseArgs.product,
+    quantity: licenseArgs.quantity ?? 1,
+    order: licenseArgs.order,
     origin,
   };
   const { data } = await api.post("/licenseKeys", info);

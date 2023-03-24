@@ -23,12 +23,12 @@ test("lizhi get blank", async (t) => {
 });
 
 test("lizhi get /generateLizense", async (t) => {
-  const res = await paddle.get("/lizhi/generateLicense");
+  const res = await paddle.get("/store/generateLicense");
   t.is(res.status, 405);
 });
 
 test("lizhi post /generateLicense no api key", async (t) => {
-  const res = await paddle.post("/lizhi/generateLicense", {}, {
+  const res = await paddle.post("/store/generateLicense", {}, {
     headers: {
       "X-Api-Key": "dff",
     },
@@ -38,7 +38,7 @@ test("lizhi post /generateLicense no api key", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body no qty", async (t) => {
-  const res = await paddle.post("/lizhi/generateLicense", {
+  const res = await paddle.post("/store/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
@@ -55,7 +55,7 @@ test("lizhi post /generateLicense with sample body no qty", async (t) => {
 });
 
 test("lizhi post /generateLicense with sample body with qty", async (t) => {
-  const res = await paddle.post("/lizhi/generateLicense", {
+  const res = await paddle.post("/store/generateLicense", {
     name: "test",
     email: "test@example.com",
     product: "com.example.product",
