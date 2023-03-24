@@ -21,13 +21,13 @@ test("lizhi get blank", async (t) => {
   const res = await paddle.get("");
   t.is(res.status, 404);
 });
-
+-
 test("lizhi get /generateLizense", async (t) => {
   const res = await paddle.get("/store/generateLicense");
   t.is(res.status, 405);
 });
 
-test("lizhi post /generateLicense no api key", async (t) => {
+test("lizhi post /generateLicense bad api key", async (t) => {
   const res = await paddle.post("/store/generateLicense", {}, {
     headers: {
       "X-Api-Key": "dff",
