@@ -1,11 +1,19 @@
 const paddleCatalog = {
   popclip: {
-    mode: "live",
-    productIds: ["818494"],
+    live: {
+      productIds: ["818494"],
+    },
+    test: {
+      productIds: ["41687"],
+    },
   },
   example: {
-    mode: "test",
-    productIds: ["47023"],
+    live: {
+      productIds: ["818704"],
+    },
+    test: {
+      productIds: ["47023"],
+    },
   },
 };
 export const couponPrefixes: Record<string, { prefix: string }> = {
