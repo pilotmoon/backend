@@ -218,10 +218,10 @@ test("webhook, store, generateCoupon, invalid offer", async (t) => {
   t.is(res.status, 400);
 });
 
-test("webhook, store, generateCoupon, popclip30", async (t) => {
+test("webhook, store, generateCoupon, coupon id for wrong mode", async (t) => {
   const res = await webhooks.post("/store/generateCoupon", {
     offer: "popclip30",
   });
   t.log(res.data);
-  t.is(res.status, 201);
+  t.is(res.status, 400);
 });

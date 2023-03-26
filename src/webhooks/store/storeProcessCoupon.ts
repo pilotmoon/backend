@@ -18,6 +18,14 @@ export async function processCoupon(
   const couponArgs = ZCouponArgs.parse(args);
   const offer = couponOffers[couponArgs.offer];
 
+  // check coupon is in correct mode
+  if (offer.product.mode !== mode) {
+    throw new ApiError(
+      400,
+      `'${couponArgs.offer}' only allowed in ${offer.product.mode} mode`,
+    );
+  }
+
   // check we have a coupon prefix for this origin
   const couponPrefix = couponPrefixes[origin]?.prefix;
   if (!couponPrefix) {
@@ -33,7 +41,7 @@ export async function processCoupon(
 
   // create coupon
   const { data } = await paddle.post("2.1/product/create_coupon", {
-    product_ids: offer.product[mode].productIds.join(","),
+    product_ids: offer.product.productIds.join(","),
     description: `${couponArgs.offer} for ${origin}`,
     coupon_type: "product",
     discount_type: "percentage",
