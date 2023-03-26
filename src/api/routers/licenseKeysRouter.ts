@@ -7,6 +7,7 @@ import {
   generateLicenseFile,
   getProductConfig,
   LicenseKeyRecord,
+  listLicenseKeys,
   readLicenseKey,
   ZLicenseKeyInfo,
 } from "../controllers/licenseKeysController.js";
@@ -78,6 +79,18 @@ router.post("/", async (ctx) => {
   ctx.body = await getCommonBody(document, ctx);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
+});
+
+// list license keys
+router.get("/", async (ctx) => {
+  const documents = await listLicenseKeys(
+    {},
+    ctx.state.paginate,
+    ctx.state.auth,
+  );
+  ctx.body = await Promise.all(
+    documents.map((document) => getCommonBody(document, ctx)),
+  );
 });
 
 // Get a license key by id

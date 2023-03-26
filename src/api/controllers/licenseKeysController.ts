@@ -23,6 +23,7 @@ import {
   LicenseFileObject,
   ZLicenseFileObject,
 } from "../../licenseFileObject.js";
+import { PaginateState } from "../middleware/processPagination.js";
 /*
 
 # License Keys
@@ -163,6 +164,7 @@ export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
+    collection.createIndex({ origin: 1 });
   }
 }
 
@@ -258,6 +260,30 @@ export async function readLicenseKey(
   try {
     decryptInPlace(document, auth.kind);
     return ZLicenseKeyRecord.parse(document);
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
+  }
+}
+
+export async function listLicenseKeys(
+  query: {
+    origin?: string;
+    emailHash?: string;
+  },
+  { limit, offset, order, orderBy }: PaginateState,
+  auth: Auth,
+): Promise<LicenseKeyRecord[]> {
+  auth.assertAccess(collectionName, undefined, "read");
+  const cursor = dbc(auth.kind)
+    .find(query)
+    .sort({ [orderBy]: order })
+    .skip(offset)
+    .limit(limit);
+  const docs = await cursor.toArray();
+  try {
+    for (const doc of docs) decryptInPlace(doc, auth.kind);
+    return docs.map((doc) => ZLicenseKeyRecord.parse(doc));
   } catch (error) {
     handleControllerError(error);
     throw (error);
