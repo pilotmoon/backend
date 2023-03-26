@@ -13,7 +13,8 @@
     "test-rolo-local": "./scripts/test-rolo-local",
     "test-twix-local": "./scripts/test-twix-local",
     "test-local": "./scripts/test-local",
-    "test-prod": "./scripts/test-prod"
+    "test-prod": "./scripts/test-prod",
+    "db": "docker run -it --expose 27017 -p 27017:27017 mongo"
   },
   "engines": {
     "node": "16.19.0",
