@@ -109,6 +109,9 @@ router.get("/byFuzzyEmail/:email", async (ctx) => {
 router.get("/byOrigin/:origin", async (ctx) => {
   ctx.body = await list({ origin: ctx.params.origin }, ctx);
 });
+router.get("/byOrder/:order", async (ctx) => {
+  ctx.body = await list({ order: ctx.params.order }, ctx);
+});
 // Get a license key by id
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);

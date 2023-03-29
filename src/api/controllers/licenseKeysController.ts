@@ -272,6 +272,7 @@ export async function readLicenseKey(
 export const ZLicenseKeysQuery = z.object({
   emailHash: z.string().optional(),
   origin: ZSaneString.optional(),
+  order: ZSaneString.optional(),
 });
 export type LicenseKeysQuery = z.infer<typeof ZLicenseKeysQuery>;
 export async function listLicenseKeys(
