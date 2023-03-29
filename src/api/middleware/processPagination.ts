@@ -43,7 +43,7 @@ export function processPagination() {
       limit: getQueryInteger("limit", 10, 1, 100),
       order,
       orderBy: "created",
-      startCursor: getQueryString("cursor"),
+      cursor: getQueryString("cursor"),
       gteDate: new Date(getQueryString("gteDate") ?? distantPast),
       ltDate: new Date(getQueryString("ltDate") ?? distantFuture),
     };

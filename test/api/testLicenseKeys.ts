@@ -214,6 +214,7 @@ test("create license key with chinese characters", async (t) => {
 });
 
 let test10Date: Date;
+let test10Objects: any[] = [];
 test("create 10 distinct license keys, for later testing of pagination", async (t) => {
   test10Date = new Date();
   for (let i = 0; i < 10; i++) {
@@ -222,6 +223,7 @@ test("create 10 distinct license keys, for later testing of pagination", async (
       name: `name ${i}`,
       origin: "test10",
     });
+    test10Objects.push(res.data);
     t.is(res.status, 201);
     t.like(res.data, {
       product: "com.example.product",
@@ -251,4 +253,22 @@ test("retreive last 10 license keys in ascending order", async (t) => {
   t.is(res.data.items.length, 10);
   t.is(res.data.items[0].name, "name 0");
   t.is(res.data.items[9].name, "name 9");
+});
+
+test("retrieve last 10 license keys in descending order, 5 at a time, using cursor", async (t) => {
+  let cursor: string | undefined;
+  for (let i = 0; i < 2; i++) {
+    const res = await rolo().get(
+      "licenseKeys?limit=5&order=-1&gteDate=" +
+        test10Date.toISOString() +
+        (cursor ? "&cursor=" + cursor : ""),
+    );
+    t.is(res.status, 200);
+    t.log(res.data);
+    t.is(res.data.object, "list");
+    t.is(res.data.items.length, 5);
+    t.is(res.data.items[0].name, "name " + (9 - i * 5));
+    t.is(res.data.items[4].name, "name " + (5 - i * 5));
+    cursor = res.data.items.at(-1).id;
+  }
 });
