@@ -86,9 +86,9 @@ function cursorPipeline<T extends Document>(
       path: "$cursorDoc",
     },
   }, {
-    // the addFields stage adds a boolean field to every document
+    // the set stage adds a boolean field to every document
     // that is true if the document is after the cursor
-    $addFields: {
+    $set: {
       afterCursor: {
         $cond: [
           {
