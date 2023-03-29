@@ -1,12 +1,12 @@
 import { Context, Next } from "koa";
 import { ApiError } from "../../errors.js";
 
-export type PaginateOptions = {
+export type PaginationOptions = {
   maximumLimit?: number;
   defaultLimit?: number;
 };
 
-export type PaginateState = {
+export type Pagination = {
   offset: number;
   limit: number;
   order: 1 | -1;
@@ -14,7 +14,7 @@ export type PaginateState = {
 };
 
 export function processPagination(
-  { maximumLimit = 100, defaultLimit = 10 }: PaginateOptions = {},
+  { maximumLimit = 100, defaultLimit = 10 }: PaginationOptions = {},
 ) {
   return async function (ctx: Context, next: Next) {
     function getQueryInteger(name: string, defaultValue: number) {
@@ -52,7 +52,7 @@ export function processPagination(
       throw new ApiError(400, "order must be 1 or -1");
     }
 
-    ctx.state.paginate = { offset, limit, order, orderBy: "created" };
+    ctx.state.pagination = { offset, limit, order, orderBy: "created" };
     await next();
   };
 }

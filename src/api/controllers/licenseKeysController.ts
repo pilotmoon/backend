@@ -23,7 +23,7 @@ import {
   LicenseFileObject,
   ZLicenseFileObject,
 } from "../../licenseFileObject.js";
-import { PaginateState } from "../middleware/processPagination.js";
+import { Pagination } from "../middleware/processPagination.js";
 /*
 
 # License Keys
@@ -271,7 +271,7 @@ export async function listLicenseKeys(
     origin?: string;
     emailHash?: string;
   },
-  { limit, offset, order, orderBy }: PaginateState,
+  { limit, offset, order, orderBy }: Pagination,
   auth: Auth,
 ): Promise<LicenseKeyRecord[]> {
   auth.assertAccess(collectionName, undefined, "read");

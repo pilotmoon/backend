@@ -31,7 +31,7 @@ router.post("/", async (ctx) => {
 
 // list registries
 router.get("/", async (ctx) => {
-  const documents = await listRegistries(ctx.state.paginate, ctx.state.auth);
+  const documents = await listRegistries(ctx.state.pagination, ctx.state.auth);
   ctx.body = documents.map(redact);
 });
 

@@ -56,7 +56,7 @@ export async function formatBody(ctx: Context, next: Next) {
     // if array, wrap in list object
     newBody = {
       object: "list",
-      paginate: ctx.state.paginate,
+      pagination: ctx.state.pagination,
       items: ctx.body.map(replaceId),
     };
   } else {

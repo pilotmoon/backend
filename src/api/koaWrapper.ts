@@ -4,7 +4,7 @@ Wrap Koa's types to inject our own state type.
 import Koa from "koa";
 import Router from "@koa/router";
 import { Auth } from "./auth.js";
-import { PaginateState } from "./middleware/processPagination.js";
+import { Pagination } from "./middleware/processPagination.js";
 
 interface State extends Koa.DefaultState {
   // items set by auth midddleware
@@ -12,7 +12,7 @@ interface State extends Koa.DefaultState {
   apiKeyId: string;
 
   // items set by paginator middleware
-  paginate: PaginateState;
+  pagination: Pagination;
 }
 
 interface Context extends Koa.DefaultContext {

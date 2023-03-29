@@ -34,7 +34,7 @@ router.post("/", async (ctx) => {
 
 // list api keys
 router.get("/", async (ctx) => {
-  const documents = await listApiKeys(ctx.state.paginate, ctx.state.auth);
+  const documents = await listApiKeys(ctx.state.pagination, ctx.state.auth);
   ctx.body = documents.map(sanitize);
 });
 

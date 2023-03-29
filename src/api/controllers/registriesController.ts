@@ -4,7 +4,7 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { handleControllerError } from "../../errors.js";
 import { randomIdentifier } from "../identifiers.js";
 import { ZSaneIdentifier, ZSaneString } from "../../saneString.js";
-import { PaginateState } from "../middleware/processPagination.js";
+import { Pagination } from "../middleware/processPagination.js";
 import { ZPortableKeyPair } from "../../keyPair.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 import { ZProductConfig } from "../../product.js";
@@ -119,7 +119,7 @@ export async function createRegistry(
 
 // List registries.
 export async function listRegistries(
-  { limit, offset, order, orderBy }: PaginateState,
+  { limit, offset, order, orderBy }: Pagination,
   auth: Auth,
 ): Promise<RegistrySchema[]> {
   auth.assertAccess(collectionName, undefined, "read");

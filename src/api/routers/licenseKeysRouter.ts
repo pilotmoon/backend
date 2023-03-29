@@ -85,7 +85,7 @@ router.post("/", async (ctx) => {
 router.get("/", async (ctx) => {
   const documents = await listLicenseKeys(
     {},
-    ctx.state.paginate,
+    ctx.state.pagination,
     ctx.state.auth,
   );
   ctx.body = await Promise.all(

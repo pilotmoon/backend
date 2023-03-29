@@ -14,7 +14,7 @@ import {
 } from "../auth.js";
 import { hashPassword } from "../../scrypt.js";
 import { TestKey, testKeys } from "../../../test/api/setup.js";
-import { PaginateState } from "../middleware/processPagination.js";
+import { Pagination } from "../middleware/processPagination.js";
 
 /*** Schemas ***/
 
@@ -163,7 +163,7 @@ export async function readApiKey(
 // Throws an internal server error if the database returns a document that
 // does not match the schema.
 export async function listApiKeys(
-  { limit, offset, order, orderBy }: PaginateState,
+  { limit, offset, order, orderBy }: Pagination,
   auth: Auth,
 ): Promise<ApiKeySchema[]> {
   auth.assertAccess(collectionName, undefined, "read");
