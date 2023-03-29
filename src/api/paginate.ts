@@ -26,7 +26,7 @@ export async function paginate<T extends Document>(
   collection: Collection<T>,
   pagination: Pagination,
   match: Record<string, unknown> = {},
-) {
+): Promise<Array<T>> {
   // add date filtering to the match filter
   if (pagination.gteDate || pagination.ltDate) {
     const created = {} as Document;
@@ -53,7 +53,7 @@ export async function paginate<T extends Document>(
     .skip(pagination.offset)
     .limit(pagination.limit);
 
-  return await resultsCursor.toArray();
+  return await resultsCursor.toArray() as T[];
 }
 
 function cursorPipeline<T extends Document>(
@@ -108,6 +108,12 @@ function cursorPipeline<T extends Document>(
     // the final match stage filters out documents that are before the cursor
     $match: {
       afterCursor: true,
+    },
+  }, {
+    // the final project stage removes the cursorDoc and afterCursor fields
+    $project: {
+      cursorDoc: 0,
+      afterCursor: 0,
     },
   }];
 }
