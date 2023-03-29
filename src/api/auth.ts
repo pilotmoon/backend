@@ -67,6 +67,8 @@ export class Auth implements AuthInfo {
         `${collectionName}/${resource}:*`,
       );
     }
+    log("accepted scopes", acceptedScopes);
+    log("scopes", this.scopes);
     if (!this.scopes.some((scope) => acceptedScopes.includes(scope))) {
       throw new ApiError(403, "Insufficient scope");
     }
