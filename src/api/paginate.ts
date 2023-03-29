@@ -5,6 +5,7 @@ export type Pagination = {
   limit: number;
   order: 1 | -1;
   orderBy: "created";
+  startAfter?: string;
 };
 
 export async function paginate<T extends Document>(

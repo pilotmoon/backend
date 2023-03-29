@@ -2,51 +2,49 @@ import { Context, Next } from "koa";
 import { ApiError } from "../../errors.js";
 import { Pagination } from "../paginate.js";
 
-export type PaginationOptions = {
-  maximumLimit?: number;
-  defaultLimit?: number;
-};
-
-export function processPagination(
-  { maximumLimit = 100, defaultLimit = 10 }: PaginationOptions = {},
-) {
+export function processPagination() {
   return async function (ctx: Context, next: Next) {
-    function getQueryInteger(name: string, defaultValue: number) {
-      const query = ctx.query[name];
-      if (typeof query === "undefined") {
-        return defaultValue;
+    function getQueryString(name: string) {
+      const value = ctx.query[name];
+      if (typeof value === "undefined" || typeof value === "string") {
+        return value;
       }
-      if (typeof query === "string") {
-        const result = Number(query);
-        if (isNaN(result) || !Number.isInteger(result)) {
-          throw new ApiError(400, `${name} must be an integer`);
-        }
-        return result;
-      }
-      if (Array.isArray(query)) {
+      if (Array.isArray(value)) {
         throw new ApiError(400, `duplicated ${name} parameter in query`);
       }
       throw new ApiError(400, `problem with ${name} parameter in query`);
     }
-
-    const offset = getQueryInteger("offset", 0);
-    const limit = Math.min(
-      getQueryInteger("limit", defaultLimit),
-      maximumLimit,
-    );
-    const order = getQueryInteger("order", -1);
-
-    if (offset < 0) {
-      throw new ApiError(400, "offset must be >= 0");
+    function getQueryInteger(
+      name: string,
+      defaultValue: number,
+      minimumValue: number = 0,
+      maximumValue: number = Number.MAX_SAFE_INTEGER,
+    ) {
+      const result = Number(getQueryString(name) ?? defaultValue);
+      if (isNaN(result) || !Number.isInteger(result)) {
+        throw new ApiError(400, `${name} must be an integer`);
+      }
+      if (result < minimumValue || result > maximumValue) {
+        throw new ApiError(
+          400,
+          `${name} must be >= ${minimumValue} and <= ${maximumValue}`,
+        );
+      }
+      return result;
     }
-    if (limit <= 0) {
-      throw new ApiError(400, "limit must be > 0");
-    }
+
+    const order = getQueryInteger("order", -1, -1, 1);
     if (order !== 1 && order !== -1) {
       throw new ApiError(400, "order must be 1 or -1");
     }
 
-    const pagination: Pagination = { offset, limit, order, orderBy: "created" };
+    const pagination: Pagination = {
+      offset: getQueryInteger("offset", 0),
+      limit: getQueryInteger("limit", 10, 1, 100),
+      order,
+      orderBy: "created",
+      startAfter: getQueryString("cursor"),
+    };
     ctx.state.pagination = pagination;
     await next();
   };

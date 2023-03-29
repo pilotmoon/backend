@@ -246,8 +246,7 @@ test("list api keys, limit negative", async (t) => {
 
 test("list api keys, limit too large", async (t) => {
   const res = await rolo().get("apiKeys?limit=1000");
-  t.is(res.status, 200);
-  t.is(res.data.pagination.limit, 100);
+  t.is(res.status, 400);
 });
 
 test("list api keys, offset negative", async (t) => {
