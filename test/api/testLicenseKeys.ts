@@ -243,7 +243,7 @@ test("retreive last 10 license keys in default (descending) order", async (t) =>
 
 test("retreive last 10 license keys in ascending order", async (t) => {
   const res = await rolo().get(
-    "licenseKeys?limit=10&order=1&startDate=" + test10Date.toISOString(),
+    "licenseKeys?limit=10&order=1&gteDate=" + test10Date.toISOString(),
   );
   t.is(res.status, 200);
   t.log(res.data);

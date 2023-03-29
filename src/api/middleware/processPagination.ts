@@ -44,8 +44,8 @@ export function processPagination() {
       order,
       orderBy: "created",
       startCursor: getQueryString("cursor"),
-      startDate: new Date(getQueryString("startDate") ?? distantPast),
-      endBeforeDate: new Date(getQueryString("endBeforeDate") ?? distantFuture),
+      gteDate: new Date(getQueryString("gteDate") ?? distantPast),
+      ltDate: new Date(getQueryString("ltDate") ?? distantFuture),
     };
     ctx.state.pagination = pagination;
     await next();

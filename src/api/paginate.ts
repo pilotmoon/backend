@@ -5,8 +5,8 @@ export type Pagination = {
   limit: number;
   order: 1 | -1;
   orderBy: "created";
-  startDate: Date;
-  endBeforeDate: Date;
+  gteDate: Date;
+  ltDate: Date;
   startCursor?: string;
 };
 
@@ -25,14 +25,14 @@ export async function paginate<T extends Document>(
       $match: {
         ...match,
         created: {
-          $gte: pagination.startDate,
-          $lt: pagination.endBeforeDate,
+          $gte: pagination.gteDate,
+          $lt: pagination.ltDate,
         },
       },
     },
     {
       $sort: {
-        created: pagination.order,
+        [pagination.orderBy]: pagination.order,
       },
     },
     {
