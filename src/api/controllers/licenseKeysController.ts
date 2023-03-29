@@ -217,6 +217,9 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
+export function hashEmail(email: string) {
+  return sha256Hex(canonicalizeEmail(email));
+}
 /*** C.R.U.D. Operations ***/
 
 // Create a new license key using the given info.
@@ -234,7 +237,7 @@ export async function createLicenseKey(
     created: now,
     ...info,
   };
-  if (info.email) document.emailHash = sha256Hex(canonicalizeEmail(info.email));
+  if (info.email) document.emailHash = hashEmail(info.email);
 
   try {
     encryptInPlace(document, auth.kind, encryptedFields);
@@ -266,16 +269,18 @@ export async function readLicenseKey(
   }
 }
 
+export const ZLicenseKeysQuery = z.object({
+  emailHash: z.string().optional(),
+  origin: ZSaneString.optional(),
+});
+export type LicenseKeysQuery = z.infer<typeof ZLicenseKeysQuery>;
 export async function listLicenseKeys(
-  query: {
-    origin?: string;
-    emailHash?: string;
-  },
+  query: LicenseKeysQuery,
   pagination: Pagination,
   auth: Auth,
 ): Promise<LicenseKeyRecord[]> {
   auth.assertAccess(collectionName, undefined, "read");
-  const docs = await paginate(dbc(auth.kind), pagination);
+  const docs = await paginate(dbc(auth.kind), pagination, query);
   try {
     for (const doc of docs) decryptInPlace(doc, auth.kind);
     return docs.map((doc) => ZLicenseKeyRecord.parse(doc));

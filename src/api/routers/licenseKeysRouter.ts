@@ -6,10 +6,13 @@ import {
   createLicenseKey,
   generateLicenseFile,
   getProductConfig,
+  hashEmail,
   LicenseKeyRecord,
+  LicenseKeysQuery,
   listLicenseKeys,
   readLicenseKey,
   ZLicenseKeyInfo,
+  ZLicenseKeysQuery,
 } from "../controllers/licenseKeysController.js";
 import { generateEncryptedToken } from "../token.js";
 import { log } from "../../logger.js";
@@ -18,6 +21,7 @@ import _ from "lodash";
 import { Context } from "koa";
 import { ApiError } from "../../errors.js";
 import { create as createCDH } from "content-disposition-header";
+import { Document } from "mongodb";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -81,18 +85,33 @@ router.post("/", async (ctx) => {
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
 
-// list license keys
-router.get("/", async (ctx) => {
+async function list(query: LicenseKeysQuery, ctx: Context) {
   const documents = await listLicenseKeys(
-    {},
+    ZLicenseKeysQuery.parse(query),
     ctx.state.pagination,
     ctx.state.auth,
   );
-  ctx.body = await Promise.all(
+  return await Promise.all(
     documents.map((document) => getCommonBody(document, ctx)),
   );
+}
+// list license keys
+router.get("/", async (ctx) => {
+  ctx.body = await list({}, ctx);
 });
-
+router.get("/byEmail/:email", async (ctx) => {
+  const docs = await list({
+    emailHash: hashEmail(ctx.params.email),
+  }, ctx);
+  if (ctx.query.fuzzy !== "true") {
+    ctx.body = docs.filter((doc: Document) => doc.email === ctx.params.email);
+  } else {
+    ctx.body = docs;
+  }
+});
+router.get("/byOrigin/:origin", async (ctx) => {
+  ctx.body = await list({ origin: ctx.params.origin }, ctx);
+});
 // Get a license key by id
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
