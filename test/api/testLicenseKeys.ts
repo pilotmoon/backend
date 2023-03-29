@@ -222,6 +222,7 @@ test("create 10 distinct license keys, for later testing of pagination", async (
       product: "com.example.product",
       name: `name ${i}`,
       origin: "test10",
+      email: "foo1@example.com",
     });
     test10Objects.push(res.data);
     t.is(res.status, 201);
@@ -271,4 +272,45 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
     t.is(res.data.items[4].name, "name " + (5 - i * 5));
     cursor = res.data.items.at(-1).id;
   }
+});
+
+test("retreive license key by email", async (t) => {
+  const res = await rolo().get(
+    "licenseKeys/byEmail/foo1@example.com?limit=1",
+  );
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 1);
+  t.is(res.data.items[0].name, "name 9");
+});
+
+test("retreive license key by email, fuzzy but not specified", async (t) => {
+  const res = await rolo().get(
+    "licenseKeys/byEmail/foo1+fish@example.com?limit=1",
+  );
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 0);
+});
+
+test("retreive license key by email, fuzzy specified", async (t) => {
+  const res = await rolo().get(
+    "licenseKeys/byEmail/foo1+fish@example.com?limit=1&fuzzy=true",
+  );
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 1);
+  t.is(res.data.items[0].name, "name 9");
+});
+
+test("retreive license key by origin", async (t) => {
+  const res = await rolo().get("licenseKeys/byOrigin/test10?offset=1&limit=1");
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 1);
+  t.is(res.data.items[0].name, "name 8");
 });
