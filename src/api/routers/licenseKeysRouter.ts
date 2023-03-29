@@ -100,16 +100,11 @@ router.get("/", async (ctx) => {
   ctx.body = await list({}, ctx);
 });
 router.get("/byEmail/:email", async (ctx) => {
-  const docs = await list({
-    emailHash: hashEmail(ctx.params.email),
-  }, ctx);
+  const docs = await list({ emailHash: hashEmail(ctx.params.email) }, ctx);
   ctx.body = docs.filter((doc: Document) => doc.email === ctx.params.email);
 });
 router.get("/byFuzzyEmail/:email", async (ctx) => {
-  const docs = await list({
-    emailHash: hashEmail(ctx.params.email),
-  }, ctx);
-  ctx.body = docs;
+  ctx.body = await list({ emailHash: hashEmail(ctx.params.email) }, ctx);
 });
 router.get("/byOrigin/:origin", async (ctx) => {
   ctx.body = await list({ origin: ctx.params.origin }, ctx);
