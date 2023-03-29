@@ -103,11 +103,13 @@ router.get("/byEmail/:email", async (ctx) => {
   const docs = await list({
     emailHash: hashEmail(ctx.params.email),
   }, ctx);
-  if (ctx.query.fuzzy !== "true") {
-    ctx.body = docs.filter((doc: Document) => doc.email === ctx.params.email);
-  } else {
-    ctx.body = docs;
-  }
+  ctx.body = docs.filter((doc: Document) => doc.email === ctx.params.email);
+});
+router.get("/byFuzzyEmail/:email", async (ctx) => {
+  const docs = await list({
+    emailHash: hashEmail(ctx.params.email),
+  }, ctx);
+  ctx.body = docs;
 });
 router.get("/byOrigin/:origin", async (ctx) => {
   ctx.body = await list({ origin: ctx.params.origin }, ctx);

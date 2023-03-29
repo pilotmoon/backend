@@ -297,7 +297,7 @@ test("retreive license key by email, fuzzy but not specified", async (t) => {
 
 test("retreive license key by email, fuzzy specified", async (t) => {
   const res = await rolo().get(
-    "licenseKeys/byEmail/foo1+fish@example.com?limit=1&fuzzy=true",
+    "licenseKeys/byFuzzyEmail/foo1+fish@example.com?limit=1",
   );
   t.is(res.status, 200);
   t.log(res.data);
