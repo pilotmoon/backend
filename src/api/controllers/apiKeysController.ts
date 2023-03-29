@@ -14,7 +14,7 @@ import {
 } from "../auth.js";
 import { hashPassword } from "../../scrypt.js";
 import { TestKey, testKeys } from "../../../test/api/setup.js";
-import { Pagination } from "../middleware/processPagination.js";
+import { paginate, Pagination } from "../paginate.js";
 
 /*** Schemas ***/
 
@@ -163,16 +163,11 @@ export async function readApiKey(
 // Throws an internal server error if the database returns a document that
 // does not match the schema.
 export async function listApiKeys(
-  { limit, offset, order, orderBy }: Pagination,
+  pagination: Pagination,
   auth: Auth,
 ): Promise<ApiKeySchema[]> {
   auth.assertAccess(collectionName, undefined, "read");
-  const cursor = await dbc(auth.kind)
-    .find()
-    .sort({ [orderBy]: order })
-    .skip(offset)
-    .limit(limit);
-  const documents = await cursor.toArray();
+  const documents = await paginate(dbc(auth.kind), pagination);
   try {
     return documents.map((document) => ZApiKeySchema.parse(document));
   } catch (error) {

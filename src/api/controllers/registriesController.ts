@@ -4,7 +4,7 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { handleControllerError } from "../../errors.js";
 import { randomIdentifier } from "../identifiers.js";
 import { ZSaneIdentifier, ZSaneString } from "../../saneString.js";
-import { Pagination } from "../middleware/processPagination.js";
+import { paginate, Pagination } from "../paginate.js";
 import { ZPortableKeyPair } from "../../keyPair.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 import { ZProductConfig } from "../../product.js";
@@ -119,15 +119,11 @@ export async function createRegistry(
 
 // List registries.
 export async function listRegistries(
-  { limit, offset, order, orderBy }: Pagination,
+  pagination: Pagination,
   auth: Auth,
 ): Promise<RegistrySchema[]> {
   auth.assertAccess(collectionName, undefined, "read");
-  const cursor = dbc(auth.kind).find()
-    .sort({ [orderBy]: order })
-    .skip(offset)
-    .limit(limit);
-  const documents = await cursor.toArray();
+  const documents = await paginate(dbc(auth.kind), pagination);
 
   try {
     return documents.map((document) => {

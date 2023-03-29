@@ -1,16 +1,10 @@
 import { Context, Next } from "koa";
 import { ApiError } from "../../errors.js";
+import { Pagination } from "../paginate.js";
 
 export type PaginationOptions = {
   maximumLimit?: number;
   defaultLimit?: number;
-};
-
-export type Pagination = {
-  offset: number;
-  limit: number;
-  order: 1 | -1;
-  orderBy: "created";
 };
 
 export function processPagination(
@@ -52,7 +46,8 @@ export function processPagination(
       throw new ApiError(400, "order must be 1 or -1");
     }
 
-    ctx.state.pagination = { offset, limit, order, orderBy: "created" };
+    const pagination: Pagination = { offset, limit, order, orderBy: "created" };
+    ctx.state.pagination = pagination;
     await next();
   };
 }
