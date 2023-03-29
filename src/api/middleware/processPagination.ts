@@ -1,6 +1,6 @@
 import { Context, Next } from "koa";
 import { ApiError } from "../../errors.js";
-import { Pagination } from "../paginate.js";
+import { distantFuture, distantPast, Pagination } from "../paginate.js";
 
 export function processPagination() {
   return async function (ctx: Context, next: Next) {
@@ -43,7 +43,9 @@ export function processPagination() {
       limit: getQueryInteger("limit", 10, 1, 100),
       order,
       orderBy: "created",
-      startAfter: getQueryString("cursor"),
+      startCursor: getQueryString("cursor"),
+      startDate: new Date(getQueryString("startDate") ?? distantPast),
+      endBeforeDate: new Date(getQueryString("endBeforeDate") ?? distantFuture),
     };
     ctx.state.pagination = pagination;
     await next();

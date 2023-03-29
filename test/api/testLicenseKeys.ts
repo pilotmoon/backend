@@ -212,3 +212,43 @@ test("create license key with chinese characters", async (t) => {
     `attachment; filename="??.examplelicense"; filename*=UTF-8''%E5%BC%A0%E4%B8%89.examplelicense`,
   );
 });
+
+let test10Date: Date;
+test("create 10 distinct license keys, for later testing of pagination", async (t) => {
+  test10Date = new Date();
+  for (let i = 0; i < 10; i++) {
+    const res = await rolo().post("licenseKeys", {
+      product: "com.example.product",
+      name: `name ${i}`,
+      origin: "test10",
+    });
+    t.is(res.status, 201);
+    t.like(res.data, {
+      product: "com.example.product",
+      name: `name ${i}`,
+    });
+    t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
+  }
+});
+
+test("retreive last 10 license keys in default (descending) order", async (t) => {
+  const res = await rolo().get("licenseKeys?limit=10");
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 10);
+  t.is(res.data.items[0].name, "name 9");
+  t.is(res.data.items[9].name, "name 0");
+});
+
+test("retreive last 10 license keys in ascending order", async (t) => {
+  const res = await rolo().get(
+    "licenseKeys?limit=10&order=1&startDate=" + test10Date.toISOString(),
+  );
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.object, "list");
+  t.is(res.data.items.length, 10);
+  t.is(res.data.items[0].name, "name 0");
+  t.is(res.data.items[9].name, "name 9");
+});
