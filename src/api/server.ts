@@ -23,6 +23,7 @@ import { init as initApiKeysController } from "./controllers/apiKeysController.j
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
 import { router as healthRouter } from "./routers/healthRouter.js";
+import { router as reportsRouter } from "./routers/reportsRouter.js";
 import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
 import { router as registriesRouter } from "./routers/registriesRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
@@ -31,6 +32,7 @@ import { hours } from "../timeIntervals.js";
 // set up main router
 const mainRouter = makeRouter();
 mainRouter.use(healthRouter.routes());
+mainRouter.use(reportsRouter.routes());
 mainRouter.use(apiKeysRouter.routes());
 mainRouter.use(registriesRouter.routes());
 mainRouter.use(licenseKeysRouter.routes());

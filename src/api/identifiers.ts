@@ -12,10 +12,12 @@ export const collectionNames = [
   "registries",
   "licenseKeys",
   "health",
+  "reports",
 ] as const;
 export const objectNames = ["apiKey", "registry", "licenseKey"] as const;
 export const objectNamesWithoutId = [
   "health",
+  "report",
   "keyPair",
   "record",
   "productConfig",
