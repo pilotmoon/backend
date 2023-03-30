@@ -23,7 +23,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     quantity: parseInt(paddleArgs.p_quantity),
     order: paddleArgs.p_order_id,
     origin: "Paddle",
-    originData: _.omit(paddleArgs, "p_signature"),
+    originData: _.omit(paddleArgs, "p_signature", "email", "name", "product"),
   };
   const { data } = await api.post("/licenseKeys", info);
   return ZLicenseExternal.parse(data);

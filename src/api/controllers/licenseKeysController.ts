@@ -196,7 +196,7 @@ export const ZLicenseKeyInfo = z.object({
   order: ZSaneString.optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
-const encryptedFields = ["name", "email", "originData"] as const;
+const encryptedFields = ["name", "email"] as const;
 
 // schema for the parts of the info that can be updated later
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
