@@ -1,5 +1,5 @@
 import { ApiError } from "../../errors.js";
-import { generateSummaryReport } from "../controllers/reportsController.js";
+import { generateReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/reports" });
@@ -18,7 +18,7 @@ function add1Day(date: Date) {
 }
 
 // health check endpoint
-router.get("/summary", async (ctx) => {
+router.get("/:name", async (ctx) => {
   // default start date to yesterday 00:00:00
   const gteDate = ctx.state.pagination.gteDate
     ? ctx.state.pagination.gteDate
@@ -33,7 +33,12 @@ router.get("/summary", async (ctx) => {
   ctx.body = {
     "object": "report",
     "dateRange": [gteDate, ltDate],
-    "reportType": "summary",
-    "report": await generateSummaryReport(ctx.state.auth, gteDate, ltDate),
+    "reportType": ctx.params.name,
+    "report": await generateReport(
+      ctx.state.auth,
+      gteDate,
+      ltDate,
+      ctx.params.name,
+    ),
   };
 });

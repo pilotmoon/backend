@@ -1,5 +1,6 @@
 // const collectionName = "licenseKeys";
 
+import { ApiError } from "../../errors.js";
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
@@ -9,12 +10,33 @@ function licenseKeysCollection(kind: AuthKind) {
   return getDb(kind).collection(licenseKeysCollectionName);
 }
 
-export async function generateSummaryReport(
+const reportGenerators: Record<
+  string,
+  (auth: Auth, gteDate: Date, getDate: Date) => object
+> = {
+  "summary": generateSummaryReport,
+};
+
+export async function generateReport(
+  auth: Auth,
+  gteDate: Date,
+  ltDate: Date,
+  name: string,
+) {
+  // check if report exists
+  const generate = reportGenerators[name];
+  if (!generate) throw new ApiError(404, `No such report '${name}'`);
+  // check if user has access to report
+  await auth.assertAccess("reports", name, "read");
+  // generate report
+  return await generate(auth, gteDate, ltDate);
+}
+
+async function generateSummaryReport(
   auth: Auth,
   gteDate: Date,
   ltDate: Date,
 ) {
-  auth.assertAccess("reports", "summary", "read");
   // aggregation pipeline
   const pipeline = [
     // filter by date range
