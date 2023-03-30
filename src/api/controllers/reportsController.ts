@@ -14,7 +14,7 @@ export async function generateSummaryReport(
   gteDate: Date,
   ltDate: Date,
 ) {
-  auth.assertAccess("reports", undefined, "read");
+  auth.assertAccess("reports", "summary", "read");
   // aggregation pipeline
   const pipeline = [
     // filter by date range
