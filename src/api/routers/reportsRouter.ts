@@ -6,7 +6,15 @@ export const router = makeRouter({ prefix: "/reports" });
 
 function yesterday() {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  now.setUTCHours(0, 0, 0, 0);
+  now.setUTCDate(now.getUTCDate() - 1);
+  return now;
+}
+
+function add1Day(date: Date) {
+  const result = new Date(date);
+  result.setUTCDate(result.getUTCDate() + 1);
+  return result;
 }
 
 // health check endpoint
@@ -18,17 +26,14 @@ router.get("/summary", async (ctx) => {
   // default end date to start date + 1 day
   const ltDate = ctx.state.pagination.ltDate
     ? ctx.state.pagination.ltDate
-    : new Date(
-      gteDate.getFullYear(),
-      gteDate.getMonth(),
-      gteDate.getDate() + 1,
-    );
+    : add1Day(gteDate);
   // error if date range is invalid
   if (ltDate <= gteDate) throw new ApiError(400, "Invalid date range");
 
   ctx.body = {
     "object": "report",
     "dateRange": [gteDate, ltDate],
+    "reportType": "summary",
     "report": await generateSummaryReport(ctx.state.auth, gteDate, ltDate),
   };
 });
