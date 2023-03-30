@@ -2,12 +2,11 @@
 
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
-import { LicenseKeyRecord } from "./licenseKeysController.js";
-import { collectionName as licenseKeysCollectionName } from "../controllers/licenseKeysController.js";
+import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
 
 // helper function to get the database collection for a given key kind
 function licenseKeysCollection(kind: AuthKind) {
-  return getDb(kind).collection<LicenseKeyRecord>(licenseKeysCollectionName);
+  return getDb(kind).collection(licenseKeysCollectionName);
 }
 
 export async function generateSummaryReport(
@@ -168,7 +167,9 @@ export async function generateSummaryReport(
     },
   ];
 
-  const licenseKeys = await licenseKeysCollection(auth.kind).aggregate(pipeline)
-    .toArray();
-  return { licenseKeys };
+  return {
+    licenseKeys: await licenseKeysCollection(auth.kind)
+      .aggregate(pipeline)
+      .next(),
+  };
 }
