@@ -5,10 +5,10 @@ import { makeRouter } from "../koaWrapper.js";
 export const router = makeRouter({ prefix: "/reports" });
 
 function yesterday() {
-  const now = new Date();
-  now.setUTCHours(0, 0, 0, 0);
-  now.setUTCDate(now.getUTCDate() - 1);
-  return now;
+  const result = new Date();
+  result.setUTCHours(0, 0, 0, 0);
+  result.setUTCDate(result.getUTCDate() - 1);
+  return result;
 }
 
 function add1Day(date: Date) {
