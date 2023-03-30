@@ -153,7 +153,7 @@ header. This allows the browser to download the file directly.
 
 /*** Database ***/
 
-const collectionName = "licenseKeys";
+export const collectionName = "licenseKeys";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
   return getDb(kind).collection<LicenseKeyRecord>(collectionName);

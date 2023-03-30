@@ -1,4 +1,5 @@
 import { ApiError } from "../../errors.js";
+import { generateSummaryReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/reports" });
@@ -10,8 +11,6 @@ function yesterday() {
 
 // health check endpoint
 router.get("/summary", async (ctx) => {
-  ctx.state.auth.assertAccess("reports", undefined, "read");
-
   // default start date to yesterday 00:00:00
   const gteDate = ctx.state.pagination.gteDate
     ? ctx.state.pagination.gteDate
@@ -30,10 +29,6 @@ router.get("/summary", async (ctx) => {
   ctx.body = {
     "object": "report",
     "dateRange": [gteDate, ltDate],
-    "report": generateSummaryReport(gteDate, ltDate),
+    "report": await generateSummaryReport(ctx.state.auth, gteDate, ltDate),
   };
 });
-
-function generateSummaryReport(gteDate: Date, ltDate: Date) {
-  return { foo: "bar" };
-}
