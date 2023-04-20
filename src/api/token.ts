@@ -186,7 +186,9 @@ export function decipherToken(token: string, resource: string): {
             ),
           ),
         );
-        const scopes = tokenData.s.map((scope) => scope.replace("$", resource));
+        const scopes = tokenData.s.map((scope) =>
+          scope.replaceAll("$", resource)
+        );
         const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
         return { keyKind, scopes, expires: expiration };
       }
