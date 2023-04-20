@@ -146,29 +146,56 @@ export function decipherToken(token: string, resource: string): {
   }
 
   // convert base62 data to buffer
+  // It is not possible to determine the number of zeroes to trim after decoding the base62,
+  // because the encrypted data may actually start with zeroes.
+  // So we will try to decrypt the data with different numbers of zeroes at the start
+  // until we find a valid decryption.
+  // It would have been better to use a different encoding for the encrypted data, potentially
+  // using a length prefix, but that would break existing tokens.
+  // (There was a bug affecting about 1 in 256 tokens, which is fixed by this change.)
   const encryptedData = Uint8Array.from(
-    baseDecode(base62Data, alphabets.base62),
+    baseDecode(base62Data, alphabets.base62, { trim: false }),
   );
 
-  // encrypted scopes
-  if (tokenType === "2") {
-    const tokenData = ZTokenData.parse(
-      decodeFirstSync(decrypt(encryptedData, keyKind)),
-    );
-    const scopes = tokenData.s;
-    const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
-    return { keyKind, scopes, expires: expiration };
+  // count number of zeroes at the start of encrypted data
+  let zeroes = 0;
+  while (encryptedData[zeroes] === 0) {
+    zeroes++;
   }
 
-  // encrypted scopes with resource
-  if (tokenType === "3") {
-    const tokenData = ZTokenData.parse(
-      decodeFirstSync(decrypt(encryptedData, keyKind, textEncode(resource))),
-    );
-    const scopes = tokenData.s.map((scope) => scope.replace("$", resource));
-    const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
-    return { keyKind, scopes, expires: expiration };
-  }
+  do {
+    try {
+      // encrypted scopes
+      if (tokenType === "2") {
+        const tokenData = ZTokenData.parse(
+          decodeFirstSync(decrypt(encryptedData.subarray(zeroes), keyKind)),
+        );
+        const scopes = tokenData.s;
+        const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
+        return { keyKind, scopes, expires: expiration };
+      }
+
+      // encrypted scopes with resource
+      if (tokenType === "3") {
+        const tokenData = ZTokenData.parse(
+          decodeFirstSync(
+            decrypt(
+              encryptedData.subarray(zeroes),
+              keyKind,
+              textEncode(resource),
+            ),
+          ),
+        );
+        const scopes = tokenData.s.map((scope) => scope.replace("$", resource));
+        const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
+        return { keyKind, scopes, expires: expiration };
+      }
+    } catch (e) {
+      if (zeroes === 0) {
+        throw e;
+      }
+    }
+  } while (--zeroes > 0);
 
   throw new Error("Invalid token (unknown token type)");
 }

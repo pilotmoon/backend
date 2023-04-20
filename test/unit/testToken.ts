@@ -2,27 +2,31 @@ import test from "ava";
 import * as token from "../../src/api/token.js";
 
 test("generate and deciper encrypted token", (t) => {
-  const scopes = ["foo:read", "bar:*"];
-  const expiration = new Date();
-  const tokenString = token.generateEncryptedToken({
-    keyKind: "test",
-    scopes,
-    expires: expiration,
-  });
-  t.log(tokenString);
+  let count = 0;
+  while (count++ <= 1000) {
+    //console.log("test no", count);
+    const scopes = ["foo:read", "bar:*"];
+    const expiration = new Date();
+    const tokenString = token.generateEncryptedToken({
+      keyKind: "test",
+      scopes,
+      expires: expiration,
+    });
+    //t.log(tokenString);
 
-  // decipher the token
-  const {
-    keyKind,
-    scopes: decipheredScopes,
-    expires: decipheredExpiration,
-  } = token.decipherToken(
-    tokenString,
-    "anyResourceWillDoForDecipheringThisToken",
-  );
-  t.is(keyKind, "test");
-  t.deepEqual(decipheredScopes, scopes);
-  t.deepEqual(decipheredExpiration, expiration);
+    // decipher the token
+    const {
+      keyKind,
+      scopes: decipheredScopes,
+      expires: decipheredExpiration,
+    } = token.decipherToken(
+      tokenString,
+      "anyResourceWillDoForDecipheringThisToken",
+    );
+    t.is(keyKind, "test");
+    t.deepEqual(decipheredScopes, scopes);
+    t.deepEqual(decipheredExpiration, expiration);
+  }
 });
 
 test("generate and decipher api key token", (t) => {
