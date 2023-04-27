@@ -127,6 +127,10 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
   if (!document) return;
 
+  if (document.void) {
+    throw new ApiError(404, "License key is void");
+  }
+
   // generate license key file object
   const licenseFile = await generateLicenseFile(
     document,
