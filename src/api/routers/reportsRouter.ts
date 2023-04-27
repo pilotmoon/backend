@@ -30,6 +30,11 @@ router.get("/:name", async (ctx) => {
   // error if date range is invalid
   if (ltDate <= gteDate) throw new ApiError(400, "Invalid date range");
 
+  // convery query to record<string, string>
+  const query = Object.fromEntries(
+    Object.entries(ctx.query).map(([k, v]) => [k, String(v)]),
+  );
+
   ctx.body = {
     "object": "report",
     "dateRange": [gteDate, ltDate],
@@ -39,6 +44,7 @@ router.get("/:name", async (ctx) => {
       gteDate,
       ltDate,
       ctx.params.name,
+      query,
     ),
   };
 });
