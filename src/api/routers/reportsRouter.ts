@@ -63,6 +63,7 @@ function makeCsvRow(row: Record<string, string>) {
 }
 
 function makeCsv(rows: Record<string, string>[]) {
+  if (rows.length === 0) return "";
   const header = Object.keys(rows[0]);
   const body = rows.map(makeCsvRow);
   return [header, ...body].join("\n");
