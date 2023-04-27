@@ -1,4 +1,4 @@
-import { processLicense, processRefund } from "./paddleProcessLicense.js";
+import { processAlert, processLicense } from "./paddleProcessLicense.js";
 import { validatePaddleWebhook } from "./paddleValidateWebhook.js";
 import Router from "@koa/router";
 import { config } from "../config.js";
@@ -31,8 +31,8 @@ router.post("/webhooks/paddle/generateLicense", async (ctx) => {
   ctx.body = `[${escapedName}](${config.ROLO_URL_CANONICAL}${file.url})`;
 });
 
-router.post("/webhooks/paddle/alert/paymentRefunded", async (ctx) => {
+router.post("/webhooks/paddle/handleAlert", async (ctx) => {
   const signed = validate(ctx);
-  processRefund(ctx.request.body, signed.mode);
+  await processAlert(ctx.request.body, signed.mode);
   ctx.status = 200;
 });

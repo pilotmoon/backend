@@ -3,7 +3,6 @@ import _ from "lodash";
 import { getRolo } from "../rolo.js";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
 import { log } from "../../logger.js";
-import { ZLicenseKeyRecord } from "../../api/controllers/licenseKeysController.js";
 
 const ZLicenseArgs = z.object({
   p_order_id: z.string(),
@@ -30,7 +29,12 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   return ZLicenseExternal.parse(data);
 }
 
+const ZAlertArgs = z.object({
+  alert_name: z.string(),
+});
+
 const ZRefundArgs = z.object({
+  alert_name: z.literal("payment_refunded"),
   order_id: z.string(),
 });
 const ZRefundResponse = z.object({
@@ -42,15 +46,23 @@ const ZRefundResponse = z.object({
   })),
 });
 
-export async function processRefund(args: unknown, mode: "test" | "live") {
-  log("info", "Paddle refund", { args, mode });
+export async function processAlert(args: unknown, mode: "test" | "live") {
+  log("info", "Paddle alert", { args, mode });
+  const alertArgs = ZAlertArgs.parse(args);
+  if (alertArgs.alert_name === "payment_refunded") {
+    await processRefund(args, mode);
+  } else {
+    throw new Error("Unknown alert_name: " + alertArgs.alert_name);
+  }
+}
+
+async function processRefund(args: unknown, mode: "test" | "live") {
   const paddleArgs = ZRefundArgs.parse(args);
   const api = getRolo(mode);
   // find the order
   const { data } = await api.get("/licenseKeys/byOrder/" + paddleArgs.order_id);
   const response = ZRefundResponse.parse(data);
   // find orders that match origin "Paddle"
-  log("response", response);
   const paddleOrders = response.items.filter((item) =>
     item.origin === "Paddle"
   );
