@@ -30,7 +30,7 @@ export const testKeys = {
     description: "test read-only key (deterministically generated)",
   },
   createLicenseKey: {
-    scopes: ["licenseKeys:create"],
+    scopes: ["licenseKeys:*"],
     description: "test createLicenseKey key (deterministically generated)",
   },
 };
