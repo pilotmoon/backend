@@ -247,7 +247,7 @@ async function generateLicenseKeysReport(
       },
     },
     // extract just the fields we are interested in:
-    // product, date, origin, order, quantity, coupon, country, currency, sale gross
+    // date, id, product, origin, order, coupon, country, currency, sale gross, void
     {
       $project: {
         "date": { $dateToString: { date: "$date" } },
@@ -258,7 +258,14 @@ async function generateLicenseKeysReport(
         "coupon": { $ifNull: ["$originData.p_coupon", ""] },
         "country": { $ifNull: ["$originData.p_country", ""] },
         "currency": { $ifNull: ["$originData.p_currency", ""] },
-        "saleGross": { $ifNull: ["$originData.p_sale_gross", ""] },
+        "saleGross": {
+          $cond: {
+            if: "$void",
+            then: "0.00",
+            else: { $ifNull: ["$originData.p_sale_gross", ""] },
+          },
+        },
+        "status": { $cond: { if: "$void", then: "refunded", else: "" } },
       },
     },
     {
