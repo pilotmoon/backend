@@ -239,12 +239,20 @@ async function generateLicenseKeysReport(
         },
       },
     },
+    // order by date then id
+    {
+      $sort: {
+        "date": 1,
+        "id": 1,
+      },
+    },
     // extract just the fields we are interested in:
     // product, date, origin, order, quantity, coupon, country, currency, sale gross
     {
       $project: {
+        "date": { $dateToString: { date: "$date" } },
+        "id": { $ifNull: ["$_id", ""] },
         "product": { $ifNull: ["$product", ""] },
-        "date": { $ifNull: ["$date", ""] },
         "origin": { $ifNull: ["$origin", ""] },
         "order": { $ifNull: ["$order", ""] },
         "coupon": { $ifNull: ["$originData.p_coupon", ""] },
@@ -252,6 +260,9 @@ async function generateLicenseKeysReport(
         "currency": { $ifNull: ["$originData.p_currency", ""] },
         "saleGross": { $ifNull: ["$originData.p_sale_gross", ""] },
       },
+    },
+    {
+      $unset: ["_id"],
     },
     // match on coupon prefix
     {
@@ -261,9 +272,7 @@ async function generateLicenseKeysReport(
     },
   ];
 
-  return {
-    licenseKeys: await licenseKeysCollection(auth.kind)
-      .aggregate(pipeline)
-      .toArray(),
-  };
+  return await licenseKeysCollection(auth.kind)
+    .aggregate(pipeline)
+    .toArray();
 }

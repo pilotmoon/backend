@@ -1,4 +1,5 @@
 import { ApiError } from "../../errors.js";
+import { log } from "../../logger.js";
 import { generateReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";
 
@@ -35,16 +36,34 @@ router.get("/:name", async (ctx) => {
     Object.entries(ctx.query).map(([k, v]) => [k, String(v)]),
   );
 
-  ctx.body = {
-    "object": "report",
-    "dateRange": [gteDate, ltDate],
-    "reportType": ctx.params.name,
-    "report": await generateReport(
-      ctx.state.auth,
-      gteDate,
-      ltDate,
-      ctx.params.name,
-      query,
-    ),
-  };
+  const report = await generateReport(
+    ctx.state.auth,
+    gteDate,
+    ltDate,
+    ctx.params.name,
+    query,
+  );
+
+  if (Array.isArray(report) && query["format"] === "csv") {
+    ctx.set("Content-Type", "text/csv");
+    ctx.body = makeCsv(report);
+  } else {
+    ctx.body = {
+      "object": "report",
+      "dateRange": [gteDate, ltDate],
+      "query": query,
+      "reportType": ctx.params.name,
+      report,
+    };
+  }
 });
+
+function makeCsvRow(row: Record<string, string>) {
+  return Object.values(row).map((v) => `"${v}"`).join(",");
+}
+
+function makeCsv(rows: Record<string, string>[]) {
+  const header = Object.keys(rows[0]);
+  const body = rows.map(makeCsvRow);
+  return [header, ...body].join("\n");
+}
