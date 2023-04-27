@@ -314,3 +314,74 @@ test("retreive license key by origin", async (t) => {
   t.is(res.data.items.length, 1);
   t.is(res.data.items[0].name, "name 8");
 });
+
+test("update a license key, changing the name", async (t) => {
+  const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
+    name: "new name",
+  });
+  t.is(res.status, 204);
+  // read it back
+  const res2 = await rolo().get(`licenseKeys/${test10Objects[0].id}`);
+  t.is(res2.status, 200);
+  t.like(res2.data, {
+    product: "com.example.product",
+    name: "new name",
+  });
+});
+
+test("update a license key, changing the email", async (t) => {
+  const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
+    email: "NEWEMAIL@email.com",
+  });
+  t.is(res.status, 204);
+  const res2 = await rolo().get(`licenseKeys/${test10Objects[0].id}`);
+  t.is(res2.status, 200);
+  t.like(res2.data, {
+    product: "com.example.product",
+    name: "new name",
+    email: "NEWEMAIL@email.com",
+  });
+});
+
+test("update a license key, marking it void", async (t) => {
+  const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
+    void: true,
+  });
+  t.is(res.status, 204);
+  const res2 = await rolo().get(`licenseKeys/${test10Objects[0].id}`);
+  t.is(res2.status, 200);
+  t.like(res2.data, {
+    product: "com.example.product",
+    name: "new name",
+    email: "NEWEMAIL@email.com",
+    void: true,
+  });
+});
+
+test("update a license key, marking it not void", async (t) => {
+  const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
+    void: false,
+  });
+  t.is(res.status, 204);
+  const res2 = await rolo().get(`licenseKeys/${test10Objects[0].id}`);
+  t.is(res2.status, 200);
+  t.like(res2.data, {
+    product: "com.example.product",
+    name: "new name",
+    void: false,
+  });
+});
+
+test("update a license key, changing the origin (should fail)", async (t) => {
+  const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
+    origin: "test11",
+  });
+  t.is(res.status, 400);
+});
+
+test("update a license key, bad id (should fail)", async (t) => {
+  const res = await rolo().patch(`licenseKeys/1234567890`, {
+    name: "new name",
+  });
+  t.is(res.status, 404);
+});

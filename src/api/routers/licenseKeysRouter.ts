@@ -11,8 +11,10 @@ import {
   LicenseKeysQuery,
   listLicenseKeys,
   readLicenseKey,
+  updateLicenseKey,
   ZLicenseKeyInfo,
   ZLicenseKeysQuery,
+  ZLicenseKeyUpdate,
 } from "../controllers/licenseKeysController.js";
 import { generateEncryptedToken } from "../token.js";
 import { log } from "../../logger.js";
@@ -145,5 +147,13 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
       406,
       "Client does not accept application/octet-stream",
     );
+  }
+});
+
+// Update a license key
+router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
+  const data = ZLicenseKeyUpdate.strict().parse(ctx.request.body);
+  if (await updateLicenseKey(ctx.params.id, data, ctx.state.auth)) {
+    ctx.status = 204;
   }
 });

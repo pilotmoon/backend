@@ -194,6 +194,8 @@ export const ZLicenseKeyInfo = z.object({
   originData: z.unknown().optional(),
   // order number supplied by origin, e.g. "123456789"
   order: ZSaneString.optional(),
+  // whether the license key has been voided
+  void: z.boolean().optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 const encryptedFields = ["name", "email"] as const;
@@ -202,7 +204,9 @@ const encryptedFields = ["name", "email"] as const;
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   name: true,
   email: true,
-}).optional();
+  void: true,
+}).partial();
+export type LicenseKeyUpdate = z.infer<typeof ZLicenseKeyUpdate>;
 
 // schema for full license key record stored in database
 export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
@@ -263,6 +267,30 @@ export async function readLicenseKey(
   try {
     decryptInPlace(document, auth.kind);
     return ZLicenseKeyRecord.parse(document);
+  } catch (error) {
+    handleControllerError(error);
+    throw (error);
+  }
+}
+
+// Update a license key record.
+// The auth context must have the "licenseKeys:update" scope.
+// Returns true if the registry was updated, false if it was not found.
+export async function updateLicenseKey(
+  id: string,
+  update: LicenseKeyUpdate,
+  auth: Auth,
+): Promise<boolean> {
+  auth.assertAccess(collectionName, id, "update");
+  const document = await dbc(auth.kind).findOne({ _id: id });
+  if (!document) return false;
+
+  try {
+    decryptInPlace(document, auth.kind);
+    const updated = { ...document, ...update };
+    encryptInPlace(updated, auth.kind, encryptedFields);
+    await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
+    return true;
   } catch (error) {
     handleControllerError(error);
     throw (error);
