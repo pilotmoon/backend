@@ -358,6 +358,13 @@ test("update a license key, marking it void", async (t) => {
   });
 });
 
+test("try downloading void license file", async (t) => {
+  const res = await rolo().get(
+    `licenseKeys/${test10Objects[0].id}/file`,
+  );
+  t.is(res.status, 404);
+});
+
 test("update a license key, marking it not void", async (t) => {
   const res = await rolo().patch(`licenseKeys/${test10Objects[0].id}`, {
     void: false,
@@ -370,6 +377,13 @@ test("update a license key, marking it not void", async (t) => {
     name: "new name",
     void: false,
   });
+});
+
+test("try downloading unvoided license file", async (t) => {
+  const res = await rolo().get(
+    `licenseKeys/${test10Objects[0].id}/file`,
+  );
+  t.is(res.status, 200);
 });
 
 test("update a license key, changing the origin (should fail)", async (t) => {
