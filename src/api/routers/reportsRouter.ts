@@ -22,11 +22,11 @@ router.get("/:name", async (ctx) => {
   // default start date to 30 days ago 00:00:00
   const gteDate = ctx.state.pagination.gteDate
     ? ctx.state.pagination.gteDate
-    : daysAgo(30);
+    : daysAgo(7);
   // default end date to start date + 1 day
   const ltDate = ctx.state.pagination.ltDate
     ? ctx.state.pagination.ltDate
-    : addDays(gteDate, 30);
+    : addDays(gteDate, 7);
   // error if date range is invalid
   if (ltDate <= gteDate) throw new ApiError(400, "Invalid date range");
 
