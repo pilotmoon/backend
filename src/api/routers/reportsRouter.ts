@@ -4,29 +4,29 @@ import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/reports" });
 
-function yesterday() {
+function daysAgo(days: number) {
   const result = new Date();
   result.setUTCHours(0, 0, 0, 0);
-  result.setUTCDate(result.getUTCDate() - 1);
+  result.setUTCDate(result.getUTCDate() - days);
   return result;
 }
 
-function add1Day(date: Date) {
+function addDays(date: Date, days: number) {
   const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() + 1);
+  result.setUTCDate(result.getUTCDate() + days);
   return result;
 }
 
 // health check endpoint
 router.get("/:name", async (ctx) => {
-  // default start date to yesterday 00:00:00
+  // default start date to 30 days ago 00:00:00
   const gteDate = ctx.state.pagination.gteDate
     ? ctx.state.pagination.gteDate
-    : yesterday();
+    : daysAgo(30);
   // default end date to start date + 1 day
   const ltDate = ctx.state.pagination.ltDate
     ? ctx.state.pagination.ltDate
-    : add1Day(gteDate);
+    : addDays(gteDate, 30);
   // error if date range is invalid
   if (ltDate <= gteDate) throw new ApiError(400, "Invalid date range");
 

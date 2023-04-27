@@ -1,6 +1,7 @@
 // const collectionName = "licenseKeys";
 
 import { ApiError } from "../../errors.js";
+import { log } from "../../logger.js";
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
@@ -23,6 +24,7 @@ export async function generateReport(
   ltDate: Date,
   name: string,
 ) {
+  log("debug", "generateReport", { auth, gteDate, ltDate, name });
   // check if report exists
   const generate = reportGenerators[name];
   if (!generate) throw new ApiError(404, `No such report '${name}'`);
@@ -59,6 +61,12 @@ async function generateSummaryReport(
         ],
         // number of license keys generated per product
         "products": [
+          // filter by product
+          {
+            $match: {
+              "product": { $exists: true, "$ne": "" },
+            },
+          },
           // group by product
           {
             $group: {
@@ -75,6 +83,12 @@ async function generateSummaryReport(
         ],
         // number of license keys generated per origin
         "origins": [
+          // filter by origin
+          {
+            $match: {
+              "origin": { $exists: true, "$ne": "" },
+            },
+          },
           // group by origin
           {
             $group: {
