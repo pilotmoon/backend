@@ -11,7 +11,7 @@ const ZRefundArgs = z.object({
   alert_name: z.literal("payment_refunded"),
   order_id: z.string(),
 });
-const ZRefundResponse = z.object({
+const ZQueryResponse = z.object({
   object: z.literal("list"),
   items: z.array(z.object({
     id: z.string(),
@@ -42,7 +42,7 @@ async function getLicenseKeyId(
   api: AxiosInstance,
 ) {
   const { data } = await api.get("/licenseKeys/byOrder/" + order);
-  const response = ZRefundResponse.parse(data);
+  const response = ZQueryResponse.parse(data);
   const orders = response.items.filter((item) => item.origin === origin);
   if (orders.length !== 1) {
     throw new ApiError(400, `Found ${orders.length} orders`);
