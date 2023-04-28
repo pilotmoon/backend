@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getRolo } from "../rolo.js";
 import { log } from "../../logger.js";
 import { ApiError } from "../../errors.js";
+import { AxiosInstance } from "axios";
 
 const ZAlertArgs = z.object({
   alert_name: z.string(),
@@ -20,30 +21,34 @@ const ZRefundResponse = z.object({
 });
 
 export async function processAlert(args: unknown, mode: "test" | "live") {
-  log("info", "Paddle alert", { args, mode });
   const alertArgs = ZAlertArgs.parse(args);
   if (alertArgs.alert_name === "payment_refunded") {
-    await processRefund(args, mode);
+    await processRefund(args, getRolo(mode));
   } else {
     throw new ApiError(400, "Unknown alert_name: " + alertArgs.alert_name);
   }
 }
 
-async function processRefund(args: unknown, mode: "test" | "live") {
+async function processRefund(args: unknown, api: AxiosInstance) {
   const paddleArgs = ZRefundArgs.parse(args);
-  const api = getRolo(mode);
-  // find the order
-  const { data } = await api.get("/licenseKeys/byOrder/" + paddleArgs.order_id);
+  const id = await getLicenseKeyId("Paddle", paddleArgs.order_id, api);
+  await api.patch("/licenseKeys/" + id, { void: true });
+}
+
+// get the unique license key id for a given origin and order
+async function getLicenseKeyId(
+  origin: string,
+  order: string,
+  api: AxiosInstance,
+) {
+  const { data } = await api.get("/licenseKeys/byOrder/" + order);
   const response = ZRefundResponse.parse(data);
-  // find orders that match origin "Paddle"
-  const paddleOrders = response.items.filter((item) =>
-    item.origin === "Paddle"
-  );
-  if (paddleOrders.length !== 1) {
-    throw new ApiError(400, `Found ${paddleOrders.length} orders`);
+  const orders = response.items.filter((item) => item.origin === origin);
+  if (orders.length !== 1) {
+    throw new ApiError(400, `Found ${orders.length} orders`);
   }
-  // set the void flag on license key
-  const res = await api.patch("/licenseKeys/" + paddleOrders[0].id, {
-    void: true,
-  });
+  // return the license key id
+  const result = orders[0].id;
+  log(`Found ${result} for order ${order} and origin ${origin}`);
+  return result;
 }
