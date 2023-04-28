@@ -46,9 +46,6 @@ async function processRefund(args: unknown, mode: "test" | "live") {
     throw new ApiError(400, "Multiple Paddle orders found");
   }
   const order = paddleOrders[0];
-  // set the refunded flag on license key
-  const res = await api.patch(
-    "/licenseKeys/" + order.id,
-    { void: true },
-  );
+  // set the void flag on license key
+  const res = await api.patch("/licenseKeys/" + order.id, { void: true });
 }
