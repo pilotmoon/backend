@@ -9,6 +9,7 @@ const ZAlertArgs = z.object({
 });
 
 export async function processAlert(args: unknown, mode: "test" | "live") {
+  log("Processing alert:", args);
   const alertArgs = ZAlertArgs.parse(args);
   if (alertArgs.alert_name === "payment_refunded") {
     await processRefund(args, getRolo(mode));
