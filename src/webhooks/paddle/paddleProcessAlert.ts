@@ -42,7 +42,8 @@ async function processRefund(args: unknown, mode: "test" | "live") {
   if (paddleOrders.length !== 1) {
     throw new ApiError(400, `Found ${paddleOrders.length} orders`);
   }
-  const order = paddleOrders[0];
   // set the void flag on license key
-  const res = await api.patch("/licenseKeys/" + order.id, { void: true });
+  const res = await api.patch("/licenseKeys/" + paddleOrders[0].id, {
+    void: true,
+  });
 }
