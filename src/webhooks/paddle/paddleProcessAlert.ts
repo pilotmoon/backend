@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getRolo } from "../rolo.js";
 import { log } from "../../logger.js";
+import { ApiError } from "../../errors.js";
 
 const ZAlertArgs = z.object({
   alert_name: z.string(),
@@ -24,7 +25,7 @@ export async function processAlert(args: unknown, mode: "test" | "live") {
   if (alertArgs.alert_name === "payment_refunded") {
     await processRefund(args, mode);
   } else {
-    throw new Error("Unknown alert_name: " + alertArgs.alert_name);
+    throw new ApiError(400, "Unknown alert_name: " + alertArgs.alert_name);
   }
 }
 
@@ -38,11 +39,11 @@ async function processRefund(args: unknown, mode: "test" | "live") {
   const paddleOrders = response.items.filter((item) =>
     item.origin === "Paddle"
   );
-  if (paddleOrders.length === 0) {
-    throw new Error("Paddle order not found");
+  if (paddleOrders.length !== 1) {
+    throw new ApiError(400, "Paddle order not found");
   }
   if (paddleOrders.length > 1) {
-    throw new Error("Multiple Paddle orders found");
+    throw new ApiError(400, "Multiple Paddle orders found");
   }
   const order = paddleOrders[0];
   // set the refunded flag on license key
@@ -50,7 +51,4 @@ async function processRefund(args: unknown, mode: "test" | "live") {
     "/licenseKeys/" + order.id,
     { void: true },
   );
-  if (res.status !== 204) {
-    throw new Error("Failed to update license key");
-  }
 }
