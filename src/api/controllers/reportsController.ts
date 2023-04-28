@@ -116,7 +116,7 @@ async function generateSummaryReport(
           // filter by coupon
           {
             $match: {
-              $ifNull: { $exists: true, "$ne": "" },
+              "originData.p_coupon": { $exists: true, $ne: "" },
             },
           },
           // group by coupon
