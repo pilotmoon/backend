@@ -9,7 +9,7 @@ const ZPaddleWebhookData = z.object({
 }).passthrough();
 
 // validate webhook signature (based on paddle docs)
-export function validatePaddleWebhook(ctx: Context, pubKey: string): boolean {
+export function validateWebhook(ctx: Context, pubKey: string): boolean {
   try {
     const data = ZPaddleWebhookData.parse(ctx.request.body);
     // sort args by key and replace non-string values with stringified values
