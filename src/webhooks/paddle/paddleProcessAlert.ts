@@ -39,7 +39,7 @@ async function processRefund(args: unknown, mode: "test" | "live") {
   const paddleOrders = response.items.filter((item) =>
     item.origin === "Paddle"
   );
-  if (paddleOrders.length !== 1) {
+  if (paddleOrders.length === 0) {
     throw new ApiError(400, "Paddle order not found");
   }
   if (paddleOrders.length > 1) {
