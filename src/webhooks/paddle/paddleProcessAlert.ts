@@ -7,18 +7,6 @@ import { AxiosInstance } from "axios";
 const ZAlertArgs = z.object({
   alert_name: z.string(),
 });
-const ZRefundArgs = z.object({
-  alert_name: z.literal("payment_refunded"),
-  order_id: z.string(),
-});
-const ZQueryResponse = z.object({
-  object: z.literal("list"),
-  items: z.array(z.object({
-    id: z.string(),
-    order: z.string().optional(),
-    origin: z.string().optional(),
-  })),
-});
 
 export async function processAlert(args: unknown, mode: "test" | "live") {
   const alertArgs = ZAlertArgs.parse(args);
@@ -29,20 +17,33 @@ export async function processAlert(args: unknown, mode: "test" | "live") {
   }
 }
 
+const ZRefundArgs = z.object({
+  alert_name: z.literal("payment_refunded"),
+  order_id: z.string(),
+});
+
 async function processRefund(args: unknown, api: AxiosInstance) {
   const paddleArgs = ZRefundArgs.parse(args);
-  const id = await getLicenseKeyId("Paddle", paddleArgs.order_id, api);
+  const id = await lookupOrder("Paddle", paddleArgs.order_id, api);
   await api.patch("/licenseKeys/" + id, { void: true });
 }
 
-// get the unique license key id for a given origin and order
-async function getLicenseKeyId(
+const ZLookupResponse = z.object({
+  object: z.literal("list"),
+  items: z.array(z.object({
+    id: z.string(),
+    order: z.string().optional(),
+    origin: z.string().optional(),
+  })),
+});
+
+async function lookupOrder(
   origin: string,
   order: string,
   api: AxiosInstance,
 ) {
   const { data } = await api.get("/licenseKeys/byOrder/" + order);
-  const response = ZQueryResponse.parse(data);
+  const response = ZLookupResponse.parse(data);
   const orders = response.items.filter((item) => item.origin === origin);
   if (orders.length !== 1) {
     throw new ApiError(400, `Found ${orders.length} orders`);
