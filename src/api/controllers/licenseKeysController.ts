@@ -287,7 +287,9 @@ export async function updateLicenseKey(
 
   try {
     decryptInPlace(document, auth.kind);
+    if (update.email) document.emailHash = hashEmail(update.email);
     const updated = { ...document, ...update };
+
     encryptInPlace(updated, auth.kind, encryptedFields);
     await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
     return true;
