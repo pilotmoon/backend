@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
 import { getPaddle } from "../paddle.js";
-import { couponOffers, couponPrefixes } from "./coupons.js";
+import { couponOffers } from "./coupons.js";
 
 const ZCouponArgs = z.object({
   offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),
@@ -26,12 +26,6 @@ export async function processCoupon(
     );
   }
 
-  // check we have a coupon prefix for this origin
-  const couponPrefix = couponPrefixes[origin]?.prefix;
-  if (!couponPrefix) {
-    throw new ApiError(403, `Not allowed for origin '${origin}'`);
-  }
-
   // get the api endpoint
   const paddle = getPaddle(mode);
 
@@ -46,7 +40,7 @@ export async function processCoupon(
     coupon_type: "product",
     discount_type: "percentage",
     discount_amount: offer.discountPercent,
-    coupon_prefix: couponPrefix,
+    coupon_prefix: offer.prefix,
     num_coupons: 1,
     allowed_uses: 1,
     expires: expiryDate.toISOString().slice(0, 10),
