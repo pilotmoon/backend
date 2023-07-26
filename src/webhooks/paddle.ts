@@ -15,7 +15,7 @@ export const paddleCredentials = ZCreds.parse(
   JSON.parse(config.PADDLE_CREDENTIALS),
 );
 
-export function getPaddle(mode: "test" | "live") {
+export function getPaddleVendorsApi(mode: "test" | "live") {
   const creds = paddleCredentials[mode === "test" ? "sandbox" : "production"];
   const prefix = mode === "test" ? "sandbox-" : "";
   return axios.create({
@@ -27,5 +27,11 @@ export function getPaddle(mode: "test" | "live") {
         ...data,
       };
     }, ...(axios.defaults.transformRequest as any)],
+  });
+}
+
+export function getPaddleCheckoutApi() {
+  return axios.create({
+    baseURL: `https://checkout.paddle.com/api`,
   });
 }

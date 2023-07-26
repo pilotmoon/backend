@@ -1,4 +1,10 @@
-const paddleCatalog = {
+interface Catalog {
+  [key: string]: {
+    mode: "live" | "test",
+    productIds: string[]
+  } | undefined
+}
+export const paddleCatalog: Catalog = {
   popclip: {
     mode: "live",
     productIds: ["818494"],

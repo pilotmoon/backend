@@ -3,6 +3,7 @@ import { ApiError } from "../../errors.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
+import { processPrices } from "./storeProcessPrices.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
 
 export const router = new Router();
@@ -33,6 +34,10 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
 
 router.get("/webhooks/store/getPrices", async (ctx) => {
   const sourceIp = ctx.request.ip;
+  const product = ctx.query['product'];
+  if (typeof product !== "string") {
+    throw new ApiError(400, "'product' query parameter is required");
+  }
   console.log(`Request received from IP: ${sourceIp}`);
-  ctx.body = `Hello from ${sourceIp}!`;
+  ctx.body = await processPrices(ctx.request.ip, product);
 });

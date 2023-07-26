@@ -225,3 +225,18 @@ test("webhook, store, generateCoupon, coupon id for wrong mode", async (t) => {
   t.log(res.data);
   t.is(res.status, 400);
 });
+
+test("webhook, store, getPrices, missing product", async (t) => {
+  const res = await webhooks.get("/store/getPrices");
+  t.is(res.status, 400);
+});
+
+test("webhook, store, getPrices, invalid product", async (t) => {
+  const res = await webhooks.get("/store/getPrices?product=invalid");
+  t.is(res.status, 400);
+});
+
+test("webhook, store, getPrices, valid product", async (t) => {
+  const res = await webhooks.get("/store/getPrices?product=popclip");
+  t.is(res.status, 200);
+});

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
-import { getPaddle } from "../paddle.js";
-import { couponOffers } from "./coupons.js";
+import { getPaddleVendorsApi } from "../paddle.js";
+import { couponOffers } from "./catalog.js";
 
 const ZCouponArgs = z.object({
   offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),
@@ -19,15 +19,15 @@ export async function processCoupon(
   const offer = couponOffers[couponArgs.offer];
 
   // check coupon is in correct mode
-  if (offer.product.mode !== mode) {
+  if (offer.product?.mode !== mode) {
     throw new ApiError(
       400,
-      `'${couponArgs.offer}' only allowed in ${offer.product.mode} mode`,
+      `'${couponArgs.offer}' only allowed in ${offer.product?.mode} mode`,
     );
   }
 
   // get the api endpoint
-  const paddle = getPaddle(mode);
+  const paddle = getPaddleVendorsApi(mode);
 
   // calculate date 28 days from now
   const expiryDate = new Date();
