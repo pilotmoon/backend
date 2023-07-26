@@ -3,6 +3,17 @@ import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
 import { paddleCatalog } from "./catalog.js";
+import { minutes } from '../../timeIntervals.js'
+import TTLCache from "@isaacs/ttlcache";
+
+const cachedResponses = new TTLCache({
+  max: 1000,
+  ttl: minutes(15),
+});
+
+function cacheKey(ip: string, product: string) {
+  return `${ip}+${product}`;
+}
 
 const ZPrice = z.object({
   gross: z.number(),
@@ -33,6 +44,13 @@ function formatCurrency(value: number, currencyCode: string) {
 }
 
 export async function processPrices(ip: string, product: string) {
+  // check cache
+  const cached = cachedResponses.get(cacheKey(ip, product));
+  if (cached){
+    log(`Using cached response for ${ip} ${product}`);
+    return cached;
+  }
+
   // get the single product id
   const productData = paddleCatalog[product];
   if (productData?.productIds.length !== 1) {
@@ -53,7 +71,7 @@ export async function processPrices(ip: string, product: string) {
   if (String(productInfo.product_id) !== productId) {
     throw new ApiError(400, `Paddle API error (product not in response)`);
   }
-  return {
+  const result = {
     country: response.response.customer_country,
     prices: {
       paddle: {
@@ -63,4 +81,6 @@ export async function processPrices(ip: string, product: string) {
       },
     },
   };
+  cachedResponses.set(cacheKey(ip, product), result);
+  return result;
 }

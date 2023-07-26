@@ -24,6 +24,7 @@ import { Context } from "koa";
 import { ApiError } from "../../errors.js";
 import { create as createCDH } from "content-disposition-header";
 import { Document } from "mongodb";
+import { minutes } from '../../timeIntervals.js'
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -37,7 +38,7 @@ const matchFile = {
 
 const cachedTokens = new TTLCache({
   max: 1000,
-  ttl: 60 * 60 * 1000, // 1 hour
+  ttl: minutes(60),
 });
 function generateToken(id: string, kind: AuthKind) {
   // generate a URL to download the license key file, with an access token
