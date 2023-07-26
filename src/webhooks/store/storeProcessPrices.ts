@@ -61,7 +61,7 @@ export async function processPrices(ip: string, product: string) {
   // look up with paddle
   const api = getPaddleCheckoutApi();
   const { data } = await api.get("2.0/prices", {
-    params: { product_ids: productData.productIds[0] },
+    params: { product_ids: productData.productIds[0], customer_ip: ip },
   });
   const response = ZPricesResponse.parse(data);
   if (!response.success) {
