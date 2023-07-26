@@ -30,3 +30,9 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
   ctx.body = await processCoupon(ctx.request.body, key.name, key.kind);
   ctx.status = 201;
 });
+
+router.get("/webhooks/store/getPrices", async (ctx) => {
+  const sourceIp = ctx.request.ip;
+  console.log(`Request received from IP: ${sourceIp}`);
+  ctx.body = `Hello from ${sourceIp}!`;
+});
