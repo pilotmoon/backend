@@ -59,7 +59,7 @@ export async function processPrices(ip: string, product: string) {
       paddle: {
         currency: productInfo.currency,
         amount: productInfo.list_price.gross,
-        formatted: formatCurrency(productInfo.list_price.gross, "AUD"),
+        formatted: formatCurrency(productInfo.list_price.gross, productInfo.currency),
       },
     },
   };
