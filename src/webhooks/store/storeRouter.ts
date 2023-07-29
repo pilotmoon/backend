@@ -32,7 +32,7 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
   ctx.status = 201;
 });
 
-router.get("/www/store/getPrices", async (ctx) => {
+router.get("/frontend/store/getPrices", async (ctx) => {
   const sourceIp = ctx.request.ip;
   const product = ctx.query['product'];
   if (typeof product !== "string") {
