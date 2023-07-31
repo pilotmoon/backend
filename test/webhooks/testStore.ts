@@ -227,16 +227,16 @@ test("webhook, store, generateCoupon, coupon id for wrong mode", async (t) => {
 });
 
 test("webhook, store, getPrices, missing product", async (t) => {
-  const res = await webhooks.get("/www/store/getPrices");
+  const res = await webhooks.get("/frontend/store/getPrices");
   t.is(res.status, 400);
 });
 
 test("webhook, store, getPrices, invalid product", async (t) => {
-  const res = await webhooks.get("/www/store/getPrices?product=invalid");
+  const res = await webhooks.get("/frontend/store/getPrices?product=invalid");
   t.is(res.status, 400);
 });
 
 test("webhook, store, getPrices, valid product", async (t) => {
-  const res = await webhooks.get("/www/store/getPrices?product=popclip");
+  const res = await webhooks.get("/frontend/store/getPrices?product=popclip");
   t.is(res.status, 200);
 });
