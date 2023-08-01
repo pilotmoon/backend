@@ -20,6 +20,11 @@ export const couponOffers = {
     discountPercent: 30,
     prefix: "STU",
   },
+  "popclip44": {
+    product: paddleCatalog.popclip,
+    discountPercent: 44,
+    prefix: "STS",
+  },
   "example30": {
     product: paddleCatalog.example,
     discountPercent: 30,
