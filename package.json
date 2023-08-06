@@ -39,7 +39,9 @@
     "mnemonic-id": "3.2.7",
     "mongodb": "5.0.0",
     "php-serialize": "4.0.2",
+    "pngjs": "7.0.0",
     "prando": "6.0.1",
+    "svgson": "5.3.1",
     "zod": "3.20.2",
     "zod-validation-error": "0.3.1"
   },
@@ -48,6 +50,7 @@
     "@types/koa": "2.13.5",
     "@types/koa__router": "12.0.0",
     "@types/node": "18.13.0",
+    "@types/pngjs": "6.0.1",
     "ava": "5.2.0",
     "ts-node": "10.9.1",
     "tsc-watch": "6.0.0",

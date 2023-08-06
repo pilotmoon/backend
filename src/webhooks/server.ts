@@ -4,16 +4,17 @@ import Router from "@koa/router";
 import { config } from "./config.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { router as storeRouter } from "./store/storeRouter.js";
-import { router as imgRouter } from "./img/imgRouter.js";
+import { router as iconRouter } from "./icon/iconRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../errors.js";
 import { handleError } from "../handleError.js";
+import { measureResponseTime } from "../measureResponseTime.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
-router.use(imgRouter.routes());
+router.use(iconRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {
@@ -31,6 +32,7 @@ const parseJsonBody = bodyParser({
 });
 
 // add all middleware
+app.use(measureResponseTime);
 app.use(handleError);
 app.use(parseJsonBody);
 app.use(router.routes());
