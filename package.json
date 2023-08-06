@@ -36,6 +36,7 @@
     "koa": "2.14.1",
     "koa-bodyparser": "4.3.0",
     "lodash": "4.17.21",
+    "lru-cache": "10.0.0",
     "mnemonic-id": "3.2.7",
     "mongodb": "5.0.0",
     "php-serialize": "4.0.2",
