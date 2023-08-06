@@ -1,55 +1,29 @@
 import Router from "@koa/router";
-import { ApiError } from "../../errors.js";
-
-import { getIcon as getIconPcx } from "./handlerPcx.js";
-import { Icon, IconFactory } from "./handler.js";
-import { recolor } from "./recolor.js";
-
-import { LRUCache } from 'lru-cache'
-
-const cache = new LRUCache<string, Icon>({max: 1000});
-
+import { z } from "zod";
+import { getIcon } from "./iconController.js";
+import { canonicalizeColor } from "./key.js";
 export const router = new Router();
 
-const specifierRegex = /^([0-9a-z]+):(.+)$/;
+const ZIconDescriptor = z.object({
+  specifier: z.string(),
+  color: z.string().optional(),
+});
 
-const handlers: Record<string, IconFactory> = {
-  pcx: getIconPcx,
-};
+router.post(`/frontend/icon`, async (ctx) => {
+  const { specifier, color } = ZIconDescriptor.parse(ctx.request.body);
+  const icon = getIcon(specifier, color);
+  ctx.body = icon;
+  ctx.status = 201;
+  ctx.set("Location", "/icons/" + "x");
+});
 
-// proxying to the icons on the legacy server
 router.get(`/frontend/icon/:specifier`, async (ctx) => {
-  const match = specifierRegex.exec(ctx.params.specifier);
-  if (!match) {
-    throw new ApiError(404, "Invalid specifier");
-  }
-  const [, prefix, subspecifier] = match;
-  const handler = handlers[prefix];
-  if (!handler) {
-    throw new ApiError(404, "Unknown prefix: " + prefix);
-  }
-
-  let hexColor: string = "000000";
-  const hexColorRegex = /^([0-9a-f]{3}|[0-9a-f]{6})$/;
-  if (typeof ctx.query.color === "string") {
-    if (hexColorRegex.test(ctx.query.color)) {
-      hexColor = ctx.query.color;
-    } else {
-      throw new ApiError(400, "Invalid color specified");
-    }
-  }
-
-  const cacheKey = `${prefix}:${subspecifier}!${hexColor}`;
-  const cachedIcon = cache.get(cacheKey);
-  if (cachedIcon) {
-    console.log("Using cached icon for", cacheKey);
-    ctx.body = cachedIcon.data;
-    ctx.set("Content-Type", cachedIcon.contentType);
-    return;
-  }
-  console.log("getIcon", prefix, subspecifier, hexColor);
-  const icon = await recolor(await handler(subspecifier), hexColor);
-  cache.set(cacheKey, icon);
-  ctx.body = icon.data;
+  const { specifier } = ctx.params;
+  const { color } = ctx.query;
+  const icon = await getIcon(specifier, canonicalizeColor(color));
+  ctx.body = icon.data
   ctx.set("Content-Type", icon.contentType);
 });
+
+
+

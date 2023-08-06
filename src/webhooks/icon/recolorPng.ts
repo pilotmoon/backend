@@ -47,12 +47,10 @@ function writePng(png: PNG): Promise<Buffer> {
   });
 }
 
+// note we expect pre-validated 6-digit hex color with hash e.g. #ffffff
 function parseHexColor(hex: string) {
-  if (hex.length === 3) {
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-  }
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
+  const r = parseInt(hex.substring(1, 3), 16);
+  const g = parseInt(hex.substring(3, 5), 16);
+  const b = parseInt(hex.substring(5, 7), 16);
   return { r, g, b };
 }

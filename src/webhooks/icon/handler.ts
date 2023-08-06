@@ -5,5 +5,5 @@ export interface Icon {
   contentType: "image/png" | "image/svg+xml" | string;
 }
 
-export type IconFactory = (specifier: string) => Promise<Icon>
+export type IconFactory = (prefix: string, subspecifier: string) => Promise<Icon>
 

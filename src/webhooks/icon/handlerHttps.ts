@@ -1,24 +1,20 @@
 import axios from "axios";
-import { Icon, IconFactory } from "./handler";
+import { Icon } from "./handler";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
 
-const filenameRegex = /^([^.]+)(?:.png|.svg)$/;
-
+// in this case the specifier is the url itself
 export async function getIcon(
-  specifier: string,
+  prefix: string,
+  subspecifier: string,
 ): Promise<Icon> {
-  if (!filenameRegex.test(specifier)) {
-    throw new ApiError(404, "Invalid file name");
-  }
-
-  const url = `https://pilotmoon.com/popclip/extensions/icon/${specifier}`;
+  const url = prefix + ":" + subspecifier;
   log(`fetching: ${url}`);
 
   const response = await axios.get(url, { responseType: "arraybuffer" });
   const contentType: unknown = response.headers["content-type"];
   if (typeof contentType !== "string") {
-    throw new ApiError(500, "Invalid content type");
+    throw new ApiError(500, "Missing content type from remote server");
   }
   return { data: response.data, contentType };
 }
