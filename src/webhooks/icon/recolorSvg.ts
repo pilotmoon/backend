@@ -32,6 +32,9 @@ export async function recolorSVG(
     }
   }
   recolor(svg);
+  if (svg.attributes.fill !== "none") {
+    svg.attributes.fill = hexColor;
+  }
 
   return Buffer.from(stringify(svg));
 }

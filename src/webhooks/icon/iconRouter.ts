@@ -6,13 +6,10 @@ import {
   IconDescriptor,
   ZIconDescriptor,
 } from "./iconKey.js";
-import { LRUCache } from "lru-cache";
-import { Icon } from "./handler.js";
 import { log } from "console";
-import { exists, upload } from "./s3.js";
+import { upload } from "./s3.js";
 
 export const router = new Router();
-const cache = new LRUCache<string, Icon>({ max: 1000 });
 
 async function generate(descriptor: IconDescriptor): Promise<string> {
   const { opaque, raw } = generateKey(descriptor);
@@ -26,27 +23,9 @@ async function generate(descriptor: IconDescriptor): Promise<string> {
 }
 
 router.post(`/frontend/icon`, async (ctx) => {
-  const descriptor = canonicalize(
-    ZIconDescriptor.parse(ctx.request.body),
+  ctx.set(
+    "Location",
+    await generate(canonicalize(ZIconDescriptor.parse(ctx.request.body))),
   );
-  ctx.set("Location", await generate(descriptor));
-  ctx.status = 302;
-});
-
-router.get(`/frontend/icon/:specifier`, async (ctx) => {
-  const descriptor = canonicalize(ZIconDescriptor.parse({
-    specifier: ctx.params.specifier,
-    color: ctx.query.color,
-  }));
-  const { opaque } = generateKey(descriptor);
-  log("key: " + opaque);
-
-  // get header from spaces to see if it exists
-  // if it does, return 302
-  let location = await exists("icons/" + opaque);
-  if (!location) {
-    location = await generate(descriptor);
-  }
-  ctx.set("Location", location);
-  ctx.status = 302;
+  ctx.status = 201;
 });

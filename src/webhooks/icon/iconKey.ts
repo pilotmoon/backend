@@ -12,7 +12,7 @@ export type IconDescriptor = z.infer<typeof ZIconDescriptor>;
 export function generateKey(
   descriptor: IconDescriptor,
 ): { opaque: string; raw: string } {
-  const raw = JSON.stringify(descriptor);
+  const raw = "3" + JSON.stringify(descriptor);
   return { opaque: sha256Base64Url(raw).substring(0, 24), raw };
 }
 
