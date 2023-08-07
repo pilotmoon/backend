@@ -26,10 +26,9 @@ env:
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
   APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
   ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
-  ROLO_APIKEY_LIVE: ""
+  ROLO_APIKEY_LIVE: "${{ secrets.ROLO_APIKEY_LIVE }}"
   PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"
   TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
-  SPACES_CONFIG: "${{ secrets.SPACES_CONFIG }}"
 
 jobs:
   test:
