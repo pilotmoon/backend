@@ -1,6 +1,8 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { config } from "../config.js";
 import { z } from "zod";
+import axios from "axios";
+import { log } from "console";
 
 const ZConfig = z.object({
   endpoint: z.string(),
@@ -47,4 +49,18 @@ export async function upload(
     console.log("Error", err);
     throw err;
   }
+}
+
+export async function exists(key: string): Promise<string> {
+  const url = `${spacesConfig.endpoint}/${spacesConfig.bucket}/${key}`;
+  log("checking if exists: " + url);
+  try {
+    const response = await axios.head(url);
+    if (response.status === 200) {
+      return `${spacesConfig.cdnEndpoint}/${key}`;
+    }
+  } catch (err) {
+    // nothing
+  }
+  return "";
 }

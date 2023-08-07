@@ -1,27 +1,36 @@
 import Router from "@koa/router";
 import { getIcon } from "./iconController.js";
-import { canonicalize, generateKey, ZIconDescriptor } from "./key.js";
+import {
+  canonicalize,
+  generateKey,
+  IconDescriptor,
+  ZIconDescriptor,
+} from "./key.js";
 import { LRUCache } from "lru-cache";
 import { Icon } from "./handler.js";
 import { log } from "console";
-import { upload } from "./s3.js";
+import { exists, upload } from "./s3.js";
 
 export const router = new Router();
 const cache = new LRUCache<string, Icon>({ max: 1000 });
+
+async function generate(descriptor: IconDescriptor): Promise<string> {
+  const { opaque, raw } = generateKey(descriptor);
+  log("key: " + opaque);
+  const icon = await getIcon(descriptor.specifier, descriptor.color);
+  const path = "icons/" + opaque;
+  const location = await upload(path, icon.data, icon.contentType, {
+    "icon-raw-key": encodeURI(raw),
+  });
+  return location;
+}
 
 router.post(`/frontend/icon`, async (ctx) => {
   const descriptor = canonicalize(
     ZIconDescriptor.parse(ctx.request.body),
   );
-  const { opaque, raw } = generateKey(descriptor);
-  log("key: " + opaque);
-  const icon = await getIcon(descriptor.specifier, descriptor.color);
-  const path = "icons/" + opaque
-  const location = await upload(path, icon.data, icon.contentType, {
-    "icon-raw-key": encodeURI(raw),
-  });
-  ctx.status = 201;
-  ctx.set("Location", location);
+  ctx.set("Location", await generate(descriptor));
+  ctx.status = 302;
 });
 
 router.get(`/frontend/icon/:specifier`, async (ctx) => {
@@ -31,14 +40,13 @@ router.get(`/frontend/icon/:specifier`, async (ctx) => {
   }));
   const { opaque } = generateKey(descriptor);
   log("key: " + opaque);
-  const cachedIcon = cache.get(opaque);
-  if (cachedIcon) {
-    ctx.body = cachedIcon.data;
-    ctx.set("Content-Type", cachedIcon.contentType);
-    return;
+
+  // get header from spaces to see if it exists
+  // if it does, return 302
+  let location = await exists("icons/" + opaque);
+  if (!location) {
+    location = await generate(descriptor);
   }
-  const icon = await getIcon(descriptor.specifier, descriptor.color);
-  cache.set(opaque, icon);
-  ctx.body = icon.data;
-  ctx.set("Content-Type", icon.contentType);
+  ctx.set("Location", location);
+  ctx.status = 302;
 });
