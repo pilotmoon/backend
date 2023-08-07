@@ -29,6 +29,7 @@ env:
   ROLO_APIKEY_LIVE: ""
   PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"
   TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
+  SPACES_CONFIG: "${{ secrets.SPACES_CONFIG }}"
 
 jobs:
   test:
