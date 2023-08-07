@@ -5,7 +5,7 @@ import {
   generateKey,
   IconDescriptor,
   ZIconDescriptor,
-} from "./key.js";
+} from "./iconKey.js";
 import { LRUCache } from "lru-cache";
 import { Icon } from "./handler.js";
 import { log } from "console";
