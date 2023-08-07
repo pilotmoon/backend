@@ -37,6 +37,12 @@ const manifestDynamic = [
 ];
 
 export const config = await loadConfig<Config>(manifestStatic);
+log("Waiting for API server".green);
+await waitForRolo();
+log("Loading remote config".green);
+Object.assign(config, await loadConfig(manifestDynamic));
+
+/* Support functions */
 
 // we put rolo here because it's bound up with config loading
 export function getRolo(kind: "test" | "live"): AxiosInstance {
@@ -56,16 +62,16 @@ export function getRolo(kind: "test" | "live"): AxiosInstance {
   });
 }
 
-log("Waiting for API server".green);
-
-let done = false;
-while (!done) {
-  try {
-    await getRolo("live").get("/");
-    done = true;
-  } catch {
-    log("API server not up yet");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+async function waitForRolo() {
+  let done = false;
+  while (!done) {
+    try {
+      await getRolo("live").get("/");
+      done = true;
+    } catch {
+      log("API server not up yet");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
   }
 }
 
@@ -79,7 +85,3 @@ function regLoader(reg: string, obj: string) {
     }
   }
 }
-
-log("Loading remote config".green);
-
-Object.assign(config, await loadConfig(manifestDynamic));
