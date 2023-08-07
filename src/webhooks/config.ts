@@ -10,6 +10,7 @@ export interface Config {
   ROLO_APIKEY_TEST: string;
   ROLO_APIKEY_LIVE: string;
   TWIX_APIKEYS: string;
+  SPACES_CONFIG: string;
 }
 export const config = loadConfig<Config>([
   { key: "TWIX_PORT", transform: decimalIntegerTransform },
@@ -24,4 +25,5 @@ export const config = loadConfig<Config>([
   { key: "ROLO_APIKEY_TEST", hidden: true },
   { key: "ROLO_APIKEY_LIVE", hidden: true },
   { key: "TWIX_APIKEYS", hidden: true },
+  { key: "SPACES_CONFIG", hidden: true },
 ]);

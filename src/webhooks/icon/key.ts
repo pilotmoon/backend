@@ -9,15 +9,16 @@ export const ZIconDescriptor = z.object({
 
 export type IconDescriptor = z.infer<typeof ZIconDescriptor>;
 
-export function generateKey(descriptor: IconDescriptor): string {
-  const descriptorString = JSON.stringify(descriptor);
-  log("descriptorString: " + descriptorString);
-  return sha256Base64Url(descriptorString).substring(0, 24);
+export function generateKey(
+  descriptor: IconDescriptor,
+): { opaque: string; raw: string } {
+  const raw = JSON.stringify(descriptor);
+  return { opaque: sha256Base64Url(raw).substring(0, 24), raw };
 }
 
 export function canonicalize(
   descriptor: IconDescriptor,
-): IconDescriptor  {
+): IconDescriptor {
   return { ...descriptor, color: canonicalizeColor(descriptor.color) };
 }
 
