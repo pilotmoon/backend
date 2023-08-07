@@ -9,7 +9,7 @@ import {
 import { LRUCache } from "lru-cache";
 import { Icon } from "./handler.js";
 import { log } from "console";
-import { exists, upload } from "../s3.js";
+import { exists, upload } from "./s3.js";
 
 export const router = new Router();
 const cache = new LRUCache<string, Icon>({ max: 1000 });

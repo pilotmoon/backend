@@ -10,8 +10,7 @@ import bodyParser from "koa-bodyparser";
 import { ApiError } from "../errors.js";
 import { handleError } from "../handleError.js";
 import { measureResponseTime } from "../measureResponseTime.js";
-import { init as initS3 } from "./s3.js";
-import { getRolo } from "./rolo.js";
+
 const router = new Router();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
@@ -67,21 +66,4 @@ process.on("SIGINT", async () => {
   }
 });
 
-log("Waiting for API server".green);
-
-let done = false;
-while (!done) {
-try {
-  await getRolo("live").get("/");
-  done=true;
-} catch {
-  log("API server not up yet");
-  await new Promise(resolve => setTimeout(resolve, 1000));
-}
-}
-
-log("Calling startup routines".green);
-await Promise.allSettled([ // run all other startup routines in parallel
-  initS3(),
-]);
 startServer();
