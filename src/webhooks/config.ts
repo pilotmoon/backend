@@ -12,7 +12,7 @@ export interface Config {
   ROLO_APIKEY_TEST: string;
   ROLO_APIKEY_LIVE: string;
   TWIX_APIKEYS: string;
-  S3_CONFIG: string
+  S3_CONFIG: string;
 }
 const manifestStatic = [
   { key: "TWIX_PORT", transform: decimalIntegerTransform },
@@ -28,11 +28,15 @@ const manifestStatic = [
   { key: "TWIX_APIKEYS", hidden: true },
 ];
 const manifestDynamic = [
-  { key: "S3_CONFIG", loader: regLoader, hidden: true },
-  { key: "PADDLE_CREDENTIALS", loader: regLoader, hidden: true },
+  { key: "S3_CONFIG", loader: regLoader("s3_cdn", "config"), hidden: true },
+  {
+    key: "PADDLE_CREDENTIALS",
+    loader: regLoader("paddle", "credentials"),
+    hidden: true,
+  },
 ];
 
-export const config = loadConfig<Config>(manifestStatic);
+export const config = await loadConfig<Config>(manifestStatic);
 
 // we put rolo here because it's bound up with config loading
 export function getRolo(kind: "test" | "live"): AxiosInstance {
@@ -52,31 +56,30 @@ export function getRolo(kind: "test" | "live"): AxiosInstance {
   });
 }
 
-
 log("Waiting for API server".green);
 
 let done = false;
 while (!done) {
-try {
-  await getRolo("live").get("/");
-  done=true;
-} catch {
-  log("API server not up yet");
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  try {
+    await getRolo("live").get("/");
+    done = true;
+  } catch {
+    log("API server not up yet");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
 }
+
+function regLoader(reg: string, obj: string) {
+  return async (key: string) => {
+    try {
+      const response = await getRolo("live").get(`registries/${reg}/objects/${obj}`);
+      return JSON.stringify(response.data.record);
+    } catch(err) {
+      log("failed loading remote config:", reg, obj);
+    }
+  }
 }
 
 log("Loading remote config".green);
-async function loadRecord(registry: string, obj: string) {
-  return JSON.stringify((await getRolo("live").get(`registries/${registry}/objects/${obj}`)).data.record)
-}
-const dynConfig: Record<string, string> = {
-  S3_CONFIG: await loadRecord("s3_cdn", "config"),
-  PADDLE_CREDENTIALS: await loadRecord("paddle", "credentials")
-};
 
-function regLoader(key: string): string | undefined {
-  return dynConfig[key];
-}
-
-Object.assign(config, loadConfig(manifestDynamic));
+Object.assign(config, await loadConfig(manifestDynamic));
