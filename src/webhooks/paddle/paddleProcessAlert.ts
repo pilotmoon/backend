@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getRolo } from "../config.js";
+import { getRolo } from "../rolo.js";
 import { log } from "../../logger.js";
 import { ApiError } from "../../errors.js";
 import { AxiosInstance } from "axios";

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
 import { ZSaneEmail, ZSaneQuantity, ZSaneString } from "../../saneString.js";
-import { getRolo } from "../config.js";
+import { getRolo } from "../rolo.js";
 
 const ZLicenseArgs = z.object({
   name: ZSaneString,

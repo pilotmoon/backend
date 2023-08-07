@@ -1,6 +1,6 @@
 import { z } from "zod";
 import _ from "lodash";
-import { getRolo } from "../config.js";
+import { getRolo } from "../rolo.js";
 import { ZLicenseExternal } from "../../licenseFileObject.js";
 
 const ZLicenseArgs = z.object({

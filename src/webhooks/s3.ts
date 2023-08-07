@@ -1,8 +1,13 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getRolo } from "./rolo.js";
 import { z } from "zod";
 import axios from "axios";
 import { log } from "console";
-import { config } from "./config.js";
+
+let spacesConfig: any;
+let s3Client: S3Client;
+export async function init() {
+  console.log("init s3");
 
   // get spaces config from rolo registry
   const ZConfig = z.object({
@@ -15,15 +20,16 @@ import { config } from "./config.js";
       secretAccessKey: z.string(),
     }),
   });
-  const spacesConfig = ZConfig.parse(JSON.parse(config.S3_CONFIG));
+  spacesConfig = ZConfig.parse((await getRolo("live").get("registries/s3_cdn/objects/config")).data.record);
 
   // create s3 client
-  const  s3Client = new S3Client({
+  s3Client = new S3Client({
     endpoint: spacesConfig.endpoint,
     region: spacesConfig.region,
     credentials: spacesConfig.credentials,
     forcePathStyle: false,
   });
+}
 
 export async function upload(
   key: string,
