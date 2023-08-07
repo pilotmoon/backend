@@ -1,10 +1,10 @@
 import { log, logw } from "./logger.js";
 
 // load config variables
-export async function loadConfig<T>(manifest: ConfigItem[]): Promise<T> {
+export function loadConfig<T>(manifest: ConfigItem[]): T {
   const config = {};
   for (const item of manifest) {
-    await setConfigItem(item, config);
+    setConfigItem(item, config);
   }
   return config as T;
 }
@@ -17,13 +17,16 @@ interface ConfigItem {
   optional?: boolean;
 }
 interface Loader {
-  (key: string): Promise<string | undefined>;
+  (key: string): string | undefined;
 }
 // loader to read from process.env
-async function envLoader(key: string) {
+function envLoader(key: string) {
   return process.env[key];
 }
-// transformers
+// construct a loader that always returns the same value
+function load(value: any) {
+  return () => value;
+}
 interface Transformer {
   (value: string): any;
 }
@@ -41,7 +44,7 @@ export function commaListTransform(string: string) {
   }
   return string.split(",").map((item) => item.trim());
 }
-async function setConfigItem(
+function setConfigItem(
   {
     key,
     loader = envLoader,
@@ -51,7 +54,7 @@ async function setConfigItem(
   }: ConfigItem,
   config: any,
 ) {
-  let value = await loader(key);
+  let value = loader(key);
   if (typeof value !== "string") {
     if (optional) {
       logw(

@@ -18,7 +18,7 @@ export interface Config {
   ACCESS_ALLOWLIST: string[];
   APP_TEST_URL: string;
 }
-export const config = await loadConfig<Config>([
+export const config = loadConfig<Config>([
   { key: "APP_PORT", transform: decimalIntegerTransform },
   { key: "DATABASE_URL", hidden: true },
   { key: "DATABASE_NAME_TEST" },
