@@ -16,7 +16,7 @@ import {
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {
-  pattern: makeGenericIdPattern("id"),
+  pattern: makeIdentifierPattern("id", "reg"),
   uuid: randomUUID(),
 };
 
