@@ -9,23 +9,24 @@ export async function recolorSVG(
   const svg = await parse(svgString);
 
   // recolor everything to the hex color
-  console.log("Recoloring image to:", hexColor);
-  console.log(svg);
+  console.log("Recoloring SVG to:", hexColor);
 
   // descend into the tree and recolor everything
   // this is based on https://github.com/mgenware/recolor-img/blob/master/src/main.ts
   // it may need testing on a range of SVGs
   function recolor(node: any) {
-    // fill defaults to black
-    if (node.attributes.fill !== "none") {
-      node.attributes.fill = hexColor;
+    console.log("current", node.attributes);
+    if (node.attributes.fill) {
+      if (node.attributes.fill !== "none") {
+        node.attributes.fill = hexColor;
+      }
     }
-    // stroke defaults to black
     if (node.attributes.stroke) {
       if (node.attributes.stroke !== "none") {
         node.attributes.stroke = hexColor;
       }
     }
+    console.log("new", node.attributes);
     if (node.children) {
       node.children.forEach(recolor);
     }

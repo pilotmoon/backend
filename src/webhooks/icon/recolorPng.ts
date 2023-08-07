@@ -3,7 +3,7 @@ import { PNG } from "pngjs";
 
 export async function recolorPng(buffer: ArrayBuffer, hexColor: string): Promise<ArrayBuffer> {
   const color = parseHexColor(hexColor);
-  console.log('Recoloring image to:', color);
+  console.log('Recoloring PNG to:', color);
   console.log("Input image size:", buffer.byteLength);
 
   const png = await readPng(Buffer.from(buffer));
