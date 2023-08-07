@@ -39,7 +39,7 @@ export async function upload(
         Body: body,
         ACL: "public-read",
         ContentType: contentType,
-        CacheControl: "public, max-age=604800, immutable",
+        CacheControl: "public, max-age=3600",
         Metadata: metadata,
       }),
     );
