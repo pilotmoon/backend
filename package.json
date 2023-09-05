@@ -39,7 +39,7 @@
     "lodash": "4.17.21",
     "lru-cache": "10.0.0",
     "mnemonic-id": "3.2.7",
-    "mongodb": "5.0.0",
+    "mongodb": "5.8.0",
     "php-serialize": "4.0.2",
     "pngjs": "7.0.0",
     "prando": "6.0.1",
