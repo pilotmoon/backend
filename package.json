@@ -42,8 +42,8 @@
     "typescript": "4.9.5"
   },
   "engines": {
-    "node": "16.20.1",
-    "npm": "8.19.4"
+    "node": "18.17.0",
+    "npm": "9.8.1"
   },
   "name": "rolo",
   "private": true,
