@@ -6,7 +6,7 @@ import { paddleCatalog } from "./catalog.js";
 import { minutes } from '../../timeIntervals.js'
 import TTLCache from "@isaacs/ttlcache";
 
-const cachedResponses = new TTLCache({
+const cachedResponses = new TTLCache<string, PricesResult>({
   max: 1000,
   ttl: minutes(15),
 });
@@ -36,6 +36,19 @@ const ZPricesResponse = z.object({
   }),
 });
 
+const ZPricesResult = z.object({
+  country: z.string(),
+  prices: z.object({
+    paddle: z.object({
+      currency: z.string(),
+      amount: z.number(),
+      formatted: z.string(),
+    }),
+  }),
+});
+export type PricesResult = z.infer<typeof ZPricesResult>;
+
+
 function formatCurrency(value: number, currencyCode: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -43,7 +56,7 @@ function formatCurrency(value: number, currencyCode: string) {
   }).format(value);
 }
 
-export async function processPrices(ip: string, product: string) {
+export async function processPrices(ip: string, product: string): Promise<PricesResult> {
   // check cache
   const cached = cachedResponses.get(cacheKey(ip, product));
   if (cached){
@@ -71,7 +84,7 @@ export async function processPrices(ip: string, product: string) {
   if (String(productInfo.product_id) !== productId) {
     throw new ApiError(400, `Paddle API error (product not in response)`);
   }
-  const result = {
+  const result = ZPricesResult.parse({
     country: response.response.customer_country,
     prices: {
       paddle: {
@@ -80,7 +93,7 @@ export async function processPrices(ip: string, product: string) {
         formatted: formatCurrency(productInfo.list_price.gross, productInfo.currency),
       },
     },
-  };
+  });
   cachedResponses.set(cacheKey(ip, product), result);
   return result;
 }

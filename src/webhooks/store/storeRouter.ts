@@ -39,5 +39,7 @@ router.get("/frontend/store/getPrices", async (ctx) => {
     throw new ApiError(400, "'product' query parameter is required");
   }
   console.log(`Request received from IP: ${sourceIp}`);
-  ctx.body = await processPrices(ctx.request.ip, product);
+  const result = await processPrices(sourceIp, product);
+  console.log("Sending prices for", result.country);
+  ctx.body = result;
 });
