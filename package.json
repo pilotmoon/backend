@@ -1,25 +1,4 @@
 {
-  "name": "rolo",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start-rolo": "node ./dist/src/api/server.js",
-    "start-twix": "node ./dist/src/webhooks/server.js",
-    "build": "tsc",
-    "dev-rolo": "./scripts/dev-rolo",
-    "dev-twix": "./scripts/dev-twix",
-    "deploy": "./scripts/deploy",
-    "test-unit": "./scripts/test-unit",
-    "test-rolo-local": "./scripts/test-rolo-local",
-    "test-twix-local": "./scripts/test-twix-local",
-    "test-local": "./scripts/test-local",
-    "test-prod": "./scripts/test-prod",
-    "db": "docker run -it --expose 27017 -p 27017:27017 mongo"
-  },
-  "engines": {
-    "node": "16.19.0",
-    "npm": "9.5.1"
-  },
   "dependencies": {
     "@aws-sdk/client-s3": "3.385.0",
     "@isaacs/ttlcache": "1.2.1",
@@ -34,12 +13,14 @@
     "cbor": "8.1.0",
     "colors": "1.4.0",
     "content-disposition-header": "0.6.0",
+    "cron": "2.4.3",
     "koa": "2.14.1",
     "koa-bodyparser": "4.3.0",
     "lodash": "4.17.21",
     "lru-cache": "10.0.0",
     "mnemonic-id": "3.2.7",
     "mongodb": "5.8.0",
+    "nodemailer": "6.9.4",
     "php-serialize": "4.0.2",
     "pngjs": "7.0.0",
     "prando": "6.0.1",
@@ -52,10 +33,33 @@
     "@types/koa": "2.13.5",
     "@types/koa__router": "12.0.0",
     "@types/node": "18.13.0",
+    "@types/node-cron": "3.0.7",
+    "@types/nodemailer": "6.4.10",
     "@types/pngjs": "6.0.1",
     "ava": "5.2.0",
     "ts-node": "10.9.1",
     "tsc-watch": "6.0.0",
     "typescript": "4.9.5"
-  }
+  },
+  "engines": {
+    "node": "16.20.1",
+    "npm": "8.19.4"
+  },
+  "name": "rolo",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "db": "docker run -it --expose 27017 -p 27017:27017 mongo",
+    "deploy": "./scripts/deploy",
+    "dev-rolo": "./scripts/dev-rolo",
+    "dev-twix": "./scripts/dev-twix",
+    "start-rolo": "node ./dist/src/api/server.js",
+    "start-twix": "node ./dist/src/webhooks/server.js",
+    "test-local": "./scripts/test-local",
+    "test-prod": "./scripts/test-prod",
+    "test-rolo-local": "./scripts/test-rolo-local",
+    "test-twix-local": "./scripts/test-twix-local",
+    "test-unit": "./scripts/test-unit"
+  },
+  "type": "module"
 }
