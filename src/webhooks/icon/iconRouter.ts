@@ -11,7 +11,7 @@ import { calculateIconKey } from "./iconKey.js";
 export const router = new Router();
 
 function suffix(color?: string) {
-  return color ? `-${color.slice(1)}` : "-base";
+  return color ? `-${color.slice(1)}` : "";
 }
 
 async function store(
