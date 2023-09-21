@@ -1,12 +1,14 @@
 import axios from "axios";
-import { Icon } from "./handler";
+import { Icon, HexColor } from "./handler";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
+import { recolor } from "./recolor.js";
 
 // in this case the specifier is the url itself
 export async function getIcon(
   prefix: string,
   subspecifier: string,
+  color?: HexColor
 ): Promise<Icon> {
   const url = prefix + ":" + subspecifier;
   log(`fetching: ${url}`);
@@ -16,5 +18,7 @@ export async function getIcon(
   if (typeof contentType !== "string") {
     throw new ApiError(500, "Missing content type from remote server");
   }
-  return { data: response.data, contentType };
+  
+  const icon: Icon = { data: response.data, contentType }; 
+  return color ? recolor(icon, color) : icon;
 }

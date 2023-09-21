@@ -1,6 +1,6 @@
 import { parse, stringify } from "svgson";
 
-export async function recolorSVG(
+export async function recolorSvg(
   data: ArrayBuffer,
   hexColor: string,
 ): Promise<ArrayBuffer> {
