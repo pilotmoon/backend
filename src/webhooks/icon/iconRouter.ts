@@ -40,12 +40,12 @@ async function store(
 
 async function storeAll(descriptor: IconDescriptor) {
   await Promise.all(
-    ([undefined, "#000000", "#ffffff", "#4d4d4d", "#b2b2b2"] as const).map(
+    ([undefined, null, "#000000", "#ffffff", "#4d4d4d", "#b2b2b2"] as const).map(
       async (color) => {
         const altered: IconDescriptor = { ...descriptor }        
         if (color) {
           altered.color = color;
-        } else {
+        } else if (color === null){ 
           delete altered.color;
         }        
         const { icon, key } = await generateIcon(altered);
