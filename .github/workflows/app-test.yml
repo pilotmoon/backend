@@ -32,6 +32,7 @@ env:
   SPACES_CONFIG: "${{ secrets.SPACES_CONFIG }}"
   SMTP_CONFIG: "${{ secrets.SMTP_CONFIG }}"
   REPORTS_CONFIG: "${{ secrets.REPORTS_CONFIG }}"
+  HMA_ROOT: "${{ secrets.HMA_ROOT }}"
 
 jobs:
   test:

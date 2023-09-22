@@ -13,6 +13,7 @@ export interface Config {
   SPACES_CONFIG: string;
   SMTP_CONFIG: string;
   REPORTS_CONFIG: string;
+  HMA_ROOT: string;
 }
 export const config = loadConfig<Config>([
   { key: "TWIX_PORT", transform: decimalIntegerTransform },
@@ -30,4 +31,5 @@ export const config = loadConfig<Config>([
   { key: "SPACES_CONFIG", hidden: true },
   { key: "SMTP_CONFIG", hidden: true },
   { key: "REPORTS_CONFIG", hidden: true },
+  { key: "HMA_ROOT", hidden: true, optional: true },
 ]);
