@@ -15,7 +15,7 @@ function meta(icon: Icon, descriptor: IconDescriptor) {
   for (const [k, v] of Object.entries(descriptor)) {
     meta[`icon-${kebabCase(k)}`] = encodeURI(String(v));
   }
-  if (icon.intrinsicPreserveColor) {
+  if (icon.intrinsicColor) {
     meta["icon-preserve-color"] = "true";
   }
   console.log(meta);

@@ -19,6 +19,6 @@ export async function getIcon(
     throw new ApiError(500, "Missing content type from remote server");
   }
   
-  const icon: Icon = { data: response.data, contentType, intrinsicPreserveColor: false }; 
+  const icon: Icon = { data: response.data, contentType, intrinsicColor: false }; 
   return color ? recolor(icon, color) : icon;
 }
