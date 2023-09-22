@@ -1,14 +1,10 @@
-import {
-  calculateIconKey,
-  Icon,
-  IconDescriptor,
-  IconFactory,
-} from "./icon.js";
+import { calculateIconKey, Icon, IconDescriptor, IconFactory } from "./icon.js";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { LRUCache } from "lru-cache";
 import { getIcon as getIconHttps } from "./iconFactoryHttps.js";
 import { getIcon as getIconPopClip } from "./iconFactoryPopClip.js";
+import axios from "axios";
 
 const specifierRegex = /^([a-z]{2,10}):(.+)$/i;
 const textIconRegex = /^((?:[a-z]{2,10} +)*)(\S{1,3}|\S \S)$/i;
@@ -26,14 +22,33 @@ function notImplemented(
   throw new ApiError(501, "Not implemented");
 }
 
+async function iconifyWrapper(
+  descriptor: IconDescriptor,
+  _prefix: string,
+  subspecifier: string,
+): Promise<Icon> {
+  // get icon dat from iconify
+  const [set, name] = subspecifier.split(":");
+  const { data } = await axios.get(
+    `https://api.iconify.design/${set}/${name}.svg`,
+  );
+
+  // return icon
+  return await getIconPopClip(
+    { ...descriptor, specifier: `svg:${data}` },
+    "",
+    "",
+  );
+}
+
 const factories: Record<string, IconFactory> = {
   https: getIconHttps,
   bundle: getIconPopClip,
   symbol: getIconPopClip,
   text: getIconPopClip,
   svg: getIconPopClip,
-  iconify: notImplemented,
-  id: notImplemented
+  iconify: iconifyWrapper,
+  id: notImplemented,
 };
 
 export async function getIcon(
@@ -52,25 +67,25 @@ export async function getIcon(
   const parts = descriptor.specifier.match(specifierRegex);
   if (parts) {
     for (const [prefix, factory] of Object.entries(factories)) {
-      if (parts[1] === prefix) {        
+      if (parts[1] === prefix) {
         console.log("Using factory", prefix, factory);
         icon = await factory(descriptor, prefix, parts[2]);
         break;
       }
     }
-  } 
+  }
 
   // fallback to popclip if input looks sane
-  if (!icon&&(parts||textIconRegex.test(descriptor.specifier))) {
+  if (!icon && (parts || textIconRegex.test(descriptor.specifier))) {
     console.log("Using PopClip");
     icon = await getIconPopClip(descriptor, "", "");
   }
-  
+
   // if we still don't have an icon, throw
   if (!icon) {
     throw new ApiError(400, "No icon for specifier");
   }
-  
+
   // cache and return
   cachedIcons.set(key, icon);
   return { icon, key };
