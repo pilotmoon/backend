@@ -7,10 +7,10 @@ export async function recolor(icon: Icon, color: HexColor ): Promise<Icon> {
   let result: Icon;
   if (icon.contentType === "image/png") {
     console.log("Recoloring PNG");
-    result = { ...icon, data: await recolorPng(icon.data, color), color };
+    result = { ... icon, data: await recolorPng(icon.data, color) };
   } else if (icon.contentType === "image/svg+xml") {
     console.log("Recoloring SVG");
-    result = { ...icon, data: await recolorSvg(icon.data, color), color }
+    result = { ...icon, data: await recolorSvg(icon.data, color) };
   } else {
     throw new Error("Unsupported content type: " + icon.contentType);
   }
