@@ -1,8 +1,9 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { config } from "../config.js";
-import { z } from "zod";
+import { boolean, z } from "zod";
 import axios from "axios";
 import { log } from "console";
+import { result } from "lodash";
 
 const ZConfig = z.object({
   endpoint: z.string(),
@@ -26,16 +27,18 @@ const s3Client = new S3Client({
 });
 
 export async function upload(
-  key: string,
+  path: string,
   body: ArrayBuffer,
   contentType: string,
   metadata?: Record<string, string>,
-): Promise<string> {
+) {
   try {
-    const data = await s3Client.send(
+    console.log("s3: sending".magenta, path.bgWhite);
+    console.time("s3 send " + path)
+    await s3Client.send(
       new PutObjectCommand({
         Bucket: spacesConfig.bucket,
-        Key: key,
+        Key: path,
         Body: body,
         ACL: "public-read",
         ContentType: contentType,
@@ -43,24 +46,28 @@ export async function upload(
         Metadata: metadata,
       }),
     );
-    console.log("Successfully uploaded object: ", key);
-    return `${spacesConfig.cdnEndpoint}/${key}`;
+    console.log("s3: sent".magenta, path.bgWhite);
+    console.timeEnd("s3 send " + path)
   } catch (err) {
-    console.log("Error", err);
+    console.log("s3: error".bgRed, err);
     throw err;
   }
 }
 
-export async function exists(key: string): Promise<string> {
-  const url = `${spacesConfig.endpoint}/${spacesConfig.bucket}/${key}`;
-  log("checking if exists: " + url);
+export async function exists(path: string) {
+  var result = false;
+  const url = `${spacesConfig.endpoint}/${spacesConfig.bucket}/${path}`;
+  log("s3: exists?".magenta, path.bgWhite);
+  console.time("s3 exists " + path)
   try {
     const response = await axios.head(url);
-    if (response.status === 200) {
-      return `${spacesConfig.cdnEndpoint}/${key}`;
+    if (response.status === 200) {      
+      result = true;
     }
   } catch (err) {
     // nothing
   }
-  return "";
+  log("s3: exists ".magenta);
+  console.timeEnd("s3 exists " + path)
+  return result;
 }

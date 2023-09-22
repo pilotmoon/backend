@@ -1,4 +1,4 @@
-import { Icon, HexColor } from "./handler.js";
+import { Icon, HexColor } from "./icon.js";
 import { recolorPng } from "./recolorPng.js";
 import { recolorSvg } from "./recolorSvg.js";
 

@@ -1,6 +1,6 @@
 import { sha256 } from 'js-sha256';
 import { baseEncode, alphabets } from '@pilotmoon/chewit';
-import { IconDescriptor } from './iconGenerator.js';
+import { IconDescriptor } from './icon.js';
 
 export function calculateIconKey(descriptor: IconDescriptor) {
     const hash = sha256.create().update(descriptor.specifier).array();
