@@ -18,6 +18,7 @@
     "content-disposition-header": "0.6.0",
     "content-type": "1.0.5",
     "cron": "2.4.3",
+    "emoji-regex": "10.2.1",
     "js-sha256": "0.10.1",
     "koa": "2.14.1",
     "koa-bodyparser": "4.3.0",

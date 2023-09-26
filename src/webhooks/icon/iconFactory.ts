@@ -6,9 +6,11 @@ import { getIconHttp } from "./geticonHttp.js";
 import { getIconPopClip } from "./getIconPopClip.js";
 import { getIconIconify } from "./getIconIconify.js";
 import { postprocess } from "./postprocess.js";
+import er from "emoji-regex";
 
 const specifierRegex = /^([a-z]{2,10}):(.+)$/i;
 const textIconRegex = /^((?:[a-z]{2,10} +)*)(\S{1,3}|\S \S)$/i;
+const emojiRegex = er();
 
 const cachedIcons = new LRUCache<string, Icon>({
   maxSize: 5_000_000,
@@ -52,7 +54,7 @@ export async function getIcon(
   }
 
   // fallback to popclip if input looks sane
-  if (!icon && (parts || textIconRegex.test(descriptor.specifier))) {
+  if (!icon && (parts || textIconRegex.test(descriptor.specifier) || emojiRegex.test(descriptor.specifier))) {
     console.log("Using PopClip");
     icon = await getIconPopClip(descriptor);
   }
