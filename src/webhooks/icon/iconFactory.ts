@@ -2,9 +2,10 @@ import { calculateIconKey, Icon, IconDescriptor, IconFactory } from "./icon.js";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { LRUCache } from "lru-cache";
-import { getIcon as getIconHttps } from "./iconFactoryHttps.js";
-import { getIcon as getIconPopClip } from "./iconFactoryPopClip.js";
-import axios from "axios";
+import { getIconHttp } from "./geticonHttp.js";
+import { getIconPopClip } from "./getIconPopClip.js";
+import { getIconIconify } from "./getIconIconify.js";
+import { postprocess } from "./postprocess.js";
 
 const specifierRegex = /^([a-z]{2,10}):(.+)$/i;
 const textIconRegex = /^((?:[a-z]{2,10} +)*)(\S{1,3}|\S \S)$/i;
@@ -14,41 +15,14 @@ const cachedIcons = new LRUCache<string, Icon>({
   sizeCalculation: (icon) => icon.data.byteLength,
 });
 
-function notImplemented(
-  _descriptor: IconDescriptor,
-  _prefix: string,
-  _subspecifier: string,
-): Promise<Icon> {
-  throw new ApiError(501, "Not implemented");
-}
-
-async function iconifyWrapper(
-  descriptor: IconDescriptor,
-  _prefix: string,
-  subspecifier: string,
-): Promise<Icon> {
-  // get icon dat from iconify
-  const [set, name] = subspecifier.split(":");
-  const { data } = await axios.get(
-    `https://api.iconify.design/${set}/${name}.svg`,
-  );
-
-  // return icon
-  return await getIconPopClip(
-    { ...descriptor, specifier: `svg:${data}` },
-    "",
-    "",
-  );
-}
-
 const factories: Record<string, IconFactory> = {
-  https: getIconHttps,
+  http: (descriptor) => getIconHttp(descriptor, { postprocess }),
+  https: (descriptor) => getIconHttp(descriptor, { postprocess }),
   bundle: getIconPopClip,
   symbol: getIconPopClip,
   text: getIconPopClip,
   svg: getIconPopClip,
-  iconify: iconifyWrapper,
-  id: notImplemented,
+  iconify: getIconIconify,
 };
 
 export async function getIcon(
@@ -69,7 +43,7 @@ export async function getIcon(
     for (const [prefix, factory] of Object.entries(factories)) {
       if (parts[1] === prefix) {
         console.log("Using factory", prefix, factory);
-        icon = await factory(descriptor, prefix, parts[2]);
+        icon = await factory(descriptor);
         break;
       }
     }
@@ -78,7 +52,7 @@ export async function getIcon(
   // fallback to popclip if input looks sane
   if (!icon && (parts || textIconRegex.test(descriptor.specifier))) {
     console.log("Using PopClip");
-    icon = await getIconPopClip(descriptor, "", "");
+    icon = await getIconPopClip(descriptor);
   }
 
   // if we still don't have an icon, throw

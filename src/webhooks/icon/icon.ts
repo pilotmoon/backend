@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { sha256 } from 'js-sha256';
-import { baseEncode, alphabets } from '@pilotmoon/chewit';
+import { sha256 } from "js-sha256";
+import { alphabets, baseEncode } from "@pilotmoon/chewit";
 
 export type HexColor = string;
 
@@ -25,38 +25,46 @@ export type Icon = z.infer<typeof ZIcon>;
 
 export type IconFactory = (
   descriptor: IconDescriptor,
-  prefix: string,
-  subspecifier: string,
 ) => Promise<Icon>;
 
 export function parseIconDescriptor(descriptor: unknown) {
   const parsed = ZIconDescriptor.parse(descriptor);
   if (parsed.scale) {
-    parsed.scale = Math.min(Math.max(parsed.scale, 0.1), 9.9);
+    parsed.scale = Math.min(Math.max(parsed.scale, 0.1), 10);
   }
   return parsed;
 }
 
-export function calculateIconKey(descriptor: IconDescriptor) {
-  const hash = sha256.create().update(descriptor.specifier).array();
-  let key = 'i' + baseEncode(hash, alphabets.base58Flickr).slice(-11);
+// Modifies descriptor by only including the properties that are non-default.
+// This allows new properties to be added in future without changing existing keys.
+function keyObject(descriptor: IconDescriptor) {
+  const keyObj: IconDescriptor = {
+    specifier: descriptor.specifier,
+  };
   if (descriptor.flipHorizontal) {
-      key += "h";
+    keyObj.flipHorizontal = true;
   }
   if (descriptor.flipVertical) {
-      key += "v";
+    keyObj.flipVertical = true;
   }
   if (descriptor.preserveAspect) {
-      key += "a";
+    keyObj.preserveAspect = true;
   }
   if (descriptor.preserveColor) {
-      key += "c";
+    keyObj.preserveColor = true;
   }
   if (descriptor.scale) {
-      key += "s" + Math.round(descriptor.scale*100);
+    keyObj.scale = descriptor.scale;
   }
+  return keyObj;
+}
+
+export function calculateIconKey(descriptor: IconDescriptor) {
+  const hash = sha256.create().update(JSON.stringify(keyObject(descriptor)));
+  let key = "i" + baseEncode(hash.array(), alphabets.base62).slice(-13);
   if (descriptor.color) {
-      key += `-${descriptor.color.slice(1)}`;
+    key += `-${descriptor.color.slice(1)}`;
   }
+  console.log("key", key);
   return key;
 }
