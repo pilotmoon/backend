@@ -24,6 +24,7 @@ const factories: Record<string, IconFactory> = {
   symbol: getIconPopClip,
   text: getIconPopClip,
   svg: getIconPopClip,
+  data: getIconPopClip,
   iconify: getIconIconify,
 };
 
@@ -54,7 +55,7 @@ export async function getIcon(
   }
 
   // fallback to popclip if input looks sane
-  if (!icon && (parts || textIconRegex.test(descriptor.specifier) || emojiRegex.test(descriptor.specifier))) {
+  if (!icon && (textIconRegex.test(descriptor.specifier) || emojiRegex.test(descriptor.specifier))) {
     console.log("Using PopClip");
     icon = await getIconPopClip(descriptor);
   }
