@@ -11,11 +11,10 @@ export async function getIconHttp(
     intrinsicColorPredicate?: (response: AxiosResponse<ArrayBuffer>) => boolean;
     postprocess?: (icon: Icon, descriptor: IconDescriptor) => Promise<Icon>;
   },
-): Promise<Icon> {
-  console.time("getIconHttp");
-  const url = options?.url ?? descriptor.specifier;
+): Promise<Icon> {  
+  const url = options?.url ?? descriptor.specifier;  
   const method = options?.method ?? "get";
-  console.log(`${method} ${url}`);
+  console.time(`getIconHttp ${method} ${url}`);
   const response = await axios<ArrayBuffer>({
     method,
     url,
@@ -51,10 +50,8 @@ export async function getIconHttp(
 
   // postprocess
   if (options?.postprocess) {
-    console.time("postprocess");
     icon = await options.postprocess(icon, descriptor);
-    console.timeEnd("postprocess");
   }
-  console.timeEnd("getIconHttp");
+  console.timeEnd(`getIconHttp ${method} ${url}`);
   return icon;
 }

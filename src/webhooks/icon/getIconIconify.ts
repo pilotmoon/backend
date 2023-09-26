@@ -6,7 +6,6 @@ import { postprocess } from "./postprocess.js";
 export async function getIconIconify(
   descriptor: IconDescriptor,
 ): Promise<Icon> {
-  console.time("getIconIconify");
   const [_, set, name] = descriptor.specifier.split(":");
   if (set === undefined || name === undefined) {
     throw new ApiError(400, "Invalid iconify specifier");
@@ -20,6 +19,5 @@ export async function getIconIconify(
     },
     postprocess,
   });
-  console.timeEnd("getIconIconify");
   return icon;
 }

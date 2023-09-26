@@ -31,13 +31,11 @@ const factories: Record<string, IconFactory> = {
 export async function getIcon(
   descriptor: IconDescriptor,
 ): Promise<{ icon: Icon; key: string }> {
-  console.time("getIcon");
   // check cache
   const key = calculateIconKey(descriptor);
   const cached = cachedIcons.get(key);
   if (cached) {
     log("Using cached icon");
-    console.timeEnd("getIcon");
     return { icon: cached, key };
   }
 
@@ -67,6 +65,5 @@ export async function getIcon(
 
   // cache and return
   cachedIcons.set(key, icon);
-  console.timeEnd("getIcon");
   return { icon, key };
 }
