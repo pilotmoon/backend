@@ -12,6 +12,7 @@ export async function getIconHttp(
     postprocess?: (icon: Icon, descriptor: IconDescriptor) => Promise<Icon>;
   },
 ): Promise<Icon> {
+  console.time("getIconHttp");
   const url = options?.url ?? descriptor.specifier;
   const method = options?.method ?? "get";
   console.log(`${method} ${url}`);
@@ -50,8 +51,10 @@ export async function getIconHttp(
 
   // postprocess
   if (options?.postprocess) {
+    console.time("postprocess");
     icon = await options.postprocess(icon, descriptor);
+    console.timeEnd("postprocess");
   }
-
+  console.timeEnd("getIconHttp");
   return icon;
 }
