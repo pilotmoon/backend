@@ -9,8 +9,7 @@ export async function getIconPopClip(
   if (!config.HMA_ROOT) {
     throw new ApiError(500, "HMA_ROOT is not configured");
   }
-  //const root = config.HMA_ROOT;
-  const root = "http://127.0.0.1:58906";
+  const root = config.HMA_ROOT;
   const icon = await getIconHttp(descriptor, {
     url: root + "/icon",
     method: "post",
