@@ -7,10 +7,12 @@ import { router as storeRouter } from "./store/storeRouter.js";
 import { router as iconRouter } from "./icon/iconRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
+import cors from '@koa/cors';
 import { ApiError } from "../errors.js";
 import { handleError } from "../handleError.js";
 import { measureResponseTime } from "../measureResponseTime.js";
 import { start as initReports, stop as stopReports } from "./reports.js";
+
 
 const router = new Router();
 router.use(paddleRouter.routes());
@@ -23,6 +25,10 @@ router.get("/", (ctx) => {
 });
 
 const app = new Koa({ proxy: true });
+
+// app.use(cors({
+//   origin: '*',
+// }));
 
 // body parser that accepts JSON and form data
 const parseJsonBody = bodyParser({
