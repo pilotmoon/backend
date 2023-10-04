@@ -3,74 +3,152 @@ import { CronJob } from "cron";
 import { getRolo } from "./rolo.js";
 import { config } from "./config.js";
 import { z } from "zod";
+const ZReportConfig = z.object({
+  from: z.string(),
+  to: z.string(),
+  cc: z.string().optional(),
+  bcc: z.string().optional(),
+  replyTo: z.string().optional(),
+  body: z.string().optional(),
+});
 const ZConfig = z.object({
-  daily: z.object({
-    from: z.string(),
-    to: z.string(),
-    cc: z.string().optional(),
-    bcc: z.string().optional(),
-    replyTo: z.string().optional(),
-  }),
+  summary: ZReportConfig,
+  studentAppCentre: ZReportConfig,
 });
 const reportsConfig = ZConfig.parse(
   JSON.parse(config.REPORTS_CONFIG),
 );
 
-
 // call once on server start
-var daily: CronJob;
+var weeklyJob: CronJob;
+var monthlyJob: CronJob;
+var testJob: CronJob;
 export function start() {
   log("Starting reports...");
-  daily = new CronJob(
-    '7 7 0 * * *', // every day at 00:07:07
-    dailyReport,
+  weeklyJob = new CronJob(
+    '7 7 2 * * 1', // every Monday at 02:07:07
+    summaryReport,
     null,
     true,
     'utc',
   );
+  monthlyJob = new CronJob(
+    '8 8 2 1 * *', // every 1st of the month at 02:08:08
+    studentAppCentreReport,
+    null,
+    true,
+    'utc',
+  );
+  // testJob = new CronJob(
+  //   "*/10 * * * * *", // every 10 seconds
+  //   testReport,
+  //   null,
+  //   true,
+  //   "utc",
+  // );
 }
 
 // call on server shutdown
 export function stop() {
   log("Stopping reports");
-  daily.stop();
+  weeklyJob.stop();
+  monthlyJob.stop();
+  testJob?.stop();
 }
 
-async function dailyReport() {
+async function testReport() {
+  // summaryReport("reportsTest@pilotmoon.com");
+  studentAppCentreReport();
+}
+
+async function summaryReport(overrideTo: string | undefined = undefined) {
   try {
-    log("Daily report", new Date());
-    // today at 00:00:00
+    log("Summary report", new Date());
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    // yesterday at 00:00:00
+    today.setUTCHours(0, 0, 0, 0); // today at 00:00:00
     const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setUTCDate(yesterday.getDate() - 7); // 7 days ago at 00:00:00
+
     // get license keys created yesterday
     const api = getRolo("live");
-    log("Getting yesterday's license keys");
     const { data } = await api.get("reports/summary", {
       params: {
         gteDate: yesterday,
         ltDate: today,
       },
     });
-    
-    const reportText = `License Keys created yesterday:
-
-${JSON.stringify(data, undefined, 2)}`;
-    
-    log("Got", reportText);
+    const reportText = JSON.stringify(data, undefined, 2);
 
     // send email
-    log("Sending email");
     const { transporter } = await import("./email.js");
-    await transporter.sendMail({...reportsConfig.daily,
-      subject: "License Keys report for " + yesterday.toDateString(),
+    const mailOptions = {
+      ...reportsConfig.summary,
+      subject: "Weekly summary report",
       text: reportText,
-    });
+    };
+    if (overrideTo) {
+      mailOptions.to = overrideTo;
+    }
+    log("Sending email to ", mailOptions.to);
+    await transporter.sendMail(mailOptions);
   } catch (e) {
     log("Error", e);
   } finally {
-    log("Daily report done");
+    log("Summary report done");
+  }
+}
+
+async function studentAppCentreReport(
+  overrideTo: string | undefined = undefined,
+) {
+  try {
+    log("Student App Centre report", new Date());
+    // get date range from 1st of month-2 to 1st of month-1
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // today at 00:00:00
+    const firstOfThisMonth = new Date(today);
+    firstOfThisMonth.setUTCDate(1); // 1st of this month at 00:00:00
+    const firstOfMonthMinus1 = new Date(firstOfThisMonth);
+    firstOfMonthMinus1.setUTCMonth(firstOfThisMonth.getMonth() - 1); // 1st of month-1 at 00:00:00
+    const firstOfMonthMinus2 = new Date(firstOfThisMonth);
+    firstOfMonthMinus2.setUTCMonth(firstOfThisMonth.getMonth() - 2); // 1st of month-2 at 00:00:00
+
+    // fetch the STU coupon codes report
+    const api = getRolo("live");
+    const { data: csvText } = await api.get("reports/licenseKeys", {
+      params: {
+        couponPrefix: "STU",
+        format: "csv",
+        gteDate: firstOfMonthMinus2,
+        ltDate: firstOfMonthMinus1,
+      }
+    });
+    // generate filename for attachment
+    const month=firstOfMonthMinus2.toISOString().slice(0, 7);
+    const filename=`STU-coupon-codes-${month}.csv`;  
+    log("filename", filename);
+    // send email
+    
+    const { transporter } = await import("./email.js");
+    const mailOptions = {
+      ...reportsConfig.studentAppCentre,
+      subject: "Coupon codes report",
+      text: reportsConfig.studentAppCentre.body,
+      attachments: [
+        {
+          filename,
+          content: csvText,
+        },
+      ],
+    };
+    if (overrideTo) {
+      mailOptions.to = overrideTo;
+    }
+    log("Sending email to ", mailOptions.to);
+    await transporter.sendMail(mailOptions);
+  } catch (e) {
+    log("Error", e);
+  } finally {
+    log("Student App Centre report done");
   }
 }
