@@ -27,10 +27,14 @@ export type IconFactory = (
   descriptor: IconDescriptor,
 ) => Promise<Icon>;
 
+function clampScale(scale: number) {
+  return Math.min(Math.max(scale, 0.1), 10);
+}
+
 export function parseIconDescriptor(descriptor: unknown) {
   const parsed = ZIconDescriptor.parse(descriptor);
   if (parsed.scale) {
-    parsed.scale = Math.min(Math.max(parsed.scale, 0.1), 10);
+    parsed.scale = clampScale(parsed.scale);
   }
   return parsed;
 }
@@ -59,7 +63,7 @@ export function querifyDescriptor(
     }
   }
   if (descriptor.scale) {
-    const fixedScale = descriptor.scale.toFixed(2);
+    const fixedScale = clampScale(descriptor.scale).toFixed(2);
     if (fixedScale !== "1.00") {
       query.append("scale", fixedScale);
     }
