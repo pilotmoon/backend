@@ -34,7 +34,6 @@ export async function upload(
 ) {
   try {
     console.log("s3: sending".magenta, path.bgWhite);
-    console.time("s3 send " + path)
     await s3Client.send(
       new PutObjectCommand({
         Bucket: spacesConfig.bucket,
@@ -47,7 +46,6 @@ export async function upload(
       }),
     );
     console.log("s3: sent".magenta, path.bgWhite);
-    console.timeEnd("s3 send " + path)
   } catch (err) {
     console.log("s3: error".bgRed, err);
     throw err;
@@ -58,7 +56,6 @@ export async function exists(path: string) {
   var result = false;
   const url = `${spacesConfig.endpoint}/${spacesConfig.bucket}/${path}`;
   log("s3: exists?".magenta, path.bgWhite);
-  console.time("s3 exists " + path)
   try {
     const response = await axios.head(url);
     if (response.status === 200) {      
@@ -68,6 +65,5 @@ export async function exists(path: string) {
     // nothing
   }
   log("s3: exists ".magenta);
-  console.timeEnd("s3 exists " + path)
   return result;
 }

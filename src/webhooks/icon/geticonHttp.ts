@@ -14,7 +14,6 @@ export async function getIconHttp(
 ): Promise<Icon> {  
   const url = options?.url ?? descriptor.specifier;  
   const method = options?.method ?? "get";
-  console.time(`getIconHttp ${method} ${url}`);
   const response = await axios<ArrayBuffer>({
     method,
     url,
@@ -52,6 +51,5 @@ export async function getIconHttp(
   if (options?.postprocess) {
     icon = await options.postprocess(icon, descriptor);
   }
-  console.timeEnd(`getIconHttp ${method} ${url}`);
   return icon;
 }
