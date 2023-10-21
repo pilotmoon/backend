@@ -31,13 +31,13 @@ async function store(
 
 // generate the icon and return the icon data; meanwhile, store the icon in S3
 // in the background in original, black, and white colors
-router.post(`/frontend/icon`, async (ctx) => {
-  const descriptor = parseIconDescriptor(ctx.request.body);
+router.get(`/frontend/icon`, async (ctx) => {
+  const descriptor = parseIconDescriptor(ctx.query);
   const { icon, key } = await getIcon(descriptor);
   store(icon, descriptor, key);
 
-  //storeAll(descriptor).then(() => console.log("Stored all icons"));
   ctx.body = icon.data;
   ctx.type = icon.contentType;
-  ctx.set("x-icon-key", key);
+  ctx.set("X-Icon-Key", key);
+  ctx.set("Cache-Control", "public, max-age=31536000, immutable");
 });

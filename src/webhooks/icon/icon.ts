@@ -7,11 +7,11 @@ export type HexColor = string;
 const colorRegex = /^#[0-9a-f]{6}$/;
 const ZIconDescriptor = z.object({
   specifier: z.string().min(1),
-  flipHorizontal: z.boolean().optional(),
-  flipVertical: z.boolean().optional(),
-  preserveColor: z.boolean().optional(),
-  preserveAspect: z.boolean().optional(),
-  scale: z.number().optional(),
+  flipHorizontal: z.coerce.boolean().optional(),
+  flipVertical: z.coerce.boolean().optional(),
+  preserveColor: z.coerce.boolean().optional(),
+  preserveAspect: z.coerce.boolean().optional(),
+  scale: z.coerce.number().optional(),
   color: z.string().regex(colorRegex).optional(),
 });
 export type IconDescriptor = z.infer<typeof ZIconDescriptor>;
@@ -35,32 +35,45 @@ export function parseIconDescriptor(descriptor: unknown) {
   return parsed;
 }
 
-// Modifies descriptor by only including the properties that are non-default.
-// This allows new properties to be added in future without changing existing keys.
-function keyObject(descriptor: IconDescriptor) {
-  const keyObj: IconDescriptor = {
-    specifier: descriptor.specifier,
-  };
-  if (descriptor.flipHorizontal) {
-    keyObj.flipHorizontal = true;
-  }
-  if (descriptor.flipVertical) {
-    keyObj.flipVertical = true;
-  }
-  if (descriptor.preserveAspect) {
-    keyObj.preserveAspect = true;
-  }
-  if (descriptor.preserveColor) {
-    keyObj.preserveColor = true;
+// Turn descriptor into a query string.
+// The string is sorted so that the same descriptor always produces the same string.
+// This can be used both as a cache key and as a URL query string.
+// Only non-default properties are included. This allows new properties to be added in future without changing existing keys.
+// Note that the order of the query string is important, so that the same descriptor always produces the same string.
+export function querifyDescriptor(
+  descriptor: IconDescriptor,
+  includeColor = true,
+) {
+  const query = new URLSearchParams();
+  query.append("specifier", descriptor.specifier);
+  for (
+    const key of [
+      "flipHorizontal",
+      "flipVertical",
+      "preserveColor",
+      "preserveAspect",
+    ] as const
+  ) {
+    if (descriptor[key]) {
+      query.append(key, "1");
+    }
   }
   if (descriptor.scale) {
-    keyObj.scale = descriptor.scale;
+    const fixedScale = descriptor.scale.toFixed(2);
+    if (fixedScale !== "1.00") {
+      query.append("scale", fixedScale);
+    }
   }
-  return keyObj;
+  if (includeColor && descriptor.color && descriptor.color !== "#000000") {
+    query.append("color", descriptor.color);
+  }
+  return query;
 }
 
 export function calculateIconKey(descriptor: IconDescriptor) {
-  const hash = sha256.create().update(JSON.stringify(keyObject(descriptor)));
+  const hash = sha256.create().update(
+    querifyDescriptor(descriptor, false).toString(),
+  );
   let key = "i" + baseEncode(hash.array(), alphabets.base62).slice(-13);
   if (descriptor.color) {
     key += `-${descriptor.color.slice(1)}`;
