@@ -39,5 +39,5 @@ router.get(`/frontend/icon`, async (ctx) => {
   ctx.body = icon.data;
   ctx.type = icon.contentType;
   ctx.set("X-Icon-Key", key);
-  ctx.set("Cache-Control", "public, max-age=31536000, immutable");
+  ctx.set("Cache-Control", "public, s-maxage=2592000, max-age=3600, immutable");
 });
