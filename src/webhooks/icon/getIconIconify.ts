@@ -14,8 +14,8 @@ export async function getIconIconify(
   const url = `https://api.iconify.design/${set}/${name}.svg`;
   const icon = await getIconHttp(descriptor, {
     url,
-    intrinsicColorPredicate: (response) => {
-      const svgString = Buffer.from(response.data).toString("utf-8");
+    intrinsicColorPredicate: async (response) => {
+      const svgString = await response.text();
       return !svgString.includes('"currentColor"');
     },
     postprocess,

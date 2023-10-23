@@ -1,9 +1,8 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { config } from "../config.js";
-import { boolean, z } from "zod";
+import { z } from "zod";
 import axios from "axios";
 import { log } from "console";
-import { result } from "lodash";
 
 const ZConfig = z.object({
   endpoint: z.string(),
@@ -28,7 +27,7 @@ const s3Client = new S3Client({
 
 export async function upload(
   path: string,
-  body: ArrayBuffer,
+  body: Buffer,
   contentType: string,
   metadata?: Record<string, string>,
 ) {

@@ -14,8 +14,8 @@ export async function getIconPopClip(
   const icon = await getIconHttp(descriptor, {
     url: root + "/icon",
     method: "post",
-    intrinsicColorPredicate: (response) => {
-      return response.headers["x-icon-color-mode"] === "intrinsic";
+    intrinsicColorPredicate: async (response) => {
+      return response.headers.get("x-icon-color-mode") === "intrinsic";
     },
   });
   return icon;
