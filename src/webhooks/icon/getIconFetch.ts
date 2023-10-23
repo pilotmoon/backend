@@ -41,10 +41,10 @@ export async function getIconHttp(
     : "mask";
   console.log("colorMode", colorMode);
 
-  const icon = ZIcon.parse({ data: await response.arrayBuffer(), contentType, colorMode });
   if (options?.postprocess) {    
+    const icon = ZIcon.parse({ data: await response.arrayBuffer(), contentType, colorMode });
     return await options.postprocess(icon, descriptor);
   } else {
-    return icon;
+    return ZIcon.parse({ data: response.body, contentType, colorMode });
   }
 }

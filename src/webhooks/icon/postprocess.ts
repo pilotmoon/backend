@@ -7,6 +7,10 @@ export async function postprocess(
   icon: Icon,
   descriptor: IconDescriptor,
 ): Promise<Icon> {
+  if (!(icon.data instanceof ArrayBuffer)) {
+    console.log("Icon is not an array buffer");
+    return icon;
+  }
   // process icons with transformations externally
   if (
     descriptor.flipHorizontal || descriptor.flipVertical || descriptor.scale

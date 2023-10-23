@@ -4,6 +4,10 @@ import { recolorPng } from "./recolorPng.js";
 import { recolorSvg } from "./recolorSvg.js";
 
 export async function recolor(icon: Icon, color: HexColor ): Promise<Icon> {
+  if (!(icon.data instanceof ArrayBuffer)) {
+    console.log("Icon is not an array buffer");
+    return icon;
+  }
   console.time("recolor"+color);
   let result: Icon;
   if (icon.contentType === "image/png") {
