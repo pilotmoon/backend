@@ -1,4 +1,5 @@
-import { Icon, HexColor } from "./icon.js";
+import { Icon } from "./iconFactory.js";
+import { HexColor } from "./iconDescriptor.js";
 import { recolorPng } from "./recolorPng.js";
 import { recolorSvg } from "./recolorSvg.js";
 

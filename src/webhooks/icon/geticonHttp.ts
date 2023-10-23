@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from "axios";
-import { Icon, IconDescriptor, ZIcon } from "./icon.js";
+import { Icon, ZIcon } from "./iconFactory.js";
+import { IconDescriptor } from "./iconDescriptor.js";
 import { ApiError } from "../../errors.js";
 import { parse as parseContentType } from "content-type";
 
@@ -11,8 +12,8 @@ export async function getIconHttp(
     intrinsicColorPredicate?: (response: AxiosResponse<ArrayBuffer>) => boolean;
     postprocess?: (icon: Icon, descriptor: IconDescriptor) => Promise<Icon>;
   },
-): Promise<Icon> {  
-  const url = options?.url ?? descriptor.specifier;  
+): Promise<Icon> {
+  const url = options?.url ?? descriptor.specifier;
   const method = options?.method ?? "get";
   const response = await axios<ArrayBuffer>({
     method,

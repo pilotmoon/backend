@@ -1,4 +1,5 @@
-import { Icon, IconDescriptor } from "./icon.js";
+import { Icon } from "./iconFactory.js";
+import { IconDescriptor } from "./iconDescriptor.js";
 import { recolor } from "./recolor.js";
 import { getIconPopClip } from "./getIconPopClip.js";
 
