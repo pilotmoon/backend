@@ -2,7 +2,6 @@ import { Icon, ZIcon } from "./iconFactory.js";
 import { IconDescriptor } from "./iconDescriptor.js";
 import { ApiError } from "../../errors.js";
 import { parse as parseContentType } from "content-type";
-import { log } from "../../logger.js";
 
 export async function getIconHttp(
   descriptor: IconDescriptor,

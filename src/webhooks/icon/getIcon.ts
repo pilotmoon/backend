@@ -2,7 +2,7 @@ import { IconDescriptor, querifyDescriptor } from "./iconDescriptor.js";
 import { Icon, IconFactory } from "./iconFactory.js";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
-import { getIconHttp } from "./getIconHttp.js";
+import { getIconHttp } from "./getIconFetch.js";
 import { getIconPopClip } from "./getIconPopClip.js";
 import { getIconIconify } from "./getIconIconify.js";
 import { postprocess } from "./postprocess.js";
