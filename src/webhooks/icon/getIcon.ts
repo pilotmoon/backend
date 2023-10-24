@@ -9,7 +9,7 @@ import { postprocess } from "./postprocess.js";
 import makeEmojiRejex from "emoji-regex";
 
 const specifierRegex = /^([a-z]{2,10}):(.+)$/i;
-const textIconRegex = /^((?:[a-z]{2,10} +)*)(\S{1,3}|\S \S)$/i;
+const textIconRegex = /^((?:[a-z]{2,10} )*)(\S{1,3}|\S \S)$/i;
 const emojiRegex = makeEmojiRejex();
 
 const factories: Record<string, IconFactory> = {
