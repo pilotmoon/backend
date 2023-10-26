@@ -4,7 +4,6 @@ import Router from "@koa/router";
 import { config } from "./config.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { router as storeRouter } from "./store/storeRouter.js";
-import { router as iconRouter } from "./icon/iconRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
 import cors from '@koa/cors';
@@ -17,7 +16,6 @@ import { start as initReports, stop as stopReports } from "./reports.js";
 const router = new Router();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
-router.use(iconRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {
