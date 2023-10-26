@@ -1,5 +1,5 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { config } from "../config.js";
+import { config } from "./config.js";
 import { z } from "zod";
 import axios from "axios";
 import { log } from "console";
