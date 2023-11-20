@@ -86,13 +86,13 @@ function httpStatusString(code: number, { showCode = true } = {}) {
 export function prettyFormatStatus(status: number) {
   let s = httpStatusString(status);
   if (status >= 200 && status < 300) {
-    s = s.bgGreen;
+    s = s.black.bgGreen;
   } else if (status >= 400 && status < 500) {
-    s = s.bgYellow;
+    s = s.black.bgYellow;
   } else if (status >= 500 && status < 600) {
     s = s.white.bgRed;
   } else {
-    s = s.bgWhite;
+    s = s.black.bgWhite;;
   }
   return s;
 }
