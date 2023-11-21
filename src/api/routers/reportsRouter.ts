@@ -49,17 +49,19 @@ router.get("/:name", async (ctx) => {
     ctx.body = makeCsv(report);
   } else {
     ctx.body = {
-      "object": "report",
-      "dateRange": [gteDate, ltDate],
-      "query": query,
-      "reportType": ctx.params.name,
+      object: "report",
+      dateRange: [gteDate, ltDate],
+      query: query,
+      reportType: ctx.params.name,
       report,
     };
   }
 });
 
 function makeCsvRow(row: Record<string, string>) {
-  return Object.values(row).map((v) => `"${v}"`).join(",");
+  return Object.values(row)
+    .map((v) => `"${v}"`)
+    .join(",");
 }
 
 function makeCsv(rows: Record<string, string>[]) {

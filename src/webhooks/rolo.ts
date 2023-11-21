@@ -13,7 +13,7 @@ export function getRolo(kind: "test" | "live"): AxiosInstance {
   return axios.create({
     baseURL: config.ROLO_URL,
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
   });
 }

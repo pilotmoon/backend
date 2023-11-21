@@ -30,9 +30,9 @@ const secretKeyLength = 24;
 const idLength = 12;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
 export const secretKeyRegex = new RegExp(
-  `^${secretKeyPrefix}_(${authKinds.join("|")})_(${base62(idLength)})${
-    base62(secretKeyLength)
-  }$`,
+  `^${secretKeyPrefix}_(${authKinds.join("|")})_(${base62(idLength)})${base62(
+    secretKeyLength,
+  )}$`,
 );
 export const idRegex = new RegExp(
   `(${idPrefixes.join("|")})_${base62(idLength)}`,
@@ -43,10 +43,7 @@ export function randomIdentifier(prefix: string): string {
 }
 
 // generate a key with the given kind, and its identifier
-export function randomKey(
-  kind: AuthKind,
-  idPrefix: string,
-) {
+export function randomKey(kind: AuthKind, idPrefix: string) {
   const keyChars = randomString({
     length: idLength + secretKeyLength,
     rng: rng(),
@@ -63,14 +60,11 @@ export function makeIdentifierPattern(
   prefix: string,
   fixedIdentifiers: string[] = [],
 ): string {
-  const patterns = [`${prefix}_${base62(idLength)}`]
-    .concat(fixedIdentifiers);
+  const patterns = [`${prefix}_${base62(idLength)}`].concat(fixedIdentifiers);
   return `/:${varName}(${patterns.join("|")})`;
 }
 
-export function makeGenericIdPattern(
-  varName: string,
-): string {
+export function makeGenericIdPattern(varName: string): string {
   return `/:${varName}(${genericIdPattern})`;
 }
 

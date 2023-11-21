@@ -47,11 +47,7 @@ rootRouter.get("/", (ctx) => {
 const app = makeServer();
 
 // function that routers can use for generating url for Location header
-app.context.getLocation = function (
-  name: string,
-  params?: any,
-  query?: {},
-) {
+app.context.getLocation = function (name: string, params?: any, query?: {}) {
   let result = mainRouter.url(name, params);
   if (result instanceof Error) throw result;
   if (query) {
@@ -94,12 +90,15 @@ const housekeepingTimer = setInterval(housekeep, hours(1));
 const abortController = new AbortController();
 function startServer() {
   log("Starting server...");
-  app.listen({
-    port: config.APP_PORT,
-    signal: abortController.signal,
-  }, () => {
-    log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
-  });
+  app.listen(
+    {
+      port: config.APP_PORT,
+      signal: abortController.signal,
+    },
+    () => {
+      log(`Server listening on port ${config.APP_PORT}`.bgMagenta);
+    },
+  );
 }
 function closeServer() {
   log("Closing server");
@@ -113,7 +112,8 @@ process.on("SIGINT", async () => {
   if (!closing) {
     closing = true;
     log("Calling shutdown routines".green);
-    await Promise.allSettled([ // run all shutdown routines in parallel
+    await Promise.allSettled([
+      // run all shutdown routines in parallel
       clearInterval(housekeepingTimer),
       closeServer(),
       closeDb(),
@@ -125,7 +125,8 @@ process.on("SIGINT", async () => {
 // app startup
 log("Calling startup routines".green);
 await connectDb(); // connect to database first
-await Promise.allSettled([ // run all other startup routines in parallel
+await Promise.allSettled([
+  // run all other startup routines in parallel
   housekeep(), // run housekeeping once at startup
   initLogAccess(),
   initApiKeysController(),

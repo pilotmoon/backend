@@ -48,12 +48,13 @@ export async function paginate<T extends Document>(
   }
 
   // add sorting and skipping
-  const resultsCursor = collection.aggregate(pipeline)
+  const resultsCursor = collection
+    .aggregate(pipeline)
     .sort({ created: pagination.order, _id: pagination.order })
     .skip(pagination.offset)
     .limit(pagination.limit);
 
-  return await resultsCursor.toArray() as T[];
+  return (await resultsCursor.toArray()) as T[];
 }
 
 function cursorPipeline<T extends Document>(
@@ -61,59 +62,65 @@ function cursorPipeline<T extends Document>(
   pagination: Pagination,
 ) {
   const comparison = pagination.order === 1 ? "$gt" : "$lt";
-  return [{
-    // the lookup stage finds documents matching the cursor id
-    // and adds the result the cursorDoc field in every document
-    $lookup: {
-      from: collection.collectionName,
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $eq: ["$_id", pagination.cursor],
+  return [
+    {
+      // the lookup stage finds documents matching the cursor id
+      // and adds the result the cursorDoc field in every document
+      $lookup: {
+        from: collection.collectionName,
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$_id", pagination.cursor],
+              },
             },
           },
-        },
-        {
-          $project: { _id: 0, created: 1 },
-        },
-      ],
-      as: "cursorDoc",
-    },
-  }, {
-    // the unwind stage removes the array around the cursorDoc field
-    $unwind: {
-      path: "$cursorDoc",
-    },
-  }, {
-    // the set stage adds a boolean field to every document
-    // that is true if the document is after the cursor
-    $set: {
-      afterCursor: {
-        $cond: [
           {
-            [comparison]: ["$created", "$cursorDoc.created"],
-          },
-          true,
-          {
-            $and: [
-              { $eq: ["$created", "$cursorDoc.created"] },
-              { [comparison]: ["$_id", pagination.cursor] },
-            ],
+            $project: { _id: 0, created: 1 },
           },
         ],
+        as: "cursorDoc",
       },
     },
-  }, {
-    // the final match stage filters out documents that are before the cursor
-    $match: {
-      afterCursor: true,
+    {
+      // the unwind stage removes the array around the cursorDoc field
+      $unwind: {
+        path: "$cursorDoc",
+      },
     },
-  }, {
-    // the final project stage removes the cursorDoc and afterCursor fields
-    $project: {
-      cursorDoc: 0,
-      afterCursor: 0,
+    {
+      // the set stage adds a boolean field to every document
+      // that is true if the document is after the cursor
+      $set: {
+        afterCursor: {
+          $cond: [
+            {
+              [comparison]: ["$created", "$cursorDoc.created"],
+            },
+            true,
+            {
+              $and: [
+                { $eq: ["$created", "$cursorDoc.created"] },
+                { [comparison]: ["$_id", pagination.cursor] },
+              ],
+            },
+          ],
+        },
+      },
     },
-  }];
+    {
+      // the final match stage filters out documents that are before the cursor
+      $match: {
+        afterCursor: true,
+      },
+    },
+    {
+      // the final project stage removes the cursorDoc and afterCursor fields
+      $project: {
+        cursorDoc: 0,
+        afterCursor: 0,
+      },
+    },
+  ];
 }

@@ -3,7 +3,7 @@ import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
 import { paddleCatalog } from "./catalog.js";
-import { minutes } from '../../timeIntervals.js'
+import { minutes } from "../../timeIntervals.js";
 import TTLCache from "@isaacs/ttlcache";
 
 const cachedResponses = new TTLCache<string, PricesResult>({
@@ -48,7 +48,6 @@ const ZPricesResult = z.object({
 });
 export type PricesResult = z.infer<typeof ZPricesResult>;
 
-
 function formatCurrency(value: number, currencyCode: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -56,10 +55,13 @@ function formatCurrency(value: number, currencyCode: string) {
   }).format(value);
 }
 
-export async function processPrices(ip: string, product: string): Promise<PricesResult> {
+export async function processPrices(
+  ip: string,
+  product: string,
+): Promise<PricesResult> {
   // check cache
   const cached = cachedResponses.get(cacheKey(ip, product));
-  if (cached){
+  if (cached) {
     log(`Using cached response for ${ip} ${product}`);
     return cached;
   }
@@ -90,7 +92,10 @@ export async function processPrices(ip: string, product: string): Promise<Prices
       paddle: {
         currency: productInfo.currency,
         amount: productInfo.list_price.gross,
-        formatted: formatCurrency(productInfo.list_price.gross, productInfo.currency),
+        formatted: formatCurrency(
+          productInfo.list_price.gross,
+          productInfo.currency,
+        ),
       },
     },
   });

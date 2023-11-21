@@ -10,8 +10,6 @@ const ZConfig = z.object({
     pass: z.string(),
   }),
 });
-const smtpConfig = ZConfig.parse(
-  JSON.parse(config.SMTP_CONFIG),
-);
+const smtpConfig = ZConfig.parse(JSON.parse(config.SMTP_CONFIG));
 
 export const transporter = nodemailer.createTransport(smtpConfig);

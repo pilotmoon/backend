@@ -52,7 +52,7 @@ async function validateSecretKey({ key, kind, id }: SecretKeyParts) {
 
   // verify the key against the hashed version
   const hash = Buffer.from(document.hashedKey.buffer);
-  if (!await verifyPassword(hash, key)) {
+  if (!(await verifyPassword(hash, key))) {
     throw new ApiError(401, "Invalid API key (bad secret)");
   }
 
@@ -99,16 +99,15 @@ export async function authorize(ctx: Context, next: Next) {
     // decipher the token
     try {
       // extract resource from the first two path segments.
-      const resource = ctx.path
-        .split("/")
-        .slice(1, 3)
-        .join("/");
+      const resource = ctx.path.split("/").slice(1, 3).join("/");
       log("Resource: " + resource);
 
-      const { keyKind: kind, secretKey, scopes, expires } = decipherToken(
-        token,
-        resource,
-      );
+      const {
+        keyKind: kind,
+        secretKey,
+        scopes,
+        expires,
+      } = decipherToken(token, resource);
       if (secretKey) {
         await authorizeKey(secretKey, ctx);
       } else if (scopes) {

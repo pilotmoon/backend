@@ -15,9 +15,7 @@ const ZConfig = z.object({
   summary: ZReportConfig,
   studentAppCentre: ZReportConfig,
 });
-const reportsConfig = ZConfig.parse(
-  JSON.parse(config.REPORTS_CONFIG),
-);
+const reportsConfig = ZConfig.parse(JSON.parse(config.REPORTS_CONFIG));
 
 // call once on server start
 var weeklyJob: CronJob;
@@ -26,18 +24,18 @@ var testJob: CronJob;
 export function start() {
   log("Starting reports...");
   weeklyJob = new CronJob(
-    '7 7 2 * * 1', // every Monday at 02:07:07
+    "7 7 2 * * 1", // every Monday at 02:07:07
     summaryReport,
     null,
     true,
-    'utc',
+    "utc",
   );
   monthlyJob = new CronJob(
-    '8 8 2 1 * *', // every 1st of the month at 02:08:08
+    "8 8 2 1 * *", // every 1st of the month at 02:08:08
     studentAppCentreReport,
     null,
     true,
-    'utc',
+    "utc",
   );
   // testJob = new CronJob(
   //   "*/10 * * * * *", // every 10 seconds
@@ -121,14 +119,14 @@ async function studentAppCentreReport(
         format: "csv",
         gteDate: firstOfMonthMinus2,
         ltDate: firstOfMonthMinus1,
-      }
+      },
     });
     // generate filename for attachment
-    const month=firstOfMonthMinus2.toISOString().slice(0, 7);
-    const filename=`STU-coupon-codes-${month}.csv`;  
+    const month = firstOfMonthMinus2.toISOString().slice(0, 7);
+    const filename = `STU-coupon-codes-${month}.csv`;
     log("filename", filename);
     // send email
-    
+
     const { transporter } = await import("./email.js");
     const mailOptions = {
       ...reportsConfig.studentAppCentre,

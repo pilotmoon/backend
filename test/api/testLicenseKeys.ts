@@ -275,9 +275,7 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
 });
 
 test("retreive license key by email", async (t) => {
-  const res = await rolo().get(
-    "licenseKeys/byEmail/foo1@example.com?limit=1",
-  );
+  const res = await rolo().get("licenseKeys/byEmail/foo1@example.com?limit=1");
   t.is(res.status, 200);
   t.log(res.data);
   t.is(res.data.object, "list");
@@ -359,9 +357,7 @@ test("update a license key, marking it void", async (t) => {
 });
 
 test("try downloading void license file", async (t) => {
-  const res = await rolo().get(
-    `licenseKeys/${test10Objects[0].id}/file`,
-  );
+  const res = await rolo().get(`licenseKeys/${test10Objects[0].id}/file`);
   t.is(res.status, 404);
 });
 
@@ -380,9 +376,7 @@ test("update a license key, marking it not void", async (t) => {
 });
 
 test("try downloading unvoided license file", async (t) => {
-  const res = await rolo().get(
-    `licenseKeys/${test10Objects[0].id}/file`,
-  );
+  const res = await rolo().get(`licenseKeys/${test10Objects[0].id}/file`);
   t.is(res.status, 200);
 });
 

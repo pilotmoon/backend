@@ -39,7 +39,7 @@ router.get("/", async (ctx) => {
 });
 
 router.get(matchIdAndCurrent, async (ctx) => {
-  const id = (ctx.params.id === "current") ? ctx.state.apiKeyId : ctx.params.id;
+  const id = ctx.params.id === "current" ? ctx.state.apiKeyId : ctx.params.id;
   const document = await readApiKey(id, ctx.state.auth);
   if (document) {
     ctx.body = sanitize(document);

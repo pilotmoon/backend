@@ -86,7 +86,7 @@ test("create registry with a secret (aquatic prime)", async (t) => {
   const res = await rolo().post("registries", {
     ...barRegistry,
     objects: {
-      "aquaticPrime": testAquaticPrimeKeyPair,
+      aquaticPrime: testAquaticPrimeKeyPair,
     },
   });
   t.is(res.status, 201);
@@ -265,44 +265,34 @@ test("list registries again, expecting last one deleted", async (t) => {
 });
 
 test("add a record to the foo registry", async (t) => {
-  const res = await rolo().put(
-    `/registries/${fooRegistryId}/objects/config`,
-    {
-      object: "record",
-      record: {
-        foo: "bar",
-      },
+  const res = await rolo().put(`/registries/${fooRegistryId}/objects/config`, {
+    object: "record",
+    record: {
+      foo: "bar",
     },
-  );
+  });
   t.is(res.status, 204);
 });
 
 test("get the record", async (t) => {
-  const res = await rolo().get(
-    `/registries/${fooRegistryId}/objects/config`,
-  );
+  const res = await rolo().get(`/registries/${fooRegistryId}/objects/config`);
   t.is(res.status, 200);
   t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
 });
 
 test("add another record to the foo registry", async (t) => {
-  const res = await rolo().put(
-    `/registries/${fooRegistryId}/objects/config2`,
-    {
-      object: "record",
-      record: {
-        foo: "bar",
-      },
+  const res = await rolo().put(`/registries/${fooRegistryId}/objects/config2`, {
+    object: "record",
+    record: {
+      foo: "bar",
     },
-  );
+  });
   t.is(res.status, 204);
 });
 
 test("get the second record", async (t) => {
-  const res = await rolo().get(
-    `/registries/${fooRegistryId}/objects/config2`,
-  );
+  const res = await rolo().get(`/registries/${fooRegistryId}/objects/config2`);
   t.is(res.status, 200);
   t.is(res.data.object, "record");
   t.like(res.data.record, { foo: "bar" });
@@ -316,10 +306,7 @@ test("list the registries using a token with read permissions", async (t) => {
   });
 
   // now use that token to list the records
-  const res = await rolo(null).get(
-    `/registries`,
-    { params: { token } },
-  );
+  const res = await rolo(null).get(`/registries`, { params: { token } });
   t.is(res.status, 200);
   t.is(res.data.object, "list");
 });
@@ -333,10 +320,7 @@ test("list the registries using a token with read permissions and a resource", a
   });
 
   // now use that token to list the records
-  const res = await rolo(null).get(
-    `/registries`,
-    { params: { token } },
-  );
+  const res = await rolo(null).get(`/registries`, { params: { token } });
   t.is(res.status, 200);
   t.is(res.data.object, "list");
 });
@@ -349,12 +333,9 @@ test("read the foo registry using a token with read permissions and a resource",
     resource: `registries/${fooRegistryId}`,
   });
 
-  const res = await rolo(null).get(
-    `/registries/${fooRegistryId}`,
-    {
-      params: { token },
-    },
-  );
+  const res = await rolo(null).get(`/registries/${fooRegistryId}`, {
+    params: { token },
+  });
   t.is(res.status, 200);
   t.is(res.data.object, "registry");
 });
@@ -367,12 +348,9 @@ test("read the foo registry using a token with read permissions for a different 
     resource: `registries/blahblah`,
   });
 
-  const res = await rolo(null).get(
-    `/registries/${fooRegistryId}`,
-    {
-      params: { token },
-    },
-  );
+  const res = await rolo(null).get(`/registries/${fooRegistryId}`, {
+    params: { token },
+  });
   t.is(res.status, 401);
 });
 

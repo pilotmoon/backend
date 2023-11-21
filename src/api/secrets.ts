@@ -87,10 +87,12 @@ function isPlainObject(value: unknown) {
   );
 }
 function shouldEncrypt(value: unknown) {
-  return typeof value === "string" ||
+  return (
+    typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean" ||
-    isPlainObject(value);
+    isPlainObject(value)
+  );
 }
 
 // The encryptInPlace and decryptInPlace functions
@@ -111,17 +113,14 @@ export function encryptInPlace(
 ) {
   if (!record) return;
   if (!keys) {
-    keys = Object.keys(record).filter((key) =>
-      key !== "_id" && key !== "object"
+    keys = Object.keys(record).filter(
+      (key) => key !== "_id" && key !== "object",
     );
   }
   for (const [key, value] of Object.entries(record)) {
     if (keys && !keys.includes(key)) continue;
     if (!shouldEncrypt(value)) continue;
-    record[key] = new Binary(
-      encrypt(encode(value), kind),
-      0x81,
-    );
+    record[key] = new Binary(encrypt(encode(value), kind), 0x81);
   }
 }
 
@@ -133,9 +132,7 @@ export function decryptInPlace(
   if (!record) return;
   for (const key of Object.keys(record)) {
     const value = record[key];
-    if (
-      value instanceof Binary && value.sub_type === 0x81
-    ) {
+    if (value instanceof Binary && value.sub_type === 0x81) {
       record[key] = decodeFirstSync(
         decrypt((record[key] as Binary).buffer, kind),
       );

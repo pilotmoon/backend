@@ -70,14 +70,17 @@ type TokenData = z.infer<typeof ZTokenData>;
 // indicated by the URL.
 // In that case the list of scopes should contain the character $ in place of the resource
 // indicated by the URL path.
-export function generateEncryptedToken(
-  { keyKind, scopes, expires: expiration, resource }: {
-    keyKind: AuthKind;
-    scopes: string[];
-    expires?: Date;
-    resource?: string;
-  },
-): string {
+export function generateEncryptedToken({
+  keyKind,
+  scopes,
+  expires: expiration,
+  resource,
+}: {
+  keyKind: AuthKind;
+  scopes: string[];
+  expires?: Date;
+  resource?: string;
+}): string {
   const tokenType = resource ? "3" : "2";
   // if resource is specified
   if (resource) {
@@ -100,9 +103,11 @@ export function generateEncryptedToken(
   const encryptedDataArray = Array.from(encryptedData);
 
   // base62-encode the encrypted data, and prepend the token type and database kind
-  return `${tokenType}${characterForKeyKind(keyKind)}${
-    baseEncode(encryptedDataArray, alphabets.base62, { trim: false })
-  }`;
+  return `${tokenType}${characterForKeyKind(keyKind)}${baseEncode(
+    encryptedDataArray,
+    alphabets.base62,
+    { trim: false },
+  )}`;
 }
 
 // Generate an access token for the given API key.
@@ -123,7 +128,10 @@ export function generateApiKeyToken(secretKey: string): string {
 //              in the case of "3", the character $ in the list of scopes is replaced with the resource
 //  expires - the expiration date (only present if the token type is "2" or "3")
 // If the token is invalid, throws an error. Should never print a token to the console or put it in an error message.
-export function decipherToken(token: string, resource: string): {
+export function decipherToken(
+  token: string,
+  resource: string,
+): {
   keyKind: AuthKind;
   secretKey?: string;
   scopes?: string[];
@@ -187,7 +195,7 @@ export function decipherToken(token: string, resource: string): {
           ),
         );
         const scopes = tokenData.s.map((scope) =>
-          scope.replaceAll("$", resource)
+          scope.replaceAll("$", resource),
         );
         const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
         return { keyKind, scopes, expires: expiration };

@@ -1,12 +1,12 @@
-import axios from 'axios';
+import axios from "axios";
 
 const getRepoContents = async (owner, repo) => {
   try {
     const response = await axios({
-      method: 'get',
+      method: "get",
       url: `https://api.github.com/repos/${owner}/${repo}/contents`,
       headers: {
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: "application/vnd.github.v3+json",
       },
     });
 
@@ -14,10 +14,9 @@ const getRepoContents = async (owner, repo) => {
     response.data.forEach((file) => {
       console.log(file.name);
     });
-
   } catch (err) {
     console.error(err);
   }
 };
 
-getRepoContents('pilotmoon', 'PopClip-Extensions');
+getRepoContents("pilotmoon", "PopClip-Extensions");

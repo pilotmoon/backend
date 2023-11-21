@@ -33,13 +33,15 @@ type ApiKeyInfoUpdate = z.infer<typeof ZApiKeyInfoUpdate>;
 // The secret key is only returned to the client once, when the api key is created.
 // The plain text key is never stored in the database. (It is removed from
 // the document before it is stored.)
-export const ZApiKeySchema = ZApiKeyInfo.merge(ZAuthInfo).merge(z.object({
-  _id: z.string(),
-  object: z.literal("apiKey"),
-  key: z.string().optional(),
-  hashedKey: z.custom<Binary>((v) => v instanceof Binary),
-  created: z.date(),
-}));
+export const ZApiKeySchema = ZApiKeyInfo.merge(ZAuthInfo).merge(
+  z.object({
+    _id: z.string(),
+    object: z.literal("apiKey"),
+    key: z.string().optional(),
+    hashedKey: z.custom<Binary>((v) => v instanceof Binary),
+    created: z.date(),
+  }),
+);
 export type ApiKeySchema = z.infer<typeof ZApiKeySchema>;
 
 /*** Database ***/
@@ -86,15 +88,11 @@ export async function init() {
   // create deterministic test keys
   console.log("Creating fixed test keys");
   await deterministic(async () => {
-    for (
-      const [name, keyDef] of Object.entries<TestKey>(testKeys)
-    ) {
+    for (const [name, keyDef] of Object.entries<TestKey>(testKeys)) {
       keyDef.description = `[${name}] ` + keyDef.description;
-      await createApiKey(
-        ZApiKeyInfo.parse(keyDef),
-        specialContext("test"),
-        { replace: true },
-      );
+      await createApiKey(ZApiKeyInfo.parse(keyDef), specialContext("test"), {
+        replace: true,
+      });
     }
   });
 }
@@ -125,7 +123,8 @@ export async function createApiKey(
 
   try {
     ZApiKeySchema.parse(document);
-    if (replace) { // delete existing key if it exists
+    if (replace) {
+      // delete existing key if it exists
       await dbc(auth.kind).deleteOne({ _id: document._id });
     }
     const result = await dbc(auth.kind).insertOne(document);
@@ -133,7 +132,7 @@ export async function createApiKey(
     return { ...document, key }; // return the key in cleartext since it's a new key
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -151,7 +150,7 @@ export async function readApiKey(
     return ZApiKeySchema.parse(document);
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -172,7 +171,7 @@ export async function listApiKeys(
     return documents.map((document) => ZApiKeySchema.parse(document));
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -192,19 +191,16 @@ export async function updateApiKey(
       { $set: params },
       { returnDocument: "after" },
     );
-    return (!!result.value);
+    return !!result.value;
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
 // Delete an API key. Returns true if the key was deleted, false if the key
 // does not exist.
-export async function deleteApiKey(
-  id: string,
-  auth: Auth,
-): Promise<boolean> {
+export async function deleteApiKey(id: string, auth: Auth): Promise<boolean> {
   auth.assertAccess(collectionName, id, "delete");
   const result = await dbc(auth.kind).deleteOne({ _id: id });
   return result.deletedCount === 1;

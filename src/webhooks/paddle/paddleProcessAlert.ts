@@ -31,18 +31,16 @@ async function processRefund(args: unknown, api: AxiosInstance) {
 
 const ZLookupResponse = z.object({
   object: z.literal("list"),
-  items: z.array(z.object({
-    id: z.string(),
-    order: z.string().optional(),
-    origin: z.string().optional(),
-  })),
+  items: z.array(
+    z.object({
+      id: z.string(),
+      order: z.string().optional(),
+      origin: z.string().optional(),
+    }),
+  ),
 });
 
-async function lookupOrder(
-  origin: string,
-  order: string,
-  api: AxiosInstance,
-) {
+async function lookupOrder(origin: string, order: string, api: AxiosInstance) {
   const { data } = await api.get("/licenseKeys/byOrder/" + order);
   const response = ZLookupResponse.parse(data);
   const orders = response.items.filter((item) => item.origin === origin);

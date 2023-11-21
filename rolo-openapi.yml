@@ -1,10 +1,10 @@
-openapi: '3.0.2'
+openapi: "3.0.2"
 info:
   title: Pilotmoon API
   contact:
     email: nick@pilotmoon.com
-    name:  Nick Moore
-  version: 'v2'
+    name: Nick Moore
+  version: "v2"
   description: Backend for pilotmoon.com services.
 tags:
   - name: admin
@@ -15,10 +15,10 @@ servers:
 
 components:
   securitySchemes:
-      BearerAuth:
-        type: http
-        scheme: bearer
-        description: Token looks like `sk_{live|test}_{40 hex chars}`
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Token looks like `sk_{live|test}_{40 hex chars}`
 
   schemas:
     ApiKeyInfo:
@@ -76,7 +76,7 @@ paths:
       description: Get server health information.
       tags: [admin]
       responses:
-        '200':
+        "200":
           description: OK
 
   /apiKeys:
@@ -90,9 +90,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApiKeyInfo'
+              $ref: "#/components/schemas/ApiKeyInfo"
       responses:
-        '201':
+        "201":
           description: API key was created.
 
   /registries:
@@ -106,9 +106,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegistryInfo'
+              $ref: "#/components/schemas/RegistryInfo"
       responses:
-        '201':
+        "201":
           description: License key was created.
 
   /licenseKeys:
@@ -122,9 +122,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LicenseKeyInfo'
+              $ref: "#/components/schemas/LicenseKeyInfo"
       responses:
-        '201':
+        "201":
           description: License key was created.
 
   /licenseKeys/{id}:
@@ -141,13 +141,5 @@ paths:
             type: string
             example: lk_rzmhagDluQujj1c0
       responses:
-        '200':
+        "200":
           description: OK
-
-
-
-
-
-
-
-

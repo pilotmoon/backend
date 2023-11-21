@@ -4,9 +4,11 @@ import { z } from "zod";
 import _ from "lodash";
 import { Context } from "koa";
 
-const ZPaddleWebhookData = z.object({
-  p_signature: z.string(),
-}).passthrough();
+const ZPaddleWebhookData = z
+  .object({
+    p_signature: z.string(),
+  })
+  .passthrough();
 
 // validate webhook signature (based on paddle docs)
 export function validateWebhook(ctx: Context, pubKey: string): boolean {
@@ -14,15 +16,17 @@ export function validateWebhook(ctx: Context, pubKey: string): boolean {
     const data = ZPaddleWebhookData.parse(ctx.request.body);
     // sort args by key and replace non-string values with stringified values
     const sorted = {} as any;
-    for (
-      const [key, val] of Object.entries(_.omit(data, "p_signature")).sort()
-    ) {
+    for (const [key, val] of Object.entries(
+      _.omit(data, "p_signature"),
+    ).sort()) {
       if (typeof val === "string") {
         sorted[key] = val;
       } else {
-        if (Array.isArray(val)) { // is it an array
+        if (Array.isArray(val)) {
+          // is it an array
           sorted[key] = val.toString();
-        } else { //if its not an array and not a string, then it is a JSON obj
+        } else {
+          //if its not an array and not a string, then it is a JSON obj
           sorted[key] = JSON.stringify(val);
         }
       }

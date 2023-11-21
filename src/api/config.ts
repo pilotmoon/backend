@@ -30,7 +30,7 @@ export const config = loadConfig<Config>([
   {
     key: "COMMIT_HASH",
     optional: true,
-    transform: (val) => val.length === 40 ? val : "?".repeat(40),
+    transform: (val) => (val.length === 40 ? val : "?".repeat(40)),
   },
   { key: "ACCESS_ALLOWLIST", transform: commaListTransform, optional: true },
   { key: "APP_TEST_URL", optional: true },

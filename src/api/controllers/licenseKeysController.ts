@@ -217,7 +217,10 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
   // date of creation of record
   created: z.date(),
   // sha256 hash of the email address, in hex
-  emailHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  emailHash: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
@@ -250,7 +253,7 @@ export async function createLicenseKey(
     return document;
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -269,7 +272,7 @@ export async function readLicenseKey(
     return ZLicenseKeyRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -295,7 +298,7 @@ export async function updateLicenseKey(
     return true;
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -317,16 +320,22 @@ export async function listLicenseKeys(
     return docs.map((doc) => ZLicenseKeyRecord.parse(doc));
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
 // how the fields should be set out in a standard license key file
 // (note - alphabetical order, to match License Utility)
 const ZLicenseFileFields = z.object({
-  Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  Date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   Email: z.string().optional(),
-  "Expiry Date": z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  "Expiry Date": z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   Name: z.string(),
   Order: z.string().optional(),
   Product: z.string(),
@@ -377,8 +386,8 @@ export async function generateLicenseFile(
   const plist = aqp.generateLicense(ZLicenseFileFields.parse(details));
 
   // generate the license file name
-  let name = sanitizeName(document.name, "License") + "." +
-    config.licenseFileExtension;
+  let name =
+    sanitizeName(document.name, "License") + "." + config.licenseFileExtension;
 
   return ZLicenseFileObject.parse({
     object: "licenseKeyFile",

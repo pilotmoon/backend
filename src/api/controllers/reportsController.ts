@@ -20,8 +20,8 @@ const reportGenerators: Record<
     query: Record<string, string>,
   ) => object
 > = {
-  "summary": generateSummaryReport,
-  "licenseKeys": generateLicenseKeysReport,
+  summary: generateSummaryReport,
+  licenseKeys: generateLicenseKeysReport,
 };
 
 export async function generateReport(
@@ -52,7 +52,7 @@ async function generateSummaryReport(
     // filter by date range
     {
       $match: {
-        "created": {
+        created: {
           $gte: gteDate,
           $lt: ltDate,
         },
@@ -62,57 +62,57 @@ async function generateSummaryReport(
     {
       $facet: {
         // total number of license keys generated
-        "total": [
+        total: [
           {
             $count: "count",
           },
         ],
         // number of license keys generated per product
-        "products": [
+        products: [
           // filter by product
           {
             $match: {
-              "product": { $exists: true, "$ne": "" },
+              product: { $exists: true, $ne: "" },
             },
           },
           // group by product
           {
             $group: {
-              "_id": "$product",
-              "count": { $sum: 1 },
+              _id: "$product",
+              count: { $sum: 1 },
             },
           },
           // sort by count
           {
             $sort: {
-              "count": -1,
+              count: -1,
             },
           },
         ],
         // number of license keys generated per origin
-        "origins": [
+        origins: [
           // filter by origin
           {
             $match: {
-              "origin": { $exists: true, "$ne": "" },
+              origin: { $exists: true, $ne: "" },
             },
           },
           // group by origin
           {
             $group: {
-              "_id": "$origin",
-              "count": { $sum: 1 },
+              _id: "$origin",
+              count: { $sum: 1 },
             },
           },
           // sort by count
           {
             $sort: {
-              "count": -1,
+              count: -1,
             },
           },
         ],
         // number of license keys generated per coupon
-        "coupons": [
+        coupons: [
           // filter by coupon
           {
             $match: {
@@ -122,14 +122,14 @@ async function generateSummaryReport(
           // group by coupon
           {
             $group: {
-              "_id": "$originData.p_coupon",
-              "count": { $sum: 1 },
+              _id: "$originData.p_coupon",
+              count: { $sum: 1 },
             },
           },
           // sort by count
           {
             $sort: {
-              "count": -1,
+              count: -1,
             },
           },
         ],
@@ -138,7 +138,7 @@ async function generateSummaryReport(
     // convert total array to object
     {
       $set: {
-        "total": {
+        total: {
           $arrayToObject: {
             $map: {
               input: "$total",
@@ -155,13 +155,13 @@ async function generateSummaryReport(
     // convert total object to number
     {
       $set: {
-        "total": "$total.count",
+        total: "$total.count",
       },
     },
     // convert products array to object
     {
       $set: {
-        "products": {
+        products: {
           $arrayToObject: {
             $map: {
               input: "$products",
@@ -178,7 +178,7 @@ async function generateSummaryReport(
     // convert origins array to object
     {
       $set: {
-        "origins": {
+        origins: {
           $arrayToObject: {
             $map: {
               input: "$origins",
@@ -195,7 +195,7 @@ async function generateSummaryReport(
     // convert coupons array to object
     {
       $set: {
-        "coupons": {
+        coupons: {
           $arrayToObject: {
             $map: {
               input: "$coupons",
@@ -233,7 +233,7 @@ async function generateLicenseKeysReport(
     // filter by date range
     {
       $match: {
-        "created": {
+        created: {
           $gte: gteDate,
           $lt: ltDate,
         },
@@ -242,30 +242,30 @@ async function generateLicenseKeysReport(
     // order by date then id
     {
       $sort: {
-        "date": 1,
-        "id": 1,
+        date: 1,
+        id: 1,
       },
     },
     // extract just the fields we are interested in:
     // date, id, product, origin, order, coupon, country, currency, sale gross, void
     {
       $project: {
-        "date": { $dateToString: { date: "$date" } },
-        "id": { $ifNull: ["$_id", ""] },
-        "product": { $ifNull: ["$product", ""] },
-        "origin": { $ifNull: ["$origin", ""] },
-        "order": { $ifNull: ["$order", ""] },
-        "coupon": { $ifNull: ["$originData.p_coupon", ""] },
-        "country": { $ifNull: ["$originData.p_country", ""] },
-        "currency": { $ifNull: ["$originData.p_currency", ""] },
-        "saleGross": {
+        date: { $dateToString: { date: "$date" } },
+        id: { $ifNull: ["$_id", ""] },
+        product: { $ifNull: ["$product", ""] },
+        origin: { $ifNull: ["$origin", ""] },
+        order: { $ifNull: ["$order", ""] },
+        coupon: { $ifNull: ["$originData.p_coupon", ""] },
+        country: { $ifNull: ["$originData.p_country", ""] },
+        currency: { $ifNull: ["$originData.p_currency", ""] },
+        saleGross: {
           $cond: {
             if: "$void",
             then: "0.00",
             else: { $ifNull: ["$originData.p_sale_gross", ""] },
           },
         },
-        "status": { $cond: { if: "$void", then: "refunded", else: "" } },
+        status: { $cond: { if: "$void", then: "refunded", else: "" } },
       },
     },
     {
@@ -274,12 +274,10 @@ async function generateLicenseKeysReport(
     // match on coupon prefix
     {
       $match: {
-        "coupon": { $regex: `^${couponPrefix}` },
+        coupon: { $regex: `^${couponPrefix}` },
       },
     },
   ];
 
-  return await licenseKeysCollection(auth.kind)
-    .aggregate(pipeline)
-    .toArray();
+  return await licenseKeysCollection(auth.kind).aggregate(pipeline).toArray();
 }

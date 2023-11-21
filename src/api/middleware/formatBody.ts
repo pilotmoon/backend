@@ -15,26 +15,32 @@ function replaceId(obj: any) {
 }
 
 // schema for objects in responses
-const ZObject = z.object({
-  id: z.string().regex(idRegex),
-  object: z.enum(objectNames),
-  created: z.date().optional(),
-}).passthrough();
+const ZObject = z
+  .object({
+    id: z.string().regex(idRegex),
+    object: z.enum(objectNames),
+    created: z.date().optional(),
+  })
+  .passthrough();
 
 // schema for lists in responses
-const ZList = z.object({
-  object: z.literal("list"),
-  items: z.array(ZObject),
-}).passthrough();
+const ZList = z
+  .object({
+    object: z.literal("list"),
+    items: z.array(ZObject),
+  })
+  .passthrough();
 
 // generic schema for all responses. this is used to validate and format
 // all responses to the client.
 const ZResponse = z.union([
   ZObject,
   ZList,
-  z.object({
-    object: z.enum(objectNamesWithoutId),
-  }).passthrough(),
+  z
+    .object({
+      object: z.enum(objectNamesWithoutId),
+    })
+    .passthrough(),
 ]);
 
 // modify all response bodies.

@@ -6,12 +6,11 @@ import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
-import cors from '@koa/cors';
+import cors from "@koa/cors";
 import { ApiError } from "../errors.js";
 import { handleError } from "../handleError.js";
 import { measureResponseTime } from "../measureResponseTime.js";
 import { start as initReports, stop as stopReports } from "./reports.js";
-
 
 const router = new Router();
 router.use(paddleRouter.routes());
@@ -64,7 +63,8 @@ process.on("SIGINT", async () => {
   if (!closing) {
     closing = true;
     log("Calling shutdown routines".green);
-    await Promise.allSettled([ // run all shutdown routines in parallel
+    await Promise.allSettled([
+      // run all shutdown routines in parallel
       closeServer(),
       stopReports(),
     ]);

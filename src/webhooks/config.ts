@@ -20,7 +20,7 @@ export const config = loadConfig<Config>([
   {
     key: "COMMIT_HASH",
     optional: true,
-    transform: (val) => val.length === 40 ? val : "?".repeat(40),
+    transform: (val) => (val.length === 40 ? val : "?".repeat(40)),
   },
   { key: "PADDLE_CREDENTIALS", hidden: true },
   { key: "ROLO_URL" },

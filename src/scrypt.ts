@@ -19,7 +19,7 @@ export async function verifyPassword(
     const hash = saltedHash.subarray(16);
     result = timingSafeEqual(
       hash,
-      await scryptAsync(suppliedPassword, salt, 64) as Buffer,
+      (await scryptAsync(suppliedPassword, salt, 64)) as Buffer,
     );
   } catch (e) {
     // do nothing

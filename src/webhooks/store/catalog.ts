@@ -1,8 +1,10 @@
 interface Catalog {
-  [key: string]: {
-    mode: "live" | "test",
-    productIds: string[]
-  } | undefined
+  [key: string]:
+    | {
+        mode: "live" | "test";
+        productIds: string[];
+      }
+    | undefined;
 }
 export const paddleCatalog: Catalog = {
   popclip: {
@@ -15,17 +17,17 @@ export const paddleCatalog: Catalog = {
   },
 };
 export const couponOffers = {
-  "popclip30": {
+  popclip30: {
     product: paddleCatalog.popclip,
     discountPercent: 30,
     prefix: "STU",
   },
-  "popclip44": {
+  popclip44: {
     product: paddleCatalog.popclip,
     discountPercent: 44,
     prefix: "STS",
   },
-  "example30": {
+  example30: {
     product: paddleCatalog.example,
     discountPercent: 30,
     prefix: "TST",

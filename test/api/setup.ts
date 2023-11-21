@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/api/identifiers.js";
 
-export type TestKey = typeof testKeys[keyof typeof testKeys];
+export type TestKey = (typeof testKeys)[keyof typeof testKeys];
 export const testKeys = {
   runner: {
     scopes: ["*"],
@@ -63,7 +63,7 @@ export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
     instance = axios.create({
       baseURL: process.env.APP_TEST_URL,
       headers: {
-        "Authorization": `Bearer ${(keys())[keyName].key}`,
+        Authorization: `Bearer ${keys()[keyName].key}`,
       },
       validateStatus: () => true, //
     });

@@ -52,18 +52,14 @@ test("encrypt and decrypt with bad aad", (t) => {
   const message = "hello world";
   const aad = "foo";
   const encrypted = encryptString(message, "test", aad);
-  t.log(
-    t.throws(() => decryptString(encrypted, "test", "bar"))?.message,
-  );
+  t.log(t.throws(() => decryptString(encrypted, "test", "bar"))?.message);
 });
 
 test("encrypt and decrypt with missing aad", (t) => {
   const message = "hello world";
   const aad = "foo";
   const encrypted = encryptString(message, "test", aad);
-  t.log(
-    t.throws(() => decryptString(encrypted, "test"))?.message,
-  );
+  t.log(t.throws(() => decryptString(encrypted, "test"))?.message);
 });
 
 test("bad key kind", (t) => {
@@ -84,9 +80,8 @@ test("decrypt random iv + nothing", (t) => {
       decryptString(
         Buffer.from("12345678901234567890123456789012", "hex"),
         "test",
-      )
-    )
-      ?.message,
+      ),
+    )?.message,
   );
 });
 

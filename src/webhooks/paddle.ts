@@ -20,13 +20,16 @@ export function getPaddleVendorsApi(mode: "test" | "live") {
   const prefix = mode === "test" ? "sandbox-" : "";
   return axios.create({
     baseURL: `https://${prefix}vendors.paddle.com/api`,
-    transformRequest: [(data) => {
-      return {
-        vendor_id: creds.vendorId,
-        vendor_auth_code: creds.vendorSecret,
-        ...data,
-      };
-    }, ...(axios.defaults.transformRequest as any)],
+    transformRequest: [
+      (data) => {
+        return {
+          vendor_id: creds.vendorId,
+          vendor_auth_code: creds.vendorSecret,
+          ...data,
+        };
+      },
+      ...(axios.defaults.transformRequest as any),
+    ],
   });
 }
 

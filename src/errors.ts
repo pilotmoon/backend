@@ -52,8 +52,10 @@ export function getErrorInfo(error: unknown): ErrorInfo {
   // try to get type name from error
   if (!type) {
     if (
-      typeof error === "object" && error !== null &&
-      "name" in error && typeof error.name === "string"
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      typeof error.name === "string"
     ) {
       type = error.name;
     } else {
@@ -92,7 +94,7 @@ export function prettyFormatStatus(status: number) {
   } else if (status >= 500 && status < 600) {
     s = s.white.bgRed;
   } else {
-    s = s.black.bgWhite;;
+    s = s.black.bgWhite;
   }
   return s;
 }

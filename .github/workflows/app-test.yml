@@ -6,9 +6,9 @@ name: Test
 on:
   push:
     branches:
-    - main
+      - main
     tags-ignore:
-    - v*
+      - v*
 
 env:
   # vars
@@ -41,26 +41,26 @@ jobs:
       matrix:
         node-version: [18.x, 20.x]
         #mongodb-version: ['6.0', 'latest']
-        mongodb-version: ['6.0']
+        mongodb-version: ["6.0"]
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build
-    - name: Run unit tests
-      run: npm run test-unit
-    - name: Start MongoDB
-      uses: supercharge/mongodb-github-action@1.8.0
-      with:
-        mongodb-version: ${{ matrix.mongodb-version }}
-        mongodb-replica-set: rs0
-    - name: Run E2E tests
-      uses: BerniWittmann/background-server-action@v1
-      with:
-        command: npm run test-local
-        start: npm run start-rolo & npm run start-twix
-        wait-on: '${{ vars.APP_TEST_URL }}, ${{ vars.TWIX_TEST_URL }}'
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - name: Run unit tests
+        run: npm run test-unit
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.8.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-replica-set: rs0
+      - name: Run E2E tests
+        uses: BerniWittmann/background-server-action@v1
+        with:
+          command: npm run test-local
+          start: npm run start-rolo & npm run start-twix
+          wait-on: "${{ vars.APP_TEST_URL }}, ${{ vars.TWIX_TEST_URL }}"

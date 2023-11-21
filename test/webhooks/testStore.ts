@@ -27,11 +27,15 @@ test("lizhi get blank", async (t) => {
 });
 
 test("lizhi post /generateLicense bad api key", async (t) => {
-  const res = await webhooks.post("/webhooks/store/generateLicense", {}, {
-    headers: {
-      "X-Api-Key": "dff",
+  const res = await webhooks.post(
+    "/webhooks/store/generateLicense",
+    {},
+    {
+      headers: {
+        "X-Api-Key": "dff",
+      },
     },
-  });
+  );
   t.log(res.data);
   t.is(res.status, 401);
 });

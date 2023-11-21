@@ -14,9 +14,7 @@ const ZConfig = z.object({
     secretAccessKey: z.string(),
   }),
 });
-const spacesConfig = ZConfig.parse(
-  JSON.parse(config.SPACES_CONFIG),
-);
+const spacesConfig = ZConfig.parse(JSON.parse(config.SPACES_CONFIG));
 
 const s3Client = new S3Client({
   endpoint: spacesConfig.endpoint,
@@ -57,7 +55,7 @@ export async function exists(path: string) {
   log("s3: exists?".magenta, path.bgWhite);
   try {
     const response = await axios.head(url);
-    if (response.status === 200) {      
+    if (response.status === 200) {
       result = true;
     }
   } catch (err) {

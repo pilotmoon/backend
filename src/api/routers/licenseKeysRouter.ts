@@ -24,7 +24,7 @@ import { Context } from "koa";
 import { ApiError } from "../../errors.js";
 import { create as createCDH } from "content-disposition-header";
 import { Document } from "mongodb";
-import { minutes } from '../../timeIntervals.js'
+import { minutes } from "../../timeIntervals.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -61,9 +61,14 @@ function generateToken(id: string, kind: AuthKind) {
 // common routine to get full response body
 async function getCommonBody(document: LicenseKeyRecord, ctx: Context) {
   const license = await generateLicenseFile(document, ctx.state.auth.kind);
-  const url = ctx.getLocation(matchFile.uuid, { id: document._id }, {
-    token: generateToken(document._id, ctx.state.auth.kind),
-  }, true);
+  const url = ctx.getLocation(
+    matchFile.uuid,
+    { id: document._id },
+    {
+      token: generateToken(document._id, ctx.state.auth.kind),
+    },
+    true,
+  );
   return {
     ..._.omit(document, "emailHash"),
     file: { ..._.omit(license, "plist"), url },
@@ -133,25 +138,16 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   }
 
   // generate license key file object
-  const licenseFile = await generateLicenseFile(
-    document,
-    ctx.state.auth.kind,
-  );
+  const licenseFile = await generateLicenseFile(document, ctx.state.auth.kind);
 
   // if client accepts octet-stream, return the file as-is
   if (ctx.accepts("application/octet-stream")) {
     // decode the base64-encoded file
     ctx.body = licenseFile.plist;
     ctx.set("Content-Type", "application/octet-stream");
-    ctx.set(
-      "Content-Disposition",
-      createCDH(licenseFile.name),
-    );
+    ctx.set("Content-Disposition", createCDH(licenseFile.name));
   } else {
-    throw new ApiError(
-      406,
-      "Client does not accept application/octet-stream",
-    );
+    throw new ApiError(406, "Client does not accept application/octet-stream");
   }
 });
 

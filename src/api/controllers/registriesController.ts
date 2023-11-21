@@ -113,7 +113,7 @@ export async function createRegistry(
     return document;
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -132,7 +132,7 @@ export async function listRegistries(
     });
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -143,9 +143,9 @@ export async function readRegistry(
   auth: Auth,
 ): Promise<RegistrySchema | null> {
   auth.assertAccess(collectionName, id, "read");
-  const document = await dbc(auth.kind).findOne(
-    { $or: [{ _id: id }, { identifiers: id }] },
-  );
+  const document = await dbc(auth.kind).findOne({
+    $or: [{ _id: id }, { identifiers: id }],
+  });
 
   if (!document) return null;
   try {
@@ -153,7 +153,7 @@ export async function readRegistry(
     return ZRegistrySchema.parse(document);
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
@@ -172,23 +172,20 @@ export async function updateRegistry(
       { $set: info },
       { returnDocument: "after" },
     );
-    return (!!result.value);
+    return !!result.value;
   } catch (error) {
     handleControllerError(error);
-    throw (error);
+    throw error;
   }
 }
 
 // Delete a registry by its canonical ID or one of its other identifiers.
 // Returns true if the registry was deleted, false if it was not found.
-export async function deleteRegistry(
-  id: string,
-  auth: Auth,
-) {
+export async function deleteRegistry(id: string, auth: Auth) {
   auth.assertAccess(collectionName, id, "delete");
-  const result = await dbc(auth.kind).deleteOne(
-    { $or: [{ _id: id }, { identifiers: id }] },
-  );
+  const result = await dbc(auth.kind).deleteOne({
+    $or: [{ _id: id }, { identifiers: id }],
+  });
   return result.deletedCount === 1;
 }
 
