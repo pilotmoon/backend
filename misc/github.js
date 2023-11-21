@@ -11,9 +11,9 @@ const getRepoContents = async (owner, repo) => {
     });
 
     // Print file names
-    response.data.forEach((file) => {
+    for (const file of response.data) {
       console.log(file.name);
-    });
+    }
   } catch (err) {
     console.error(err);
   }
