@@ -112,13 +112,11 @@ export function encryptInPlace(
   keys?: readonly string[],
 ) {
   if (!record) return;
-  if (!keys) {
-    keys = Object.keys(record).filter(
-      (key) => key !== "_id" && key !== "object",
-    );
-  }
+  const keysToEncrypt =
+    keys ??
+    Object.keys(record).filter((key) => key !== "_id" && key !== "object");
   for (const [key, value] of Object.entries(record)) {
-    if (keys && !keys.includes(key)) continue;
+    if (!keysToEncrypt.includes(key)) continue;
     if (!shouldEncrypt(value)) continue;
     record[key] = new Binary(encrypt(encode(value), kind), 0x81);
   }
