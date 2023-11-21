@@ -16,20 +16,20 @@ interface ConfigItem {
   hidden?: boolean;
   optional?: boolean;
 }
-interface Loader {
-  (key: string): string | undefined;
-}
+type Loader = (key: string) => string | undefined;
+
 // loader to read from process.env
 function envLoader(key: string) {
   return process.env[key];
 }
 // construct a loader that always returns the same value
-function load(value: any) {
+function load(value: unknown) {
   return () => value;
 }
-interface Transformer {
-  (value: string): any;
-}
+
+// transform a string into another type
+type Transformer = (value: string) => unknown;
+
 // identity
 function trimTransform(string: string) {
   return string.trim();
@@ -52,7 +52,7 @@ function setConfigItem(
     hidden = false,
     optional = false,
   }: ConfigItem,
-  config: any,
+  config: Record<string, unknown>,
 ) {
   let value = loader(key);
   if (typeof value !== "string") {
