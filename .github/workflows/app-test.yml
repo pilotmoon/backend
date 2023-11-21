@@ -24,7 +24,7 @@ env:
   ROLO_URL_CANONICAL: "${{ vars.ROLO_URL_CANONICAL }}"
   # secrets
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
-  APP_SECRET_TEST: "${{ secrets.APP_SECRET_TEST }}"
+  APP_SECRET: "${{ secrets.APP_SECRET }}"
   ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
   ROLO_APIKEY_LIVE: ""
   PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"

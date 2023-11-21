@@ -11,76 +11,63 @@ import { AuthKind } from "../../src/api/auth.js";
 // string wrappers for encrypt and decrypt
 export function encryptString(
   message: string,
-  kind: AuthKind,
   associatedString?: string,
 ): Uint8Array {
   const associatedData = associatedString
     ? Buffer.from(associatedString)
     : undefined;
-  return encrypt(Buffer.from(message), kind, associatedData);
+  return encrypt(Buffer.from(message), associatedData);
 }
 
 export function decryptString(
   encryptedMessage: Uint8Array,
-  kind: AuthKind,
   associatedString?: string,
 ): string {
   const associatedData = associatedString
     ? Buffer.from(associatedString)
     : undefined;
-  return Buffer.from(decrypt(encryptedMessage, kind, associatedData)).toString(
+  return Buffer.from(decrypt(encryptedMessage, associatedData)).toString(
     "utf8",
   );
 }
 
 test("encrypt and decrypt", (t) => {
   const message = "hello world";
-  const encrypted = encryptString(message, "test");
-  const decrypted = decryptString(encrypted, "test");
+  const encrypted = encryptString(message);
+  const decrypted = decryptString(encrypted);
   t.is(decrypted, message);
 });
 
 test("encrypt and decrypt with aad", (t) => {
   const message = "hello world";
   const aad = "foo";
-  const encrypted = encryptString(message, "test", aad);
-  const decrypted = decryptString(encrypted, "test", aad);
+  const encrypted = encryptString(message, aad);
+  const decrypted = decryptString(encrypted, aad);
   t.is(decrypted, message);
 });
 
 test("encrypt and decrypt with bad aad", (t) => {
   const message = "hello world";
   const aad = "foo";
-  const encrypted = encryptString(message, "test", aad);
-  t.log(t.throws(() => decryptString(encrypted, "test", "bar"))?.message);
+  const encrypted = encryptString(message, aad);
+  t.log(t.throws(() => decryptString(encrypted, "bar"))?.message);
 });
 
 test("encrypt and decrypt with missing aad", (t) => {
   const message = "hello world";
   const aad = "foo";
-  const encrypted = encryptString(message, "test", aad);
-  t.log(t.throws(() => decryptString(encrypted, "test"))?.message);
-});
-
-test("bad key kind", (t) => {
-  const message = "hello world";
-  t.log(t.throws(() => encryptString(message, "foo" as any))?.message);
+  const encrypted = encryptString(message, aad);
+  t.log(t.throws(() => decryptString(encrypted))?.message);
 });
 
 test("decrypt garbage", (t) => {
-  t.log(
-    t.throws(() => decryptString(Buffer.from("sdgfjhgsdfhjg"), "test"))
-      ?.message,
-  );
+  t.log(t.throws(() => decryptString(Buffer.from("sdgfjhgsdfhjg")))?.message);
 });
 
 test("decrypt random iv + nothing", (t) => {
   t.log(
     t.throws(() =>
-      decryptString(
-        Buffer.from("12345678901234567890123456789012", "hex"),
-        "test",
-      ),
+      decryptString(Buffer.from("12345678901234567890123456789012", "hex")),
     )?.message,
   );
 });
@@ -103,7 +90,7 @@ test("encrypt and decrypt record in place", (t) => {
   };
   const original = { ...record };
   // encrypt the record
-  encryptInPlace(record, "test", ["encrypted"]);
+  encryptInPlace(record, ["encrypted"]);
 
   // verify that the encrypted value is different
   t.notDeepEqual(record, original);
@@ -113,6 +100,6 @@ test("encrypt and decrypt record in place", (t) => {
   t.like(record, { foo: "bar", baz: "qux" });
 
   // verify that the encrypted value is decrypted correctly
-  decryptInPlace(record, "test");
+  decryptInPlace(record);
   t.deepEqual(record, original);
 });

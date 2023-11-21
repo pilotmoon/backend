@@ -247,9 +247,9 @@ export async function createLicenseKey(
   if (info.email) document.emailHash = hashEmail(info.email);
 
   try {
-    encryptInPlace(document, auth.kind, encryptedFields);
+    encryptInPlace(document, encryptedFields);
     await dbc(auth.kind).insertOne(document);
-    decryptInPlace(document, auth.kind);
+    decryptInPlace(document);
     return document;
   } catch (error) {
     handleControllerError(error);
@@ -268,7 +268,7 @@ export async function readLicenseKey(
   if (!document) return null;
 
   try {
-    decryptInPlace(document, auth.kind);
+    decryptInPlace(document);
     return ZLicenseKeyRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
@@ -289,11 +289,11 @@ export async function updateLicenseKey(
   if (!document) return false;
 
   try {
-    decryptInPlace(document, auth.kind);
+    decryptInPlace(document);
     if (update.email) document.emailHash = hashEmail(update.email);
     const updated = { ...document, ...update };
 
-    encryptInPlace(updated, auth.kind, encryptedFields);
+    encryptInPlace(updated, encryptedFields);
     await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
     return true;
   } catch (error) {
@@ -316,7 +316,7 @@ export async function listLicenseKeys(
   auth.assertAccess(collectionName, undefined, "read");
   const docs = await paginate(dbc(auth.kind), pagination, query);
   try {
-    for (const doc of docs) decryptInPlace(doc, auth.kind);
+    for (const doc of docs) decryptInPlace(doc);
     return docs.map((doc) => ZLicenseKeyRecord.parse(doc));
   } catch (error) {
     handleControllerError(error);

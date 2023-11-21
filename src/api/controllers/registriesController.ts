@@ -107,9 +107,9 @@ export async function createRegistry(
   };
 
   try {
-    encryptInPlace(document.objects, auth.kind);
+    encryptInPlace(document.objects);
     await dbc(auth.kind).insertOne(document);
-    decryptInPlace(document.objects, auth.kind);
+    decryptInPlace(document.objects);
     return document;
   } catch (error) {
     handleControllerError(error);
@@ -127,7 +127,7 @@ export async function listRegistries(
 
   try {
     return documents.map((document) => {
-      decryptInPlace(document.objects, auth.kind);
+      decryptInPlace(document.objects);
       return ZRegistrySchema.parse(document);
     });
   } catch (error) {
@@ -149,7 +149,7 @@ export async function readRegistry(
 
   if (!document) return null;
   try {
-    decryptInPlace(document.objects, auth.kind);
+    decryptInPlace(document.objects);
     return ZRegistrySchema.parse(document);
   } catch (error) {
     handleControllerError(error);
@@ -166,7 +166,7 @@ export async function updateRegistry(
 ) {
   auth.assertAccess(collectionName, id, "update");
   try {
-    encryptInPlace(info.objects, auth.kind);
+    encryptInPlace(info.objects);
     const result = await dbc(auth.kind).findOneAndUpdate(
       { $or: [{ _id: id }, { identifiers: id }] },
       { $set: info },

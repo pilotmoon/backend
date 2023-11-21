@@ -94,11 +94,7 @@ export function generateEncryptedToken({
     tokenData.e = expiration.getTime();
   }
 
-  const encryptedData = encrypt(
-    encode(tokenData),
-    keyKind,
-    textEncode(resource),
-  );
+  const encryptedData = encrypt(encode(tokenData), textEncode(resource));
   // convert the buffer to an array of numbers
   const encryptedDataArray = Array.from(encryptedData);
 
@@ -176,7 +172,7 @@ export function decipherToken(
       // encrypted scopes
       if (tokenType === "2") {
         const tokenData = ZTokenData.parse(
-          decodeFirstSync(decrypt(encryptedData.subarray(zeroes), keyKind)),
+          decodeFirstSync(decrypt(encryptedData.subarray(zeroes))),
         );
         const scopes = tokenData.s;
         const expiration = tokenData.e ? new Date(tokenData.e) : undefined;
@@ -187,11 +183,7 @@ export function decipherToken(
       if (tokenType === "3") {
         const tokenData = ZTokenData.parse(
           decodeFirstSync(
-            decrypt(
-              encryptedData.subarray(zeroes),
-              keyKind,
-              textEncode(resource),
-            ),
+            decrypt(encryptedData.subarray(zeroes), textEncode(resource)),
           ),
         );
         const scopes = tokenData.s.map((scope) =>
