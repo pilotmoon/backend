@@ -31,19 +31,19 @@ export async function connect() {
     client = new MongoClient(config.DATABASE_URL, {
       serverApi: ServerApiVersion.v1,
     });
-    client.on("close", (event: any) => {
+    client.on("close", (event: unknown): void => {
       log("Database connection closed (close)", event);
     });
-    client.on("timeout", (event: any) => {
+    client.on("timeout", (event: unknown): void => {
       log("Database connection timed out (timeout)", event);
     });
-    client.on("error", (event) => {
+    client.on("error", (event: unknown): void => {
       log(`Database connection error: ${event}`);
     });
-    client.on("serverClosed", (event) => {
+    client.on("serverClosed", (event: unknown): void => {
       log("Database connection closed (serverClosed)", event);
     });
-    client.on("serverOpening", (event) => {
+    client.on("serverOpening", (event: unknown): void => {
       log("Database connection opening (serverOpening)", event);
     });
     await client.connect();
