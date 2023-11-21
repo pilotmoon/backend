@@ -260,7 +260,9 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
   let cursor: string | undefined;
   for (let i = 0; i < 2; i++) {
     const res = await rolo().get(
-      `licenseKeys?limit=5&order=-1&gteDate=${test10Date.toISOString()}${cursor ? `&cursor=${cursor}` : ""}`,
+      `licenseKeys?limit=5&order=-1&gteDate=${test10Date.toISOString()}${
+        cursor ? `&cursor=${cursor}` : ""
+      }`,
     );
     t.is(res.status, 200);
     t.log(res.data);

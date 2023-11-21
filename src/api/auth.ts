@@ -7,7 +7,7 @@ import { log } from "../logger.js";
 // all operations initiated by the api key happen against the corresponding
 // database, and the api key is only valid for that database.
 export const authKinds = ["test", "live"] as const;
-export type AuthKind = (typeof authKinds)[number];
+export type AuthKind = typeof authKinds[number];
 
 // schema for the part of the auth context that can be set by the client
 export const ZSettableAuthContext = z.object({
@@ -52,7 +52,7 @@ export class Auth implements AuthInfo {
 
   // check whether the context is authorized to perform the given action with the given resource.
   assertAccess(
-    collectionName: (typeof collectionNames)[number],
+    collectionName: typeof collectionNames[number],
     resource: string | undefined,
     action: "create" | "read" | "update" | "delete",
   ) {

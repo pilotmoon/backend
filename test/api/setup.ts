@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/api/identifiers.js";
 
-export type TestKey = (typeof testKeys)[keyof typeof testKeys];
+export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
   runner: {
     scopes: ["*"],

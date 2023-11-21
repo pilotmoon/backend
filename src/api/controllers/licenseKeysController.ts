@@ -386,8 +386,9 @@ export async function generateLicenseFile(
   const plist = aqp.generateLicense(ZLicenseFileFields.parse(details));
 
   // generate the license file name
-  const name =
-    `${sanitizeName(document.name, "License")}.${config.licenseFileExtension}`;
+  const name = `${sanitizeName(document.name, "License")}.${
+    config.licenseFileExtension
+  }`;
 
   return ZLicenseFileObject.parse({
     object: "licenseKeyFile",
