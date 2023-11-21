@@ -4,7 +4,9 @@ import axios, { AxiosInstance } from "axios";
 let webhooks: AxiosInstance;
 async function setup() {
   const keys = JSON.parse(process.env.TWIX_APIKEYS ?? "");
-  const key = keys.find((key: any) => key.name === "internal test");
+  const key = keys.find(
+    (key: { name: string }) => key.name === "internal test",
+  );
 
   webhooks = axios.create({
     baseURL: process.env.TWIX_TEST_URL,
