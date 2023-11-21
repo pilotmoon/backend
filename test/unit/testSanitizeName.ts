@@ -1,5 +1,5 @@
-import { sanitizeName } from "../../src/sanitizeName.js";
 import test from "ava";
+import { sanitizeName } from "../../src/sanitizeName.js";
 
 test("sanitizeName", (t) => {
   t.is(sanitizeName("John Doe"), "John_Doe");

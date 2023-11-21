@@ -1,17 +1,17 @@
+import { randomUUID } from "node:crypto";
+import _ from "lodash";
+import { ApiError } from "../../errors.js";
 import {
+  ZApiKeyInfo,
+  ZApiKeyInfoUpdate,
   createApiKey,
   deleteApiKey,
   listApiKeys,
   readApiKey,
   updateApiKey,
-  ZApiKeyInfo,
-  ZApiKeyInfoUpdate,
 } from "../controllers/apiKeysController.js";
-import { makeRouter } from "../koaWrapper.js";
-import { ApiError } from "../../errors.js";
-import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers.js";
-import _ from "lodash";
+import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/apiKeys" });
 const matchId = {

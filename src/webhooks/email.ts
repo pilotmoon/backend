@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
-import { config } from "./config.js";
 import { z } from "zod";
+import { config } from "./config.js";
 const ZConfig = z.object({
   host: z.string(),
   port: z.number(),

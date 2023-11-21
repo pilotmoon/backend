@@ -1,7 +1,8 @@
-import { makeRouter } from "../koaWrapper.js";
 import { randomUUID } from "node:crypto";
-import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
 import {
+  ZObject,
+  ZRegistryInfo,
+  ZRegistryInfoUpdate,
   createRegistry,
   deleteRegistry,
   getRegistryObject,
@@ -9,10 +10,9 @@ import {
   readRegistry,
   redact,
   updateRegistry,
-  ZObject,
-  ZRegistryInfo,
-  ZRegistryInfoUpdate,
 } from "../controllers/registriesController.js";
+import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
+import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {

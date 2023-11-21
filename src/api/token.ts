@@ -27,11 +27,11 @@
 // The access token is validated by decrypting the data. Verification of the scopes and expiration
 // is left to the caller.
 
-import { decrypt, encrypt } from "./secrets.js";
-import { AuthKind } from "./auth.js";
 import { alphabets, baseDecode, baseEncode } from "@pilotmoon/chewit";
-import { z } from "zod";
 import { decodeFirstSync, encode } from "cbor";
+import { z } from "zod";
+import { AuthKind } from "./auth.js";
+import { decrypt, encrypt } from "./secrets.js";
 
 const encoder = new TextEncoder();
 const textEncode = encoder.encode.bind(encoder);

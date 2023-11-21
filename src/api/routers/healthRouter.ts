@@ -1,6 +1,6 @@
-import { makeRouter } from "../koaWrapper.js";
 import { randomString } from "@pilotmoon/chewit";
 import { config } from "../config.js";
+import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter();
 

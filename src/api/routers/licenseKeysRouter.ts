@@ -1,30 +1,30 @@
-import { AppContext, makeRouter } from "../koaWrapper.js";
 import { randomUUID } from "node:crypto";
+import TTLCache from "@isaacs/ttlcache";
+import { create as createCDH } from "content-disposition-header";
+import { Context } from "koa";
+import _ from "lodash";
+import { Document } from "mongodb";
+import { ApiError } from "../../errors.js";
+import { log } from "../../logger.js";
+import { minutes } from "../../timeIntervals.js";
 import { AuthKind } from "../auth.js";
-import { makeIdentifierPattern } from "../identifiers.js";
 import {
+  LicenseKeyRecord,
+  LicenseKeysQuery,
+  ZLicenseKeyInfo,
+  ZLicenseKeyUpdate,
+  ZLicenseKeysQuery,
   createLicenseKey,
   generateLicenseFile,
   getProductConfig,
   hashEmail,
-  LicenseKeyRecord,
-  LicenseKeysQuery,
   listLicenseKeys,
   readLicenseKey,
   updateLicenseKey,
-  ZLicenseKeyInfo,
-  ZLicenseKeysQuery,
-  ZLicenseKeyUpdate,
 } from "../controllers/licenseKeysController.js";
+import { makeIdentifierPattern } from "../identifiers.js";
+import { AppContext, makeRouter } from "../koaWrapper.js";
 import { generateEncryptedToken } from "../token.js";
-import { log } from "../../logger.js";
-import TTLCache from "@isaacs/ttlcache";
-import _ from "lodash";
-import { Context } from "koa";
-import { ApiError } from "../../errors.js";
-import { create as createCDH } from "content-disposition-header";
-import { Document } from "mongodb";
-import { minutes } from "../../timeIntervals.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {

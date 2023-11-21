@@ -1,5 +1,5 @@
-import { hashPassword, verifyPassword } from "../../src/scrypt.js";
 import test from "ava";
+import { hashPassword, verifyPassword } from "../../src/scrypt.js";
 
 test("hash and verify", async (t) => {
   const password = "hello world";

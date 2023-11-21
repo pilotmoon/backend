@@ -1,16 +1,16 @@
+import cors from "@koa/cors";
+import Router from "@koa/router";
 import "colors";
 import Koa from "koa";
-import Router from "@koa/router";
-import { config } from "./config.js";
-import { router as paddleRouter } from "./paddle/paddleRouter.js";
-import { router as storeRouter } from "./store/storeRouter.js";
-import { log } from "../logger.js";
 import bodyParser from "koa-bodyparser";
-import cors from "@koa/cors";
 import { ApiError } from "../errors.js";
 import { handleError } from "../handleError.js";
+import { log } from "../logger.js";
 import { measureResponseTime } from "../measureResponseTime.js";
+import { config } from "./config.js";
+import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { start as initReports, stop as stopReports } from "./reports.js";
+import { router as storeRouter } from "./store/storeRouter.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());

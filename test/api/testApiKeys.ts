@@ -1,6 +1,6 @@
+import { randomString } from "@pilotmoon/chewit";
 import test from "ava";
 import { keys, rolo } from "./setup.js";
-import { randomString } from "@pilotmoon/chewit";
 
 test("missing api key", async (t) => {
   const res = await rolo().get("health", {

@@ -13,11 +13,11 @@
 //   - authScopes: the auth scopes of the request, if applicable
 //   - authExpires: the auth expiration of the request, if applicable
 import { Context, Next } from "koa";
-import { getDb } from "../database.js";
-import { z } from "zod";
 import _ from "lodash";
-import { ZAuthInfo } from "../auth.js";
+import { z } from "zod";
 import { days } from "../../timeIntervals.js";
+import { ZAuthInfo } from "../auth.js";
+import { getDb } from "../database.js";
 
 const ZLogSchema = z.object({
   timestamp: z.date(),

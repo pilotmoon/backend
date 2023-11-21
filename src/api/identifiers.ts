@@ -1,9 +1,9 @@
-import Prando from "prando";
 import { defaultRng, randomString } from "@pilotmoon/chewit";
-import { config } from "./config.js";
+import Prando from "prando";
 import { logw } from "../logger.js";
-import { AuthKind, authKinds } from "./auth.js";
 import { genericIdPattern } from "../saneString.js";
+import { AuthKind, authKinds } from "./auth.js";
+import { config } from "./config.js";
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = ["ak", "reg", "lk"] as const;

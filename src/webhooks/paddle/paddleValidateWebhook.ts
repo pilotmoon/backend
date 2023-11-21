@@ -1,7 +1,7 @@
-import { serialize } from "php-serialize";
 import { createVerify } from "node:crypto";
-import { z } from "zod";
 import { Context } from "koa";
+import { serialize } from "php-serialize";
+import { z } from "zod";
 
 const ZPaddleWebhookData = z
   .object({

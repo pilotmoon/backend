@@ -1,8 +1,13 @@
+import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { z } from "zod";
-import { getDb } from "../database.js";
-import { Auth } from "../auth.js";
+import { canonicalizeEmail } from "../../canonicalizeEmail.js";
 import { handleControllerError } from "../../errors.js";
-import { randomIdentifier } from "../identifiers.js";
+import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
+import {
+  LicenseFileObject,
+  ZLicenseFileObject,
+} from "../../licenseFileObject.js";
+import { ProductConfig, ZProductConfig } from "../../product.js";
 import {
   ZSaneDate,
   ZSaneEmail,
@@ -10,20 +15,15 @@ import {
   ZSaneQuantity,
   ZSaneString,
 } from "../../saneString.js";
-import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
-import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
-import { sha256Hex } from "../../sha256.js";
-import { decryptInPlace, encryptInPlace } from "../secrets.js";
-import { canonicalizeEmail } from "../../canonicalizeEmail.js";
-import { AuthKind, authKinds } from "../auth.js";
-import { getRegistryObjectInternal as getreg } from "./registriesController.js";
-import { ProductConfig, ZProductConfig } from "../../product.js";
 import { sanitizeName } from "../../sanitizeName.js";
-import {
-  LicenseFileObject,
-  ZLicenseFileObject,
-} from "../../licenseFileObject.js";
-import { paginate, Pagination } from "../paginate.js";
+import { sha256Hex } from "../../sha256.js";
+import { Auth } from "../auth.js";
+import { AuthKind, authKinds } from "../auth.js";
+import { getDb } from "../database.js";
+import { randomIdentifier } from "../identifiers.js";
+import { Pagination, paginate } from "../paginate.js";
+import { decryptInPlace, encryptInPlace } from "../secrets.js";
+import { getRegistryObjectInternal as getreg } from "./registriesController.js";
 /*
 
 # License Keys

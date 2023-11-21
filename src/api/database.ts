@@ -1,7 +1,7 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
-import { config } from "./config.js";
 import { log } from "../logger.js";
 import { AuthKind } from "./auth.js";
+import { config } from "./config.js";
 
 let client: MongoClient;
 

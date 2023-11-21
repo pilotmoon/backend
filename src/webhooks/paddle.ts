@@ -1,6 +1,6 @@
-import { config } from "./config.js";
-import { z } from "zod";
 import axios from "axios";
+import { z } from "zod";
+import { config } from "./config.js";
 
 const ZCred = z.object({
   vendorId: z.string(),

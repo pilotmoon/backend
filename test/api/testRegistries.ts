@@ -1,10 +1,10 @@
-import test from "ava";
-import { keys, rolo } from "./setup.js";
 import { randomString } from "@pilotmoon/chewit";
+import test from "ava";
 import {
   generateApiKeyToken,
   generateEncryptedToken,
 } from "../../src/api/token.js";
+import { keys, rolo } from "./setup.js";
 import { testAquaticPrimeKeyPair } from "./testLicenseKeys.js";
 
 export function uniqueId(id: string) {

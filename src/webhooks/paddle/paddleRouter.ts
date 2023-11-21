@@ -1,12 +1,12 @@
-import { processLicense } from "./paddleProcessLicense.js";
-import { processAlert } from "./paddleProcessAlert.js";
-import { validateWebhook } from "./paddleValidateWebhook.js";
 import Router from "@koa/router";
-import { config } from "../config.js";
-import { ApiError } from "../../errors.js";
-import { paddleCredentials } from "../paddle.js";
 import { Context } from "koa";
+import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
+import { config } from "../config.js";
+import { paddleCredentials } from "../paddle.js";
+import { processAlert } from "./paddleProcessAlert.js";
+import { processLicense } from "./paddleProcessLicense.js";
+import { validateWebhook } from "./paddleValidateWebhook.js";
 
 export const router = new Router();
 

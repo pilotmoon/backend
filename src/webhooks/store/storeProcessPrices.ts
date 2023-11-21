@@ -1,10 +1,10 @@
+import TTLCache from "@isaacs/ttlcache";
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
+import { minutes } from "../../timeIntervals.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
 import { paddleCatalog } from "./catalog.js";
-import { minutes } from "../../timeIntervals.js";
-import TTLCache from "@isaacs/ttlcache";
 
 const cachedResponses = new TTLCache<string, PricesResult>({
   max: 1000,

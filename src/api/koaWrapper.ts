@@ -1,8 +1,8 @@
+import Router from "@koa/router";
 /*
 Wrap Koa's types to inject our own state type.
 */
 import Koa from "koa";
-import Router from "@koa/router";
 import { Auth } from "./auth.js";
 import { Pagination } from "./paginate";
 

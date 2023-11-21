@@ -1,33 +1,33 @@
 import "colors";
-import { makeRouter, makeServer } from "./koaWrapper.js";
 import bodyParser from "koa-bodyparser";
-import { config } from "./config.js";
 import { ApiError } from "../errors.js";
-import { close as closeDb, connect as connectDb } from "./database.js";
-import { log } from "../logger.js";
-import { asciiHello } from "./static.js";
-import { authorize } from "./middleware/authorize.js";
-import { processPagination } from "./middleware/processPagination.js";
 import { handleError } from "../handleError.js";
-import { formatBody } from "./middleware/formatBody.js";
-import { checkAccess } from "./middleware/checkAccess.js";
+import { log } from "../logger.js";
 import { measureResponseTime } from "../measureResponseTime.js";
+import { config } from "./config.js";
+import { close as closeDb, connect as connectDb } from "./database.js";
+import { makeRouter, makeServer } from "./koaWrapper.js";
+import { authorize } from "./middleware/authorize.js";
+import { checkAccess } from "./middleware/checkAccess.js";
 import { enforceJson } from "./middleware/enforceJson.js";
+import { formatBody } from "./middleware/formatBody.js";
 import { logAccess } from "./middleware/logAccess.js";
+import { processPagination } from "./middleware/processPagination.js";
+import { asciiHello } from "./static.js";
 
 import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
 
-import { init as initRegistriesController } from "./controllers/registriesController.js";
-import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
 import { init as initApiKeysController } from "./controllers/apiKeysController.js";
+import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
+import { init as initRegistriesController } from "./controllers/registriesController.js";
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
-import { router as healthRouter } from "./routers/healthRouter.js";
-import { router as reportsRouter } from "./routers/reportsRouter.js";
-import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
-import { router as registriesRouter } from "./routers/registriesRouter.js";
-import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
 import { hours } from "../timeIntervals.js";
+import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
+import { router as healthRouter } from "./routers/healthRouter.js";
+import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
+import { router as registriesRouter } from "./routers/registriesRouter.js";
+import { router as reportsRouter } from "./routers/reportsRouter.js";
 
 // set up main router
 const mainRouter = makeRouter();

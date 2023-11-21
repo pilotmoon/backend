@@ -8,9 +8,9 @@
 // The key is a 32 byte (256 bit) hex string.
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { decodeFirstSync, encode } from "cbor";
 import { Binary } from "mongodb";
 import { config } from "./config.js";
-import { decodeFirstSync, encode } from "cbor";
 
 function getSecretKey() {
   return Buffer.from(config.APP_SECRET, "hex");

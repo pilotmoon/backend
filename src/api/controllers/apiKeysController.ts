@@ -1,20 +1,20 @@
-import { deterministic, randomKey } from "../identifiers.js";
-import { ZSaneString } from "../../saneString.js";
-import { z } from "zod";
-import { getDb } from "../database.js";
 import { Binary } from "mongodb";
+import { z } from "zod";
+import { TestKey, testKeys } from "../../../test/api/setup.js";
 import { handleControllerError } from "../../errors.js";
 import { log } from "../../logger.js";
+import { ZSaneString } from "../../saneString.js";
+import { hashPassword } from "../../scrypt.js";
 import {
   Auth,
   AuthKind,
-  authKinds,
   ZAuthInfo,
   ZSettableAuthContext,
+  authKinds,
 } from "../auth.js";
-import { hashPassword } from "../../scrypt.js";
-import { TestKey, testKeys } from "../../../test/api/setup.js";
-import { paginate, Pagination } from "../paginate.js";
+import { getDb } from "../database.js";
+import { deterministic, randomKey } from "../identifiers.js";
+import { Pagination, paginate } from "../paginate.js";
 
 /*** Schemas ***/
 
