@@ -28,7 +28,7 @@ export function getPaddleVendorsApi(mode: "test" | "live") {
           ...data,
         };
       },
-      ...(axios.defaults.transformRequest as any),
+      ...(axios.defaults.transformRequest as []),
     ],
   });
 }
