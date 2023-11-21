@@ -40,7 +40,7 @@ type KeyName = [keyof typeof testKeys][number];
 let keyStore: Record<KeyName, { id: string; key: string }>;
 export function keys() {
   if (!keyStore) {
-    keyStore = {} as any;
+    keyStore = {} as Record<string, { id: string; key: string }>;
     for (const keyName of Object.keys(testKeys) as KeyName[]) {
       deterministic(() => {
         keyStore[keyName] = randomKey("test", "ak");
