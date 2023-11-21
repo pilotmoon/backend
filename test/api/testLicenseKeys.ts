@@ -214,7 +214,7 @@ test("create license key with chinese characters", async (t) => {
 });
 
 let test10Date: Date;
-const test10Objects: any[] = [];
+const test10Objects: { id: string }[] = [];
 test("create 10 distinct license keys, for later testing of pagination", async (t) => {
   test10Date = new Date();
   for (let i = 0; i < 10; i++) {
