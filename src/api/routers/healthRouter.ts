@@ -9,7 +9,7 @@ router.get("/health", async (ctx) => {
   ctx.state.auth.assertAccess("health", undefined, "read");
 
   // add object identifier to response
-  const health = { object: "health" } as any;
+  const health = { object: "health" } as Record<string, unknown>;
 
   // add random string to response
   health.name = "Pilotmoon API Server v2";
