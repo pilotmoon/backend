@@ -6,7 +6,7 @@ import Router from "@koa/router";
 import { Auth } from "./auth.js";
 import { Pagination } from "./paginate";
 
-interface State extends Koa.DefaultState {
+export interface AppState extends Koa.DefaultState {
   // items set by auth midddleware
   auth: Auth;
   apiKeyId: string;
@@ -15,19 +15,24 @@ interface State extends Koa.DefaultState {
   pagination: Pagination;
 }
 
-interface Context extends Koa.DefaultContext {
+export interface AppContext extends Koa.DefaultContext {
   // function to generate a URL for the Location header or other purposes
   // name: name of the route
   // params: parameters to pass to the route
   // query: query parameters to add to the URL
   // full: if true, return a full URL including the app's base URL
-  getLocation(name: string, params?: any, query?: {}, full?: boolean): string;
+  getLocation(
+    name: string,
+    params?: Record<string, string>,
+    query?: Record<string, string>,
+  ): string;
+  state: AppState;
 }
 
 export function makeServer() {
-  return new Koa<State, Context>({ proxy: true });
+  return new Koa<AppState, AppContext>({ proxy: true });
 }
 
 export function makeRouter(opt?: Router.RouterOptions) {
-  return new Router<State, Context>(opt);
+  return new Router<AppState, AppContext>(opt);
 }

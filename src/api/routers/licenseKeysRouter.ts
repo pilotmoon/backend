@@ -1,4 +1,4 @@
-import { makeRouter } from "../koaWrapper.js";
+import { AppContext, makeRouter } from "../koaWrapper.js";
 import { randomUUID } from "node:crypto";
 import { AuthKind } from "../auth.js";
 import { makeIdentifierPattern } from "../identifiers.js";
@@ -40,12 +40,12 @@ const cachedTokens = new TTLCache({
   max: 1000,
   ttl: minutes(60),
 });
-function generateToken(id: string, kind: AuthKind) {
+function generateToken(id: string, kind: AuthKind): string {
   // generate a URL to download the license key file, with an access token
   // that doesn't expire. token is cached so that the same token is returned
   // on subsequent requests. this is mainly to help testing.
   const cached = cachedTokens.get(id);
-  if (cached) return cached;
+  if (typeof cached === "string") return cached;
 
   const resource = `licenseKeys/${id}`;
   const result = generateEncryptedToken({
@@ -59,16 +59,10 @@ function generateToken(id: string, kind: AuthKind) {
 }
 
 // common routine to get full response body
-async function getCommonBody(document: LicenseKeyRecord, ctx: Context) {
+async function getCommonBody(document: LicenseKeyRecord, ctx: AppContext) {
   const license = await generateLicenseFile(document, ctx.state.auth.kind);
-  const url = ctx.getLocation(
-    matchFile.uuid,
-    { id: document._id },
-    {
-      token: generateToken(document._id, ctx.state.auth.kind),
-    },
-    true,
-  );
+  const token = generateToken(document._id, ctx.state.auth.kind);
+  const url = ctx.getLocation(matchFile.uuid, { id: document._id }, { token });
   return {
     ..._.omit(document, "emailHash"),
     file: { ..._.omit(license, "plist"), url },
@@ -93,7 +87,7 @@ router.post("/", async (ctx) => {
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
 
-async function list(query: LicenseKeysQuery, ctx: Context) {
+async function list(query: LicenseKeysQuery, ctx: AppContext) {
   const documents = await listLicenseKeys(
     ZLicenseKeysQuery.parse(query),
     ctx.state.pagination,
