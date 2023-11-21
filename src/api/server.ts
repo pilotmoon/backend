@@ -51,7 +51,7 @@ app.context.getLocation = function (name: string, params?: any, query?: {}) {
   let result = mainRouter.url(name, params);
   if (result instanceof Error) throw result;
   if (query) {
-    result += "?" + new URLSearchParams(query).toString();
+    result += `?${new URLSearchParams(query).toString()}`;
   }
   return result;
 };

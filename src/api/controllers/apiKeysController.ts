@@ -71,7 +71,7 @@ export async function init() {
 
     // if there are no keys, create a bootstrap key
     const count = await collection.countDocuments();
-    if (count == 0) {
+    if (count === 0) {
       log("No API keys found, creating bootstrap key", kind.blue);
       const settableAuthContext = {
         scopes: ["*"],

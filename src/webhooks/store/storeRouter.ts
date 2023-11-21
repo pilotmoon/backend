@@ -34,7 +34,7 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
 
 router.get("/frontend/store/getPrices", async (ctx) => {
   const sourceIp = ctx.request.ip;
-  const product = ctx.query["product"];
+  const product = ctx.query.product;
   if (typeof product !== "string") {
     throw new ApiError(400, "'product' query parameter is required");
   }

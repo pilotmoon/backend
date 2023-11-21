@@ -49,7 +49,7 @@ function setConfigItem(
     key,
     loader = envLoader,
     transform = trimTransform,
-    hidden: hidden = false,
+    hidden = false,
     optional = false,
   }: ConfigItem,
   config: any,
@@ -58,10 +58,10 @@ function setConfigItem(
   if (typeof value !== "string") {
     if (optional) {
       logw(
-        "Substituting empty string for missing environment variable: " + key,
+        `Substituting empty string for missing environment variable: ${key}`,
       );
     } else {
-      throw new Error("Missing required environment variable: " + key);
+      throw new Error(`Missing required environment variable: ${key}`);
     }
     value = "";
   }

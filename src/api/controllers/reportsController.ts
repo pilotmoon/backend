@@ -226,7 +226,7 @@ async function generateLicenseKeysReport(
   query: Record<string, string>,
 ) {
   // get coupon prefix from query
-  const couponPrefix = query["couponPrefix"] ?? "";
+  const couponPrefix = query.couponPrefix ?? "";
 
   // aggregation pipeline to get all purchases that used a coupon and return the details as an array
   const pipeline = [

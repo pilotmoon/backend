@@ -20,7 +20,7 @@ export function getDb(kind: AuthKind | "logs"): Db {
     case "logs":
       return client.db(config.DATABASE_NAME_LOGS);
     default:
-      throw new Error("Unknown database kind: " + kind);
+      throw new Error(`Unknown database kind: ${kind}`);
   }
 }
 
@@ -38,7 +38,7 @@ export async function connect() {
       log("Database connection timed out (timeout)", event);
     });
     client.on("error", (event) => {
-      log("Database connection error: " + event);
+      log(`Database connection error: ${event}`);
     });
     client.on("serverClosed", (event) => {
       log("Database connection closed (serverClosed)", event);

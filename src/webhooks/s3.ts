@@ -50,7 +50,7 @@ export async function upload(
 }
 
 export async function exists(path: string) {
-  var result = false;
+  let result = false;
   const url = `${spacesConfig.endpoint}/${spacesConfig.bucket}/${path}`;
   log("s3: exists?".magenta, path.bgWhite);
   try {

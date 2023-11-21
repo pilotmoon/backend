@@ -214,7 +214,7 @@ test("create license key with chinese characters", async (t) => {
 });
 
 let test10Date: Date;
-let test10Objects: any[] = [];
+const test10Objects: any[] = [];
 test("create 10 distinct license keys, for later testing of pagination", async (t) => {
   test10Date = new Date();
   for (let i = 0; i < 10; i++) {
@@ -246,7 +246,7 @@ test("retreive last 10 license keys in default (descending) order", async (t) =>
 
 test("retreive last 10 license keys in ascending order", async (t) => {
   const res = await rolo().get(
-    "licenseKeys?limit=10&order=1&gteDate=" + test10Date.toISOString(),
+    `licenseKeys?limit=10&order=1&gteDate=${test10Date.toISOString()}`,
   );
   t.is(res.status, 200);
   t.log(res.data);
@@ -260,16 +260,14 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
   let cursor: string | undefined;
   for (let i = 0; i < 2; i++) {
     const res = await rolo().get(
-      "licenseKeys?limit=5&order=-1&gteDate=" +
-        test10Date.toISOString() +
-        (cursor ? "&cursor=" + cursor : ""),
+      `licenseKeys?limit=5&order=-1&gteDate=${test10Date.toISOString()}${cursor ? `&cursor=${cursor}` : ""}`,
     );
     t.is(res.status, 200);
     t.log(res.data);
     t.is(res.data.object, "list");
     t.is(res.data.items.length, 5);
-    t.is(res.data.items[0].name, "name " + (9 - i * 5));
-    t.is(res.data.items[4].name, "name " + (5 - i * 5));
+    t.is(res.data.items[0].name, `name ${9 - i * 5}`);
+    t.is(res.data.items[4].name, `name ${5 - i * 5}`);
     cursor = res.data.items.at(-1).id;
   }
 });
@@ -388,7 +386,7 @@ test("update a license key, changing the origin (should fail)", async (t) => {
 });
 
 test("update a license key, bad id (should fail)", async (t) => {
-  const res = await rolo().patch(`licenseKeys/1234567890`, {
+  const res = await rolo().patch("licenseKeys/1234567890", {
     name: "new name",
   });
   t.is(res.status, 404);

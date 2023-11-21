@@ -75,8 +75,8 @@ test("api key CRUD test", async (t) => {
   t.assert(res.data.key.length > 0);
   t.is(res.data.description, "crud test key");
   t.is(res.data.blah, undefined);
-  const location = res.headers["location"];
-  t.is(location, "/apiKeys/" + res.data.id);
+  const location = res.headers.location;
+  t.is(location, `/apiKeys/${res.data.id}`);
   t.log(location);
 
   // get the key
@@ -149,32 +149,32 @@ test("delete current api key", async (t) => {
 test("options current api key", async (t) => {
   const res = await rolo().options("apiKeys/current");
   t.is(res.status, 200);
-  const allow = res.headers["allow"].split(", ").sort();
+  const allow = res.headers.allow.split(", ").sort();
   t.deepEqual(allow, ["GET", "HEAD"]);
 });
 
 test("options current api key by id", async (t) => {
-  const res = await rolo().options("apiKeys/" + keys().runner.id);
+  const res = await rolo().options(`apiKeys/${keys().runner.id}`);
   t.is(res.status, 200);
-  const allow = res.headers["allow"].split(", ").sort();
+  const allow = res.headers.allow.split(", ").sort();
   t.deepEqual(allow, ["DELETE", "GET", "HEAD", "PATCH"]);
 });
 
 test("delete current api key by id", async (t) => {
-  const res = await rolo().delete("apiKeys/" + keys().runner.id);
+  const res = await rolo().delete(`apiKeys/${keys().runner.id}`);
   t.is(res.status, 400);
 });
 
 test("modify current api key by id", async (t) => {
-  const res = await rolo().patch("apiKeys/" + keys().runner.id, {
+  const res = await rolo().patch(`apiKeys/${keys().runner.id}`, {
     description: "foo",
   });
   t.is(res.status, 400);
 });
 
 test("modify other api key by id", async (t) => {
-  const str = "random " + randomString({ length: 10 });
-  const res = await rolo().patch("apiKeys/" + keys().subject.id, {
+  const str = `random ${randomString({ length: 10 })}`;
+  const res = await rolo().patch(`apiKeys/${keys().subject.id}`, {
     description: str,
   });
   t.is(res.status, 204);
@@ -182,14 +182,14 @@ test("modify other api key by id", async (t) => {
 });
 
 test("modify other api key, adding unrecognized key", async (t) => {
-  const res = await rolo().patch("apiKeys/" + keys().subject.id, {
+  const res = await rolo().patch(`apiKeys/${keys().subject.id}`, {
     blah: "blah",
   });
   t.is(res.status, 400);
 });
 
 test("modify other api key by id, no read scope", async (t) => {
-  const res = await rolo("updateonly").patch("apiKeys/" + keys().subject.id, {
+  const res = await rolo("updateonly").patch(`apiKeys/${keys().subject.id}`, {
     description: "foo",
   });
   t.is(res.status, 204);
@@ -197,7 +197,7 @@ test("modify other api key by id, no read scope", async (t) => {
 });
 
 test("modify other api key by id, no write scope", async (t) => {
-  const res = await rolo("readonly").patch("apiKeys/" + keys().subject.id, {
+  const res = await rolo("readonly").patch(`apiKeys/${keys().subject.id}`, {
     description: "foo",
   });
   t.is(res.status, 403);

@@ -44,7 +44,7 @@ router.get("/:name", async (ctx) => {
     query,
   );
 
-  if (Array.isArray(report) && query["format"] === "csv") {
+  if (Array.isArray(report) && query.format === "csv") {
     ctx.set("Content-Type", "text/csv");
     ctx.body = makeCsv(report);
   } else {

@@ -30,13 +30,13 @@ function parseSecretKey(key: string): SecretKeyParts {
     throw new ApiError(401, "Invalid API key (bad format)");
   }
   const kind = match[1] as AuthKind;
-  const id = "ak_" + match[2];
+  const id = `ak_${match[2]}`;
 
   // generate sha256 hashed version of the key so we can store it
   // in the cache without exposing the secret key to the cache.
   // include the unique keyId as a prefix so that there is no
   // chance of a collision between different keys.
-  const cacheKey = id + ":" + sha256Hex(key);
+  const cacheKey = `${id}:${sha256Hex(key)}`;
 
   return { key, kind, id, cacheKey };
 }
@@ -78,7 +78,7 @@ const authCache = new TTLCache<string, Auth>({ max: 100_000, ttl });
 // - the api key or token is invalid
 export async function authorize(ctx: Context, next: Next) {
   // get the authorization header and token
-  const authorization = ctx.request.headers["authorization"];
+  const authorization = ctx.request.headers.authorization;
   const token = ctx.request.query.token;
   if (Array.isArray(token)) {
     throw new ApiError(401, "Multiple tokens provided");
@@ -100,7 +100,7 @@ export async function authorize(ctx: Context, next: Next) {
     try {
       // extract resource from the first two path segments.
       const resource = ctx.path.split("/").slice(1, 3).join("/");
-      log("Resource: " + resource);
+      log(`Resource: ${resource}`);
 
       const {
         keyKind: kind,
@@ -111,7 +111,7 @@ export async function authorize(ctx: Context, next: Next) {
       if (secretKey) {
         await authorizeKey(secretKey, ctx);
       } else if (scopes) {
-        log("Token scopes: " + scopes.join(", "));
+        log(`Token scopes: ${scopes.join(", ")}`);
         ctx.state.auth = new Auth({
           kind,
           scopes,
@@ -150,14 +150,14 @@ async function authorizeKey(key: string, ctx: Context) {
           authCache.set(keyParts.cacheKey, new Auth(authContext));
         })
         .catch((err) => {
-          log("Error revalidating API key: " + err.message);
+          log(`Error revalidating API key: ${err.message}`);
           authCache.delete(keyParts.cacheKey);
         });
     }
   }
 
-  log("New auth cache size: " + authCache.size);
+  log(`New auth cache size: ${authCache.size}`);
   ctx.state.auth = auth;
   ctx.state.apiKeyId = keyParts.id;
-  log("Key ID: " + keyParts.id);
+  log(`Key ID: ${keyParts.id}`);
 }

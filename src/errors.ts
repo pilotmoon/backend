@@ -17,7 +17,7 @@ export function handleControllerError(error: unknown) {
   if (error instanceof MongoServerError && error.code === 11000) {
     throw new ApiError(409, "Unique constraint violation");
   } else if (error instanceof ZodError) {
-    throw new ApiError(500, "Invalid document: " + error.message);
+    throw new ApiError(500, `Invalid document: ${error.message}`);
   }
 }
 
@@ -41,7 +41,7 @@ export function getErrorInfo(error: unknown): ErrorInfo {
     message = error.message;
     const innerError = error.response?.headers["x-error-message"];
     if (typeof innerError === "string") {
-      message += " / " + innerError;
+      message += ` / ${innerError}`;
     }
   } else if (error instanceof Error) {
     message = error.message;

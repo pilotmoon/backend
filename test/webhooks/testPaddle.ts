@@ -4,7 +4,7 @@ import axios, { AxiosInstance } from "axios";
 let paddle: AxiosInstance;
 async function setup() {
   paddle = axios.create({
-    baseURL: process.env.TWIX_TEST_URL + "/webhooks/paddle",
+    baseURL: `${process.env.TWIX_TEST_URL}/webhooks/paddle`,
     validateStatus: () => true, // don't throw on non-200 status
   });
 }

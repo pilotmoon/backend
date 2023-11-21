@@ -16,7 +16,7 @@ export function processPagination() {
     }
     function getQueryInteger(name: string, defaultValue: number) {
       const result = Number(getQueryString(name) ?? defaultValue);
-      if (isNaN(result) || !Number.isInteger(result)) {
+      if (Number.isNaN(result) || !Number.isInteger(result)) {
         throw new ApiError(400, `${name} must be an integer`);
       }
       return result;

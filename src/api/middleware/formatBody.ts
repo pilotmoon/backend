@@ -9,7 +9,7 @@ function replaceId(obj: any) {
     if (typeof obj._id === "string") {
       obj.id = obj._id;
     }
-    delete obj._id;
+    obj._id = undefined;
   }
   return obj;
 }

@@ -84,7 +84,7 @@ export async function processPrices(
   }
   const productInfo = response.response.products[0];
   if (String(productInfo.product_id) !== productId) {
-    throw new ApiError(400, `Paddle API error (product not in response)`);
+    throw new ApiError(400, "Paddle API error (product not in response)");
   }
   const result = ZPricesResult.parse({
     country: response.response.customer_country,

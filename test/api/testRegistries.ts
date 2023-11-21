@@ -8,7 +8,7 @@ import {
 import { testAquaticPrimeKeyPair } from "./testLicenseKeys.js";
 
 export function uniqueId(id: string) {
-  return id + "-" + uniqueSuffix;
+  return `${id}-${uniqueSuffix}`;
 }
 let uniqueSuffix: string;
 let fooRegistry: any;
@@ -306,7 +306,7 @@ test("list the registries using a token with read permissions", async (t) => {
   });
 
   // now use that token to list the records
-  const res = await rolo(null).get(`/registries`, { params: { token } });
+  const res = await rolo(null).get("/registries", { params: { token } });
   t.is(res.status, 200);
   t.is(res.data.object, "list");
 });
@@ -320,7 +320,7 @@ test("list the registries using a token with read permissions and a resource", a
   });
 
   // now use that token to list the records
-  const res = await rolo(null).get(`/registries`, { params: { token } });
+  const res = await rolo(null).get("/registries", { params: { token } });
   t.is(res.status, 200);
   t.is(res.data.object, "list");
 });
@@ -345,7 +345,7 @@ test("read the foo registry using a token with read permissions for a different 
   const token = generateEncryptedToken({
     keyKind: "test",
     scopes: ["registries:read"],
-    resource: `registries/blahblah`,
+    resource: "registries/blahblah",
   });
 
   const res = await rolo(null).get(`/registries/${fooRegistryId}`, {

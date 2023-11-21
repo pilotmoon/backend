@@ -14,7 +14,7 @@ export async function processAlert(args: unknown, mode: "test" | "live") {
   if (alertArgs.alert_name === "payment_refunded") {
     await processRefund(args, getRolo(mode));
   } else {
-    throw new ApiError(400, "Unknown alert_name: " + alertArgs.alert_name);
+    throw new ApiError(400, `Unknown alert_name: ${alertArgs.alert_name}`);
   }
 }
 
@@ -26,7 +26,7 @@ const ZRefundArgs = z.object({
 async function processRefund(args: unknown, api: AxiosInstance) {
   const paddleArgs = ZRefundArgs.parse(args);
   const id = await lookupOrder("Paddle", paddleArgs.order_id, api);
-  await api.patch("/licenseKeys/" + id, { void: true });
+  await api.patch(`/licenseKeys/${id}`, { void: true });
 }
 
 const ZLookupResponse = z.object({
@@ -41,7 +41,7 @@ const ZLookupResponse = z.object({
 });
 
 async function lookupOrder(origin: string, order: string, api: AxiosInstance) {
-  const { data } = await api.get("/licenseKeys/byOrder/" + order);
+  const { data } = await api.get(`/licenseKeys/byOrder/${order}`);
   const response = ZLookupResponse.parse(data);
   const orders = response.items.filter((item) => item.origin === origin);
   if (orders.length !== 1) {

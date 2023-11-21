@@ -18,9 +18,9 @@ const ZConfig = z.object({
 const reportsConfig = ZConfig.parse(JSON.parse(config.REPORTS_CONFIG));
 
 // call once on server start
-var weeklyJob: CronJob;
-var monthlyJob: CronJob;
-var testJob: CronJob;
+let weeklyJob: CronJob;
+let monthlyJob: CronJob;
+let testJob: CronJob;
 export function start() {
   log("Starting reports...");
   weeklyJob = new CronJob(

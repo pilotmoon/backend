@@ -35,6 +35,6 @@ export function getPaddleVendorsApi(mode: "test" | "live") {
 
 export function getPaddleCheckoutApi() {
   return axios.create({
-    baseURL: `https://checkout.paddle.com/api`,
+    baseURL: "https://checkout.paddle.com/api",
   });
 }

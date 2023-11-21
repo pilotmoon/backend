@@ -18,7 +18,7 @@ router.use(storeRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {
-  ctx.body = "twix " + config.COMMIT_HASH;
+  ctx.body = `twix ${config.COMMIT_HASH}`;
 });
 
 const app = new Koa({ proxy: true });

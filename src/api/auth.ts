@@ -59,7 +59,7 @@ export class Auth implements AuthInfo {
     const acceptedScopes = [
       `${collectionName}:${action}`,
       `${collectionName}:*`,
-      `*`,
+      "*",
     ];
     if (resource) {
       acceptedScopes.push(

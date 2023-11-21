@@ -32,7 +32,7 @@ const matchId = {
   uuid: randomUUID(),
 };
 const matchFile = {
-  pattern: matchId.pattern + "/file",
+  pattern: `${matchId.pattern}/file`,
   uuid: randomUUID(),
 };
 
@@ -50,7 +50,7 @@ function generateToken(id: string, kind: AuthKind) {
   const resource = `licenseKeys/${id}`;
   const result = generateEncryptedToken({
     keyKind: kind,
-    scopes: [resource + ":read"],
+    scopes: [`${resource}:read`],
     expires: undefined,
     resource: resource,
   });
@@ -82,7 +82,7 @@ router.post("/", async (ctx) => {
   // check that the product id is valid
   try {
     const config = await getProductConfig(data.product, ctx.state.auth.kind);
-    log("Creating license key for " + config.productName);
+    log(`Creating license key for ${config.productName}`);
   } catch (err) {
     throw new ApiError(400, `Invalid product '${data.product}'`);
   }

@@ -59,7 +59,7 @@ router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
 });
 
 // add or update a named object using a dedicated url
-router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
+router.put(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
   const suppliedObject = ZObject.parse(ctx.request.body);
   const auth = ctx.state.auth;
   const id = ctx.params.id;
@@ -82,7 +82,7 @@ router.put(matchId.pattern + "/objects/:objectId", async (ctx) => {
 });
 
 // read a named objects using a dedicated url
-router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
+router.get(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
   const document = await getRegistryObject(
     ctx.params.id,
     ctx.params.objectId,
@@ -95,7 +95,7 @@ router.get(matchId.pattern + "/objects/:objectId", async (ctx) => {
 
 // read a registry using one of its identifiers, using `byIdentifier` url
 router.get(
-  "/byIdentifier" + makeGenericIdPattern("identifier"),
+  `/byIdentifier${makeGenericIdPattern("identifier")}`,
   async (ctx) => {
     const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
     if (document) {
