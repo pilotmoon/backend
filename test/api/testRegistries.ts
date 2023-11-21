@@ -10,12 +10,16 @@ import { testAquaticPrimeKeyPair } from "./testLicenseKeys.js";
 export function uniqueId(id: string) {
   return `${id}-${uniqueSuffix}`;
 }
+type Registry = {
+  description: string;
+  identifiers: string[];
+};
 let uniqueSuffix: string;
-let fooRegistry: any;
+let fooRegistry: Registry;
 let fooRegistryId: string;
-let barRegistry: any;
+let barRegistry: Registry;
 let barRegistryId: string;
-let bazRegistry: any;
+let bazRegistry: Registry;
 let bazRegistryId: string;
 
 test.before(() => {
