@@ -2,9 +2,10 @@ import { Context, Next } from "koa";
 import { z } from "zod";
 import { ApiError } from "../../errors.js";
 import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers.js";
+import { Pagination } from "../paginate.js";
 
 // replace _id with id
-function replaceId(obj: any) {
+function replaceId(obj: { _id?: string; id?: string }) {
   if (obj._id) {
     if (typeof obj._id === "string") {
       obj.id = obj._id;
@@ -57,7 +58,14 @@ export async function formatBody(ctx: Context, next: Next) {
     throw new ApiError(406, "Client does not accept JSON");
   }
 
-  let newBody;
+  let newBody:
+    | Record<string, unknown>
+    | {
+        object: "list";
+        pagination: Pagination;
+        items: Record<string, unknown>[];
+        livemode: boolean;
+      };
   if (Array.isArray(ctx.body)) {
     // if array, wrap in list object
     newBody = {
