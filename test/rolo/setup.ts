@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { deterministic, randomKey } from "../../src/api/identifiers.js";
+import { deterministic, randomKey } from "../../src/rolo/identifiers.js";
 import { log } from "console";
 
 export type TestKey = typeof testKeys[keyof typeof testKeys];

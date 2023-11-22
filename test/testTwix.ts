@@ -1,3 +1,3 @@
-import "./webhooks/testHello.js";
-import "./webhooks/testPaddle.js";
-import "./webhooks/testStore.js";
+import "./twix/testHello.js";
+import "./twix/testPaddle.js";
+import "./twix/testStore.js";

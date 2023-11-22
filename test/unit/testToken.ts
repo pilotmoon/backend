@@ -1,5 +1,5 @@
 import test from "ava";
-import * as token from "../../src/api/token.js";
+import * as token from "../../src/rolo/token.js";
 
 test("generate and deciper encrypted token", (t) => {
   let count = 0;

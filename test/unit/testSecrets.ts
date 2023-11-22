@@ -1,12 +1,12 @@
 import test from "ava";
 import { Binary } from "mongodb";
-import { AuthKind } from "../../src/api/auth.js";
+import { AuthKind } from "../../src/rolo/auth.js";
 import {
   decrypt,
   decryptInPlace,
   encrypt,
   encryptInPlace,
-} from "../../src/api/secrets.js";
+} from "../../src/rolo/secrets.js";
 
 // string wrappers for encrypt and decrypt
 export function encryptString(

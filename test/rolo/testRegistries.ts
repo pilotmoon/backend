@@ -3,7 +3,7 @@ import test from "ava";
 import {
   generateApiKeyToken,
   generateEncryptedToken,
-} from "../../src/api/token.js";
+} from "../../src/rolo/token.js";
 import { keys, rolo } from "./setup.js";
 import { testAquaticPrimeKeyPair } from "./testLicenseKeys.js";
 
