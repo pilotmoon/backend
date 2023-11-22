@@ -53,7 +53,6 @@ export function keys() {
 }
 
 export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
-  log("APP_TEST_URL", process.env.APP_TEST_URL);
   if (!keyName) {
     return axios.create({
       baseURL: process.env.APP_TEST_URL,

@@ -28,7 +28,6 @@ env:
   ROLO_APIKEY_LIVE: ""
   PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"
   TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
-  SPACES_CONFIG: "${{ secrets.SPACES_CONFIG }}"
   SMTP_CONFIG: "${{ secrets.SMTP_CONFIG }}"
   REPORTS_CONFIG: "${{ secrets.REPORTS_CONFIG }}"
   HMA_ROOT: "${{ secrets.HMA_ROOT }}"
