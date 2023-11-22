@@ -1,6 +1,6 @@
 import { Binary } from "mongodb";
 import { z } from "zod";
-import { TestKey, testKeys } from "../../../test/api/setup.js";
+import { TestKey, testKeys } from "../../../test/rolo/setup.js";
 import { handleControllerError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { ZSaneString } from "../../saneString.js";
