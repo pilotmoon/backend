@@ -18,7 +18,7 @@ export async function handleError(ctx: Context, next: Next) {
       `Sending ${ctx.response.length ?? 0} bytes`,
     );
     if (info) {
-      log(`${info.type.bgWhite} ${info.message}`);
+      log(`${info.type.black.bgWhite} ${info.message}`);
     }
   }
 }

@@ -48,7 +48,7 @@ function startServer() {
   const port = config.TWIX_PORT;
   log("Starting server...");
   app.listen({ port, signal: abortController.signal }, () => {
-    log(`Server listening on port ${port}`.bgMagenta);
+    log(`Server listening on port ${port}`.black.bgMagenta);
   });
 }
 function closeServer() {

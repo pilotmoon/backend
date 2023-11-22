@@ -81,7 +81,7 @@ export async function init() {
         settableAuthContext,
         specialContext(kind),
       );
-      console.log("Bootstrap key:".bgMagenta, document.key);
+      console.log("Bootstrap key:".black.bgMagenta, document.key);
     }
   }
 
