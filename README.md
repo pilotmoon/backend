@@ -1,20 +1,5 @@
 # Backend
 
-```text
-                     ,--,
-Pilotmoon API ==== ,--.'| ===========
-  __  ,-.   ,---.  |  | :     ,---.
-,' ,'/ /|  '   ,'\ :  : '    '   ,'\
-'  | |' | /   /   ||  ' |   /   /   |
-|  |   ,'.   ; ,. :'  | |  .   ; ,. :
-'  :  /  '   | |: :|  | :  '   | |: :
-|  | '   '   | .; :'  : |__'   | .; :
-;  : |   |   :    ||  | '.'|   :    |
-|  , ;    \   \  / ;  :    ;\   \  /
- ---'      `----'  |  ,   /  `----'
-==================  ---`-' ======= v2
-```
-
 Back-end components for Pilotmoon's apps and websites.
 
 Current capabilities:
@@ -33,11 +18,11 @@ Planned capabilities:
 
 There are two server components, running as separate apps:
 
-- `src/api/`: **Rolo**, the main API server.
-- `src/webhooks/`: **Twix**, a companion server that acts as an adapter
-  interface for external services.
+- `src/rolo/`: **Rolo**, the main API server.
+- `src/twix/`: **Twix**, a companion server that acts as an adapter interface
+  for external services.
 
 ## Infrastructure
 
-The components are deployed on DigitalOcean App Platform under Node 16.x,
+The components are deployed on DigitalOcean App Platform under Node 18.x,
 fronted by an nginx reverse proxy.
