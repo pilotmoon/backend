@@ -7,4 +7,6 @@ function inject() {
 }
 
 inject rolo
+inject rolotest
 inject twix
+inject twixtest

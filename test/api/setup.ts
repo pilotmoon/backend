@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/api/identifiers.js";
+import { log } from "console";
 
 export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
@@ -42,7 +43,7 @@ export function keys() {
   if (!keyStore) {
     keyStore = {} as Record<string, { id: string; key: string }>;
     for (const keyName of Object.keys(testKeys) as KeyName[]) {
-      deterministic(() => {
+      deterministic(process.env.BOOTSTRAP_SEED ?? "", () => {
         keyStore[keyName] = randomKey("test", "ak");
       });
     }
@@ -52,6 +53,7 @@ export function keys() {
 }
 
 export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
+  log("APP_TEST_URL", process.env.APP_TEST_URL);
   if (!keyName) {
     return axios.create({
       baseURL: process.env.APP_TEST_URL,

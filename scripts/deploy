@@ -1,3 +1,0 @@
-#!/bin/zsh
-set -e
-git push origin main:deploy

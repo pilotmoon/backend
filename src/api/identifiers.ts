@@ -3,7 +3,6 @@ import Prando from "prando";
 import { logw } from "../logger.js";
 import { genericIdPattern } from "../saneString.js";
 import { AuthKind, authKinds } from "./auth.js";
-import { config } from "./config.js";
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = ["ak", "reg", "lk"] as const;
@@ -71,7 +70,11 @@ export function makeGenericIdPattern(varName: string): string {
 /*** helpers for deterministic tests ***/
 
 // run a block of code with the deterministic RNG
-export async function deterministic(block: () => void) {
+let prando: Prando;
+export async function deterministic(seed: string, block: () => void) {
+  if (!prando) {
+    prando = new Prando(seed);
+  }
   usePrng = true;
   await block();
   usePrng = false;
@@ -84,7 +87,7 @@ function rng() {
 }
 
 // pseudo-random number generator
-const prando = new Prando(config.BOOTSTRAP_SEED);
+
 let prngCount = 0;
 function pseudoRng(size: number): Array<number> {
   logw("Using PRNG", { count: ++prngCount });

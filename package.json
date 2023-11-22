@@ -49,17 +49,15 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "db": "docker run -it --expose 27017 -p 27017:27017 mongo",
-    "deploy": "./scripts/deploy",
+    "deploy": "git push origin main:deploy",
     "dev-rolo": "./scripts/dev-rolo",
     "dev-twix": "./scripts/dev-twix",
     "start-rolo": "node ./dist/src/api/server.js",
     "start-twix": "node ./dist/src/webhooks/server.js",
-    "test-local": "./scripts/test-local",
-    "test-prod": "./scripts/test-prod",
-    "test-rolo-local": "./scripts/test-rolo-local",
-    "test-twix-local": "./scripts/test-twix-local",
-    "test-unit": "./scripts/test-unit"
+    "test-unit": "npx ava dist/test/testUnit.js",
+    "test-rolo": "npx ava dist/test/testRolo.js --serial",
+    "test-twix": "npx ava dist/test/testTwix.js --serial",
+    "test-local": "npm run test-unit && ./scripts/env && source .env-rolotest && npm run test-rolo && source .env-twixtest && npm run test-twix"
   },
   "type": "module"
 }

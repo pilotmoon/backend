@@ -15,6 +15,7 @@ import {
 import { getDb } from "../database.js";
 import { deterministic, randomKey } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
+import { config } from "../config.js";
 
 /*** Schemas ***/
 
@@ -87,7 +88,7 @@ export async function init() {
 
   // create deterministic test keys
   console.log("Creating fixed test keys");
-  await deterministic(async () => {
+  await deterministic(config.BOOTSTRAP_SEED, async () => {
     for (const [name, keyDef] of Object.entries<TestKey>(testKeys)) {
       keyDef.description = `[${name}] ` + keyDef.description;
       await createApiKey(ZApiKeyInfo.parse(keyDef), specialContext("test"), {

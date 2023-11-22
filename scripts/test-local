@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-if [ -z ${APP_PORT+x} ]; then
-  echo "generating .env file"
-  ./scripts/env
-  source .env-rolo
-  source .env-twix
-fi
-npx ava dist/test/testE2E.js --serial
