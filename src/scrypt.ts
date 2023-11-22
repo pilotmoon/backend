@@ -1,6 +1,5 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { log, loge } from "./logger.js";
 const scryptAsync = promisify(scrypt);
 
 export async function hashPassword(password: string) {

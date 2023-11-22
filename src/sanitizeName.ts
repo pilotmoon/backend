@@ -1,4 +1,3 @@
-// TODO fix this. it doesn't work for chinese characters
 // sanitize a name for use in a license file name
 export function sanitizeName(name: string, fallback = "") {
   let result = name.replace(/[^\p{L}\p{N}]/gu, "_");
