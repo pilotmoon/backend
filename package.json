@@ -24,6 +24,7 @@
     "nodemailer": "6.9.4",
     "php-serialize": "4.0.2",
     "prando": "6.0.1",
+    "saslprep": "1.0.3",
     "zod": "3.22.4",
     "zod-validation-error": "0.3.1"
   },

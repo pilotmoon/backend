@@ -13,28 +13,67 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +4 ~/work/chewit/index.ts
-badd +7 dist/src/canonicalizeEmail.js
-badd +4 term://~/work/backend//99624:/bin/zsh
-badd +11 term://~/work/backend//230:/bin/zsh
-badd +164 term://~/work/backend//868:/bin/zsh
-badd +19 .env-twix
-badd +1 ~/work/backend
-badd +55 term://~/work/backend//9368:/bin/zsh
-badd +0 term://~/work/backend//9825:/bin/zsh
-badd +0 term://~/work/backend//9913:/bin/zsh
+badd +4 src/logger.ts
+badd +1 src/product.ts
+badd +11 src/sanitizeName.ts
+badd +30 src/api/auth.ts
+badd +42 test/api/setup.ts
+badd +135 test/api/testApiKeys.ts
+badd +6590 term://~/work/backend//28578:/bin/zsh
+badd +28 term://~/work/backend//29540:/bin/zsh
+badd +0 term://~/work/backend//29995:/bin/zsh
+badd +1 biome.json
+badd +22 misc/github.js
+badd +134 term://~/work/backend//32730:/bin/zsh
+badd +0 term://~/work/backend//33986:/bin/zsh
 argglobal
 %argdel
-$argadd ~/work/backend
+$argadd NvimTree_1
 set stal=2
 tabnew +setlocal\ bufhidden=wipe
+tabnew +setlocal\ bufhidden=wipe
 tabrewind
+edit biome.json
+let s:save_splitbelow = &splitbelow
+let s:save_splitright = &splitright
+set splitbelow splitright
+wincmd _ | wincmd |
+vsplit
+1wincmd h
+wincmd w
+wincmd _ | wincmd |
+split
+1wincmd k
+wincmd w
+let &splitbelow = s:save_splitbelow
+let &splitright = s:save_splitright
+wincmd t
+let s:save_winminheight = &winminheight
+let s:save_winminwidth = &winminwidth
+set winminheight=0
+set winheight=1
+set winminwidth=0
+set winwidth=1
+exe 'vert 1resize ' . ((&columns * 30 + 106) / 212)
+exe '2resize ' . ((&lines * 27 + 29) / 58)
+exe 'vert 2resize ' . ((&columns * 181 + 106) / 212)
+exe '3resize ' . ((&lines * 27 + 29) / 58)
+exe 'vert 3resize ' . ((&columns * 181 + 106) / 212)
 argglobal
-if bufexists(fnamemodify("term://~/work/backend//9368:/bin/zsh", ":p")) | buffer term://~/work/backend//9368:/bin/zsh | else | edit term://~/work/backend//9368:/bin/zsh | endif
-if &buftype ==# 'terminal'
-  silent file term://~/work/backend//9368:/bin/zsh
-endif
-balt .env-twix
+enew
+file NvimTree_1
+balt src/logger.ts
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal nofen
+lcd ~/work/backend
+wincmd w
+argglobal
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -43,12 +82,70 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 55 - ((0 * winheight(0) + 23) / 46)
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 17 - ((16 * winheight(0) + 13) / 27)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 55
-normal! 066|
+keepjumps 17
+normal! 03|
+lcd ~/work/backend
+wincmd w
+argglobal
+if bufexists(fnamemodify("term://~/work/backend//33986:/bin/zsh", ":p")) | buffer term://~/work/backend//33986:/bin/zsh | else | edit term://~/work/backend//33986:/bin/zsh | endif
+if &buftype ==# 'terminal'
+  silent file term://~/work/backend//33986:/bin/zsh
+endif
+balt ~/work/backend/biome.json
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+let s:l = 67 - ((15 * winheight(0) + 13) / 27)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 67
+normal! 020|
+lcd ~/work/backend
+wincmd w
+exe 'vert 1resize ' . ((&columns * 30 + 106) / 212)
+exe '2resize ' . ((&lines * 27 + 29) / 58)
+exe 'vert 2resize ' . ((&columns * 181 + 106) / 212)
+exe '3resize ' . ((&lines * 27 + 29) / 58)
+exe 'vert 3resize ' . ((&columns * 181 + 106) / 212)
+tabnext
+edit ~/work/backend/test/api/testApiKeys.ts
+wincmd t
+let s:save_winminheight = &winminheight
+let s:save_winminwidth = &winminwidth
+set winminheight=0
+set winheight=1
+set winminwidth=0
+set winwidth=1
+argglobal
+balt term://~/work/backend//32730:/bin/zsh
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 135 - ((28 * winheight(0) + 27) / 55)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 135
+normal! 017|
 lcd ~/work/backend
 tabnext
 let s:save_splitbelow = &splitbelow
@@ -71,17 +168,13 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 81 + 81) / 162)
-exe '2resize ' . ((&lines * 23 + 24) / 49)
-exe 'vert 2resize ' . ((&columns * 80 + 81) / 162)
-exe '3resize ' . ((&lines * 22 + 24) / 49)
-exe 'vert 3resize ' . ((&columns * 80 + 81) / 162)
+wincmd =
 argglobal
-if bufexists(fnamemodify("term://~/work/backend//868:/bin/zsh", ":p")) | buffer term://~/work/backend//868:/bin/zsh | else | edit term://~/work/backend//868:/bin/zsh | endif
+if bufexists(fnamemodify("term://~/work/backend//28578:/bin/zsh", ":p")) | buffer term://~/work/backend//28578:/bin/zsh | else | edit term://~/work/backend//28578:/bin/zsh | endif
 if &buftype ==# 'terminal'
-  silent file term://~/work/backend//868:/bin/zsh
+  silent file term://~/work/backend//28578:/bin/zsh
 endif
-balt term://~/work/backend//230:/bin/zsh
+balt ~/work/backend/test/api/testApiKeys.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -90,20 +183,20 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 913 - ((30 * winheight(0) + 23) / 46)
+let s:l = 7337 - ((11 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 913
-normal! 043|
+keepjumps 7337
+normal! 039|
 lcd ~/work/backend
 wincmd w
 argglobal
-if bufexists(fnamemodify("term://~/work/backend//9825:/bin/zsh", ":p")) | buffer term://~/work/backend//9825:/bin/zsh | else | edit term://~/work/backend//9825:/bin/zsh | endif
+if bufexists(fnamemodify("term://~/work/backend//29540:/bin/zsh", ":p")) | buffer term://~/work/backend//29540:/bin/zsh | else | edit term://~/work/backend//29540:/bin/zsh | endif
 if &buftype ==# 'terminal'
-  silent file term://~/work/backend//9825:/bin/zsh
+  silent file term://~/work/backend//29540:/bin/zsh
 endif
-balt term://~/work/backend//868:/bin/zsh
+balt term://~/work/backend//28578:/bin/zsh
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -112,20 +205,20 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1191 - ((22 * winheight(0) + 11) / 23)
+let s:l = 4691 - ((22 * winheight(0) + 11) / 23)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1191
+keepjumps 4691
 normal! 0
 lcd ~/work/backend
 wincmd w
 argglobal
-if bufexists(fnamemodify("term://~/work/backend//9913:/bin/zsh", ":p")) | buffer term://~/work/backend//9913:/bin/zsh | else | edit term://~/work/backend//9913:/bin/zsh | endif
+if bufexists(fnamemodify("term://~/work/backend//29995:/bin/zsh", ":p")) | buffer term://~/work/backend//29995:/bin/zsh | else | edit term://~/work/backend//29995:/bin/zsh | endif
 if &buftype ==# 'terminal'
-  silent file term://~/work/backend//9913:/bin/zsh
+  silent file term://~/work/backend//29995:/bin/zsh
 endif
-balt term://~/work/backend//868:/bin/zsh
+balt term://~/work/backend//29540:/bin/zsh
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -134,19 +227,15 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 287 - ((21 * winheight(0) + 11) / 22)
+let s:l = 1087 - ((30 * winheight(0) + 15) / 31)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 287
+keepjumps 1087
 normal! 0
 lcd ~/work/backend
 wincmd w
-exe 'vert 1resize ' . ((&columns * 81 + 81) / 162)
-exe '2resize ' . ((&lines * 23 + 24) / 49)
-exe 'vert 2resize ' . ((&columns * 80 + 81) / 162)
-exe '3resize ' . ((&lines * 22 + 24) / 49)
-exe 'vert 3resize ' . ((&columns * 80 + 81) / 162)
+wincmd =
 tabnext 2
 set stal=1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
