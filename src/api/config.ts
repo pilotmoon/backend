@@ -23,7 +23,7 @@ export const config = loadConfig<Config>([
   { key: "DATABASE_NAME_TEST" },
   { key: "DATABASE_NAME_LIVE" },
   { key: "DATABASE_NAME_LOGS" },
-  { key: "APP_SECRET", hidden: true },
+  { key: "APP_SECRET", hidden: true, optional: true },
   { key: "BOOTSTRAP_SEED" },
   {
     key: "COMMIT_HASH",

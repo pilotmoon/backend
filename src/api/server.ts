@@ -28,6 +28,12 @@ import { router as healthRouter } from "./routers/healthRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
 import { router as registriesRouter } from "./routers/registriesRouter.js";
 import { router as reportsRouter } from "./routers/reportsRouter.js";
+import { setSecretKey } from "./secrets.js";
+
+// first set the encryption key, if we have one
+if (config.APP_SECRET) {
+  setSecretKey(config.APP_SECRET);
+}
 
 // set up main router
 const mainRouter = makeRouter();

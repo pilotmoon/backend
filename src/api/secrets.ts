@@ -1,5 +1,4 @@
-// Module to encrypt and decrypt secrets
-// using the APP_SECRET key stored in the environment variable.
+// Module to encrypt and decrypt secrets using a 32-buye key.
 // The binary format of the encrypted string is
 // the initialization vector (16 bytes) followed
 // by the encrypted message.
@@ -10,10 +9,29 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { decodeFirstSync, encode } from "cbor";
 import { Binary } from "mongodb";
-import { config } from "./config.js";
+import { logw } from "../logger.js";
 
+// called externally to set an encryption key
+let secretKey: Buffer | undefined;
+export function setSecretKey(key: string) {
+  if (/^[0-9a-f]{64}$/.test(key)) {
+    secretKey = Buffer.from(key, "hex");
+  } else {
+    throw new Error("Invalid encryption key");
+  }
+}
+
+// called internally to get the encryption key
+// if no key is set, use a dummy key and log a warning
+// (dummy key is used for testing)
+const dummyKey = Buffer.alloc(32);
 function getSecretKey() {
-  return Buffer.from(config.APP_SECRET, "hex");
+  if (secretKey) {
+    return secretKey;
+  } else {
+    logw("Using dummy encryption key");
+    return dummyKey;
+  }
 }
 
 // encrypt a string to a buffer using the specified key kind
