@@ -1,26 +1,18 @@
-import {
-  commaListTransform,
-  decimalIntegerTransform,
-  loadConfig,
-} from "../loadConfig.js";
+import { decimalIntegerTransform, loadConfig } from "../loadConfig.js";
 
 // app configuration
 export interface Config {
-  APP_PORT: number;
+  ROLO_PORT: number;
   DATABASE_URL: string;
-  DATABASE_NAME_TEST: string;
-  DATABASE_NAME_LIVE: string;
-  DATABASE_NAME_LOGS: string;
+  DATABASE_NAME: string;
+  BOOTSTRAP_SEED: string;
   APP_SECRET: string;
   COMMIT_HASH: string;
-  BOOTSTRAP_SEED: string;
 }
 export const config = loadConfig<Config>([
-  { key: "APP_PORT", transform: decimalIntegerTransform },
+  { key: "ROLO_PORT", transform: decimalIntegerTransform },
   { key: "DATABASE_URL", hidden: true },
-  { key: "DATABASE_NAME_TEST" },
-  { key: "DATABASE_NAME_LIVE" },
-  { key: "DATABASE_NAME_LOGS" },
+  { key: "DATABASE_NAME" },
   { key: "APP_SECRET", hidden: true, optional: true },
   { key: "BOOTSTRAP_SEED" },
   {

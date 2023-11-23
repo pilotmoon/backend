@@ -13,12 +13,12 @@ export function getDb(kind: AuthKind | "logs"): Db {
     );
   }
   switch (kind) {
-    case "test":
-      return client.db(config.DATABASE_NAME_TEST);
     case "live":
-      return client.db(config.DATABASE_NAME_LIVE);
+      return client.db(`${config.DATABASE_NAME}`);
+    case "test":
+      return client.db(`${config.DATABASE_NAME}_test`);
     case "logs":
-      return client.db(config.DATABASE_NAME_LOGS);
+      return client.db(`${config.DATABASE_NAME}_logs`);
     default:
       throw new Error(`Unknown database kind: ${kind}`);
   }

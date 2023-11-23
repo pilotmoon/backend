@@ -7,7 +7,7 @@ const test = test0 as TestFn<{
 
 test.before(async (t) => {
   t.context.twix = axios.create({
-    baseURL: process.env.TWIX_TEST_URL,
+    baseURL: process.env.TWIX_URL,
     headers: {
       "Content-Type": "application/json",
     },

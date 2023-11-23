@@ -1,6 +1,5 @@
 import { log, logw } from "./logger.js";
 
-// load config variables
 export function loadConfig<T>(manifest: ConfigItem[]): T {
   const config = {};
   for (const item of manifest) {
@@ -8,7 +7,7 @@ export function loadConfig<T>(manifest: ConfigItem[]): T {
   }
   return config as T;
 }
-/* Helpers */
+
 interface ConfigItem {
   key: string;
   loader?: Loader;
@@ -22,33 +21,26 @@ type Loader = (key: string) => string | undefined;
 function envLoader(key: string) {
   return process.env[key];
 }
-// construct a loader that always returns the same value
-function load(value: unknown) {
-  return () => value;
-}
 
 // transform a string into another type
 type Transformer = (value: string) => unknown;
 
-// identity
-function trimTransform(string: string) {
-  return string.trim();
-}
 // parse a string as a decimal integer
 export function decimalIntegerTransform(string: string) {
   return parseInt(string, 10);
 }
-export function commaListTransform(string: string) {
-  if (!string) {
-    return [];
-  }
-  return string.split(",").map((item) => item.trim());
+
+// print ? x40 if the string is not 40 characters long
+export function sha1PrettyTransform(val: string) {
+  return val.length === 40 ? val : "?".repeat(40);
 }
+
+// actually set the config item
 function setConfigItem(
   {
     key,
     loader = envLoader,
-    transform = trimTransform,
+    transform,
     hidden = false,
     optional = false,
   }: ConfigItem,
@@ -65,7 +57,8 @@ function setConfigItem(
     }
     value = "";
   }
-  const transformed = transform(value);
+  value = value.trim();
+  const transformed = transform ? transform(value) : value;
   log(
     `Loaded config variable ${key.blue} with value ${
       hidden ? "<hidden>".yellow : JSON.stringify(transformed).cyan

@@ -100,11 +100,11 @@ function startServer() {
   log("Starting server...");
   app.listen(
     {
-      port: config.APP_PORT,
+      port: config.ROLO_PORT,
       signal: abortController.signal,
     },
     () => {
-      log(`Server listening on port ${config.APP_PORT}`.black.bgMagenta);
+      log(`Server listening on port ${config.ROLO_PORT}`.black.bgMagenta);
     },
   );
 }

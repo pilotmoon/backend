@@ -9,7 +9,7 @@ async function setup() {
   );
 
   webhooks = axios.create({
-    baseURL: process.env.TWIX_TEST_URL,
+    baseURL: process.env.TWIX_URL,
     validateStatus: () => true, // don't throw on non-200 status
     headers: {
       "X-Api-Key": key.key,

@@ -55,14 +55,14 @@ export function keys() {
 export function rolo(keyName: KeyName | null = "runner"): AxiosInstance {
   if (!keyName) {
     return axios.create({
-      baseURL: process.env.APP_TEST_URL,
+      baseURL: process.env.ROLO_URL,
       validateStatus: () => true,
     });
   }
   let instance = instances.get(keyName);
   if (!instance) {
     instance = axios.create({
-      baseURL: process.env.APP_TEST_URL,
+      baseURL: process.env.ROLO_URL,
       headers: {
         Authorization: `Bearer ${keys()[keyName].key}`,
       },
