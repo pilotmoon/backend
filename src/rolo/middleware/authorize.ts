@@ -2,8 +2,8 @@ import TTLCache from "@isaacs/ttlcache";
 import { Context, Next } from "koa";
 import { ApiError } from "../../errors.js";
 import { log } from "../../logger.js";
-import { verifyPassword } from "../../scrypt.js";
-import { sha256Hex } from "../../sha256.js";
+import { verifyPassword } from "../scrypt.js";
+import { sha256Hex } from "../sha256.js";
 import { minutes } from "../../timeIntervals.js";
 import { Auth, AuthKind, ZAuthInfo } from "../auth.js";
 import {

@@ -4,7 +4,7 @@ import { TestKey, testKeys } from "../../../test/rolo/setup.js";
 import { handleControllerError } from "../../errors.js";
 import { log } from "../../logger.js";
 import { ZSaneString } from "../../saneString.js";
-import { hashPassword } from "../../scrypt.js";
+import { hashPassword } from "../scrypt.js";
 import {
   Auth,
   AuthKind,
