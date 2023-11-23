@@ -7,5 +7,5 @@ export const ZSaneQuantity = z.number().int().positive();
 export const ZSaneDate = z.coerce.date().min(new Date("2010-01-01"));
 export const ZSaneIdentifier = z
   .string()
-  .regex(/^[0-9a-zA-Z-_.]+$/)
+  .regex(/^[0-9a-zA-Z]+([-_.][0-9a-zA-Z]+)*$/)
   .max(100);
