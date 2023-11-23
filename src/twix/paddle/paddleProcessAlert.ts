@@ -1,6 +1,6 @@
 import { AxiosInstance } from "axios";
 import { z } from "zod";
-import { ApiError } from "../../rolo/errors.js";
+import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { getRolo } from "../rolo.js";
 

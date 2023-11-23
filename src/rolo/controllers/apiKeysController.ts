@@ -1,7 +1,7 @@
 import { Binary } from "mongodb";
 import { z } from "zod";
 import { TestKey, testKeys } from "../../../test/rolo/setup.js";
-import { handleControllerError } from "../errors.js";
+import { handleControllerError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { ZSaneString } from "../../common/saneSchemas.js";
 import { hashPassword } from "../scrypt.js";

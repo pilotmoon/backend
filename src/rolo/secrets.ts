@@ -10,7 +10,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { decodeFirstSync, encode } from "cbor";
 import { Binary } from "mongodb";
 import { logw } from "../common/log.js";
-import { ApiError } from "./errors.js";
+import { ApiError } from "../common/errors.js";
 
 // called externally to set an encryption key
 let secretKey: Buffer | undefined;

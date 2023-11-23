@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ApiError } from "./errors.js";
+import { ApiError } from "../common/errors.js";
 import { log } from "../common/log.js";
 import { collectionNames } from "./identifiers.js";
 

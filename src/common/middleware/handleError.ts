@@ -1,9 +1,5 @@
 import { Context, Next } from "koa";
-import {
-  formatResponse,
-  getErrorInfo,
-  prettyFormatStatus,
-} from "../../rolo/errors.js";
+import { formatResponse, getErrorInfo, prettyFormatStatus } from "../errors.js";
 import { log } from "../log.js";
 
 export async function handleError(ctx: Context, next: Next) {

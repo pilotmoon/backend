@@ -1,6 +1,6 @@
 import Router from "@koa/router";
 import { Context } from "koa";
-import { ApiError } from "../../rolo/errors.js";
+import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { config } from "../config.js";
 import { paddleCredentials } from "../paddle.js";

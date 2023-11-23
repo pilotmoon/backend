@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { handleControllerError } from "../errors.js";
+import { handleControllerError } from "../../common/errors.js";
 import { ZPortableKeyPair } from "../keyPair.js";
 import { ZProductConfig } from "../product.js";
 import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";

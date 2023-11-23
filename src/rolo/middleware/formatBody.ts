@@ -1,6 +1,6 @@
 import { Context, Next } from "koa";
 import { z } from "zod";
-import { ApiError } from "../errors.js";
+import { ApiError } from "../../common/errors.js";
 import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers.js";
 import { Pagination } from "../paginate.js";
 

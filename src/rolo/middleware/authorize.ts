@@ -1,6 +1,6 @@
 import TTLCache from "@isaacs/ttlcache";
 import { Context, Next } from "koa";
-import { ApiError } from "../errors.js";
+import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { verifyPassword } from "../scrypt.js";
 import { sha256Hex } from "../sha256.js";

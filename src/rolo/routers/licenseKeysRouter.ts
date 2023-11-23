@@ -4,7 +4,7 @@ import { create as createCDH } from "content-disposition-header";
 import { Context } from "koa";
 import _ from "lodash";
 import { Document } from "mongodb";
-import { ApiError } from "../errors.js";
+import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { minutes } from "../../common/timeIntervals.js";
 import { AuthKind } from "../auth.js";
