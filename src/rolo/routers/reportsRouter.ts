@@ -1,4 +1,4 @@
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../errors.js";
 import { log } from "../../logger.js";
 import { generateReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";

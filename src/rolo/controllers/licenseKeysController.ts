@@ -1,13 +1,13 @@
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { z } from "zod";
 import { canonicalizeEmail } from "../canonicalizeEmail.js";
-import { handleControllerError } from "../../errors.js";
-import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
+import { handleControllerError } from "../errors.js";
+import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
 import {
   LicenseFileObject,
   ZLicenseFileObject,
 } from "../../licenseFileObject.js";
-import { ProductConfig, ZProductConfig } from "../../product.js";
+import { ProductConfig, ZProductConfig } from "../product.js";
 import {
   ZSaneDate,
   ZSaneEmail,

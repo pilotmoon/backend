@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { handleControllerError } from "../../errors.js";
-import { ZPortableKeyPair } from "../../keyPair.js";
-import { ZProductConfig } from "../../product.js";
+import { handleControllerError } from "../errors.js";
+import { ZPortableKeyPair } from "../keyPair.js";
+import { ZProductConfig } from "../product.js";
 import { ZSaneIdentifier, ZSaneString } from "../../saneString.js";
 import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";

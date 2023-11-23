@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../../rolo/errors.js";
 import { getPaddleVendorsApi } from "../paddle.js";
 import { couponOffers } from "./catalog.js";
 

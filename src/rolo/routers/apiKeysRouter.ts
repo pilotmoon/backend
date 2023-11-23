@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import _ from "lodash";
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../errors.js";
 import {
   ZApiKeyInfo,
   ZApiKeyInfoUpdate,

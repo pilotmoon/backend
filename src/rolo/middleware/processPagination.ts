@@ -1,5 +1,5 @@
 import { Context, Next } from "koa";
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../errors.js";
 import { ZPagination } from "../paginate.js";
 
 export function processPagination() {

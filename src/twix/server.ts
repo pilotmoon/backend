@@ -3,7 +3,7 @@ import Router from "@koa/router";
 import "colors";
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
-import { ApiError } from "../errors.js";
+import { ApiError } from "../rolo/errors.js";
 import { handleError } from "../handleError.js";
 import { log } from "../logger.js";
 import { measureResponseTime } from "../measureResponseTime.js";

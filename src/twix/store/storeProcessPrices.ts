@@ -1,6 +1,6 @@
 import TTLCache from "@isaacs/ttlcache";
 import { z } from "zod";
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../../rolo/errors.js";
 import { log } from "../../logger.js";
 import { minutes } from "../../timeIntervals.js";
 import { getPaddleCheckoutApi } from "../paddle.js";

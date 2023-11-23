@@ -1,5 +1,5 @@
 import Router from "@koa/router";
-import { ApiError } from "../../errors.js";
+import { ApiError } from "../../rolo/errors.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";

@@ -1,6 +1,6 @@
 import "colors";
 import bodyParser from "koa-bodyparser";
-import { ApiError } from "../errors.js";
+import { ApiError } from "./errors.js";
 import { handleError } from "../handleError.js";
 import { log } from "../logger.js";
 import { measureResponseTime } from "../measureResponseTime.js";
