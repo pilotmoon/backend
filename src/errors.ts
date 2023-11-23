@@ -5,10 +5,8 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 export class ApiError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
+  constructor(public status: number, message: string) {
     super(message);
-    this.status = status;
     this.name = this.constructor.name;
   }
 }
