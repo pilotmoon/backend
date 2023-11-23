@@ -1,6 +1,6 @@
 import { CronJob } from "cron";
 import { z } from "zod";
-import { log } from "../logger.js";
+import { log } from "../common/log.js";
 import { config } from "./config.js";
 import { getRolo } from "./rolo.js";
 const ZReportConfig = z.object({

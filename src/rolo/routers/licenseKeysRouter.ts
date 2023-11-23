@@ -5,8 +5,8 @@ import { Context } from "koa";
 import _ from "lodash";
 import { Document } from "mongodb";
 import { ApiError } from "../errors.js";
-import { log } from "../../logger.js";
-import { minutes } from "../../timeIntervals.js";
+import { log } from "../../common/log.js";
+import { minutes } from "../../common/timeIntervals.js";
 import { AuthKind } from "../auth.js";
 import {
   LicenseKeyRecord,

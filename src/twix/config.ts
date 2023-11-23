@@ -1,4 +1,8 @@
-import { decimalIntegerTransform, sha1PrettyTransform, loadConfig } from "../loadConfig.js";
+import {
+  decimalIntegerTransform,
+  sha1PrettyTransform,
+  loadConfig,
+} from "../common/loadConfig.js";
 
 // app configuration
 export interface Config {
@@ -19,7 +23,7 @@ export const config = loadConfig<Config>([
   {
     key: "COMMIT_HASH",
     optional: true,
-    transform: sha1PrettyTransform
+    transform: sha1PrettyTransform,
   },
   { key: "PADDLE_CREDENTIALS", hidden: true },
   { key: "ROLO_URL" },

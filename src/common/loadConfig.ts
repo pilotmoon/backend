@@ -1,4 +1,4 @@
-import { log, logw } from "./logger.js";
+import { log, logw } from "./log.js";
 
 export function loadConfig<T>(manifest: ConfigItem[]): T {
   const config = {};

@@ -9,7 +9,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { decodeFirstSync, encode } from "cbor";
 import { Binary } from "mongodb";
-import { logw } from "../logger.js";
+import { logw } from "../common/log.js";
 import { ApiError } from "./errors.js";
 
 // called externally to set an encryption key

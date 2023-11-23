@@ -1,7 +1,7 @@
 // const collectionName = "licenseKeys";
 
 import { ApiError } from "../errors.js";
-import { log } from "../../logger.js";
+import { log } from "../../common/log.js";
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";

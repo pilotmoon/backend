@@ -1,5 +1,5 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
-import { log } from "../logger.js";
+import { log } from "../common/log.js";
 import { AuthKind } from "./auth.js";
 import { config } from "./config.js";
 

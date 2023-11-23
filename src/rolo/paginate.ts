@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Collection, Document } from "mongodb";
 import { z } from "zod";
-import { log } from "../logger.js";
+import { log } from "../common/log.js";
 
 export const ZPagination = z.object({
   offset: z.number().int().min(0),

@@ -1,4 +1,4 @@
-import { decimalIntegerTransform, loadConfig } from "../loadConfig.js";
+import { decimalIntegerTransform, loadConfig } from "../common/loadConfig.js";
 
 // app configuration
 export interface Config {

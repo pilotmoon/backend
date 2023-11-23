@@ -1,7 +1,7 @@
 import { AxiosInstance } from "axios";
 import { z } from "zod";
 import { ApiError } from "../../rolo/errors.js";
-import { log } from "../../logger.js";
+import { log } from "../../common/log.js";
 import { getRolo } from "../rolo.js";
 
 const ZAlertArgs = z.object({

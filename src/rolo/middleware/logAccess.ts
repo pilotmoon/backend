@@ -15,7 +15,7 @@
 import { Context, Next } from "koa";
 import _ from "lodash";
 import { z } from "zod";
-import { days } from "../../timeIntervals.js";
+import { days } from "../../common/timeIntervals.js";
 import { ZAuthInfo } from "../auth.js";
 import { getDb } from "../database.js";
 

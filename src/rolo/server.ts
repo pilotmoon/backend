@@ -1,9 +1,9 @@
 import "colors";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "./errors.js";
-import { handleError } from "../handleError.js";
-import { log } from "../logger.js";
-import { measureResponseTime } from "../measureResponseTime.js";
+import { handleError } from "../common/handleError.js";
+import { log } from "../common/log.js";
+import { measureResponseTime } from "../common/measureResponseTime.js";
 import { config } from "./config.js";
 import { close as closeDb, connect as connectDb } from "./database.js";
 import { makeRouter, makeServer } from "./koaWrapper.js";
@@ -21,7 +21,7 @@ import { init as initLicenseKeysController } from "./controllers/licenseKeysCont
 import { init as initRegistriesController } from "./controllers/registriesController.js";
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
-import { hours } from "../timeIntervals.js";
+import { hours } from "../common/timeIntervals.js";
 import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
 import { router as healthRouter } from "./routers/healthRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";

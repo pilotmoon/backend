@@ -6,7 +6,7 @@ import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
 import {
   LicenseFileObject,
   ZLicenseFileObject,
-} from "../../licenseFileObject.js";
+} from "../../common/licenseFileObject.js";
 import { ProductConfig, ZProductConfig } from "../product.js";
 import {
   ZSaneDate,
@@ -14,7 +14,7 @@ import {
   ZSaneIdentifier,
   ZSaneQuantity,
   ZSaneString,
-} from "../../saneSchemas.js";
+} from "../../common/saneSchemas.js";
 import { sanitizeName } from "../sanitizeName.js";
 import { sha256Hex } from "../sha256.js";
 import { Auth } from "../auth.js";

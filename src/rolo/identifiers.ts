@@ -1,6 +1,6 @@
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import Prando from "prando";
-import { logw } from "../logger.js";
+import { logw } from "../common/log.js";
 import { AuthKind, authKinds } from "./auth.js";
 
 // the collection names, object types and corresponding key prefixes

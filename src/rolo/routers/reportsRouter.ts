@@ -1,5 +1,5 @@
 import { ApiError } from "../errors.js";
-import { log } from "../../logger.js";
+import { log } from "../../common/log.js";
 import { generateReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";
 
