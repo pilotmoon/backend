@@ -12,24 +12,22 @@ on:
 
 env:
   # vars
-  ROLO_PORT: "${{ vars.APP_PORT }}"
+  DATABASE_NAME: "${{ vars.DATABASE_NAME }}"
   DATABASE_URL: "${{ vars.DATABASE_URL }}"
-  DATABASE_NAME_LIVE: "${{ vars.DATABASE_NAME_LIVE }}"
-  DATABASE_NAME_TEST: "${{ vars.DATABASE_NAME_TEST }}"
-  DATABASE_NAME_LOGS: "${{ vars.DATABASE_NAME_LOGS }}"
-  TWIX_PORT: "${{ vars.TWIX_PORT }}"
-  TWIX_URL: "${{ vars.TWIX_TEST_URL }}"
-  ROLO_URL: "${{ vars.APP_TEST_URL }}"
+  ROLO_PORT: "${{ vars.ROLO_PORT }}"
   ROLO_URL_CANONICAL: "${{ vars.ROLO_URL_CANONICAL }}"
+  ROLO_URL: "${{ vars.ROLO_URL }}"
+  TWIX_PORT: "${{ vars.TWIX_PORT }}"
+  TWIX_URL: "${{ vars.TWIX_URL }}"
   # secrets
   BOOTSTRAP_SEED: "${{ secrets.BOOTSTRAP_SEED }}"
-  ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
-  ROLO_APIKEY_LIVE: ""
-  PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"
-  TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
-  SMTP_CONFIG: "${{ secrets.SMTP_CONFIG }}"
-  REPORTS_CONFIG: "${{ secrets.REPORTS_CONFIG }}"
   HMA_ROOT: "${{ secrets.HMA_ROOT }}"
+  PADDLE_CREDENTIALS: "${{ secrets.PADDLE_CREDENTIALS }}"
+  REPORTS_CONFIG: "${{ secrets.REPORTS_CONFIG }}"
+  ROLO_APIKEY_LIVE: ""
+  ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
+  SMTP_CONFIG: "${{ secrets.SMTP_CONFIG }}"
+  TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
 
 jobs:
   test:
@@ -59,4 +57,4 @@ jobs:
         with:
           command: npm run test-rolo && npm run test-twix
           start: npm run start-rolo & npm run start-twix
-          wait-on: "${{ vars.APP_TEST_URL }}, ${{ vars.TWIX_TEST_URL }}"
+          wait-on: "${{ vars.ROLO_URL }}, ${{ vars.TWIX_URL }}"
