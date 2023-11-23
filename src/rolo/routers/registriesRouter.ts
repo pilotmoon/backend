@@ -81,7 +81,14 @@ router.delete(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
 
 // add or update a named object using a dedicated url
 router.put(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
-  const suppliedObject = ZObject.parse(ctx.request.body);
+  // if "wrap=record" supplied in query param, wrap the body
+  const wrap = ctx.query.wrap;
+  let body = ctx.request.body;
+  if (wrap === "record") {
+    body = { object: "record", record: body };
+  }
+
+  const suppliedObject = ZObject.parse(body);
   const auth = ctx.state.auth;
   const id = ctx.params.id;
   const objectId = ctx.params.objectId;

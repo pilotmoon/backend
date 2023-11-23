@@ -329,6 +329,21 @@ test("delete the config3 object again", async (t) => {
   t.is(res.status, 404);
 });
 
+test("add an object to the foo registry using the wrap=record query param", async (t) => {
+  const res = await rolo().put(
+    `/registries/${fooRegistryId}/objects/config4?wrap=record`,
+    {
+      foo: "bar",
+    },
+  );
+  t.is(res.status, 204);
+
+  const res2 = await rolo().get(`/registries/${fooRegistryId}/objects/config4`);
+  t.is(res2.status, 200);
+  t.is(res2.data.object, "record");
+  t.like(res2.data.record, { foo: "bar" });
+});
+
 test("list the registries using a token with read permissions", async (t) => {
   // first generate a token with read permissions
   const token = generateEncryptedToken({
