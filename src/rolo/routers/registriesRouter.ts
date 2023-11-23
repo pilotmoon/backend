@@ -8,6 +8,7 @@ import {
   getRegistryObject,
   listRegistries,
   readRegistry,
+  redact,
   updateRegistry,
 } from "../controllers/registriesController.js";
 import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
@@ -23,7 +24,7 @@ const matchId = {
 router.post("/", async (ctx) => {
   const suppliedData = ZRegistryInfo.strict().parse(ctx.request.body);
   const document = await createRegistry(suppliedData, ctx.state.auth);
-  ctx.body = document;
+  ctx.body = redact(document);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
@@ -31,14 +32,14 @@ router.post("/", async (ctx) => {
 // list registries
 router.get("/", async (ctx) => {
   const documents = await listRegistries(ctx.state.pagination, ctx.state.auth);
-  ctx.body = documents;
+  ctx.body = documents.map(redact);
 });
 
 // read a registry
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = document;
+    ctx.body = redact(document);
   }
 });
 
