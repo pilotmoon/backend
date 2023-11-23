@@ -49,7 +49,7 @@ const testLicenseKey = `<?xml version="1.0" encoding="UTF-8"?>
 // test full license file generation
 test("create registry for example product", async (t) => {
   // first find and delete the existing registry if it exists
-  const res0 = await rolo().get("registries/byIdentifier/com.example.product");
+  const res0 = await rolo().get("registries/com.example.product");
   if (res0.status === 200) {
     const res1 = await rolo().delete(`registries/${res0.data.id}`);
     t.is(res1.status, 204);

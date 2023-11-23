@@ -16,7 +16,7 @@ import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/registries" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "reg"),
+  pattern: makeGenericIdPattern("id"),
   uuid: randomUUID(),
 };
 
@@ -92,14 +92,3 @@ router.get(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
     ctx.body = document;
   }
 });
-
-// read a registry using one of its identifiers, using `byIdentifier` url
-router.get(
-  `/byIdentifier${makeGenericIdPattern("identifier")}`,
-  async (ctx) => {
-    const document = await readRegistry(ctx.params.identifier, ctx.state.auth);
-    if (document) {
-      ctx.body = redact(document);
-    }
-  },
-);
