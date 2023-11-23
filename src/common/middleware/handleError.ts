@@ -3,8 +3,8 @@ import {
   formatResponse,
   getErrorInfo,
   prettyFormatStatus,
-} from "../rolo/errors.js";
-import { log } from "./log.js";
+} from "../../rolo/errors.js";
+import { log } from "../log.js";
 
 export async function handleError(ctx: Context, next: Next) {
   let info;

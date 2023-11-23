@@ -1,9 +1,9 @@
 import "colors";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "./errors.js";
-import { handleError } from "../common/handleError.js";
+import { handleError } from "../common/middleware/handleError.js";
 import { log } from "../common/log.js";
-import { measureResponseTime } from "../common/measureResponseTime.js";
+import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { config } from "./config.js";
 import { close as closeDb, connect as connectDb } from "./database.js";
 import { makeRouter, makeServer } from "./koaWrapper.js";
