@@ -11,7 +11,7 @@ import {
   redact,
   updateRegistry,
 } from "../controllers/registriesController.js";
-import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
+import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 
 export const router = makeRouter({ prefix: "/registries" });
@@ -54,6 +54,27 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
 // delete a registry
 router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
   if (await deleteRegistry(ctx.params.id, ctx.state.auth)) {
+    ctx.status = 204;
+  }
+});
+
+//delete a registry object
+router.delete(`${matchId.pattern}/objects/:objectId`, async (ctx) => {
+  const auth = ctx.state.auth;
+  const id = ctx.params.id;
+  const objectId = ctx.params.objectId;
+
+  // get current document and check if the object exists
+  const document = await readRegistry(id, auth);
+  if (!document?.objects?.[objectId]) {
+    return;
+  }
+
+  // delete the object
+  delete document.objects[objectId];
+
+  // update the document
+  if (await updateRegistry(id, document, auth)) {
     ctx.status = 204;
   }
 });

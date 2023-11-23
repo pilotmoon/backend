@@ -304,6 +304,31 @@ test("get the second record", async (t) => {
   t.like(res.data.record, { foo: "bar" });
 });
 
+test("add a record, delete it and then try to get it", async (t) => {
+  const res = await rolo().put(`/registries/${fooRegistryId}/objects/config3`, {
+    object: "record",
+    record: {
+      foo: "bar",
+    },
+  });
+  t.is(res.status, 204);
+
+  const res2 = await rolo().delete(
+    `/registries/${fooRegistryId}/objects/config3`,
+  );
+  t.is(res2.status, 204);
+
+  const res3 = await rolo().get(`/registries/${fooRegistryId}/objects/config3`);
+  t.is(res3.status, 404);
+});
+
+test("delete the config3 object again", async (t) => {
+  const res = await rolo().delete(
+    `/registries/${fooRegistryId}/objects/config3`,
+  );
+  t.is(res.status, 404);
+});
+
 test("list the registries using a token with read permissions", async (t) => {
   // first generate a token with read permissions
   const token = generateEncryptedToken({
