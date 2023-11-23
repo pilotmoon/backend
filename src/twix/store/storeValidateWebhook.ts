@@ -1,7 +1,7 @@
 import { Context } from "koa";
 import { z } from "zod";
-import { config } from "../config.js";
 import { log } from "../../common/log.js";
+import { config } from "../config.js";
 
 const ZKeyDef = z.object({
   key: z.string(),

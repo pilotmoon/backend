@@ -1,11 +1,11 @@
 import Router from "@koa/router";
 import { ApiError } from "../../common/errors.js";
+import { log } from "../../common/log.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
 import { processPrices } from "./storeProcessPrices.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
-import { log } from "../../common/log.js";
 
 export const router = new Router();
 

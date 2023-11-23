@@ -1,7 +1,7 @@
 import {
   decimalIntegerTransform,
-  sha1PrettyTransform,
   loadConfig,
+  sha1PrettyTransform,
 } from "../common/loadConfig.js";
 
 // app configuration

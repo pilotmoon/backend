@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
+import { log } from "../../common/log.js";
 import { getPaddleVendorsApi } from "../paddle.js";
 import { couponOffers } from "./catalog.js";
-import { log } from "../../common/log.js";
 
 const ZCouponArgs = z.object({
   offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),

@@ -4,7 +4,6 @@ import { TestKey, testKeys } from "../../../test/rolo/setup.js";
 import { handleControllerError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { ZSaneString } from "../../common/saneSchemas.js";
-import { hashPassword } from "../scrypt.js";
 import {
   Auth,
   AuthKind,
@@ -12,10 +11,11 @@ import {
   ZSettableAuthContext,
   authKinds,
 } from "../auth.js";
+import { config } from "../config.js";
 import { getDb } from "../database.js";
 import { deterministic, randomKey } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
-import { config } from "../config.js";
+import { hashPassword } from "../scrypt.js";
 
 /*** Schemas ***/
 

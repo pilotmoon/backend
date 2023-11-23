@@ -2,8 +2,6 @@ import TTLCache from "@isaacs/ttlcache";
 import { Context, Next } from "koa";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
-import { verifyPassword } from "../scrypt.js";
-import { sha256Hex } from "../sha256.js";
 import { minutes } from "../../common/timeIntervals.js";
 import { Auth, AuthKind, ZAuthInfo } from "../auth.js";
 import {
@@ -11,6 +9,8 @@ import {
   specialContext,
 } from "../controllers/apiKeysController.js";
 import { secretKeyRegex } from "../identifiers.js";
+import { verifyPassword } from "../scrypt.js";
+import { sha256Hex } from "../sha256.js";
 import { decipherToken } from "../token.js";
 
 // container for a deconstructed secret key
