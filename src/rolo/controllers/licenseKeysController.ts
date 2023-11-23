@@ -1,6 +1,6 @@
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
 import { z } from "zod";
-import { canonicalizeEmail } from "../../canonicalizeEmail.js";
+import { canonicalizeEmail } from "../canonicalizeEmail.js";
 import { handleControllerError } from "../../errors.js";
 import { PortableKeyPair, ZPortableKeyPair } from "../../keyPair.js";
 import {
