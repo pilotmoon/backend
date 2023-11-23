@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { deterministic, randomKey } from "../../src/rolo/identifiers.js";
-import { log } from "console";
+import { log } from "../../src/common/log.js";
 
 export type TestKey = typeof testKeys[keyof typeof testKeys];
 export const testKeys = {
@@ -47,7 +47,7 @@ export function keys() {
         keyStore[keyName] = randomKey("test", "ak");
       });
     }
-    console.log("Created keyStore", keyStore);
+    log("Created keyStore", keyStore);
   }
   return keyStore;
 }

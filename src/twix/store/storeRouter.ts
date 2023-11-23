@@ -5,6 +5,7 @@ import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
 import { processPrices } from "./storeProcessPrices.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
+import { log } from "../../common/log.js";
 
 export const router = new Router();
 
@@ -38,8 +39,8 @@ router.get("/frontend/store/getPrices", async (ctx) => {
   if (typeof product !== "string") {
     throw new ApiError(400, "'product' query parameter is required");
   }
-  console.log(`Request received from IP: ${sourceIp}`);
+  log(`Request received from IP: ${sourceIp}`);
   const result = await processPrices(sourceIp, product);
-  console.log("Sending prices for", result.country);
+  log("Sending prices for", result.country);
   ctx.body = result;
 });

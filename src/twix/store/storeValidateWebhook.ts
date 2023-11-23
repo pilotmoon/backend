@@ -1,6 +1,7 @@
 import { Context } from "koa";
 import { z } from "zod";
 import { config } from "../config.js";
+import { log } from "../../common/log.js";
 
 const ZKeyDef = z.object({
   key: z.string(),
@@ -15,11 +16,11 @@ export function validateStoreWebhook(ctx: Context) {
   try {
     const apiKey = ctx.request.get("x-api-key");
     const key = keys.find((key) => key.key === apiKey);
-    console.log("key", key);
+    log("key", key);
     if (!key) return null;
     return key;
   } catch (e) {
-    console.log("Error validating Store webhook", e);
+    log("Error validating Store webhook", e);
     return null;
   }
 }

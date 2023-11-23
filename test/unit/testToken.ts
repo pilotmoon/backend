@@ -4,7 +4,6 @@ import * as token from "../../src/rolo/token.js";
 test("generate and deciper encrypted token", (t) => {
   let count = 0;
   while (count++ <= 1000) {
-    //console.log("test no", count);
     const scopes = ["foo:read", "bar:*"];
     const expiration = new Date();
     const tokenString = token.generateEncryptedToken({

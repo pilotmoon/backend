@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../rolo/errors.js";
 import { getPaddleVendorsApi } from "../paddle.js";
 import { couponOffers } from "./catalog.js";
+import { log } from "../../common/log.js";
 
 const ZCouponArgs = z.object({
   offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),
@@ -13,7 +14,7 @@ export async function processCoupon(
   mode: "test" | "live",
 ) {
   // create coupon
-  console.log("mode: ", mode);
+  log("mode: ", mode);
 
   const couponArgs = ZCouponArgs.parse(args);
   const offer = couponOffers[couponArgs.offer];
@@ -46,6 +47,6 @@ export async function processCoupon(
     expires: expiryDate.toISOString().slice(0, 10),
     group: origin,
   });
-  console.log(data);
+  log(data);
   return data.response.coupon_codes[0];
 }

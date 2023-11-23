@@ -82,12 +82,12 @@ export async function init() {
         settableAuthContext,
         specialContext(kind),
       );
-      console.log("Bootstrap key:".black.bgMagenta, document.key);
+      log("Bootstrap key:".black.bgMagenta, document.key);
     }
   }
 
   // create deterministic test keys
-  console.log("Creating fixed test keys");
+  log("Creating fixed test keys");
   await deterministic(config.BOOTSTRAP_SEED, async () => {
     for (const [name, keyDef] of Object.entries<TestKey>(testKeys)) {
       keyDef.description = `[${name}] ` + keyDef.description;

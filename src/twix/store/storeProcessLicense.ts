@@ -6,6 +6,7 @@ import {
   ZSaneString,
 } from "../../common/saneSchemas.js";
 import { getRolo } from "../rolo.js";
+import { log } from "../../common/log.js";
 
 const ZLicenseArgs = z.object({
   name: ZSaneString,
@@ -21,7 +22,7 @@ export async function processLicense(
   mode: "test" | "live",
 ) {
   // create license
-  console.log("mode: ", mode);
+  log("mode: ", mode);
   const licenseArgs = ZLicenseArgs.parse(args);
   const api = getRolo(mode);
   const info = {
