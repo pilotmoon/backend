@@ -9,7 +9,8 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { decodeFirstSync, encode } from "cbor";
 import { Binary } from "mongodb";
-import { log, logw } from "../logger.js";
+import { logw } from "../logger.js";
+import { ApiError } from "../errors.js";
 
 // called externally to set an encryption key
 let secretKey: Buffer | undefined;
@@ -129,7 +130,11 @@ export function decryptInPlace(record: Record<string, unknown> | undefined) {
   for (const key of Object.keys(record)) {
     const value = record[key];
     if (value instanceof Binary && value.sub_type === 0x81) {
-      record[key] = decodeFirstSync(decrypt((record[key] as Binary).buffer));
+      try {
+        record[key] = decodeFirstSync(decrypt((record[key] as Binary).buffer));
+      } catch (error) {
+        throw new Error(`Error decrypting '${key}'`);
+      }
     }
   }
 }

@@ -102,8 +102,6 @@ export function prettyFormatStatus(status: number) {
 // format the error info as it will be sent to the client in body
 export function formatResponse(info: ErrorInfo) {
   let result = httpStatusString(info.status, { showCode: false });
-  if (info.status < 500) {
-    result += ` (${info.message})`;
-  }
+  result += ` (${info.message})`;
   return result;
 }
