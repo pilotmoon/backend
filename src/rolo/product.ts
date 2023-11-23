@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSaneString } from "../saneString.js";
+import { ZSaneString } from "../saneSchemas.js";
 
 // configuration for products
 export const ZProductConfig = z.object({

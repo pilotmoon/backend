@@ -14,7 +14,7 @@ import {
   ZSaneIdentifier,
   ZSaneQuantity,
   ZSaneString,
-} from "../../saneString.js";
+} from "../../saneSchemas.js";
 import { sanitizeName } from "../sanitizeName.js";
 import { sha256Hex } from "../sha256.js";
 import { Auth } from "../auth.js";

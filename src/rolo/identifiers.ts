@@ -1,7 +1,6 @@
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import Prando from "prando";
 import { logw } from "../logger.js";
-import { genericIdPattern } from "../saneString.js";
 import { AuthKind, authKinds } from "./auth.js";
 
 // the collection names, object types and corresponding key prefixes
@@ -53,7 +52,7 @@ export function randomKey(kind: AuthKind, idPrefix: string) {
   return { key, id };
 }
 
-// produce pattern such as `/:id(ak_[0-9a-zA-Z]{20}|current)`
+// produce pattern for matching identifiers
 export function makeIdentifierPattern(
   varName: string,
   prefix: string,
@@ -63,8 +62,9 @@ export function makeIdentifierPattern(
   return `/:${varName}(${patterns.join("|")})`;
 }
 
+// produce a pattern for matching generic identifiers
 export function makeGenericIdPattern(varName: string): string {
-  return `/:${varName}(${genericIdPattern})`;
+  return `/:${varName}([0-9a-zA-Z-_.]+)`;
 }
 
 /*** helpers for deterministic tests ***/

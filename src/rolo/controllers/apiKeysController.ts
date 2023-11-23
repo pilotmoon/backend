@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TestKey, testKeys } from "../../../test/rolo/setup.js";
 import { handleControllerError } from "../errors.js";
 import { log } from "../../logger.js";
-import { ZSaneString } from "../../saneString.js";
+import { ZSaneString } from "../../saneSchemas.js";
 import { hashPassword } from "../scrypt.js";
 import {
   Auth,
