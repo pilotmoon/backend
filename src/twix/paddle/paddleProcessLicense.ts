@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { z } from "zod";
-import { ZLicenseExternal } from "../../common/licenseFileObject.js";
+import { ZLicenseKey } from "../licenseKeySchema.js";
 import { getRolo } from "../rolo.js";
 
 const ZLicenseArgs = z.object({
@@ -25,5 +25,5 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     originData: _.omit(paddleArgs, "p_signature", "email", "name", "product"),
   };
   const { data } = await api.post("/licenseKeys", info);
-  return ZLicenseExternal.parse(data);
+  return ZLicenseKey.parse(data);
 }

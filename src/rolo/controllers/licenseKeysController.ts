@@ -3,10 +3,6 @@ import { z } from "zod";
 import { canonicalizeEmail } from "../canonicalizeEmail.js";
 import { handleControllerError } from "../../common/errors.js";
 import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
-import {
-  LicenseFileObject,
-  ZLicenseFileObject,
-} from "../../common/licenseFileObject.js";
 import { ProductConfig, ZProductConfig } from "../product.js";
 import {
   ZSaneDate,
@@ -223,6 +219,18 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
     .optional(),
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
+
+const ZLicenseFileObject = z.object({
+  // literal string "licenseKeyFile"
+  object: z.literal("licenseKeyFile"),
+  // license key filename, e.g. "John_Doe.popcliplicense"
+  name: z.string(),
+  // license file content as plist string
+  plist: z.string(),
+  // license key file content, as a Base64-encoded string
+  data: z.string(),
+});
+type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
 export function hashEmail(email: string) {
   return sha256Hex(canonicalizeEmail(email));

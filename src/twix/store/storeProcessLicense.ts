@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZLicenseExternal } from "../../common/licenseFileObject.js";
+import { ZLicenseKey } from "../licenseKeySchema.js";
 import {
   ZSaneEmail,
   ZSaneQuantity,
@@ -34,5 +34,5 @@ export async function processLicense(
     origin,
   };
   const { data } = await api.post("/licenseKeys", info);
-  return ZLicenseExternal.parse(data);
+  return ZLicenseKey.parse(data);
 }
