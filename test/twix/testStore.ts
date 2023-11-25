@@ -1,5 +1,6 @@
 import test from "ava";
 import axios, { AxiosInstance } from "axios";
+import { getRolo } from "../../src/twix/rolo.js";
 
 let webhooks: AxiosInstance;
 async function setup() {
@@ -86,15 +87,17 @@ test("post license with sample body to /store/generateLicense", async (t) => {
   t.is(res.status, 201);
 });
 
-test("quantity must be integer", async (t) => {
+test("post license with sample body to /store/generateLicense with 12 months validity", async (t) => {
   const res = await webhooks.post("/webhooks/store/generateLicense", {
     name: "test",
-    email: "fgfg@foo.com",
+    email: "test@example.com",
     product: "com.example.product",
-    order: "789012",
-    quantity: 1.5,
+    order: "789013",
+    date: "2021-01-01T00:00:00.000Z",
+    valid_months: 12,
   });
-  t.is(res.status, 400);
+  t.is(res.status, 201);
+  t.log(res.data);
 });
 
 test("quantity must be positive", async (t) => {

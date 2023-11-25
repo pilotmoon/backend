@@ -1,5 +1,7 @@
 import _ from "lodash";
 import { z } from "zod";
+import { log } from "../../common/log.js";
+import { dates } from "../dates.js";
 import { ZLicenseKey } from "../licenseKeySchema.js";
 import { getRolo } from "../rolo.js";
 
@@ -9,13 +11,18 @@ const ZLicenseArgs = z.object({
   email: z.string(),
   name: z.string(),
   product: z.string(),
+  valid_months: z.number().int().min(1).optional(),
 });
 
 export async function processLicense(args: unknown, mode: "test" | "live") {
   // create license
+  log("Processing license:", args);
   const paddleArgs = ZLicenseArgs.passthrough().parse(args);
   const api = getRolo(mode);
+  const { date, expiryDate } = dates(paddleArgs);
   const info = {
+    date,
+    expiryDate,
     email: paddleArgs.email,
     name: paddleArgs.name,
     product: paddleArgs.product,

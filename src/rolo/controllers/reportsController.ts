@@ -260,12 +260,12 @@ async function generateLicenseKeysReport(
         currency: { $ifNull: ["$originData.p_currency", ""] },
         saleGross: {
           $cond: {
-            if: "$void",
+            if: "$refunded",
             then: "0.00",
             else: { $ifNull: ["$originData.p_sale_gross", ""] },
           },
         },
-        status: { $cond: { if: "$void", then: "refunded", else: "" } },
+        status: { $cond: { if: "$refunded", then: "refunded", else: "" } },
       },
     },
     {

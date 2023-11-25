@@ -192,6 +192,10 @@ export const ZLicenseKeyInfo = z.object({
   order: ZSaneString.optional(),
   // whether the license key has been voided
   void: z.boolean().optional(),
+  // whether the license key has been refunded
+  refunded: z.boolean().optional(),
+  // note about the license key
+  note: z.string().optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 const encryptedFields = ["name", "email"] as const;
@@ -201,6 +205,9 @@ export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   name: true,
   email: true,
   void: true,
+  refunded: true,
+  note: true,
+  expiryDate: true,
 }).partial();
 export type LicenseKeyUpdate = z.infer<typeof ZLicenseKeyUpdate>;
 

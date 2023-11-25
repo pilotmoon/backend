@@ -26,7 +26,11 @@ const ZRefundArgs = z.object({
 async function processRefund(args: unknown, api: AxiosInstance) {
   const paddleArgs = ZRefundArgs.parse(args);
   const id = await lookupOrder("Paddle", paddleArgs.order_id, api);
-  await api.patch(`/licenseKeys/${id}`, { void: true });
+  await api.patch(`/licenseKeys/${id}`, {
+    void: true,
+    refunded: true,
+    note: "Refunded via Paddle",
+  });
 }
 
 const ZLookupResponse = z.object({

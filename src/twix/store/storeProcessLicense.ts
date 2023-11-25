@@ -7,6 +7,7 @@ import {
 } from "../../common/saneSchemas.js";
 import { ZLicenseKey } from "../licenseKeySchema.js";
 import { getRolo } from "../rolo.js";
+import { dates } from "../dates.js";
 
 const ZLicenseArgs = z.object({
   name: ZSaneString,
@@ -14,6 +15,7 @@ const ZLicenseArgs = z.object({
   order: ZSaneString,
   product: z.enum(["com.pilotmoon.popclip", "com.example.product"]),
   quantity: ZSaneQuantity.optional(),
+  valid_months: z.number().int().min(1).optional(),
 });
 
 export async function processLicense(
@@ -25,6 +27,8 @@ export async function processLicense(
   log("mode: ", mode);
   const licenseArgs = ZLicenseArgs.parse(args);
   const api = getRolo(mode);
+  const { date, expiryDate } = dates(licenseArgs);
+
   const info = {
     email: licenseArgs.email,
     name: licenseArgs.name,
@@ -32,6 +36,8 @@ export async function processLicense(
     quantity: licenseArgs.quantity ?? 1,
     order: licenseArgs.order,
     origin,
+    date,
+    expiryDate,
   };
   const { data } = await api.post("/licenseKeys", info);
   return ZLicenseKey.parse(data);
