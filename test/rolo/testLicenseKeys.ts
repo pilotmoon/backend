@@ -213,6 +213,32 @@ test("create license key with chinese characters", async (t) => {
   );
 });
 
+test("create license key with latin-1 characters", async (t) => {
+  const res = await rolo().post("licenseKeys", {
+    product: "com.example.product",
+    name: "Åke",
+  });
+  t.is(res.status, 201);
+  t.like(res.data, {
+    product: "com.example.product",
+    name: "Åke",
+  });
+  t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
+
+  // then we download the license file
+  const res3 = await rolo().get(res.data.file.url, {
+    headers: {
+      Authorization: null,
+    },
+  });
+  t.is(res3.status, 200);
+  t.is(res3.headers["content-type"], "application/octet-stream");
+  t.is(
+    res3.headers["content-disposition"],
+    `attachment; filename="?ke.examplelicense"; filename*=UTF-8''%C3%85ke.examplelicense`,
+  );
+});
+
 let test10Date: Date;
 const test10Objects: { id: string }[] = [];
 test("create 10 distinct license keys, for later testing of pagination", async (t) => {

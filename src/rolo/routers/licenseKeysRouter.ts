@@ -139,7 +139,9 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
     // decode the base64-encoded file
     ctx.body = licenseFile.plist;
     ctx.set("Content-Type", "application/octet-stream");
-    ctx.set("Content-Disposition", createCDH(licenseFile.name));
+    // fallback should contain only ASCII characters
+    const fallback = licenseFile.name.replace(/[^\x20-\x7e]/g, "?");
+    ctx.set("Content-Disposition", createCDH(licenseFile.name, { fallback }));
   } else {
     throw new ApiError(406, "Client does not accept application/octet-stream");
   }
