@@ -11,7 +11,7 @@ const ZLicenseArgs = z.object({
   email: z.string(),
   name: z.string(),
   product: z.string(),
-  valid_months: z.number().int().min(1).optional(),
+  valid_months: z.coerce.number().int().min(1).optional(),
 });
 
 export async function processLicense(args: unknown, mode: "test" | "live") {
