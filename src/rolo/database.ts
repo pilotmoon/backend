@@ -50,8 +50,8 @@ export async function connect() {
     log("Connected to database".green, client.db().databaseName);
 
     // drop the test database
-    log("Dropping test database");
-    await getDb("test").dropDatabase();
+    // log("Dropping test database");
+    // await getDb("test").dropDatabase();
   }
 }
 
