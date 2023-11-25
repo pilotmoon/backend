@@ -43,6 +43,8 @@ const ZPricesResult = z.object({
       currency: z.string(),
       amount: z.number(),
       formatted: z.string(),
+      netAmount: z.number(),
+      netFormatted: z.string(),
     }),
   }),
 });
@@ -94,6 +96,11 @@ export async function processPrices(
         amount: productInfo.list_price.gross,
         formatted: formatCurrency(
           productInfo.list_price.gross,
+          productInfo.currency,
+        ),
+        netAmount: productInfo.list_price.net,
+        netFormatted: formatCurrency(
+          productInfo.list_price.net,
           productInfo.currency,
         ),
       },
