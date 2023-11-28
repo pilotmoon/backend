@@ -196,6 +196,10 @@ export const ZLicenseKeyInfo = z.object({
   refunded: z.boolean().optional(),
   // note about the license key
   note: z.string().optional(),
+  // valid before OS
+  validBeforeOs: z.string().optional(),
+  // valid before version
+  validBeforeVersion: z.string().optional(),
 });
 export type LicenseKeyInfo = z.infer<typeof ZLicenseKeyInfo>;
 const encryptedFields = ["name", "email"] as const;
@@ -208,6 +212,8 @@ export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   refunded: true,
   note: true,
   expiryDate: true,
+  validBeforeOs: true,
+  validBeforeVersion: true,
 }).partial();
 export type LicenseKeyUpdate = z.infer<typeof ZLicenseKeyUpdate>;
 
@@ -355,6 +361,8 @@ const ZLicenseFileFields = z.object({
   Order: z.string().optional(),
   Product: z.string(),
   Quantity: z.string().optional(),
+  "Valid Before OS": z.string().optional(),
+  "Valid Before Version": z.string().optional(),
 });
 type LicenseFileFields = z.infer<typeof ZLicenseFileFields>;
 
@@ -395,6 +403,12 @@ export async function generateLicenseFile(
   }
   if (document.description) {
     details.Product = `${document.product}/${document.description}`;
+  }
+  if (document.validBeforeOs) {
+    details["Valid Before OS"] = document.validBeforeOs;
+  }
+  if (document.validBeforeVersion) {
+    details["Valid Before Version"] = document.validBeforeVersion;
   }
 
   // generate the license file content
