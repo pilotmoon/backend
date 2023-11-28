@@ -60,24 +60,34 @@ export function decrypt(
   encryptedMessage: Uint8Array,
   associatedData?: Uint8Array,
 ): Uint8Array {
-  const key = getSecretKey();
-  // encryptedMessage consis of:
-  // - 12 byte initialization vector
-  // - encrypted message
-  // - 16 byte authentication tag
-  const iv = encryptedMessage.subarray(0, 12);
-  const encryptedMessageWithoutIv = encryptedMessage.subarray(12, -16);
-  const authTag = encryptedMessage.subarray(-16);
+  const keys = [getSecretKey(), dummyKey];
+  // try each key in turn
+  let i = 0;
+  for (const key of keys) {
+    try {
+      // encryptedMessage consis of:
+      // - 12 byte initialization vector
+      // - encrypted message
+      // - 16 byte authentication tag
+      const iv = encryptedMessage.subarray(0, 12);
+      const encryptedMessageWithoutIv = encryptedMessage.subarray(12, -16);
+      const authTag = encryptedMessage.subarray(-16);
 
-  const decipher = createDecipheriv("aes-256-gcm", key, iv);
-  decipher.setAuthTag(authTag);
-  if (associatedData) {
-    decipher.setAAD(associatedData);
+      const decipher = createDecipheriv("aes-256-gcm", key, iv);
+      decipher.setAuthTag(authTag);
+      if (associatedData) {
+        decipher.setAAD(associatedData);
+      }
+      return Buffer.concat([
+        decipher.update(encryptedMessageWithoutIv),
+        decipher.final(),
+      ]);
+    } catch (error) {
+      logw(`Error decrypting: ${error} with key ${i++}`);
+      // ignore errors
+    }
   }
-  return Buffer.concat([
-    decipher.update(encryptedMessageWithoutIv),
-    decipher.final(),
-  ]);
+  throw new Error("Decryption failed");
 }
 
 // function to check if the value is a plain object
