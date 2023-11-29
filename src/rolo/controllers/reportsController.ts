@@ -22,6 +22,7 @@ const reportGenerators: Record<
 > = {
   summary: generateSummaryReport,
   licenseKeys: generateLicenseKeysReport,
+  voidLicenseKeys: generateVoidLicenseKeysReport,
 };
 
 export async function generateReport(
@@ -212,10 +213,11 @@ async function generateSummaryReport(
   ];
 
   // collect and return all results
+  const result = await licenseKeysCollection(auth.kind)
+    .aggregate(pipeline)
+    .toArray();
   return {
-    licenseKeys: await licenseKeysCollection(auth.kind)
-      .aggregate(pipeline)
-      .toArray(),
+    licenseKeys: result[0],
   };
 }
 
@@ -280,4 +282,64 @@ async function generateLicenseKeysReport(
   ];
 
   return await licenseKeysCollection(auth.kind).aggregate(pipeline).toArray();
+}
+
+// for each product, return the hashes of all license keys whose "void" field is true
+// each license key has "hashes" field which is an array of strings.
+async function generateVoidLicenseKeysReport(
+  auth: Auth,
+  gteDate: Date,
+  ltDate: Date,
+  query: Record<string, string>,
+) {
+  const pipeline = [
+    // match all void license keys (any dates)
+    {
+      $match: {
+        void: true,
+      },
+    },
+    // order by date then id
+    {
+      $sort: {
+        date: 1,
+        id: 1,
+      },
+    },
+
+    // group by product
+    {
+      $group: {
+        _id: "$product",
+        hashes: {
+          $push: "$hashes",
+        },
+      },
+    },
+    // combine all hashes into a single array
+    {
+      $set: {
+        hashes: {
+          $reduce: {
+            input: "$hashes",
+            initialValue: [],
+            in: { $concatArrays: ["$$value", "$$this"] },
+          },
+        },
+      },
+    },
+    // de-duplicate hashes
+    {
+      $set: {
+        hashes: {
+          $setUnion: "$hashes",
+        },
+      },
+    },
+  ];
+
+  const result = await licenseKeysCollection(auth.kind)
+    .aggregate(pipeline)
+    .toArray();
+  return result;
 }
