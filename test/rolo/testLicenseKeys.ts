@@ -26,6 +26,11 @@ const testLicenseData = {
 const testLicenseFileName = "John_Doe.examplelicense";
 const testLicenseFileHash = "f1a9dc582d9538ab498263bffa1fae5209504323";
 
+const updatedLicenseHashes = [
+  "aef57835463492a92e2ac61e04931eb1ab254964",
+  "b5fbf2ecbf716b8370de379628f1ec73960ec5c5",
+];
+
 const testLicenseKey = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -121,6 +126,7 @@ test("create license key", async (t) => {
   });
   t.log(res.data.file.hash);
   t.is(res.data.file.hash, testLicenseFileHash);
+  t.deepEqual(res.data.hashes, [testLicenseFileHash]);
   t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
 });
 
@@ -344,6 +350,8 @@ test("update a license key, changing the name", async (t) => {
     product: "com.example.product",
     name: "new name",
   });
+  t.log(res2.data.hashes);
+  t.deepEqual(res2.data.hashes, updatedLicenseHashes);
 });
 
 test("update a license key, changing the email", async (t) => {

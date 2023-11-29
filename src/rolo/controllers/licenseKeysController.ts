@@ -208,12 +208,13 @@ const encryptedFields = ["name", "email"] as const;
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   name: true,
   email: true,
-  void: true,
-  refunded: true,
-  note: true,
   expiryDate: true,
   validBeforeOs: true,
   validBeforeVersion: true,
+  // these ones dont go into the actual license key:
+  void: true,
+  refunded: true,
+  note: true,
 }).partial();
 export type LicenseKeyUpdate = z.infer<typeof ZLicenseKeyUpdate>;
 
@@ -230,6 +231,8 @@ export const ZLicenseKeyRecord = ZLicenseKeyInfo.extend({
     .string()
     .regex(/^[0-9a-f]{64}$/)
     .optional(),
+  // array of identifying aquaticPrime hashes of the license key file content, in hex
+  hashes: z.array(z.string().regex(/^[0-9a-f]{40}$/)).optional(),
 });
 export type LicenseKeyRecord = z.infer<typeof ZLicenseKeyRecord>;
 
@@ -267,7 +270,13 @@ export async function createLicenseKey(
     created: now,
     ...info,
   };
+
+  // hash the email address if it exists
   if (info.email) document.emailHash = hashEmail(info.email);
+
+  // populate the hashes field with the initial hash
+  const { hash } = await generateLicenseFile(document, auth.kind);
+  document.hashes = [hash];
 
   try {
     encryptInPlace(document, encryptedFields);
@@ -315,6 +324,12 @@ export async function updateLicenseKey(
     decryptInPlace(document);
     if (update.email) document.emailHash = hashEmail(update.email);
     const updated = { ...document, ...update };
+
+    // generate the hashes array if needed
+    if (!Array.isArray(updated.hashes)) updated.hashes = [];
+    // if the hash has changed, add it to the hashes array
+    const { hash } = await generateLicenseFile(updated, auth.kind);
+    if (!updated.hashes.includes(hash)) updated.hashes.push(hash);
 
     encryptInPlace(updated, encryptedFields);
     await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
