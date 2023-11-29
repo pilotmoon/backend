@@ -42,22 +42,6 @@ export async function generateReport(
   return await generate(auth, gteDate, ltDate, query);
 }
 
-// helper to convert array of { _id, count } into an object of key-value pairs
-function setObject(key: string, subKey: string) {
-  return {
-    $set: {
-      [key]: {
-        $arrayToObject: {
-          $map: {
-            input: `$${key}`,
-            in: { k: "$$this._id", v: `$$this.${subKey}` },
-          },
-        },
-      },
-    },
-  };
-}
-
 async function generateSummaryReport(
   auth: Auth,
   gteDate: Date,
@@ -69,28 +53,34 @@ async function generateSummaryReport(
     { $match: { created: { $gte: gteDate, $lt: ltDate } } },
     {
       $facet: {
-        total: [{ $group: { _id: "all", count: { $sum: 1 } } }],
+        total: [
+          { $group: { _id: "all", count: { $sum: 1 } } },
+          { $project: { _id: 0, k: "$_id", v: "$count" } },
+        ],
         products: [
           { $match: { product: { $exists: true, $ne: "" } } },
           { $group: { _id: "$product", count: { $sum: 1 } } },
           { $sort: { count: -1 } },
+          { $project: { _id: 0, k: "$_id", v: "$count" } },
         ],
         origins: [
           { $match: { origin: { $exists: true, $ne: "" } } },
           { $group: { _id: "$origin", count: { $sum: 1 } } },
           { $sort: { count: -1 } },
+          { $project: { _id: 0, k: "$_id", v: "$count" } },
         ],
         coupons: [
           { $match: { "originData.p_coupon": { $exists: true, $ne: "" } } },
           { $group: { _id: "$originData.p_coupon", count: { $sum: 1 } } },
           { $sort: { count: -1 } },
+          { $project: { _id: 0, k: "$_id", v: "$count" } },
         ],
       },
     },
-    setObject("total", "count"),
-    setObject("products", "count"),
-    setObject("origins", "count"),
-    setObject("coupons", "count"),
+    { $set: { total: { $arrayToObject: "$total" } } },
+    { $set: { products: { $arrayToObject: "$products" } } },
+    { $set: { origins: { $arrayToObject: "$origins" } } },
+    { $set: { coupons: { $arrayToObject: "$coupons" } } },
   ];
 
   // collect and return all results
