@@ -19,7 +19,6 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-// health check endpoint
 router.get("/:name", async (ctx) => {
   // default start date to 30 days ago 00:00:00
   const gteDate = ctx.state.pagination.gteDate
