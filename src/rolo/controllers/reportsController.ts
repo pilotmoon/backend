@@ -153,13 +153,12 @@ async function generateVoidLicenseKeysReport(
     { $project: { product: 1, hashes: 1 } },
     { $unwind: "$hashes" },
     { $group: { _id: "$product", hashes: { $addToSet: "$hashes" } } },
-    { $sort: { _id: 1 } },
     { $group: { _id: null, data: { $push: { k: "$_id", v: "$hashes" } } } },
     { $replaceRoot: { newRoot: { $arrayToObject: "$data" } } },
   ];
 
   const result = await licenseKeysCollection(auth.kind)
     .aggregate(pipeline)
-    .toArray();
+    .next();
   return result;
 }
