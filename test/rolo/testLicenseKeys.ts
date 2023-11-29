@@ -309,19 +309,9 @@ test("retreive license key by email", async (t) => {
   t.is(res.data.items[0].name, "name 9");
 });
 
-test("retreive license key by email, fuzzy but not specified", async (t) => {
+test("retreive license key by email, fuzzy test", async (t) => {
   const res = await rolo().get(
     "licenseKeys/byEmail/foo1+fish@example.com?limit=1",
-  );
-  t.is(res.status, 200);
-  t.log(res.data);
-  t.is(res.data.object, "list");
-  t.is(res.data.items.length, 0);
-});
-
-test("retreive license key by email, fuzzy specified", async (t) => {
-  const res = await rolo().get(
-    "licenseKeys/byFuzzyEmail/foo1+fish@example.com?limit=1",
   );
   t.is(res.status, 200);
   t.log(res.data);
