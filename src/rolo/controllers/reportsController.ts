@@ -94,7 +94,7 @@ async function generateLicenseKeysReport(
 
   // aggregation pipeline to get all purchases that used a coupon and return the details as an array
   const pipeline = [
-    { $match: { created: { $gte: gteDate, $lt: ltDate } } },
+    { $match: { date: { $gte: gteDate, $lt: ltDate } } },
     { $sort: { date: 1, _id: 1 } },
     {
       $project: {
