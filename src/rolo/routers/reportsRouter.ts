@@ -111,7 +111,7 @@ function makeObjcArray(items: unknown[], indent = 1) {
       result.push(space(indent) + makeObjcObject(item, indent + 1));
     } else if (Array.isArray(item)) {
       result.push(space(indent) + makeObjcArray(item, indent + 1));
-    } else if (typeof item === "string") {
+    } else {
       result.push(space(indent) + makeObjcScalar(item));
     }
   }
@@ -125,7 +125,7 @@ function makeObjcObject(item: object, indent = 2) {
       result.push(space(indent) + `@"${k}": ${makeObjcArray(v, indent + 1)}`);
     } else if (typeof v === "object" && v !== null) {
       result.push(space(indent) + `@"${k}": ${makeObjcObject(v, indent + 1)}`);
-    } else if (typeof v === "string") {
+    } else {
       result.push(space(indent) + `@"${k}": ${makeObjcScalar(v)}`);
     }
   }
