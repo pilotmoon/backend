@@ -5,6 +5,7 @@ import { log } from "../../common/log.js";
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
+import { setObject, concatArrays } from "../aggregationHelpers.js";
 
 // helper function to get the database collection for a given key kind
 function licenseKeysCollection(kind: AuthKind) {
@@ -48,29 +49,12 @@ async function generateSummaryReport(
   ltDate: Date,
   query: Record<string, string>,
 ) {
-  function toObj(name: string) {
-    return {
-      $set: {
-        [name]: {
-          $arrayToObject: {
-            $map: {
-              input: `\$${name}`,
-              as: "item",
-              in: { k: "$$item._id", v: "$$item.count" },
-            },
-          },
-        },
-      },
-    };
-  }
   // aggregation pipeline
   const pipeline = [
-    // filter by date range
     { $match: { created: { $gte: gteDate, $lt: ltDate } } },
-    // facets
     {
       $facet: {
-        total: [{ $count: "count" }],
+        total: [{ $group: { _id: "all", count: { $sum: 1 } } }],
         products: [
           { $match: { product: { $exists: true, $ne: "" } } },
           { $group: { _id: "$product", count: { $sum: 1 } } },
@@ -88,23 +72,17 @@ async function generateSummaryReport(
         ],
       },
     },
-    // replace total with the first element of the array
-    { $set: { total: { $arrayElemAt: ["$total", 0] } } },
-    // convert products array to object
-    toObj("products"),
-    // convert origins array to object
-    toObj("origins"),
-    // convert coupons array to object
-    toObj("coupons"),
+    setObject("total", "count"),
+    setObject("products", "count"),
+    setObject("origins", "count"),
+    setObject("coupons", "count"),
   ];
 
   // collect and return all results
-  const result = await licenseKeysCollection(auth.kind)
+  const licenseKeys = await licenseKeysCollection(auth.kind)
     .aggregate(pipeline)
-    .toArray();
-  return {
-    licenseKeys: result[0],
-  };
+    .next();
+  return { licenseKeys };
 }
 
 async function generateLicenseKeysReport(
@@ -118,12 +96,8 @@ async function generateLicenseKeysReport(
 
   // aggregation pipeline to get all purchases that used a coupon and return the details as an array
   const pipeline = [
-    // filter by date range
     { $match: { created: { $gte: gteDate, $lt: ltDate } } },
-    // order by date then id
-    { $sort: { date: 1, id: 1 } },
-    // extract just the fields we are interested in:
-    // date, id, product, origin, order, coupon, country, currency, sale gross, void
+    { $sort: { date: 1, _id: 1 } },
     {
       $project: {
         date: { $dateToString: { date: "$date" } },
@@ -144,10 +118,7 @@ async function generateLicenseKeysReport(
         status: { $cond: { if: "$refunded", then: "refunded", else: "" } },
       },
     },
-    {
-      $unset: ["_id"],
-    },
-    // match on coupon prefix
+    { $unset: ["_id"] },
     { $match: { coupon: { $regex: `^${couponPrefix}` } } },
   ];
 
@@ -163,32 +134,24 @@ async function generateVoidLicenseKeysReport(
   query: Record<string, string>,
 ) {
   const pipeline = [
-    // match all void license keys (any dates)
-    { $match: { void: true } },
-    // order by date then id
-    { $sort: { date: 1, id: 1 } },
-    // group by product
-    { $group: { _id: "$product", hashes: { $push: "$hashes" } } },
-    // combine all hashes into a single array
     {
-      $set: {
-        hashes: {
-          $reduce: {
-            input: "$hashes",
-            initialValue: [],
-            in: { $concatArrays: ["$$value", "$$this"] },
-          },
-        },
+      $facet: {
+        products: [
+          { $match: { void: true } },
+          { $sort: { date: 1, _id: 1 } },
+          { $group: { _id: "$product", hashes: { $push: "$hashes" } } },
+          concatArrays("hashes"),
+          { $set: { hashes: { $setUnion: ["$hashes"] } } }, // remove duplicates
+          { $sort: { _id: 1 } },
+        ],
       },
     },
-    // de-duplicate hashes
-    { $set: { hashes: { $setUnion: "$hashes" } } },
-    // sort by product
-    { $sort: { _id: 1 } },
+    setObject("products", "hashes"),
+    { $replaceRoot: { newRoot: "$products" } },
   ];
 
   const result = await licenseKeysCollection(auth.kind)
     .aggregate(pipeline)
-    .toArray();
+    .next();
   return result;
 }
