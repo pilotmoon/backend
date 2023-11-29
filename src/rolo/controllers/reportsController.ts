@@ -48,6 +48,14 @@ async function generateSummaryReport(
   ltDate: Date,
   query: Record<string, string>,
 ) {
+  // helper
+  const facet = (keyPath: string) => [
+    { $match: { [keyPath]: { $exists: true, $ne: "" } } },
+    { $group: { _id: `$${keyPath}`, count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $project: { _id: 0, k: "$_id", v: "$count" } },
+  ];
+
   // aggregation pipeline
   const pipeline = [
     { $match: { created: { $gte: gteDate, $lt: ltDate } } },
@@ -57,24 +65,9 @@ async function generateSummaryReport(
           { $group: { _id: "all", count: { $sum: 1 } } },
           { $project: { _id: 0, k: "$_id", v: "$count" } },
         ],
-        products: [
-          { $match: { product: { $exists: true, $ne: "" } } },
-          { $group: { _id: "$product", count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-          { $project: { _id: 0, k: "$_id", v: "$count" } },
-        ],
-        origins: [
-          { $match: { origin: { $exists: true, $ne: "" } } },
-          { $group: { _id: "$origin", count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-          { $project: { _id: 0, k: "$_id", v: "$count" } },
-        ],
-        coupons: [
-          { $match: { "originData.p_coupon": { $exists: true, $ne: "" } } },
-          { $group: { _id: "$originData.p_coupon", count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-          { $project: { _id: 0, k: "$_id", v: "$count" } },
-        ],
+        products: facet("product"),
+        origins: facet("origin"),
+        coupons: facet("originData.p_coupon"),
       },
     },
     { $set: { total: { $arrayToObject: "$total" } } },
