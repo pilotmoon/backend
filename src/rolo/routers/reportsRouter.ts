@@ -103,7 +103,6 @@ function makeObjcScalar(item: unknown) {
   }
 }
 
-// fomat as an objective-c object (NSArray and NSDictionary lioterals)
 function makeObjcArray(items: unknown[], indent = 1) {
   const result: string[] = [];
   for (const item of items) {

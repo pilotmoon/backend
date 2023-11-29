@@ -336,6 +336,12 @@ async function generateVoidLicenseKeysReport(
         },
       },
     },
+    // sort by product
+    {
+      $sort: {
+        _id: 1,
+      },
+    },
   ];
 
   const result = await licenseKeysCollection(auth.kind)
