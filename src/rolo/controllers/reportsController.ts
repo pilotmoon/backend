@@ -5,7 +5,6 @@ import { log } from "../../common/log.js";
 import { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
-import { setObject, concatArrays } from "../aggregationHelpers.js";
 
 // helper function to get the database collection for a given key kind
 function licenseKeysCollection(kind: AuthKind) {
@@ -41,6 +40,22 @@ export async function generateReport(
   await auth.assertAccess("reports", name, "read");
   // generate report
   return await generate(auth, gteDate, ltDate, query);
+}
+
+// helper to convert array of { _id, count } into an object of key-value pairs
+function setObject(key: string, subKey: string) {
+  return {
+    $set: {
+      [key]: {
+        $arrayToObject: {
+          $map: {
+            input: `$${key}`,
+            in: { k: "$$this._id", v: `$$this.${subKey}` },
+          },
+        },
+      },
+    },
+  };
 }
 
 async function generateSummaryReport(
@@ -134,24 +149,17 @@ async function generateVoidLicenseKeysReport(
   query: Record<string, string>,
 ) {
   const pipeline = [
-    {
-      $facet: {
-        products: [
-          { $match: { void: true } },
-          { $sort: { date: 1, _id: 1 } },
-          { $group: { _id: "$product", hashes: { $push: "$hashes" } } },
-          concatArrays("hashes"),
-          { $set: { hashes: { $setUnion: ["$hashes"] } } }, // remove duplicates
-          { $sort: { _id: 1 } },
-        ],
-      },
-    },
-    setObject("products", "hashes"),
-    { $replaceRoot: { newRoot: "$products" } },
+    { $match: { void: true } },
+    { $project: { product: 1, hashes: 1 } },
+    { $unwind: "$hashes" },
+    { $group: { _id: "$product", hashes: { $addToSet: "$hashes" } } },
+    { $sort: { _id: 1 } },
+    { $group: { _id: null, data: { $push: { k: "$_id", v: "$hashes" } } } },
+    { $replaceRoot: { newRoot: { $arrayToObject: "$data" } } },
   ];
 
   const result = await licenseKeysCollection(auth.kind)
     .aggregate(pipeline)
-    .next();
+    .toArray();
   return result;
 }
