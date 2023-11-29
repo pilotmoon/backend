@@ -24,6 +24,7 @@ const testLicenseData = {
 };
 
 const testLicenseFileName = "John_Doe.examplelicense";
+const testLicenseFileHash = "f1a9dc582d9538ab498263bffa1fae5209504323";
 
 const testLicenseKey = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -118,6 +119,8 @@ test("create license key", async (t) => {
     product: "com.example.product",
     name: "name",
   });
+  t.log(res.data.file.hash);
+  t.is(res.data.file.hash, testLicenseFileHash);
   t.is(res.headers.location, `/licenseKeys/${res.data.id}`);
 });
 
