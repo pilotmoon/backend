@@ -48,168 +48,54 @@ async function generateSummaryReport(
   ltDate: Date,
   query: Record<string, string>,
 ) {
+  function toObj(name: string) {
+    return {
+      $set: {
+        [name]: {
+          $arrayToObject: {
+            $map: {
+              input: `\$${name}`,
+              as: "item",
+              in: { k: "$$item._id", v: "$$item.count" },
+            },
+          },
+        },
+      },
+    };
+  }
   // aggregation pipeline
   const pipeline = [
     // filter by date range
-    {
-      $match: {
-        created: {
-          $gte: gteDate,
-          $lt: ltDate,
-        },
-      },
-    },
+    { $match: { created: { $gte: gteDate, $lt: ltDate } } },
     // facets
     {
       $facet: {
-        // total number of license keys generated
-        total: [
-          {
-            $count: "count",
-          },
-        ],
-        // number of license keys generated per product
+        total: [{ $count: "count" }],
         products: [
-          // filter by product
-          {
-            $match: {
-              product: { $exists: true, $ne: "" },
-            },
-          },
-          // group by product
-          {
-            $group: {
-              _id: "$product",
-              count: { $sum: 1 },
-            },
-          },
-          // sort by count
-          {
-            $sort: {
-              count: -1,
-            },
-          },
+          { $match: { product: { $exists: true, $ne: "" } } },
+          { $group: { _id: "$product", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
         ],
-        // number of license keys generated per origin
         origins: [
-          // filter by origin
-          {
-            $match: {
-              origin: { $exists: true, $ne: "" },
-            },
-          },
-          // group by origin
-          {
-            $group: {
-              _id: "$origin",
-              count: { $sum: 1 },
-            },
-          },
-          // sort by count
-          {
-            $sort: {
-              count: -1,
-            },
-          },
+          { $match: { origin: { $exists: true, $ne: "" } } },
+          { $group: { _id: "$origin", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
         ],
-        // number of license keys generated per coupon
         coupons: [
-          // filter by coupon
-          {
-            $match: {
-              "originData.p_coupon": { $exists: true, $ne: "" },
-            },
-          },
-          // group by coupon
-          {
-            $group: {
-              _id: "$originData.p_coupon",
-              count: { $sum: 1 },
-            },
-          },
-          // sort by count
-          {
-            $sort: {
-              count: -1,
-            },
-          },
+          { $match: { "originData.p_coupon": { $exists: true, $ne: "" } } },
+          { $group: { _id: "$originData.p_coupon", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
         ],
       },
     },
-    // convert total array to object
-    {
-      $set: {
-        total: {
-          $arrayToObject: {
-            $map: {
-              input: "$total",
-              as: "total",
-              in: {
-                k: "count",
-                v: "$$total.count",
-              },
-            },
-          },
-        },
-      },
-    },
-    // convert total object to number
-    {
-      $set: {
-        total: "$total.count",
-      },
-    },
+    // replace total with the first element of the array
+    { $set: { total: { $arrayElemAt: ["$total", 0] } } },
     // convert products array to object
-    {
-      $set: {
-        products: {
-          $arrayToObject: {
-            $map: {
-              input: "$products",
-              as: "product",
-              in: {
-                k: "$$product._id",
-                v: "$$product.count",
-              },
-            },
-          },
-        },
-      },
-    },
+    toObj("products"),
     // convert origins array to object
-    {
-      $set: {
-        origins: {
-          $arrayToObject: {
-            $map: {
-              input: "$origins",
-              as: "origin",
-              in: {
-                k: "$$origin._id",
-                v: "$$origin.count",
-              },
-            },
-          },
-        },
-      },
-    },
+    toObj("origins"),
     // convert coupons array to object
-    {
-      $set: {
-        coupons: {
-          $arrayToObject: {
-            $map: {
-              input: "$coupons",
-              as: "coupon",
-              in: {
-                k: "$$coupon._id",
-                v: "$$coupon.count",
-              },
-            },
-          },
-        },
-      },
-    },
+    toObj("coupons"),
   ];
 
   // collect and return all results
@@ -233,21 +119,9 @@ async function generateLicenseKeysReport(
   // aggregation pipeline to get all purchases that used a coupon and return the details as an array
   const pipeline = [
     // filter by date range
-    {
-      $match: {
-        created: {
-          $gte: gteDate,
-          $lt: ltDate,
-        },
-      },
-    },
+    { $match: { created: { $gte: gteDate, $lt: ltDate } } },
     // order by date then id
-    {
-      $sort: {
-        date: 1,
-        id: 1,
-      },
-    },
+    { $sort: { date: 1, id: 1 } },
     // extract just the fields we are interested in:
     // date, id, product, origin, order, coupon, country, currency, sale gross, void
     {
@@ -274,11 +148,7 @@ async function generateLicenseKeysReport(
       $unset: ["_id"],
     },
     // match on coupon prefix
-    {
-      $match: {
-        coupon: { $regex: `^${couponPrefix}` },
-      },
-    },
+    { $match: { coupon: { $regex: `^${couponPrefix}` } } },
   ];
 
   return await licenseKeysCollection(auth.kind).aggregate(pipeline).toArray();
@@ -294,28 +164,11 @@ async function generateVoidLicenseKeysReport(
 ) {
   const pipeline = [
     // match all void license keys (any dates)
-    {
-      $match: {
-        void: true,
-      },
-    },
+    { $match: { void: true } },
     // order by date then id
-    {
-      $sort: {
-        date: 1,
-        id: 1,
-      },
-    },
-
+    { $sort: { date: 1, id: 1 } },
     // group by product
-    {
-      $group: {
-        _id: "$product",
-        hashes: {
-          $push: "$hashes",
-        },
-      },
-    },
+    { $group: { _id: "$product", hashes: { $push: "$hashes" } } },
     // combine all hashes into a single array
     {
       $set: {
@@ -329,19 +182,9 @@ async function generateVoidLicenseKeysReport(
       },
     },
     // de-duplicate hashes
-    {
-      $set: {
-        hashes: {
-          $setUnion: "$hashes",
-        },
-      },
-    },
+    { $set: { hashes: { $setUnion: "$hashes" } } },
     // sort by product
-    {
-      $sort: {
-        _id: 1,
-      },
-    },
+    { $sort: { _id: 1 } },
   ];
 
   const result = await licenseKeysCollection(auth.kind)
