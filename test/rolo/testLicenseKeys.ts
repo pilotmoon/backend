@@ -118,6 +118,7 @@ test("create license key", async (t) => {
   const res = await rolo().post("licenseKeys", {
     product: "com.example.product",
     name: "name",
+    date: "2023-11-29",
   });
   t.is(res.status, 201);
   t.like(res.data, {
@@ -258,6 +259,7 @@ test("create 10 distinct license keys, for later testing of pagination", async (
       name: `name ${i}`,
       origin: "test10",
       email: "foo1@example.com",
+      date: "2023-11-29",
     });
     test10Objects.push(res.data);
     t.is(res.status, 201);
