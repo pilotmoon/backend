@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { z } from "zod";
-import { config } from "./config.js";
+import { log } from "../common/log.js";
+import { getRemoteConfig } from "./remoteConfig.js";
 const ZConfig = z.object({
   host: z.string(),
   port: z.number(),
@@ -10,6 +11,6 @@ const ZConfig = z.object({
     pass: z.string(),
   }),
 });
-const smtpConfig = ZConfig.parse(JSON.parse(config.SMTP_CONFIG));
-
+const smtpConfig = ZConfig.parse(await getRemoteConfig("smtp_credentials"));
+log("SMTP config loaded".green);
 export const transporter = nodemailer.createTransport(smtpConfig);

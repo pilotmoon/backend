@@ -1,6 +1,7 @@
 import { CronJob } from "cron";
 import { z } from "zod";
 import { log } from "../common/log.js";
+import { AuthKind } from "../rolo/auth.js";
 import { config } from "./config.js";
 import { getRemoteConfig } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
@@ -57,11 +58,14 @@ export function stop() {
 }
 
 async function testReport() {
-  // summaryReport("reportsTest@pilotmoon.com");
-  studentAppCentreReport();
+  summaryReport("reportstest@pilotmoon.com", "test");
+  // studentAppCentreReport();
 }
 
-async function summaryReport(overrideTo: string | undefined = undefined) {
+async function summaryReport(
+  overrideTo: string | undefined = undefined,
+  keyKind: AuthKind = "live",
+) {
   try {
     log("Summary report", new Date());
     const today = new Date();
@@ -70,7 +74,7 @@ async function summaryReport(overrideTo: string | undefined = undefined) {
     yesterday.setUTCDate(yesterday.getDate() - 7); // 7 days ago at 00:00:00
 
     // get license keys created yesterday
-    const api = getRolo("live");
+    const api = getRolo(keyKind);
     const { data } = await api.get("reports/summary", {
       params: {
         gteDate: yesterday,
