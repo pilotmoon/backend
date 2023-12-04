@@ -1,15 +1,19 @@
 import { Context } from "koa";
 import { z } from "zod";
 import { log } from "../../common/log.js";
-import { config } from "../config.js";
+import { getRemoteConfig } from "../remoteConfig.js";
 
-const ZKeyDef = z.object({
-  key: z.string(),
-  name: z.string(),
-  kind: z.enum(["test", "live"]),
-});
-
-const keys = z.array(ZKeyDef).parse(JSON.parse(config.TWIX_APIKEYS));
+const keys = z
+  .object({
+    keys: z.array(
+      z.object({
+        key: z.string(),
+        name: z.string(),
+        kind: z.enum(["test", "live"]),
+      }),
+    ),
+  })
+  .parse(await getRemoteConfig("user_apikeys")).keys;
 
 // validate the webhook header
 export function validateStoreWebhook(ctx: Context) {

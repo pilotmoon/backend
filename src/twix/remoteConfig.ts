@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { config } from "./config.js";
 import { log, loge } from "../common/log.js";
 
 const ZRecordWrapper = z.object({
@@ -7,30 +6,13 @@ const ZRecordWrapper = z.object({
   record: z.record(z.unknown()),
 });
 
-export async function waitForRemoteConfigServer(): Promise<void> {
-  log("Waiting for config server...".green);
-  while (true) {
-    const response = await fetch(`${config.ROLO_URL_CANONICAL}/`, {
-      method: "GET",
-    });
-    if (response.status === 200) {
-      break;
-    }
-    // Wait for a second before retrying
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  log("Config server is available".green);
-  return;
-}
-
 export async function getRemoteConfig(object: string) {
-  await waitForRemoteConfigServer();
   const response = await fetch(
-    `${config.ROLO_URL_CANONICAL}/registries/twix_config/objects/${object}`,
+    `${process.env.ROLO_URL_CANONICAL}/registries/twix_config/objects/${object}`,
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${config.ROLO_APIKEY_CONFIG}`,
+        Authorization: `Bearer ${process.env.ROLO_APIKEY_CONFIG}`,
       },
     },
   );
@@ -38,5 +20,6 @@ export async function getRemoteConfig(object: string) {
     throw new Error(`HTTP error, status: ${response.status}`);
   }
   const { record } = ZRecordWrapper.parse(await response.json());
+  log(`Remote config ${object} loaded`.green);
   return record;
 }

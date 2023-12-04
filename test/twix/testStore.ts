@@ -1,10 +1,11 @@
 import test from "ava";
 import axios, { AxiosInstance } from "axios";
+import { getRemoteConfig } from "../../src/twix/remoteConfig.js";
 import { getRolo } from "../../src/twix/rolo.js";
 
 let webhooks: AxiosInstance;
 async function setup() {
-  const keys = JSON.parse(process.env.TWIX_APIKEYS ?? "");
+  const keys = (await getRemoteConfig("user_apikeys")).keys as any;
   const key = keys.find(
     (key: { name: string }) => key.name === "internal test",
   );

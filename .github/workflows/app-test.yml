@@ -25,7 +25,6 @@ env:
   ROLO_APIKEY_LIVE: ""
   ROLO_APIKEY_TEST: "${{ secrets.ROLO_APIKEY_TEST }}"
   ROLO_APIKEY_CONFIG: "${{ secrets.ROLO_APIKEY_CONFIG }}"
-  TWIX_APIKEYS: "${{ secrets.LIZHI_APIKEYS }}"
 
 jobs:
   test:
