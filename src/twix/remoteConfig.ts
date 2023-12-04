@@ -8,7 +8,7 @@ const ZRecordWrapper = z.object({
 });
 
 export async function waitForRemoteConfigServer(): Promise<void> {
-  log("Waiting for config server availability");
+  log("Waiting for config server...".green);
   while (true) {
     const response = await fetch(`${config.ROLO_URL_CANONICAL}/`, {
       method: "GET",
@@ -19,7 +19,7 @@ export async function waitForRemoteConfigServer(): Promise<void> {
     // Wait for a second before retrying
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
-  log("Config server is available");
+  log("Config server is available".green);
   return;
 }
 
