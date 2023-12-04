@@ -14,12 +14,13 @@ export async function waitForRemoteConfigServer(): Promise<void> {
       method: "GET",
     });
     if (response.status === 200) {
-      log("Config server is available");
-      return;
+      break;
     }
     // Wait for a second before retrying
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+  log("Config server is available");
+  return;
 }
 
 export async function getRemoteConfig(object: string) {
