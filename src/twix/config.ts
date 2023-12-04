@@ -16,7 +16,6 @@ export interface Config {
   ROLO_APIKEY_CONFIG: string;
   TWIX_APIKEYS: string;
   SMTP_CONFIG: string;
-  REPORTS_CONFIG: string;
   HMA_ROOT: string;
 }
 export const config = loadConfig<Config>([
@@ -34,6 +33,5 @@ export const config = loadConfig<Config>([
   { key: "ROLO_APIKEY_CONFIG", hidden: true },
   { key: "TWIX_APIKEYS", hidden: true },
   { key: "SMTP_CONFIG", hidden: true },
-  { key: "REPORTS_CONFIG", hidden: true },
   { key: "HMA_ROOT", hidden: true, optional: true },
 ]);

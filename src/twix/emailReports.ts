@@ -2,7 +2,9 @@ import { CronJob } from "cron";
 import { z } from "zod";
 import { log } from "../common/log.js";
 import { config } from "./config.js";
+import { getRemoteConfig } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
+
 const ZReportConfig = z.object({
   from: z.string(),
   to: z.string(),
@@ -15,7 +17,7 @@ const ZConfig = z.object({
   summary: ZReportConfig,
   studentAppCentre: ZReportConfig,
 });
-const reportsConfig = ZConfig.parse(JSON.parse(config.REPORTS_CONFIG));
+const reportsConfig = ZConfig.parse(await getRemoteConfig("reports_config"));
 
 // call once on server start
 let weeklyJob: CronJob;

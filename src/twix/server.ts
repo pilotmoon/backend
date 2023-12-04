@@ -10,6 +10,8 @@ import { measureResponseTime } from "../common/middleware/measureResponseTime.js
 import { config } from "./config.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
+import { waitForRemoteConfigServer } from "./remoteConfig.js";
+import { getRolo } from "./rolo.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 
 const router = new Router();
