@@ -1,6 +1,6 @@
 import axios from "axios";
 import { z } from "zod";
-import { config } from "./config.js";
+import { getRemoteConfig } from "./remoteConfig.js";
 
 const ZCred = z.object({
   vendorId: z.string(),
@@ -12,7 +12,7 @@ const ZCreds = z.object({
   sandbox: ZCred,
 });
 export const paddleCredentials = ZCreds.parse(
-  JSON.parse(config.PADDLE_CREDENTIALS),
+  await getRemoteConfig("paddle_credentials"),
 );
 
 export function getPaddleVendorsApi(mode: "test" | "live") {

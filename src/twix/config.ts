@@ -13,7 +13,6 @@ export interface Config {
   ROLO_APIKEY_TEST: string;
   ROLO_APIKEY_LIVE: string;
   ROLO_APIKEY_CONFIG: string;
-  PADDLE_CREDENTIALS: string;
 }
 export const config = loadConfig<Config>([
   { key: "TWIX_PORT", transform: decimalIntegerTransform },
@@ -22,7 +21,6 @@ export const config = loadConfig<Config>([
     optional: true,
     transform: sha1PrettyTransform,
   },
-  { key: "PADDLE_CREDENTIALS", hidden: true },
   { key: "ROLO_URL" },
   { key: "ROLO_URL_CANONICAL" },
   { key: "ROLO_APIKEY_TEST", hidden: true },
