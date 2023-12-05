@@ -2,6 +2,7 @@ import { CronJob } from "cron";
 import { z } from "zod";
 import { log } from "../common/log.js";
 import { AuthKind } from "../rolo/auth.js";
+import { getTransporter } from "./email.js";
 import { getRemoteConfig } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
 
@@ -26,11 +27,13 @@ async function getConfig() {
   return config;
 }
 
-// call once on server start
+//call once on server start
 let weeklyJob: CronJob;
 let monthlyJob: CronJob;
 let testJob: CronJob;
-export function start() {
+export async function start() {
+  await getConfig();
+
   log("Starting reports...");
   weeklyJob = new CronJob(
     "7 7 2 * * 1", // every Monday at 02:07:07
@@ -90,7 +93,7 @@ async function summaryReport(
     const reportText = JSON.stringify(data, undefined, 2);
 
     // send email
-    const { transporter } = await import("./email.js");
+    const transporter = await getTransporter();
     const mailOptions = {
       ...(await getConfig()).summary,
       subject: "Weekly summary report",
@@ -139,7 +142,7 @@ async function studentAppCentreReport(
     log("filename", filename);
     // send email
 
-    const { transporter } = await import("./email.js");
+    const transporter = await getTransporter();
     const mailOptions = {
       ...(await getConfig()).studentAppCentre,
       subject: "Coupon codes report",

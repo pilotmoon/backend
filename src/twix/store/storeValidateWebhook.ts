@@ -12,7 +12,7 @@ const ZKeys = z.array(
 );
 
 let keys: z.infer<typeof ZKeys>;
-async function getKeys() {
+export async function getKeys() {
   if (!keys) {
     keys = z
       .object({

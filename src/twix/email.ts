@@ -13,11 +13,13 @@ const ZConfig = z.object({
 });
 
 let config: z.infer<typeof ZConfig>;
-async function getConfig() {
+export async function getConfig() {
   if (!config) {
     config = ZConfig.parse(await getRemoteConfig("smtp_credentials"));
   }
   return config;
 }
 
-export const transporter = nodemailer.createTransport(await getConfig());
+export async function getTransporter() {
+  return nodemailer.createTransport(await getConfig());
+}

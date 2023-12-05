@@ -8,10 +8,13 @@ import { log } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { config } from "./config.js";
+import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
+import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { getRolo } from "./rolo.js";
 import { router as storeRouter } from "./store/storeRouter.js";
+import { getKeys as initStore } from "./store/storeValidateWebhook.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
@@ -83,9 +86,14 @@ async function waitForRolo() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   } while (true);
-  log("Rolo is ready".green);
+  log("Rolo is ready".black.bgGreen);
 }
 
 await waitForRolo();
-initReports();
+await Promise.allSettled([
+  initPaddle(),
+  initEmail(),
+  initReports(),
+  initStore(),
+]);
 startServer();
