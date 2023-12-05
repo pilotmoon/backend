@@ -43,7 +43,6 @@ app.use(
       }
       return "";
     },
-    allowMethods: ["GET"],
   }),
 );
 
