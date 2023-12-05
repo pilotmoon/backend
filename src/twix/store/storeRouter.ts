@@ -42,5 +42,6 @@ router.get("/frontend/store/getPrices", async (ctx) => {
   log(`Request received from IP: ${sourceIp}`);
   const result = await processPrices(sourceIp, product);
   log("Sending prices for", result.country);
+  ctx.set("Cache-Control", "public, max-age=900");
   ctx.body = result;
 });
