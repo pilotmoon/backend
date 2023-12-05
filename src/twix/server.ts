@@ -12,6 +12,7 @@ import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
+import { waitForRemoteConfigServer } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
@@ -76,20 +77,7 @@ process.on("SIGINT", async () => {
   }
 });
 
-async function waitForRolo() {
-  do {
-    try {
-      await getRolo("test").get("/");
-      break;
-    } catch (e) {
-      log("Waiting for rolo to be ready".yellow);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  } while (true);
-  log("Rolo is ready".black.bgGreen);
-}
-
-await waitForRolo();
+await waitForRemoteConfigServer();
 await Promise.allSettled([
   initPaddle(),
   initEmail(),
