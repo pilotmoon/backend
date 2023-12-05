@@ -9,10 +9,7 @@ export async function waitForRemoteConfigServer() {
       const response = await fetch(`${process.env.ROLO_URL_CANONICAL}/`, {
         method: "GET",
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error, status: ${response.status}`);
-      }
-      done = true;
+      done = response.ok;
     } catch (e) {
       log(`Waiting for remote config server (${++retries})`.yellow);
       await new Promise((resolve) => setTimeout(resolve, 1000));
