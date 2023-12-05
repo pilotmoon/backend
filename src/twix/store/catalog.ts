@@ -61,11 +61,11 @@ export async function getPaddleCatalog() {
     const paddleCatalogRaw = {
       popclip: {
         mode: "live",
-        productIds: ["818494"],
+        productId: "818494",
       },
       example: {
         mode: "test",
-        productIds: ["47023"],
+        productId: "47023",
       },
     };
     paddleCatalog = z.record(ZCatalogEntry).parse(paddleCatalogRaw);
