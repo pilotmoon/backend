@@ -2,10 +2,10 @@ import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { getPaddleVendorsApi } from "../paddle.js";
-import { couponOffers } from "./catalog.js";
+import { getCouponOffers } from "./catalog.js";
 
 const ZCouponArgs = z.object({
-  offer: z.enum(Object.keys(couponOffers) as [keyof typeof couponOffers]),
+  offer: z.string(),
 });
 
 export async function processCoupon(
@@ -17,13 +17,16 @@ export async function processCoupon(
   log("mode: ", mode);
 
   const couponArgs = ZCouponArgs.parse(args);
-  const offer = couponOffers[couponArgs.offer];
+  const offer = (await getCouponOffers())[couponArgs.offer];
+  if (!offer) {
+    throw new ApiError(400, `Unknown coupon offer '${couponArgs.offer}'`);
+  }
 
   // check coupon is in correct mode
-  if (offer.product?.mode !== mode) {
+  if (offer.catalogEntry.mode !== mode) {
     throw new ApiError(
       400,
-      `'${couponArgs.offer}' only allowed in ${offer.product?.mode} mode`,
+      `'${couponArgs.offer}' only allowed in ${offer.catalogEntry.mode} mode`,
     );
   }
 
@@ -36,7 +39,7 @@ export async function processCoupon(
 
   // create coupon
   const { data } = await paddle.post("2.1/product/create_coupon", {
-    product_ids: offer.product.productIds.join(","),
+    product_ids: offer.catalogEntry.productId,
     description: `${couponArgs.offer} for ${origin}`,
     coupon_type: "product",
     discount_type: "percentage",

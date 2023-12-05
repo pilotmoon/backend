@@ -4,7 +4,7 @@ import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { minutes } from "../../common/timeIntervals.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
-import { paddleCatalog } from "./catalog.js";
+import { getPaddleCatalog } from "./catalog.js";
 
 const cachedResponses = new TTLCache<string, PricesResult>({
   max: 1000,
@@ -69,23 +69,22 @@ export async function processPrices(
   }
 
   // get the single product id
-  const productData = paddleCatalog[product];
-  if (productData?.productIds.length !== 1) {
-    throw new ApiError(400, `Can't look up prices for '${product}'`);
+  const productData = (await getPaddleCatalog())[product];
+  if (!productData) {
+    throw new ApiError(400, `Unknown product '${product}'`);
   }
-  const productId = productData.productIds[0];
 
   // look up with paddle
   const api = getPaddleCheckoutApi();
   const { data } = await api.get("2.0/prices", {
-    params: { product_ids: productData.productIds[0], customer_ip: ip },
+    params: { product_ids: productData.productId, customer_ip: ip },
   });
   const response = ZPricesResponse.parse(data);
   if (!response.success) {
     throw new ApiError(500, "Paddle API error (success=false)");
   }
   const productInfo = response.response.products[0];
-  if (String(productInfo.product_id) !== productId) {
+  if (String(productInfo.product_id) !== productData.productId) {
     throw new ApiError(400, "Paddle API error (product not in response)");
   }
   const result = ZPricesResult.parse({

@@ -1,35 +1,74 @@
-interface Catalog {
-  [key: string]:
-    | {
-        mode: "live" | "test";
-        productIds: string[];
+import { z } from "zod";
+import { log } from "../../common/log.js";
+
+const ZCatalogEntry = z.object({
+  mode: z.enum(["live", "test"]),
+  productId: z.string(),
+});
+
+const ZCouponOffer = z.object({
+  product: z.string(),
+  catalogEntry: ZCatalogEntry,
+  discountPercent: z.number(),
+  prefix: z.string().length(3),
+});
+
+let couponOffers: Record<string, z.infer<typeof ZCouponOffer> | undefined>;
+export async function getCouponOffers() {
+  if (!couponOffers) {
+    const couponOffersRaw = z
+      .record(ZCouponOffer.omit({ catalogEntry: true }))
+      .parse({
+        popclip30: {
+          product: "popclip",
+          discountPercent: 30,
+          prefix: "STU",
+        },
+        popclip44: {
+          product: "popclip",
+          discountPercent: 44,
+          prefix: "STS",
+        },
+        example30: {
+          product: "example",
+          discountPercent: 30,
+          prefix: "TST",
+        },
+      });
+
+    couponOffers = {};
+    const paddleCatalog = await getPaddleCatalog();
+    for (const [key, offer] of Object.entries(couponOffersRaw)) {
+      if (offer) {
+        const catalogEntry = paddleCatalog[offer.product];
+        if (catalogEntry) {
+          couponOffers[key] = {
+            ...offer,
+            catalogEntry,
+          };
+        }
       }
-    | undefined;
+    }
+  }
+
+  log("couponOffers: ", couponOffers);
+  return couponOffers;
 }
-export const paddleCatalog: Catalog = {
-  popclip: {
-    mode: "live",
-    productIds: ["818494"],
-  },
-  example: {
-    mode: "test",
-    productIds: ["47023"],
-  },
-};
-export const couponOffers = {
-  popclip30: {
-    product: paddleCatalog.popclip,
-    discountPercent: 30,
-    prefix: "STU",
-  },
-  popclip44: {
-    product: paddleCatalog.popclip,
-    discountPercent: 44,
-    prefix: "STS",
-  },
-  example30: {
-    product: paddleCatalog.example,
-    discountPercent: 30,
-    prefix: "TST",
-  },
-};
+
+let paddleCatalog: Record<string, z.infer<typeof ZCatalogEntry> | undefined>;
+export async function getPaddleCatalog() {
+  if (!paddleCatalog) {
+    const paddleCatalogRaw = {
+      popclip: {
+        mode: "live",
+        productIds: ["818494"],
+      },
+      example: {
+        mode: "test",
+        productIds: ["47023"],
+      },
+    };
+    paddleCatalog = z.record(ZCatalogEntry).parse(paddleCatalogRaw);
+  }
+  return paddleCatalog;
+}
