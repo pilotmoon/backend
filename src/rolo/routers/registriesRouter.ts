@@ -24,7 +24,7 @@ const matchId = {
 router.post("/", async (ctx) => {
   const suppliedData = ZRegistryInfo.strict().parse(ctx.request.body);
   const document = await createRegistry(suppliedData, ctx.state.auth);
-  ctx.body = redact(document);
+  ctx.body = redact(document, ctx.query);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
@@ -32,14 +32,14 @@ router.post("/", async (ctx) => {
 // list registries
 router.get("/", async (ctx) => {
   const documents = await listRegistries(ctx.state.pagination, ctx.state.auth);
-  ctx.body = documents.map(redact);
+  ctx.body = documents.map((info) => redact(info, ctx.query));
 });
 
 // read a registry
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readRegistry(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = redact(document);
+    ctx.body = redact(document, ctx.query);
   }
 });
 

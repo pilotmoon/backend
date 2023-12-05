@@ -61,8 +61,8 @@ export type RegistryObject = z.infer<typeof ZObject>;
 
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
-export function redact(info: RegistryInfo) {
-  if (!info.objects) return info;
+export function redact(info: RegistryInfo, params: { redact?: string }) {
+  if (params.redact === "no" || !info.objects) return info;
   const redactedObjects = Object.fromEntries(
     Object.entries(info.objects).map(([key, obj]) => {
       return [key, { object: obj.object, redacted: true }];
