@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { log } from "../../common/log.js";
+import { getRemoteConfig } from "../remoteConfig.js";
 
 const ZCatalogEntry = z.object({
   mode: z.enum(["live", "test"]),
@@ -18,23 +18,7 @@ export async function getCouponOffers() {
   if (!couponOffers) {
     const couponOffersRaw = z
       .record(ZCouponOffer.omit({ catalogEntry: true }))
-      .parse({
-        popclip30: {
-          product: "popclip",
-          discountPercent: 30,
-          prefix: "STU",
-        },
-        popclip44: {
-          product: "popclip",
-          discountPercent: 44,
-          prefix: "STS",
-        },
-        example30: {
-          product: "example",
-          discountPercent: 30,
-          prefix: "TST",
-        },
-      });
+      .parse(await getRemoteConfig("coupon_offers"));
 
     couponOffers = {};
     const paddleCatalog = await getPaddleCatalog();
@@ -51,24 +35,15 @@ export async function getCouponOffers() {
     }
   }
 
-  log("couponOffers: ", couponOffers);
   return couponOffers;
 }
 
 let paddleCatalog: Record<string, z.infer<typeof ZCatalogEntry> | undefined>;
 export async function getPaddleCatalog() {
   if (!paddleCatalog) {
-    const paddleCatalogRaw = {
-      popclip: {
-        mode: "live",
-        productId: "818494",
-      },
-      example: {
-        mode: "test",
-        productId: "47023",
-      },
-    };
-    paddleCatalog = z.record(ZCatalogEntry).parse(paddleCatalogRaw);
+    paddleCatalog = z
+      .record(ZCatalogEntry)
+      .parse(await getRemoteConfig("paddle_catalog"));
   }
   return paddleCatalog;
 }
