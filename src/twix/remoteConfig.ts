@@ -3,6 +3,7 @@ import { log, loge } from "../common/log.js";
 
 export async function waitForRemoteConfigServer() {
   let retries = 0;
+  let done = false;
   do {
     try {
       const response = await fetch(`${process.env.ROLO_URL_CANONICAL}/`, {
@@ -11,13 +12,17 @@ export async function waitForRemoteConfigServer() {
       if (!response.ok) {
         throw new Error(`HTTP error, status: ${response.status}`);
       }
-      break;
+      done = true;
     } catch (e) {
       log(`Waiting for remote config server (${++retries})`.yellow);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-  } while (true);
-  log("Remote config server is ready".black.bgGreen);
+  } while (!done && retries < 60);
+  if (done) {
+    log("Remote config server is ready".black.bgGreen);
+  } else {
+    throw new Error("Remote config server timed out");
+  }
 }
 
 export async function getRemoteConfig(object: string) {

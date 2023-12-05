@@ -13,9 +13,9 @@ import { start as initReports, stop as stopReports } from "./emailReports.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { waitForRemoteConfigServer } from "./remoteConfig.js";
+import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
-import { getCouponOffers as initCatalog } from "./store/catalog.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
