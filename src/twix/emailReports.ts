@@ -2,7 +2,6 @@ import { CronJob } from "cron";
 import { z } from "zod";
 import { log } from "../common/log.js";
 import { AuthKind } from "../rolo/auth.js";
-import { config } from "./config.js";
 import { getRemoteConfig } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
 
@@ -18,7 +17,14 @@ const ZConfig = z.object({
   summary: ZReportConfig,
   studentAppCentre: ZReportConfig,
 });
-const reportsConfig = ZConfig.parse(await getRemoteConfig("reports_config"));
+
+let config: z.infer<typeof ZConfig>;
+async function getConfig() {
+  if (!config) {
+    config = ZConfig.parse(await getRemoteConfig("reports_config"));
+  }
+  return config;
+}
 
 // call once on server start
 let weeklyJob: CronJob;
@@ -86,7 +92,7 @@ async function summaryReport(
     // send email
     const { transporter } = await import("./email.js");
     const mailOptions = {
-      ...reportsConfig.summary,
+      ...(await getConfig()).summary,
       subject: "Weekly summary report",
       text: reportText,
     };
@@ -135,9 +141,9 @@ async function studentAppCentreReport(
 
     const { transporter } = await import("./email.js");
     const mailOptions = {
-      ...reportsConfig.studentAppCentre,
+      ...(await getConfig()).studentAppCentre,
       subject: "Coupon codes report",
-      text: reportsConfig.studentAppCentre.body,
+      text: (await getConfig()).studentAppCentre.body,
       attachments: [
         {
           filename,

@@ -11,12 +11,19 @@ const ZCreds = z.object({
   production: ZCred,
   sandbox: ZCred,
 });
-export const paddleCredentials = ZCreds.parse(
-  await getRemoteConfig("paddle_credentials"),
-);
 
-export function getPaddleVendorsApi(mode: "test" | "live") {
-  const creds = paddleCredentials[mode === "test" ? "sandbox" : "production"];
+let credentials: z.infer<typeof ZCreds>;
+export async function getPaddleCredentials() {
+  if (!credentials) {
+    credentials = ZCreds.parse(await getRemoteConfig("paddle_credentials"));
+  }
+  return credentials;
+}
+
+export async function getPaddleVendorsApi(mode: "test" | "live") {
+  const creds = (await getPaddleCredentials())[
+    mode === "test" ? "sandbox" : "production"
+  ];
   const prefix = mode === "test" ? "sandbox-" : "";
   return axios.create({
     baseURL: `https://${prefix}vendors.paddle.com/api`,

@@ -28,7 +28,7 @@ export async function processCoupon(
   }
 
   // get the api endpoint
-  const paddle = getPaddleVendorsApi(mode);
+  const paddle = await getPaddleVendorsApi(mode);
 
   // calculate date 28 days from now
   const expiryDate = new Date();

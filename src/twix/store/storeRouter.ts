@@ -10,7 +10,7 @@ import { validateStoreWebhook } from "./storeValidateWebhook.js";
 export const router = new Router();
 
 router.post("/webhooks/store/generateLicense", async (ctx) => {
-  const key = validateStoreWebhook(ctx);
+  const key = await validateStoreWebhook(ctx);
   if (!key) {
     throw new ApiError(401, "Missing or invalid API key");
   }
@@ -25,7 +25,7 @@ router.post("/webhooks/store/generateLicense", async (ctx) => {
 });
 
 router.post("/webhooks/store/generateCoupon", async (ctx) => {
-  const key = validateStoreWebhook(ctx);
+  const key = await validateStoreWebhook(ctx);
   if (!key) {
     throw new ApiError(401, "Missing or invalid API key");
   }

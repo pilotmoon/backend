@@ -73,5 +73,19 @@ process.on("SIGINT", async () => {
   }
 });
 
+async function waitForRolo() {
+  do {
+    try {
+      await getRolo("test").get("/");
+      break;
+    } catch (e) {
+      log("Waiting for rolo to be ready".yellow);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  } while (true);
+  log("Rolo is ready".green);
+}
+
+await waitForRolo();
 initReports();
 startServer();
