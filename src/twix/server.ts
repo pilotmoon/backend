@@ -77,6 +77,8 @@ process.on("SIGINT", async () => {
   }
 });
 
+log("Twix Starting".black.bgWhite);
+log("Current working directory:", process.cwd());
 await waitForRemoteConfigServer();
 await Promise.allSettled([
   initPaddle(),
