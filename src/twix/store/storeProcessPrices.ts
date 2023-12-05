@@ -1,19 +1,8 @@
-import TTLCache from "@isaacs/ttlcache";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
-import { minutes } from "../../common/timeIntervals.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
 import { getPaddleCatalog } from "./catalog.js";
-
-const cachedResponses = new TTLCache<string, PricesResult>({
-  max: 1000,
-  ttl: minutes(15),
-});
-
-function cacheKey(ip: string, product: string) {
-  return `${ip}+${product}`;
-}
 
 const ZPrice = z.object({
   gross: z.number(),
@@ -61,13 +50,6 @@ export async function processPrices(
   ip: string,
   product: string,
 ): Promise<PricesResult> {
-  // check cache
-  const cached = cachedResponses.get(cacheKey(ip, product));
-  if (cached) {
-    log(`Using cached response for ${ip} ${product}`);
-    return cached;
-  }
-
   // get the single product id
   const productData = (await getPaddleCatalog())[product];
   if (!productData) {
@@ -105,6 +87,5 @@ export async function processPrices(
       },
     },
   });
-  cachedResponses.set(cacheKey(ip, product), result);
   return result;
 }
