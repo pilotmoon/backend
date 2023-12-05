@@ -28,9 +28,24 @@ router.get("/", (ctx) => {
 
 const app = new Koa({ proxy: true });
 
-// app.use(cors({
-//   origin: '*',
-// }));
+// set up CORS for frontend requests
+app.use(
+  cors({
+    origin: (context: Koa.Context) => {
+      const origin = context.request.header.origin;
+      const path = context.request.path;
+      if (
+        path.startsWith("/frontend/") &&
+        (origin === "https://www.popclip.app" ||
+          origin?.startsWith("http://localhost:"))
+      ) {
+        return origin;
+      }
+      return "";
+    },
+    allowMethods: ["GET"],
+  }),
+);
 
 // body parser that accepts JSON and form data
 const parseJsonBody = bodyParser({
