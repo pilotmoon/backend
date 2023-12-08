@@ -5,16 +5,5 @@
 {
   "copilot": {
     "disabled_globs": [".env*"]
-  },
-  "format_on_save": "on",
-  "language_overrides": {
-    "TypeScript": {
-      "formatter": {
-        "external": {
-          "command": "node_modules/.bin/biome",
-          "arguments": ["format", "--stdin-file-path=file.ts"]
-        }
-      }
-    }
   }
 }

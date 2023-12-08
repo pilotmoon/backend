@@ -8,6 +8,7 @@ import { log } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { config } from "./config.js";
+import { router as directoryRouter } from "./directory/directoryRouter.js";
 import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
@@ -20,6 +21,7 @@ import { getKeys as initStore } from "./store/storeValidateWebhook.js";
 const router = new Router();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
+router.use(directoryRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {
