@@ -13,10 +13,12 @@ import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
-import { waitForRemoteConfigServer } from "./remoteConfig.js";
+import { remoteConfigReady } from "./remoteConfig.js";
 import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
+import { init as initDirectoryRouter } from "./directory/directoryRouter.js";
+import { waitFor } from "./wait.js";
 
 const router = new Router();
 router.use(paddleRouter.routes());
@@ -95,12 +97,16 @@ process.on("SIGINT", async () => {
 
 log("Twix Starting".black.bgWhite);
 log("Current working directory:", process.cwd());
-await waitForRemoteConfigServer();
+
+await waitFor("Remote config server", remoteConfigReady);
+await waitFor("Rolo", async () => (await fetch(`${config.ROLO_URL}/`)).ok);
+
 await Promise.allSettled([
   initPaddle(),
   initEmail(),
   initReports(),
   initStore(),
   initCatalog(),
+  initDirectoryRouter(),
 ]);
 startServer();

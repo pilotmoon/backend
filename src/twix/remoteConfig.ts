@@ -1,26 +1,8 @@
 import { z } from "zod";
-import { log, loge } from "../common/log.js";
+import { log } from "../common/log.js";
 
-export async function waitForRemoteConfigServer() {
-  let retries = 0;
-  let done = false;
-  do {
-    try {
-      const response = await fetch(`${process.env.ROLO_URL_CANONICAL}/`, {
-        method: "GET",
-      });
-      done = response.ok;
-    } catch (e) {
-      log(`Waiting for remote config server (${++retries})`.yellow);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  } while (!done && retries < 60);
-  if (done) {
-    log("Remote config server is ready".black.bgGreen);
-  } else {
-    throw new Error("Remote config server timed out");
-  }
-}
+export const remoteConfigReady = async () =>
+  (await fetch(`${process.env.ROLO_URL_CANONICAL}/`)).ok;
 
 export async function getRemoteConfig(object: string) {
   const response = await fetch(
