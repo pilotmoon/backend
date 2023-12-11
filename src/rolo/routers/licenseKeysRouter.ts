@@ -124,7 +124,12 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   if (!document) return;
 
   if (document.void) {
-    throw new ApiError(404, "License key is void");
+    throw new ApiError(
+      404,
+      `This license was cancelled${
+        document.refunded ? " because the order was refunded" : ""
+      }`,
+    );
   }
 
   // generate license key file object
