@@ -36,7 +36,7 @@ function makeObjcArray(items: unknown[], indent = 1) {
       result.push(space(indent) + makeObjcScalar(item));
     }
   }
-  return `@[\n${result.join(",\n")}\n${space(indent - 1)}]`;
+  return `@[\n${result.join(",\n")},\n${space(indent - 1)}]`;
 }
 function makeObjcObject(item: object, indent = 1) {
   const result: string[] = [];
@@ -49,5 +49,5 @@ function makeObjcObject(item: object, indent = 1) {
       result.push(space(indent) + `@"${k}": ${makeObjcScalar(v)}`);
     }
   }
-  return `@{\n${result.join(",\n")}\n${space(indent - 1)}}`;
+  return `@{\n${result.join(",\n")},\n${space(indent - 1)}}`;
 }

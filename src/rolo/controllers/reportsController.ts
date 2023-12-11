@@ -143,5 +143,10 @@ async function generateVoidLicenseKeysReport(
   const result = await licenseKeysCollection(auth.kind)
     .aggregate(pipeline)
     .next();
+
+  // sort each array of hashes
+  for (const product in result) {
+    result[product].sort();
+  }
   return result;
 }
