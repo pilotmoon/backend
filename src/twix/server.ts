@@ -113,7 +113,6 @@ await waitFor("Remote config server", remoteConfigReady);
 await waitFor("Rolo", async () => (await fetch(`${config.ROLO_URL}/`)).ok);
 
 await assertSuccess([
-  housekeep(),
   initPaddle(),
   initEmail(),
   initReports(),
@@ -121,6 +120,6 @@ await assertSuccess([
   initCatalog(),
   initDirectoryRouter(),
 ]);
-
+await housekeep();
 log("Startup complete".green);
 startServer();

@@ -135,11 +135,11 @@ process.on("SIGINT", async () => {
 log("Calling startup routines".green);
 await connectDb(); // connect to database first
 await assertSuccess([
-  housekeep(),
   initLogAccess(),
   initApiKeysController(),
   initRegistriesController(),
   initLicenseKeysController(),
 ]);
+housekeep();
 log("Startup complete".green);
 startServer();
