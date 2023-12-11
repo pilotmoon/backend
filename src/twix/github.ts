@@ -74,12 +74,10 @@ export async function validateGithubWebhook(ctx: Koa.Context, next: Koa.Next) {
   if (
     ctx.request.headers["content-type"] === "application/x-www-form-urlencoded"
   ) {
-    const formBody = z
+    const { payload } = z
       .object({ payload: z.string() })
-      .safeParse(ctx.request.body);
-    if (formBody.success) {
-      ctx.request.body = JSON.parse(formBody.data.payload);
-    }
+      .parse(ctx.request.body);
+    ctx.request.body = JSON.parse(payload);
   }
 
   await next();
