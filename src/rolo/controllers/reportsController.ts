@@ -1,5 +1,6 @@
 // const collectionName = "licenseKeys";
 
+import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { Auth, AuthKind } from "../auth.js";
@@ -127,9 +128,9 @@ async function generateLicenseKeysReport(
 // each license key has "hashes" field which is an array of strings.
 async function generateVoidLicenseKeysReport(
   auth: Auth,
-  gteDate: Date,
-  ltDate: Date,
-  query: Record<string, string>,
+  _gteDate: Date,
+  _ltDate: Date,
+  _query: Record<string, string>,
 ) {
   const pipeline = [
     { $match: { void: true } },
@@ -139,14 +140,9 @@ async function generateVoidLicenseKeysReport(
     { $group: { _id: null, data: { $push: { k: "$_id", v: "$hashes" } } } },
     { $replaceRoot: { newRoot: { $arrayToObject: "$data" } } },
   ];
-
-  const result = await licenseKeysCollection(auth.kind)
-    .aggregate(pipeline)
-    .next();
-
-  // sort each array of hashes
-  for (const product in result) {
-    result[product].sort();
-  }
-  return result;
+  const report = z
+    .record(z.array(z.string()))
+    .parse(await licenseKeysCollection(auth.kind).aggregate(pipeline).next());
+  for (const hashes of Object.values(report)) hashes.sort();
+  return report;
 }
