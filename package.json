@@ -17,6 +17,9 @@
     "content-type": "1.0.5",
     "cron": "2.4.3",
     "emoji-regex": "10.2.1",
+    "graphql": "16.8.1",
+    "graphql-request": "6.1.0",
+    "ip-cidr": "3.1.0",
     "koa": "2.14.1",
     "koa-bodyparser": "4.3.0",
     "lodash": "4.17.21",
@@ -31,6 +34,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "7.6.0",
+    "@types/jsbn": "1.2.33",
     "@types/koa": "2.13.5",
     "@types/koa__cors": "4.0.1",
     "@types/koa__router": "12.0.0",

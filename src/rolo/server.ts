@@ -89,9 +89,9 @@ app.use(mainRouter.routes());
 app.use(mainRouter.allowedMethods());
 
 // housekeeping tasks
-function housekeep() {
+async function housekeep() {
   log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
-  housekeepLogAccess();
+  await housekeepLogAccess();
 }
 const housekeepingTimer = setInterval(housekeep, hours(1));
 
@@ -140,6 +140,6 @@ await assertSuccess([
   initRegistriesController(),
   initLicenseKeysController(),
 ]);
-housekeep();
+await housekeep();
 log("Startup complete".green);
 startServer();

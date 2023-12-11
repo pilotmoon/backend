@@ -10,19 +10,17 @@ import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { hours } from "../common/timeIntervals.js";
 import { config } from "./config.js";
-import {
-  housekeep as housekeepDirectoryRouter,
-  router as directoryRouter,
-} from "./directory/directoryRouter.js";
-import { init as initDirectoryRouter } from "./directory/directoryRouter.js";
+import { router as directoryRouter } from "./directory/directoryRouter.js";
 import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
+import { housekeep as housekeepGithub, init as initGithub } from "./github.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { remoteConfigReady } from "./remoteConfig.js";
 import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
+
 const router = new Router();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
@@ -69,9 +67,9 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 // housekeeping tasks
-function housekeep() {
+async function housekeep() {
   log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
-  housekeepDirectoryRouter();
+  await housekeepGithub();
 }
 const housekeepingTimer = setInterval(housekeep, hours(1));
 
@@ -118,7 +116,7 @@ await assertSuccess([
   initReports(),
   initStore(),
   initCatalog(),
-  initDirectoryRouter(),
+  initGithub(),
 ]);
 await housekeep();
 log("Startup complete".green);
