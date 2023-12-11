@@ -3,7 +3,7 @@ export function seconds(n: number) {
   return 1000 * n;
 }
 export function minutes(n: number) {
-  return seconds(n);
+  return seconds(60) * n;
 }
 export function hours(n: number) {
   return minutes(60) * n;

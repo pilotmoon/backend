@@ -57,7 +57,7 @@ export async function housekeep() {
   githubCidrs = meta.hookIpAddresses.map((ip: string) => new IPCIDR(ip));
 }
 
-// middleware to verify that the request came from github
+// middleware to validate and cook the request from github
 export async function validateGithubWebhook(ctx: Koa.Context, next: Koa.Next) {
   // check the source ip
   const ip = ctx.request.ip;
