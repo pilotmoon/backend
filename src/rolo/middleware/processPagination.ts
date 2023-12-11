@@ -3,16 +3,16 @@ import { ApiError } from "../../common/errors.js";
 import { ZPagination } from "../paginate.js";
 
 export function processPagination() {
-  return async function (ctx: Context, next: Next) {
+  return async (ctx: Context, next: Next) => {
     function getQueryString(name: string) {
       const value = ctx.query[name];
       if (typeof value === "undefined" || typeof value === "string") {
         return value;
-      } else if (Array.isArray(value)) {
-        throw new ApiError(400, `duplicated ${name} parameter in query`);
-      } else {
-        throw new ApiError(400, `problem with ${name} parameter in query`);
       }
+      if (Array.isArray(value)) {
+        throw new ApiError(400, `duplicated ${name} parameter in query`);
+      }
+      throw new ApiError(400, `problem with ${name} parameter in query`);
     }
     function getQueryInteger(name: string, defaultValue: number) {
       const result = Number(getQueryString(name) ?? defaultValue);

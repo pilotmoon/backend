@@ -7,14 +7,13 @@ import { collectionNames } from "./identifiers.js";
 // all operations initiated by the api key happen against the corresponding
 // database, and the api key is only valid for that database.
 export const authKinds = ["test", "live"] as const;
-export type AuthKind = typeof authKinds[number];
+export type AuthKind = (typeof authKinds)[number];
 
 // schema for the part of the auth context that can be set by the client
 export const ZSettableAuthContext = z.object({
   scopes: z.array(z.string()),
   expires: z.date().optional(),
 });
-type SettableAuthContext = z.infer<typeof ZSettableAuthContext>;
 
 // Schema for the pertinent auth info of a key, including the key kind (test or live)
 // which is derived from the auth context used to create the key.
@@ -52,7 +51,7 @@ export class Auth implements AuthInfo {
 
   // check whether the context is authorized to perform the given action with the given resource.
   assertAccess(
-    collectionName: typeof collectionNames[number],
+    collectionName: (typeof collectionNames)[number],
     resource: string | undefined,
     action: "create" | "read" | "update" | "delete",
   ) {

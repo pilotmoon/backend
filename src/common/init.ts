@@ -1,6 +1,5 @@
 import { log } from "../common/log.js";
 
-// wait for rolo
 export async function waitFor(desc: string, readyFn: () => Promise<boolean>) {
   let retries = 0;
   let done = false;
@@ -16,5 +15,13 @@ export async function waitFor(desc: string, readyFn: () => Promise<boolean>) {
     log(`${desc} is ready`.black.bgGreen);
   } else {
     throw new Error(`${desc} timed out`);
+  }
+}
+
+export async function assertSuccess(promises: unknown[]) {
+  for (const result of await Promise.allSettled(promises)) {
+    if (result.status === "rejected") {
+      throw result.reason;
+    }
   }
 }

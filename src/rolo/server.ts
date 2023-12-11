@@ -1,7 +1,8 @@
 import "colors";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../common/errors.js";
-import { log } from "../common/log.js";
+import { assertSuccess } from "../common/init.js";
+import { log, loge } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { config } from "./config.js";
@@ -52,11 +53,11 @@ rootRouter.get("/", (ctx) => {
 const app = makeServer();
 
 // function that routers can use for generating url for Location header
-app.context.getLocation = function (
+app.context.getLocation = (
   name: string,
   params?: Record<string, string>,
   query?: Record<string, string>,
-) {
+) => {
   let result = mainRouter.url(name, params);
   if (result instanceof Error) throw result;
   if (query) {
@@ -89,7 +90,7 @@ app.use(mainRouter.allowedMethods());
 
 // housekeeping tasks
 function housekeep() {
-  log(`Housekeeping ${new Date().getTime()}`.bgYellow);
+  log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
   housekeepLogAccess();
 }
 const housekeepingTimer = setInterval(housekeep, hours(1));
@@ -133,9 +134,8 @@ process.on("SIGINT", async () => {
 // app startup
 log("Calling startup routines".green);
 await connectDb(); // connect to database first
-await Promise.allSettled([
-  // run all other startup routines in parallel
-  housekeep(), // run housekeeping once at startup
+await assertSuccess([
+  housekeep(),
   initLogAccess(),
   initApiKeysController(),
   initRegistriesController(),

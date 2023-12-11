@@ -1,24 +1,26 @@
 export function makeObjc(obj: unknown) {
   if (Array.isArray(obj)) {
     return makeObjcArray(obj);
-  } else if (typeof obj === "object" && obj !== null) {
-    return makeObjcObject(obj);
-  } else {
-    return makeObjcScalar(obj);
   }
+  if (typeof obj === "object" && obj !== null) {
+    return makeObjcObject(obj);
+  }
+  return makeObjcScalar(obj);
 }
 function makeObjcScalar(item: unknown) {
   if (item === null) {
     return "[NSNull null]";
-  } else if (typeof item === "string") {
-    return `@"${item}"`;
-  } else if (typeof item === "number") {
-    return `@(${item})`;
-  } else if (typeof item === "boolean") {
-    return item ? "@YES" : "@NO";
-  } else {
-    throw new Error(`Can't format objective-c type for: ${typeof item}`);
   }
+  if (typeof item === "string") {
+    return `@"${item}"`;
+  }
+  if (typeof item === "number") {
+    return `@(${item})`;
+  }
+  if (typeof item === "boolean") {
+    return item ? "@YES" : "@NO";
+  }
+  throw new Error(`Can't format objective-c type for: ${typeof item}`);
 }
 function space(indent: number) {
   return " ".repeat(indent * 2);

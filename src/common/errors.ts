@@ -14,7 +14,8 @@ export class ApiError extends Error {
 export function handleControllerError(error: unknown) {
   if (error instanceof MongoServerError && error.code === 11000) {
     throw new ApiError(409, "Unique constraint violation");
-  } else if (error instanceof ZodError) {
+  }
+  if (error instanceof ZodError) {
     throw new ApiError(500, `Invalid document: ${error.message}`);
   }
 }
@@ -77,9 +78,8 @@ function httpStatusString(code: number, { showCode = true } = {}) {
   const string = STATUS_CODES[code];
   if (string) {
     return showCode ? `${code} ${string}` : string;
-  } else {
-    return "???";
   }
+  return "???";
 }
 
 // pretty print status code for logging

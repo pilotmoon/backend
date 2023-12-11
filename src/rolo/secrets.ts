@@ -28,10 +28,9 @@ const dummyKey = Buffer.alloc(32);
 function getSecretKey() {
   if (secretKey) {
     return secretKey;
-  } else {
-    logw("Using dummy encryption key");
-    return dummyKey;
   }
+  logw("Using dummy encryption key");
+  return dummyKey;
 }
 
 // encrypt a string to a buffer using the specified key kind
