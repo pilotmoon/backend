@@ -12,7 +12,7 @@ router.get("/health", async (ctx) => {
   const health = { object: "health" } as Record<string, unknown>;
 
   // add random string to response
-  health.name = "Pilotmoon API Server v2";
+  health.name = "Pilotmoon API Server";
   health.random = randomString({ length: 10 });
 
   // insert date and uptime
