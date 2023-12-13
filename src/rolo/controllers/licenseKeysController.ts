@@ -373,13 +373,16 @@ function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
   const pipeline: Document[] = [];
 
   // match on query
-  const preMatch: Document = {};
-  assignMatch(preMatch, "emailHash", q, "email", hashEmail);
-  assignMatch(preMatch, "origin", q, "origin");
-  assignMatch(preMatch, "order", q, "order");
-  assignMatch(preMatch, "void", q, "void", booleanFromString);
-  assignMatch(preMatch, "refunded", q, "refunded", booleanFromString);
-  pipeline.push({ $match: preMatch });
+  const $match: Document = {};
+  assignMatch($match, "emailHash", q, "email", hashEmail);
+  assignMatch($match, "origin", q, "origin");
+  assignMatch($match, "order", q, "order");
+  assignMatch($match, "void", q, "void", booleanFromString);
+  assignMatch($match, "refunded", q, "refunded", booleanFromString);
+  assignMatch($match, "originData.p_coupon", q, "couponPrefix", (val) => {
+    return { $regex: `^${val}` };
+  });
+  pipeline.push({ $match });
 
   switch (q.view) {
     case View.Financial:
@@ -410,13 +413,6 @@ function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
       });
     default:
   }
-
-  // match parts that need to be done after the view
-  const postMatch: Document = {};
-  assignMatch(postMatch, "coupon", q, "couponPrefix", (val) => {
-    return { $regex: `^${val}` };
-  });
-  pipeline.push({ $match: postMatch });
 
   return pipeline;
 }
