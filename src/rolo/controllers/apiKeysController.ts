@@ -158,8 +158,8 @@ export async function readApiKey(
 // List API keys. This is a paginated list. The default order is by
 // creation date, descending. Only the first `limit` keys are returned.
 // The `offset` parameter can be used to skip the first `offset` keys.
-// The `orderBy` and `order` parameters can be used to change the sort order.
-// The `order` parameter can be either "1" or "-1" to sort ascending or descending.
+// The `sortBy` and `sort` parameters can be used to change the sort order.
+// The `sort` parameter can be either "1" or "-1" to sort ascending or descending.
 // Throws an internal server error if the database returns a document that
 // does not match the schema.
 export async function listApiKeys(

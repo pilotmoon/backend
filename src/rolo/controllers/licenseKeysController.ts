@@ -1,7 +1,10 @@
 import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
+import { Document } from "mongodb";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
+import { log } from "../../common/log.js";
 import {
+  ZSaneAlphanum,
   ZSaneDate,
   ZSaneEmail,
   ZSaneIdentifier,
@@ -340,22 +343,100 @@ export async function updateLicenseKey(
   }
 }
 
-export const ZLicenseKeysQuery = z.object({
-  emailHash: z.string().optional(),
+/* Utils to move somewhere */
+function assignMatch(
+  doc: Document,
+  docKey: string,
+  query: Record<string, unknown>,
+  queryKey: string,
+  transform?: (val: string) => Document | string | boolean,
+) {
+  const val = query[queryKey];
+  if (typeof val === "string") {
+    doc[docKey] = transform ? transform(val) : val;
+  }
+}
+
+function booleanFromString(val: string): boolean {
+  return val === "1";
+}
+/* end utils */
+
+// available views for license key records
+enum View {
+  Default = "default",
+  Financial = "financial",
+}
+
+function matchDocument(q: z.infer<typeof ZLicenseKeysQuery>) {
+  const m: Document = {};
+  assignMatch(m, "emailHash", q, "email", hashEmail);
+  assignMatch(m, "origin", q, "origin");
+  assignMatch(m, "order", q, "order");
+  assignMatch(m, "void", q, "void", booleanFromString);
+  assignMatch(m, "refunded", q, "refunded", booleanFromString);
+  assignMatch(m, "coupon", q, "couponPrefix", (val) => {
+    return { $regex: `^${val}` };
+  });
+  console.log(m);
+  return m;
+}
+
+function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
+  const pipeline: Document[] = [{ $match: matchDocument(q) }];
+  switch (q.view) {
+    case View.Financial:
+      pipeline.push({
+        $project: {
+          object: "licenseKeyFinancialView",
+          created: 1,
+          product: { $ifNull: ["$product", ""] },
+          origin: { $ifNull: ["$origin", ""] },
+          order: { $ifNull: ["$order", ""] },
+          coupon: { $ifNull: ["$originData.p_coupon", ""] },
+          country: { $ifNull: ["$originData.p_country", ""] },
+          currency: { $ifNull: ["$originData.p_currency", ""] },
+          saleGross: {
+            $cond: {
+              if: "$refunded",
+              then: "0.00",
+              else: { $ifNull: ["$originData.p_sale_gross", ""] },
+            },
+          },
+          status: { $cond: { if: "$refunded", then: "refunded", else: "" } },
+        },
+      });
+      break;
+    default:
+  }
+  return pipeline;
+}
+
+// recognised query parameters for listing license keys
+const ZLicenseKeysQuery = z.object({
+  email: z.string().optional(),
   origin: ZSaneString.optional(),
   order: ZSaneString.optional(),
+  void: z.string().optional(),
+  refunded: z.string().optional(),
+  couponPrefix: ZSaneAlphanum.optional(),
+  view: z.nativeEnum(View).optional(),
 });
-export type LicenseKeysQuery = z.infer<typeof ZLicenseKeysQuery>;
+
 export async function listLicenseKeys(
-  query: LicenseKeysQuery,
+  query: unknown,
   pagination: Pagination,
   auth: Auth,
-): Promise<LicenseKeyRecord[]> {
+): Promise<Document[]> {
   auth.assertAccess(collectionName, undefined, "read");
-  const docs = await paginate(dbc(auth.kind), pagination, query);
+  const docs = await paginate(
+    dbc(auth.kind),
+    pagination,
+    getPipeline(ZLicenseKeysQuery.parse(query)),
+  );
   try {
     for (const doc of docs) decryptInPlace(doc);
-    return docs.map((doc) => ZLicenseKeyRecord.parse(doc));
+    return docs;
   } catch (error) {
     handleControllerError(error);
     throw error;

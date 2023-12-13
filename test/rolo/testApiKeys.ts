@@ -208,7 +208,7 @@ test("list api keys", async (t) => {
   t.is(res.data.object, "list");
   t.is(res.status, 200);
   t.is(res.data.items.length, 4);
-  t.like(res.data.pagination, { limit: 4, offset: 0, order: -1 });
+  t.like(res.data.pagination, { limit: 4, offset: 0, sort: -1 });
   t.is(res.data.items[0].key, undefined);
   const lastKey = Object.keys(keys()).at(-1) as string;
   t.is(res.data.items[0].id, (keys() as any)[lastKey].id);
@@ -230,7 +230,7 @@ test("list api keys, limit negative", async (t) => {
 });
 
 test("list api keys, limit too large", async (t) => {
-  const res = await rolo().get("apiKeys?limit=1000");
+  const res = await rolo().get("apiKeys?limit=10001");
   t.is(res.status, 400);
 });
 
@@ -247,16 +247,16 @@ test("list api keys, offset too large", async (t) => {
 });
 
 test("list api keys, order ascending", async (t) => {
-  const res = await rolo().get("apiKeys?order=1");
+  const res = await rolo().get("apiKeys?sort=1");
   t.is(res.data.object, "list");
   t.is(res.status, 200);
-  t.like(res.data.pagination, { limit: 10, offset: 0, order: 1 });
+  t.like(res.data.pagination, { limit: 10, offset: 0, sort: 1 });
 });
 
 test("list api keys, order invalid", async (t) => {
-  const res = await rolo().get("apiKeys?order=2");
+  const res = await rolo().get("apiKeys?sort=2");
   t.is(res.status, 400);
-  const res2 = await rolo().get("apiKeys?order=a");
+  const res2 = await rolo().get("apiKeys?sort=a");
   t.is(res2.status, 400);
 });
 
@@ -275,7 +275,7 @@ test("list api keys, limit and offset", async (t) => {
   t.is(res.data.object, "list");
   t.is(res.status, 200);
   t.is(res.data.items.length, 3);
-  t.like(res.data.pagination, { limit: 3, offset: 2, order: -1 });
+  t.like(res.data.pagination, { limit: 3, offset: 2, sort: -1 });
   t.is(
     res.data.items[0].id,
     (keys() as any)[Object.keys(keys()).at(-3) as string].id,

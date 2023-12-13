@@ -17,7 +17,7 @@ const reportGenerators: Record<
   (
     auth: Auth,
     gteDate: Date,
-    getDate: Date,
+    ltDate: Date,
     query: Record<string, string>,
   ) => object
 > = {

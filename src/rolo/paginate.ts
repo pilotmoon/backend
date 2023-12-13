@@ -5,9 +5,9 @@ import { log } from "../common/log.js";
 
 export const ZPagination = z.object({
   offset: z.number().int().min(0),
-  limit: z.number().int().min(1).max(100),
-  order: z.literal(1).or(z.literal(-1)),
-  orderBy: z.literal("created"),
+  limit: z.number().int().min(1).max(10000),
+  sort: z.literal(1).or(z.literal(-1)),
+  sortBy: z.literal("created"),
   cursor: z.string().optional(),
   gteDate: z.coerce.date().optional(),
   ltDate: z.coerce.date().optional(),
@@ -25,9 +25,11 @@ export const distantPast = new Date(-maxTime);
 export async function paginate<T extends Document>(
   collection: Collection<T>,
   pagination: Pagination,
-  match: Record<string, unknown> = {},
+  customPipeline?: Document[],
 ): Promise<Array<T>> {
-  // add date filtering to the match filter
+  const pipeline: Document[] = [];
+
+  // add date filtering if dates are provided
   if (pagination.gteDate || pagination.ltDate) {
     const created = {} as Document;
     if (pagination.gteDate) {
@@ -36,11 +38,13 @@ export async function paginate<T extends Document>(
     if (pagination.ltDate) {
       created.$lt = pagination.ltDate;
     }
-    match.created = created;
+    pipeline.push({ $match: { created } });
   }
 
-  // standard aggregation pipeline with no cursor is just a match stage
-  const pipeline: Document[] = [{ $match: match }];
+  // add custom pipeline if provided
+  if (customPipeline) {
+    pipeline.push(...customPipeline);
+  }
 
   // add cursor filtering to the pipeline if a cursor is provided
   if (pagination.cursor) {
@@ -48,9 +52,10 @@ export async function paginate<T extends Document>(
   }
 
   // add sorting and skipping
+  log("paginate", { pipeline, pagination });
   const resultsCursor = collection
     .aggregate(pipeline)
-    .sort({ created: pagination.order, _id: pagination.order })
+    .sort({ created: pagination.sort, _id: pagination.sort })
     .skip(pagination.offset)
     .limit(pagination.limit);
 
@@ -61,7 +66,7 @@ function cursorPipeline<T extends Document>(
   collection: Collection<T>,
   pagination: Pagination,
 ) {
-  const comparison = pagination.order === 1 ? "$gt" : "$lt";
+  const comparison = pagination.sort === 1 ? "$gt" : "$lt";
   return [
     {
       // the lookup stage finds documents matching the cursor id

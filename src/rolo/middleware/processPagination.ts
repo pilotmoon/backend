@@ -25,8 +25,8 @@ export function processPagination() {
     ctx.state.pagination = ZPagination.parse({
       offset: getQueryInteger("offset", 0),
       limit: getQueryInteger("limit", 10),
-      order: getQueryInteger("order", -1),
-      orderBy: "created",
+      sort: getQueryInteger("sort", -1),
+      sortBy: "created",
       cursor: getQueryString("cursor"),
       gteDate: getQueryString("gteDate"),
       ltDate: getQueryString("ltDate"),

@@ -1,29 +1,27 @@
 import { randomUUID } from "node:crypto";
 import TTLCache from "@isaacs/ttlcache";
 import { create as createCDH } from "content-disposition-header";
-import { Context } from "koa";
 import _ from "lodash";
-import { Document } from "mongodb";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { minutes } from "../../common/timeIntervals.js";
 import { AuthKind } from "../auth.js";
 import {
   LicenseKeyRecord,
-  LicenseKeysQuery,
   ZLicenseKeyInfo,
+  ZLicenseKeyRecord,
   ZLicenseKeyUpdate,
-  ZLicenseKeysQuery,
   createLicenseKey,
   generateLicenseFile,
   getProductConfig,
-  hashEmail,
   listLicenseKeys,
   readLicenseKey,
   updateLicenseKey,
 } from "../controllers/licenseKeysController.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
+import { makeCsv } from "../makeCsv.js";
+import { makeObjc } from "../makeObjc.js";
 import { generateEncryptedToken } from "../token.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
@@ -58,8 +56,8 @@ function generateToken(id: string, kind: AuthKind): string {
   return result;
 }
 
-// common routine to get full response body
-async function getCommonBody(document: LicenseKeyRecord, ctx: AppContext) {
+// return full response body including license file and download URL
+async function expand(document: LicenseKeyRecord, ctx: AppContext) {
   const license = await generateLicenseFile(document, ctx.state.auth.kind);
   const token = generateToken(document._id, ctx.state.auth.kind);
   const url = ctx.getLocation(matchFile.uuid, { id: document._id }, { token });
@@ -82,39 +80,36 @@ router.post("/", async (ctx) => {
   }
 
   const document = await createLicenseKey(data, ctx.state.auth);
-  ctx.body = await getCommonBody(document, ctx);
+  ctx.body = await expand(document, ctx);
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
 
-async function list(query: LicenseKeysQuery, ctx: AppContext) {
+// list license keys
+router.get("/", async (ctx) => {
   const documents = await listLicenseKeys(
-    ZLicenseKeysQuery.parse(query),
+    ctx.query,
     ctx.state.pagination,
     ctx.state.auth,
   );
-  return await Promise.all(
-    documents.map((document) => getCommonBody(document, ctx)),
-  );
-}
-// list license keys
-router.get("/", async (ctx) => {
-  ctx.body = await list({}, ctx);
+  if (ctx.query.format === "csv") {
+    ctx.set("Content-Type", "text/csv");
+    ctx.body = makeCsv(documents);
+  } else {
+    ctx.body = await Promise.all(
+      documents.map((document) => {
+        const parsed = ZLicenseKeyRecord.safeParse(document);
+        return parsed.success ? expand(parsed.data, ctx) : document;
+      }),
+    );
+  }
 });
-router.get("/byEmail/:email", async (ctx) => {
-  ctx.body = await list({ emailHash: hashEmail(ctx.params.email) }, ctx);
-});
-router.get("/byOrigin/:origin", async (ctx) => {
-  ctx.body = await list({ origin: ctx.params.origin }, ctx);
-});
-router.get("/byOrder/:order", async (ctx) => {
-  ctx.body = await list({ order: ctx.params.order }, ctx);
-});
+
 // Get a license key by id
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readLicenseKey(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = await getCommonBody(document, ctx);
+    ctx.body = await expand(document, ctx);
   }
 });
 

@@ -283,7 +283,7 @@ test("retreive last 10 license keys in default (descending) order", async (t) =>
 
 test("retreive last 10 license keys in ascending order", async (t) => {
   const res = await rolo().get(
-    `licenseKeys?limit=10&order=1&gteDate=${test10Date.toISOString()}`,
+    `licenseKeys?limit=10&sort=1&gteDate=${test10Date.toISOString()}`,
   );
   t.is(res.status, 200);
   t.log(res.data);
@@ -297,7 +297,7 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
   let cursor: string | undefined;
   for (let i = 0; i < 2; i++) {
     const res = await rolo().get(
-      `licenseKeys?limit=5&order=-1&gteDate=${test10Date.toISOString()}${
+      `licenseKeys?limit=5&sort=-1&gteDate=${test10Date.toISOString()}${
         cursor ? `&cursor=${cursor}` : ""
       }`,
     );
@@ -312,7 +312,7 @@ test("retrieve last 10 license keys in descending order, 5 at a time, using curs
 });
 
 test("retreive license key by email", async (t) => {
-  const res = await rolo().get("licenseKeys/byEmail/foo1@example.com?limit=1");
+  const res = await rolo().get("licenseKeys?email=foo1@example.com&limit=1");
   t.is(res.status, 200);
   t.log(res.data);
   t.is(res.data.object, "list");
@@ -322,7 +322,7 @@ test("retreive license key by email", async (t) => {
 
 test("retreive license key by email, fuzzy test", async (t) => {
   const res = await rolo().get(
-    "licenseKeys/byEmail/foo1+fish@example.com?limit=1",
+    "licenseKeys?email=foo1%2Bfish@example.com&limit=1",
   );
   t.is(res.status, 200);
   t.log(res.data);
@@ -332,7 +332,7 @@ test("retreive license key by email, fuzzy test", async (t) => {
 });
 
 test("retreive license key by origin", async (t) => {
-  const res = await rolo().get("licenseKeys/byOrigin/test10?offset=1&limit=1");
+  const res = await rolo().get("licenseKeys?origin=test10&offset=1&limit=1");
   t.is(res.status, 200);
   t.log(res.data);
   t.is(res.data.object, "list");

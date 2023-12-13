@@ -1,3 +1,4 @@
+import axios, { AxiosInstance } from "axios";
 import { GraphQLClient, gql } from "graphql-request";
 import IPCIDR from "ip-cidr";
 import Koa from "koa";
@@ -5,7 +6,6 @@ import { z } from "zod";
 import { ApiError } from "../common/errors.js";
 import { log } from "../common/log.js";
 import { getRemoteConfig } from "./remoteConfig.js";
-import axios, { AxiosInstance } from "axios";
 
 let githubRest: AxiosInstance;
 let githubGql: GraphQLClient;

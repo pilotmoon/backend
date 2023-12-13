@@ -9,3 +9,7 @@ export const ZSaneIdentifier = z
   .string()
   .regex(/^[0-9a-zA-Z]+([-_.][0-9a-zA-Z]+)*$/)
   .max(100);
+export const ZSaneAlphanum = z
+  .string()
+  .regex(/^[0-9a-zA-Z]+$/)
+  .max(100);

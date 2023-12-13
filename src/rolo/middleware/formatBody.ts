@@ -2,7 +2,6 @@ import { Context, Next } from "koa";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers.js";
-import { Pagination } from "../paginate.js";
 
 // replace _id with id
 function replaceId(obj: { _id?: string; id?: string }) {
@@ -28,6 +27,8 @@ const ZObject = z
 const ZList = z
   .object({
     object: z.literal("list"),
+    pagination: z.record(z.unknown()),
+    count: z.number().int().min(0),
     items: z.array(ZObject),
   })
   .passthrough();
@@ -58,18 +59,12 @@ export async function formatBody(ctx: Context, next: Next) {
     throw new ApiError(406, "Client does not accept JSON");
   }
 
-  let newBody:
-    | Record<string, unknown>
-    | {
-        object: "list";
-        pagination: Pagination;
-        items: Record<string, unknown>[];
-        livemode: boolean;
-      };
+  let newBody: Record<string, unknown>;
   if (Array.isArray(ctx.body)) {
     // if array, wrap in list object
     newBody = {
       object: "list",
+      count: ctx.body.length,
       pagination: ctx.state.pagination,
       items: ctx.body.map(replaceId),
     };
