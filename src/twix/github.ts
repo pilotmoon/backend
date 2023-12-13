@@ -5,14 +5,18 @@ import { z } from "zod";
 import { ApiError } from "../common/errors.js";
 import { log } from "../common/log.js";
 import { getRemoteConfig } from "./remoteConfig.js";
-// import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance } from "axios";
 
-// let githubRest: AxiosInstance;
+let githubRest: AxiosInstance;
 let githubGql: GraphQLClient;
 let githubCidrs: IPCIDR[];
 
-export function client() {
+export function gqlClient() {
   return githubGql;
+}
+
+export function restClient() {
+  return githubRest;
 }
 
 // load credentials from remote config and set up the github client
@@ -21,13 +25,14 @@ export async function init() {
     .object({ accessToken: z.string() })
     .parse(await getRemoteConfig("github_api"));
 
-  // githubRest = axios.create({
-  //   baseURL: "https://api.github.com",
-  //   headers: {
-  //     Authorization: `Bearer ${accessToken}`,
-  //     "X-GitHub-Api-Version": "2022-11-28",
-  //   },
-  // });
+  githubRest = axios.create({
+    baseURL: "https://api.github.com",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "X-GitHub-Api-Version": "2022-11-28",
+      Accept: "application/vnd.github+json",
+    },
+  });
 
   githubGql = new GraphQLClient("https://api.github.com/graphql", {
     headers: {
@@ -52,7 +57,7 @@ export async function housekeep() {
         hookIpAddresses: z.array(z.string()),
       }),
     })
-    .parse(await client().request(document));
+    .parse(await gqlClient().request(document));
   log("github meta", meta);
   githubCidrs = meta.hookIpAddresses.map((ip: string) => new IPCIDR(ip));
 }
