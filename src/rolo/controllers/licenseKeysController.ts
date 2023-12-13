@@ -366,24 +366,21 @@ function booleanFromString(val: string): boolean {
 enum View {
   Default = "default",
   Financial = "financial",
-}
-
-function matchDocument(q: z.infer<typeof ZLicenseKeysQuery>) {
-  const m: Document = {};
-  assignMatch(m, "emailHash", q, "email", hashEmail);
-  assignMatch(m, "origin", q, "origin");
-  assignMatch(m, "order", q, "order");
-  assignMatch(m, "void", q, "void", booleanFromString);
-  assignMatch(m, "refunded", q, "refunded", booleanFromString);
-  assignMatch(m, "coupon", q, "couponPrefix", (val) => {
-    return { $regex: `^${val}` };
-  });
-  console.log(m);
-  return m;
+  Redacted = "redacted",
 }
 
 function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
-  const pipeline: Document[] = [{ $match: matchDocument(q) }];
+  const pipeline: Document[] = [];
+
+  // match on query
+  const preMatch: Document = {};
+  assignMatch(preMatch, "emailHash", q, "email", hashEmail);
+  assignMatch(preMatch, "origin", q, "origin");
+  assignMatch(preMatch, "order", q, "order");
+  assignMatch(preMatch, "void", q, "void", booleanFromString);
+  assignMatch(preMatch, "refunded", q, "refunded", booleanFromString);
+  pipeline.push({ $match: preMatch });
+
   switch (q.view) {
     case View.Financial:
       pipeline.push({
@@ -407,8 +404,20 @@ function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
         },
       });
       break;
+    case View.Redacted:
+      pipeline.push({
+        $unset: ["email", "name"],
+      });
     default:
   }
+
+  // match parts that need to be done after the view
+  const postMatch: Document = {};
+  assignMatch(postMatch, "coupon", q, "couponPrefix", (val) => {
+    return { $regex: `^${val}` };
+  });
+  pipeline.push({ $match: postMatch });
+
   return pipeline;
 }
 

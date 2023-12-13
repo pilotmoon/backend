@@ -68,7 +68,7 @@ export function stop() {
 
 async function testReport() {
   summaryReport("reportstest@pilotmoon.com", "test");
-  // studentAppCentreReport();
+  studentAppCentreReport("reportstest@pilotmoon.com", "live");
 }
 
 async function summaryReport(
@@ -113,6 +113,7 @@ async function summaryReport(
 
 async function studentAppCentreReport(
   overrideTo: string | undefined = undefined,
+  keyKind: AuthKind = "live",
 ) {
   try {
     log("Student App Centre report", new Date());
@@ -127,13 +128,16 @@ async function studentAppCentreReport(
     firstOfMonthMinus2.setUTCMonth(firstOfThisMonth.getMonth() - 2); // 1st of month-2 at 00:00:00
 
     // fetch the STU coupon codes report
-    const api = getRolo("live");
-    const { data: csvText } = await api.get("reports/licenseKeys", {
+    const api = getRolo(keyKind);
+    const { data: csvText } = await api.get("licenseKeys", {
       params: {
-        couponPrefix: "STU",
-        format: "csv",
         gteDate: firstOfMonthMinus2,
         ltDate: firstOfMonthMinus1,
+        couponPrefix: "STU",
+        view: "financial",
+        sort: 1,
+        limit: 5000,
+        format: "csv",
       },
     });
     // generate filename for attachment

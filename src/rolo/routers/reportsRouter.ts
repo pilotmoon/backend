@@ -31,30 +31,23 @@ router.get("/:name", async (ctx) => {
   // error if date range is invalid
   if (ltDate <= gteDate) throw new ApiError(400, "Invalid date range");
 
-  // convery query to record<string, string>
-  const query = Object.fromEntries(
-    Object.entries(ctx.query).map(([k, v]) => [k, String(v)]),
-  );
-
   const report = await generateReport(
     ctx.state.auth,
     gteDate,
     ltDate,
     ctx.params.name,
-    query,
   );
 
-  if (Array.isArray(report) && query.format === "csv") {
+  if (Array.isArray(report) && ctx.query.format === "csv") {
     ctx.set("Content-Type", "text/csv");
     ctx.body = makeCsv(report);
-  } else if (query.format === "objc") {
+  } else if (ctx.query.format === "objc") {
     ctx.set("Content-Type", "text/plain");
     ctx.body = makeObjc(report);
   } else {
     ctx.body = {
       object: "report",
       dateRange: [gteDate, ltDate],
-      query: query,
       reportType: ctx.params.name,
       report,
     };

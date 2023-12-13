@@ -21,7 +21,6 @@ import {
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { makeCsv } from "../makeCsv.js";
-import { makeObjc } from "../makeObjc.js";
 import { generateEncryptedToken } from "../token.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
