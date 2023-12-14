@@ -18,7 +18,7 @@ function makePlistScalar(item: unknown) {
     return `<date>${item.toISOString().slice(0, -5)}Z</date>`;
   }
   if (typeof item === "string") {
-    return `<string>${item}</string>`;
+    return item === "" ? "<string/>" : `<string>${item}</string>`;
   }
   if (typeof item === "number") {
     if (item % 1 === 0) {
