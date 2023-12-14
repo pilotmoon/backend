@@ -1,10 +1,8 @@
-import { AquaticPrime, LicenseDetails } from "@pilotmoon/aquatic-prime";
+import { AquaticPrime } from "@pilotmoon/aquatic-prime";
 import { Document } from "mongodb";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import {
-  ZSaneAlphanum,
   ZSaneDate,
   ZSaneEmail,
   ZSaneIdentifier,
@@ -21,7 +19,6 @@ import { Pagination, paginate } from "../paginate.js";
 import { ProductConfig, ZProductConfig } from "../product.js";
 import { sanitizeName } from "../sanitizeName.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
-import { sha256Hex } from "../sha256.js";
 import { getQueryPipeline } from "./licenseKeysQuery.js";
 import { getRegistryObjectInternal as getreg } from "./registriesController.js";
 /*
