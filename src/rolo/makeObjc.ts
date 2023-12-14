@@ -14,7 +14,7 @@ function makeObjcScalar(item: unknown) {
   if (typeof item === "string") {
     return `@"${item}"`;
   }
-  if (typeof item === "number" && isFinite(item)) {
+  if (typeof item === "number" && Number.isFinite(item)) {
     return `@${item}`;
   }
   if (typeof item === "boolean") {

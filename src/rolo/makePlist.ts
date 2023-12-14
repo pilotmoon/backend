@@ -23,9 +23,8 @@ function makePlistScalar(item: unknown) {
   if (typeof item === "number") {
     if (item % 1 === 0) {
       return `<integer>${item}</integer>`;
-    } else {
-      return `<real>${item}</real>`;
     }
+    return `<real>${item}</real>`;
   }
   if (typeof item === "boolean") {
     return item ? "<true/>" : "<false/>";
