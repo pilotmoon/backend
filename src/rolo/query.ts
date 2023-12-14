@@ -17,6 +17,11 @@ export function boolFromQueryValue(val: unknown, fallback: boolean) {
   return fallback;
 }
 
+// wrapper for boolFromQueryValue that extracts the value from a query object
+export function boolFromQuery(query: unknown, key: string, fallback: boolean) {
+  return boolFromQueryValue((query as Record<string, unknown>)[key], fallback);
+}
+
 // mongodb query for boolean flag field
 export function matchExpressionFromQueryValue(val: string) {
   if (val === "" || val === "1") {
