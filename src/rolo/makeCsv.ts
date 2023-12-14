@@ -34,7 +34,7 @@ export function makeCsv(obj: unknown) {
   if (rows.length === 0) {
     return "";
   }
-  const header = determineKeys(rows).filter((k) => k !== "object");
+  const header = determineKeys(rows);
   const body = rows.map((row) => makeCsvRow(row, header));
-  return [header.map((k) => (k === "_id" ? "id" : k)), ...body].join("\n");
+  return [header, ...body].join("\n");
 }

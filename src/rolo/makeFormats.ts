@@ -13,6 +13,10 @@ function preprocess(ctx: Context, obj: unknown) {
     if (extract) {
       return obj.map((item) => item[extract]);
     }
+    return obj.map((item) => {
+      const { _id, object, ...rest } = item;
+      return { id: _id, ...rest };
+    });
   }
   return obj;
 }
