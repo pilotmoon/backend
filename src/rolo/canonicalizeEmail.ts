@@ -1,3 +1,5 @@
+import { sha256Hex } from "./sha256.js";
+
 export function canonicalizeEmail(email: string) {
   // Split the email address into the local part and domain
   const [localPart, domain] = email.toLowerCase().split("@");
@@ -8,4 +10,8 @@ export function canonicalizeEmail(email: string) {
 
   // Return the canonicalized email address
   return `${canonicalLocalPart}@${domain}`;
+}
+
+export function hashEmail(email: string) {
+  return sha256Hex(canonicalizeEmail(email));
 }

@@ -13,7 +13,7 @@ import {
 } from "../../common/saneSchemas.js";
 import { Auth } from "../auth.js";
 import { AuthKind, authKinds } from "../auth.js";
-import { canonicalizeEmail } from "../canonicalizeEmail.js";
+import { hashEmail } from "../canonicalizeEmail.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
@@ -22,6 +22,7 @@ import { ProductConfig, ZProductConfig } from "../product.js";
 import { sanitizeName } from "../sanitizeName.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 import { sha256Hex } from "../sha256.js";
+import { getQueryPipeline } from "./licenseKeysQuery.js";
 import { getRegistryObjectInternal as getreg } from "./registriesController.js";
 /*
 
@@ -253,9 +254,6 @@ const ZLicenseFileObject = z.object({
 });
 type LicenseFileObject = z.infer<typeof ZLicenseFileObject>;
 
-export function hashEmail(email: string) {
-  return sha256Hex(canonicalizeEmail(email));
-}
 /*** C.R.U.D. Operations ***/
 
 // Create a new license key using the given info.
@@ -343,91 +341,6 @@ export async function updateLicenseKey(
   }
 }
 
-/* Utils to move somewhere */
-function assignMatch(
-  doc: Document,
-  docKey: string,
-  query: Record<string, unknown>,
-  queryKey: string,
-  transform?: (val: string) => Document | string | boolean,
-) {
-  const val = query[queryKey];
-  if (typeof val === "string") {
-    doc[docKey] = transform ? transform(val) : val;
-  }
-}
-
-function booleanFromString(val: string): boolean {
-  return val === "1";
-}
-/* end utils */
-
-// available views for license key records
-enum View {
-  Default = "default",
-  Financial = "financial",
-  Redacted = "redacted",
-}
-
-function getPipeline(q: z.infer<typeof ZLicenseKeysQuery>) {
-  const pipeline: Document[] = [];
-
-  // match on query
-  const $match: Document = {};
-  assignMatch($match, "emailHash", q, "email", hashEmail);
-  assignMatch($match, "origin", q, "origin");
-  assignMatch($match, "order", q, "order");
-  assignMatch($match, "void", q, "void", booleanFromString);
-  assignMatch($match, "refunded", q, "refunded", booleanFromString);
-  assignMatch($match, "originData.p_coupon", q, "couponPrefix", (val) => {
-    return { $regex: `^${val}` };
-  });
-  pipeline.push({ $match });
-
-  switch (q.view) {
-    case View.Financial:
-      pipeline.push({
-        $project: {
-          object: "licenseKeyFinancialView",
-          created: 1,
-          product: { $ifNull: ["$product", ""] },
-          origin: { $ifNull: ["$origin", ""] },
-          order: { $ifNull: ["$order", ""] },
-          coupon: { $ifNull: ["$originData.p_coupon", ""] },
-          country: { $ifNull: ["$originData.p_country", ""] },
-          currency: { $ifNull: ["$originData.p_currency", ""] },
-          saleGross: {
-            $cond: {
-              if: "$refunded",
-              then: "0.00",
-              else: { $ifNull: ["$originData.p_sale_gross", ""] },
-            },
-          },
-          status: { $cond: { if: "$refunded", then: "refunded", else: "" } },
-        },
-      });
-      break;
-    case View.Redacted:
-      pipeline.push({
-        $unset: ["email", "name"],
-      });
-    default:
-  }
-
-  return pipeline;
-}
-
-// recognised query parameters for listing license keys
-const ZLicenseKeysQuery = z.object({
-  email: z.string().optional(),
-  origin: ZSaneString.optional(),
-  order: ZSaneString.optional(),
-  void: z.string().optional(),
-  refunded: z.string().optional(),
-  couponPrefix: ZSaneAlphanum.optional(),
-  view: z.nativeEnum(View).optional(),
-});
-
 export async function listLicenseKeys(
   query: unknown,
   pagination: Pagination,
@@ -437,7 +350,7 @@ export async function listLicenseKeys(
   const docs = await paginate(
     dbc(auth.kind),
     pagination,
-    getPipeline(ZLicenseKeysQuery.parse(query)),
+    getQueryPipeline(query),
   );
   try {
     for (const doc of docs) decryptInPlace(doc);
