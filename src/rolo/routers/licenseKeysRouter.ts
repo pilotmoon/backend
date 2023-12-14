@@ -23,6 +23,7 @@ import { AppContext, makeRouter } from "../koaWrapper.js";
 import { makeCsv } from "../makeCsv.js";
 import { makeObjc } from "../makeObjc.js";
 import { generateEncryptedToken } from "../token.js";
+import { makePlist } from "../makePlist.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -98,6 +99,9 @@ router.get("/", async (ctx) => {
   } else if (ctx.query.format === "objc") {
     ctx.set("Content-Type", "text/plain");
     ctx.body = makeObjc(documents, ctx.query);
+  } else if (ctx.query.format === "plist") {
+    ctx.set("Content-Type", "text/plain");
+    ctx.body = makePlist(documents, ctx.query);
   } else {
     ctx.body = await Promise.all(
       documents.map((document) => {
