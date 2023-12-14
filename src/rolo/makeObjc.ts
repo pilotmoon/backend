@@ -1,6 +1,11 @@
-export function makeObjc(obj: unknown) {
+import { stringFromQuery } from "./query.js";
+
+export function makeObjc(obj: unknown, query?: unknown) {
   if (Array.isArray(obj)) {
-    return makeObjcArray(obj);
+    const extract = stringFromQuery(query, "extract", "");
+    return makeObjcArray(
+      extract !== "" ? obj.map((item) => item[extract]) : obj,
+    );
   }
   if (typeof obj === "object" && obj !== null) {
     return makeObjcObject(obj);
@@ -26,6 +31,9 @@ function space(indent: number) {
   return " ".repeat(indent * 2);
 }
 function makeObjcArray(items: unknown[], indent = 1) {
+  if (items.length === 0) {
+    return "@[]";
+  }
   const result: string[] = [];
   for (const item of items) {
     if (typeof item === "object" && item !== null) {
@@ -39,6 +47,9 @@ function makeObjcArray(items: unknown[], indent = 1) {
   return `@[\n${result.join(",\n")},\n${space(indent - 1)}]`;
 }
 function makeObjcObject(item: object, indent = 1) {
+  if (Object.keys(item).length === 0) {
+    return "@{}";
+  }
   const result: string[] = [];
   for (const [k, v] of Object.entries(item)) {
     if (Array.isArray(v)) {

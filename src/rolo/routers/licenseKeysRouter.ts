@@ -21,6 +21,7 @@ import {
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { makeCsv } from "../makeCsv.js";
+import { makeObjc } from "../makeObjc.js";
 import { generateEncryptedToken } from "../token.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
@@ -94,6 +95,9 @@ router.get("/", async (ctx) => {
   if (ctx.query.format === "csv") {
     ctx.set("Content-Type", "text/csv");
     ctx.body = makeCsv(documents);
+  } else if (ctx.query.format === "objc") {
+    ctx.set("Content-Type", "text/plain");
+    ctx.body = makeObjc(documents, ctx.query);
   } else {
     ctx.body = await Promise.all(
       documents.map((document) => {

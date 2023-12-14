@@ -19,7 +19,24 @@ export function boolFromQueryValue(val: unknown, fallback: boolean) {
 
 // wrapper for boolFromQueryValue that extracts the value from a query object
 export function boolFromQuery(query: unknown, key: string, fallback: boolean) {
+  if (typeof query !== "object" || query === null) {
+    return fallback;
+  }
   return boolFromQueryValue((query as Record<string, unknown>)[key], fallback);
+}
+
+export function stringFromQueryValue(val: unknown, fallback: string) {
+  return typeof val === "string" ? val : fallback;
+}
+
+export function stringFromQuery(query: unknown, key: string, fallback: string) {
+  if (typeof query !== "object" || query === null) {
+    return fallback;
+  }
+  return stringFromQueryValue(
+    (query as Record<string, unknown>)[key],
+    fallback,
+  );
 }
 
 // mongodb query for boolean flag field

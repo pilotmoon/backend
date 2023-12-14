@@ -16,11 +16,13 @@ export function getQueryPipeline(query: unknown) {
     Default = "default",
     Financial = "financial",
     Redacted = "redacted",
+    Hashes = "hashes",
   }
 
   const q = z
     .object({
       email: z.string().optional(),
+      product: ZSaneString.optional(),
       origin: ZSaneString.optional(),
       order: ZSaneString.optional(),
       void: ZBoolQueryValue.optional(),
@@ -33,6 +35,7 @@ export function getQueryPipeline(query: unknown) {
   // match on query
   const $match: Document = {};
   assignMatch($match, "emailHash", q.email, hashEmail);
+  assignMatch($match, "product", q.product);
   assignMatch($match, "origin", q.origin);
   assignMatch($match, "order", q.order);
   assignMatch($match, "void", q.void, matchExpressionFromQueryValue);
@@ -68,6 +71,22 @@ export function getQueryPipeline(query: unknown) {
     case View.Redacted:
       pipeline.push({
         $unset: ["email", "name"],
+      });
+      break;
+    case View.Hashes:
+      pipeline.push({
+        $unwind: "$hashes",
+      });
+      pipeline.push({
+        $project: {
+          object: "licenseKeyHashesView",
+          created: 1,
+          product: 1,
+          origin: 1,
+          hashes: 1,
+          void: 1,
+          refunded: 1,
+        },
       });
       break;
     default:
