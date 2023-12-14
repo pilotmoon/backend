@@ -18,20 +18,25 @@ function preprocess(ctx: Context, obj: unknown) {
 }
 
 export function setBodySpecialFormat(ctx: Context, obj: unknown) {
-  if (ctx.query.format === "jsontext") {
-    ctx.set("Content-Type", "application/json");
-    ctx.body = JSON.stringify(preprocess(ctx, obj), null, 2);
-  } else if (ctx.query.format === "csv") {
-    ctx.set("Content-Type", "text/csv");
-    ctx.body = makeCsv(preprocess(ctx, obj));
-  } else if (ctx.query.format === "objc") {
-    ctx.set("Content-Type", "text/plain");
-    ctx.body = makeObjc(preprocess(ctx, obj));
-  } else if (ctx.query.format === "plist") {
-    ctx.set("Content-Type", "application/x-plist");
-    ctx.body = makePlist(preprocess(ctx, obj));
-  } else {
-    return false;
+  switch (ctx.query.format) {
+    case "json":
+      ctx.set("Content-Type", "application/json");
+      ctx.body = JSON.stringify(preprocess(ctx, obj), null, 2);
+      break;
+    case "csv":
+      ctx.set("Content-Type", "text/csv");
+      ctx.body = makeCsv(preprocess(ctx, obj));
+      break;
+    case "objc":
+      ctx.set("Content-Type", "text/plain");
+      ctx.body = makeObjc(preprocess(ctx, obj));
+      break;
+    case "plist":
+      ctx.set("Content-Type", "application/x-plist");
+      ctx.body = makePlist(preprocess(ctx, obj));
+      break;
+    default:
+      return false;
   }
   return true;
 }
