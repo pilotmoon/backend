@@ -7,6 +7,7 @@ import { randomIdentifier } from "../identifiers.js";
 import { ZPortableKeyPair } from "../keyPair.js";
 import { Pagination, paginate } from "../paginate.js";
 import { ZProductConfig } from "../product.js";
+import { boolFromQueryValue } from "../query.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 
 /*** Database ***/
@@ -62,7 +63,7 @@ export type RegistryObject = z.infer<typeof ZObject>;
 // a function to redact secrets by removing the secret data.
 // a redated flag is added.
 export function redact(info: RegistryInfo, params: { redact?: string }) {
-  if (params.redact === "no" || !info.objects) return info;
+  if (boolFromQueryValue(params.redact, true) || !info.objects) return info;
   const redactedObjects = Object.fromEntries(
     Object.entries(info.objects).map(([key, obj]) => {
       return [key, { object: obj.object, redacted: true }];
