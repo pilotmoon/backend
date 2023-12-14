@@ -49,7 +49,7 @@ export function getQueryPipeline(query: unknown) {
     case View.Financial:
       pipeline.push({
         $project: {
-          object: "licenseKeyFinancialView",
+          object: 1,
           created: 1,
           product: { $ifNull: ["$product", ""] },
           origin: { $ifNull: ["$origin", ""] },
@@ -79,7 +79,7 @@ export function getQueryPipeline(query: unknown) {
       });
       pipeline.push({
         $project: {
-          object: "licenseKeyHashView",
+          object: 1,
           created: 1,
           product: 1,
           origin: 1,

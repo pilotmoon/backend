@@ -12,13 +12,7 @@ export const collectionNames = [
   "health",
   "reports",
 ] as const;
-export const objectNames = [
-  "apiKey",
-  "registry",
-  "licenseKey",
-  "licenseKeyFinancialView",
-  "licenseKeyHashView",
-] as const;
+export const objectNames = ["apiKey", "registry", "licenseKey"] as const;
 export const objectNamesWithoutId = [
   "health",
   "report",
