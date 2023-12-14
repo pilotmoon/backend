@@ -1,5 +1,6 @@
 import { type Document } from "mongodb";
 import { z } from "zod";
+import { log } from "../../common/log.js";
 import { ZSaneAlphanum, ZSaneString } from "../../common/saneSchemas.js";
 import { hashEmail } from "../canonicalizeEmail.js";
 
@@ -8,7 +9,7 @@ function assignMatch(
   docKey: string,
   query: Record<string, unknown>,
   queryKey: string,
-  transform?: (val: string) => Document | string | boolean,
+  transform?: (val: string) => Document | string | boolean | undefined,
 ) {
   const val = query[queryKey];
   if (typeof val === "string") {
@@ -16,26 +17,33 @@ function assignMatch(
   }
 }
 
-function booleanFromString(val: string): boolean {
-  return val === "1";
+function matchFlagQuery(val: string) {
+  if (val === "") {
+    return true;
+  }
+  if (val === "no") {
+    return { $ne: true };
+  }
 }
 
 export function getQueryPipeline(query: unknown) {
   const pipeline: Document[] = [];
-
+  log("getQueryPipeline", { query });
   enum View {
     Default = "default",
     Financial = "financial",
     Redacted = "redacted",
   }
 
+  const ZBoolQuery = z.enum(["", "no"]);
+
   const q = z
     .object({
       email: z.string().optional(),
       origin: ZSaneString.optional(),
       order: ZSaneString.optional(),
-      void: z.string().optional(),
-      refunded: z.string().optional(),
+      void: ZBoolQuery.optional(),
+      refunded: ZBoolQuery.optional(),
       couponPrefix: ZSaneAlphanum.optional(),
       view: z.nativeEnum(View).optional(),
     })
@@ -46,8 +54,8 @@ export function getQueryPipeline(query: unknown) {
   assignMatch($match, "emailHash", q, "email", hashEmail);
   assignMatch($match, "origin", q, "origin");
   assignMatch($match, "order", q, "order");
-  assignMatch($match, "void", q, "void", booleanFromString);
-  assignMatch($match, "refunded", q, "refunded", booleanFromString);
+  assignMatch($match, "void", q, "void", matchFlagQuery);
+  assignMatch($match, "refunded", q, "refunded", matchFlagQuery);
   assignMatch($match, "originData.p_coupon", q, "couponPrefix", (val) => {
     return { $regex: `^${val}` };
   });
