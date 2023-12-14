@@ -79,13 +79,14 @@ export function getQueryPipeline(query: unknown) {
       });
       pipeline.push({
         $project: {
-          object: "licenseKeyHashesView",
+          object: "licenseKeyHashView",
           created: 1,
           product: 1,
           origin: 1,
-          hashes: 1,
+          hash: "$hashes",
           void: 1,
           refunded: 1,
+          note: 1,
         },
       });
       break;

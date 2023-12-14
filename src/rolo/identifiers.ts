@@ -17,7 +17,7 @@ export const objectNames = [
   "registry",
   "licenseKey",
   "licenseKeyFinancialView",
-  "licenseKeyHashesView",
+  "licenseKeyHashView",
 ] as const;
 export const objectNamesWithoutId = [
   "health",
