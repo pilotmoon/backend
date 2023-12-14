@@ -1,37 +1,38 @@
-import { stringFromQuery } from "./query.js";
 const header = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 `;
 const footer = `
 </plist>`;
-
-export function makePlist(obj: unknown, query?: unknown) {
+export function makePlist(obj: unknown) {
   if (Array.isArray(obj)) {
-    const extract = stringFromQuery(query, "extract", "");
-    return (
-      header +
-      makePlistArray(extract !== "" ? obj.map((item) => item[extract]) : obj) +
-      footer
-    );
+    return header + makePlistArray(obj) + footer;
   }
   if (typeof obj === "object" && obj !== null) {
     return header + makePlistObject(obj) + footer;
   }
-  throw new Error(`Can't make plist for: ${typeof obj}`);
+  return makePlistScalar(obj);
 }
-
 function makePlistScalar(item: unknown) {
+  if (item instanceof Date) {
+    return `<date>${item.toISOString().slice(0, -5)}Z</date>`;
+  }
   if (typeof item === "string") {
     return `<string>${item}</string>`;
   }
   if (typeof item === "number") {
-    return `<real>${item}</real>`;
+    if (item % 1 === 0) {
+      return `<integer>${item}</integer>`;
+    } else {
+      return `<real>${item}</real>`;
+    }
   }
   if (typeof item === "boolean") {
     return item ? "<true/>" : "<false/>";
   }
-  throw new Error(`Can't make plist scalar for: ${typeof item}`);
+  throw new Error(
+    `Can't make plist scalar for type ${typeof item}, value ${item}`,
+  );
 }
 function space(indent: number) {
   return " ".repeat(indent * 2);
@@ -53,6 +54,9 @@ function makePlistArray(items: unknown[], indent = 1) {
   return `<array>\n${result.join("\n")}\n${space(indent - 1)}</array>`;
 }
 function makePlistObject(item: object, indent = 1) {
+  if (item instanceof Date) {
+    return makePlistScalar(item);
+  }
   if (Object.keys(item).length === 0) {
     return "<dict/>";
   }

@@ -1,8 +1,7 @@
 import { ApiError } from "../../common/errors.js";
 import { generateReport } from "../controllers/reportsController.js";
 import { makeRouter } from "../koaWrapper.js";
-import { makeCsv } from "../makeCsv.js";
-import { makeObjc } from "../makeObjc.js";
+import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/reports" });
 
@@ -38,13 +37,7 @@ router.get("/:name", async (ctx) => {
     ctx.params.name,
   );
 
-  if (Array.isArray(report) && ctx.query.format === "csv") {
-    ctx.set("Content-Type", "text/csv");
-    ctx.body = makeCsv(report);
-  } else if (ctx.query.format === "objc") {
-    ctx.set("Content-Type", "text/plain");
-    ctx.body = makeObjc(report);
-  } else {
+  if (!setBodySpecialFormat(ctx, report)) {
     ctx.body = {
       object: "report",
       dateRange: [gteDate, ltDate],

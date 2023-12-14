@@ -1,11 +1,6 @@
-import { stringFromQuery } from "./query.js";
-
-export function makeObjc(obj: unknown, query?: unknown) {
+export function makeObjc(obj: unknown) {
   if (Array.isArray(obj)) {
-    const extract = stringFromQuery(query, "extract", "");
-    return makeObjcArray(
-      extract !== "" ? obj.map((item) => item[extract]) : obj,
-    );
+    return makeObjcArray(obj);
   }
   if (typeof obj === "object" && obj !== null) {
     return makeObjcObject(obj);
@@ -19,13 +14,15 @@ function makeObjcScalar(item: unknown) {
   if (typeof item === "string") {
     return `@"${item}"`;
   }
-  if (typeof item === "number") {
-    return `@(${item})`;
+  if (typeof item === "number" && isFinite(item)) {
+    return `@${item}`;
   }
   if (typeof item === "boolean") {
     return item ? "@YES" : "@NO";
   }
-  throw new Error(`Can't format objective-c type for: ${typeof item}`);
+  throw new Error(
+    `Can't make objc scalar for type ${typeof item}, value ${item}`,
+  );
 }
 function space(indent: number) {
   return " ".repeat(indent * 2);
@@ -47,6 +44,9 @@ function makeObjcArray(items: unknown[], indent = 1) {
   return `@[\n${result.join(",\n")},\n${space(indent - 1)}]`;
 }
 function makeObjcObject(item: object, indent = 1) {
+  if (item instanceof Date) {
+    return makeObjcScalar(item.toISOString());
+  }
   if (Object.keys(item).length === 0) {
     return "@{}";
   }

@@ -5,15 +5,16 @@ function makeCsvString(val: unknown) {
   if (val instanceof Date) return val.toISOString();
   if (val === null) return "";
   if (val === undefined) return "";
-  // todo: handle nested objects using key path
-  return "OBJECT";
+  if (Array.isArray(val)) return "ARRAY";
+  if (typeof val === "object") return "OBJECT";
+  return "UNKNOWN";
 }
 
-function makeCsvRow(row: Record<string, string>, header: string[]) {
+function makeCsvRow(row: Record<string, unknown>, header: string[]) {
   return header.map((k) => `"${makeCsvString(row[k])}"`).join(",");
 }
 
-function determineKeys(rows: Record<string, string>[]) {
+function determineKeys(rows: Record<string, unknown>[]) {
   const keys = new Set<string>();
   for (const row of rows) {
     for (const key of Object.keys(row)) {
@@ -23,8 +24,16 @@ function determineKeys(rows: Record<string, string>[]) {
   return Array.from(keys);
 }
 
-export function makeCsv(rows: Record<string, string>[]) {
-  if (rows.length === 0) return "";
+export function makeCsv(obj: unknown) {
+  let rows: Record<string, unknown>[] = [];
+  if (!Array.isArray(obj)) {
+    rows = [obj as Record<string, unknown>];
+  } else {
+    rows = obj as Record<string, unknown>[];
+  }
+  if (rows.length === 0) {
+    return "";
+  }
   const header = determineKeys(rows).filter((k) => k !== "object");
   const body = rows.map((row) => makeCsvRow(row, header));
   return [header.map((k) => (k === "_id" ? "id" : k)), ...body].join("\n");

@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import TTLCache from "@isaacs/ttlcache";
+import { RouterParamContext } from "@koa/router";
 import { create as createCDH } from "content-disposition-header";
+import { ParameterizedContext } from "koa";
 import _ from "lodash";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
@@ -19,11 +21,9 @@ import {
   updateLicenseKey,
 } from "../controllers/licenseKeysController.js";
 import { makeIdentifierPattern } from "../identifiers.js";
-import { AppContext, makeRouter } from "../koaWrapper.js";
-import { makeCsv } from "../makeCsv.js";
-import { makeObjc } from "../makeObjc.js";
+import { AppContext, AppState, makeRouter } from "../koaWrapper.js";
+import { setBodySpecialFormat } from "../makeFormats.js";
 import { generateEncryptedToken } from "../token.js";
-import { makePlist } from "../makePlist.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -93,16 +93,7 @@ router.get("/", async (ctx) => {
     ctx.state.pagination,
     ctx.state.auth,
   );
-  if (ctx.query.format === "csv") {
-    ctx.set("Content-Type", "text/csv");
-    ctx.body = makeCsv(documents);
-  } else if (ctx.query.format === "objc") {
-    ctx.set("Content-Type", "text/plain");
-    ctx.body = makeObjc(documents, ctx.query);
-  } else if (ctx.query.format === "plist") {
-    ctx.set("Content-Type", "text/plain");
-    ctx.body = makePlist(documents, ctx.query);
-  } else {
+  if (!setBodySpecialFormat(ctx, documents)) {
     ctx.body = await Promise.all(
       documents.map((document) => {
         const parsed = ZLicenseKeyRecord.safeParse(document);
@@ -157,3 +148,13 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
     ctx.status = 204;
   }
 });
+function makeFormats(
+  ctx: ParameterizedContext<
+    AppState,
+    AppContext & RouterParamContext<AppState, AppContext>,
+    unknown
+  >,
+  documents: import("bson").Document[],
+) {
+  throw new Error("Function not implemented.");
+}
