@@ -3,7 +3,8 @@ const header = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 `;
 const footer = `
-</plist>`;
+</plist>
+`;
 export function makePlist(obj: unknown) {
   if (Array.isArray(obj)) {
     return header + makePlistArray(obj) + footer;
@@ -34,7 +35,7 @@ function makePlistScalar(item: unknown) {
   );
 }
 function space(indent: number) {
-  return " ".repeat(indent * 2);
+  return "\t".repeat(indent);
 }
 function makePlistArray(items: unknown[], indent = 1) {
   if (items.length === 0) {
