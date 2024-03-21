@@ -6,13 +6,19 @@ import { getRolo } from "../rolo.js";
 
 const ZAlertArgs = z.object({
   alert_name: z.string(),
+  refund_type: z.string().optional(),
 });
 
 export async function processAlert(args: unknown, mode: "test" | "live") {
   log("Processing alert:", args);
   const alertArgs = ZAlertArgs.parse(args);
   if (alertArgs.alert_name === "payment_refunded") {
-    await processRefund(args, getRolo(mode));
+    log("Refund type is ", alertArgs.refund_type);
+    if (alertArgs.refund_type === "full") {      
+      await processRefund(args, getRolo(mode));
+    } else {
+      log("Ignoring refund");
+    }
   } else {
     throw new ApiError(400, `Unknown alert_name: ${alertArgs.alert_name}`);
   }
