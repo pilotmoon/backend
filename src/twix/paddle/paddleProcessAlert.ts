@@ -45,7 +45,7 @@ const ZLookupResponse = z.object({
 });
 
 async function lookupOrder(origin: string, order: string, api: AxiosInstance) {
-  const { data } = await api.get(`/licenseKeys/byOrder/${order}`);
+  const { data } = await api.get(`/licenseKeys?order=${order}`);
   const response = ZLookupResponse.parse(data);
   const orders = response.items.filter((item) => item.origin === origin);
   if (orders.length !== 1) {
