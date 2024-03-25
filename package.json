@@ -16,6 +16,7 @@
     "content-disposition-header": "0.6.0",
     "content-type": "1.0.5",
     "cron": "2.4.3",
+    "csv-parse": "5.5.5",
     "emoji-regex": "10.2.1",
     "graphql": "16.8.1",
     "graphql-request": "6.1.0",
@@ -33,6 +34,7 @@
     "zod-validation-error": "0.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.6.2",
     "@faker-js/faker": "7.6.0",
     "@types/jsbn": "1.2.33",
     "@types/koa": "2.13.5",
