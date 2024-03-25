@@ -26,7 +26,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     email: paddleArgs.email,
     name: paddleArgs.name,
     product: paddleArgs.product,
-    quantity: parseInt(paddleArgs.p_quantity),
+    quantity: Number.parseInt(paddleArgs.p_quantity),
     order: paddleArgs.p_order_id,
     origin: "Paddle",
     originData: _.omit(paddleArgs, "p_signature", "email", "name", "product"),
