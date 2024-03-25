@@ -1,4 +1,4 @@
-import { AxiosInstance } from "axios";
+import type { AxiosInstance } from "axios";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
@@ -14,7 +14,7 @@ export async function processAlert(args: unknown, mode: "test" | "live") {
   const alertArgs = ZAlertArgs.parse(args);
   if (alertArgs.alert_name === "payment_refunded") {
     log("Refund type is ", alertArgs.refund_type);
-    if (alertArgs.refund_type === "full") {      
+    if (alertArgs.refund_type === "full") {
       await processRefund(args, getRolo(mode));
     } else {
       log("Ignoring refund");
