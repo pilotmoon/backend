@@ -1,0 +1,5 @@
+paddleCountries file is from https://developer.paddle.com/classic/reference/29717a4e58630-supported-countries
+
+country codes from https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
+
+blanks is manually created
