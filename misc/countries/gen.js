@@ -27,10 +27,11 @@ const blanks = JSON.parse(readFileSync('blanks.json', 'utf8'));
 
 const result = {};
 
-for (let [name, alpha2] of Object.entries(paddleCountries)) {
+for (const [name, rawAlpha2] of Object.entries(paddleCountries)) {
     //console.log(name, alpha2);
 
     // if alpha2 is in blanks, remap to alpha2 in blanks
+    let alpha2 = rawAlpha2;
     if (blanks[alpha2]) {
         console.warn(`Remapping ${alpha2} (${name}) to ${blanks[alpha2]}`);
         alpha2 = blanks[alpha2];
@@ -44,18 +45,35 @@ for (let [name, alpha2] of Object.entries(paddleCountries)) {
     }
   
     // look up country in pppTable
-    const ppp = pppTable.find((row) => row["Country Code"] === isoCountry.alpha3);
-    if (!ppp) {
+    const pppEntry = pppTable.find((row) => row["Country Code"] === isoCountry.alpha3);
+    if (!pppEntry) {
         console.error(`No PPP for ${alpha2} ${isoCountry.alpha3} ${name} [${isoCountry.sovreignty}]`);
         continue;
     }    
 
+    // extact ppp; start with 2022 then try 2021, 2020, ... back to 1960
+    let pppValue = null;
+    for (let year = 2022; year >= 1960; year--) {
+      pppValue = pppEntry[year];
+      if (pppValue) {
+        if (year !== 2022) {
+          console.warn(`Using ${year} PPP for ${alpha2} ${isoCountry.alpha3} ${name} [${isoCountry.sovreignty}]`);
+        }
+        break;
+      }
+    }
+    if (!pppValue) {
+        console.error(`No PPP for ${alpha2} ${isoCountry.alpha3} ${name} [${isoCountry.sovreignty}]`);
+        continue;
+    }
+
     // output
     // console.log(`${alpha2} ${isoCountry.alpha3} ${name} [${isoCountry.sovreignty}] ${ppp["2022"]}`);
-    result[alpha2] = {
+    result[rawAlpha2] = {
         name: name,
+        treatedAs: alpha2,
         alpha3: isoCountry.alpha3,        
-        ppp: Number(ppp["2022"]),
+        ppp: Number(pppValue),
     };
 }
 

@@ -1,976 +1,1375 @@
 {
   "AD": {
     "name": "Andorra",
-    "alpha3": "AND",
-    "ppp": 0
+    "treatedAs": "ES",
+    "alpha3": "ESP",
+    "ppp": 0.640481030490275
   },
   "AE": {
     "name": "United Arab Emirates",
+    "treatedAs": "AE",
     "alpha3": "ARE",
     "ppp": 0.606945376536776
   },
   "AG": {
     "name": "Antigua and Barbuda",
+    "treatedAs": "AG",
     "alpha3": "ATG",
     "ppp": 0.755523321225804
   },
+  "AI": {
+    "name": "Anguilla",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "AL": {
     "name": "Albania",
+    "treatedAs": "AL",
     "alpha3": "ALB",
     "ppp": 0.36606801589494
   },
   "AM": {
     "name": "Armenia",
+    "treatedAs": "AM",
     "alpha3": "ARM",
     "ppp": 0.370038611966337
   },
+  "AN": {
+    "name": "Netherlands Antilles",
+    "treatedAs": "NL",
+    "alpha3": "NLD",
+    "ppp": 0.804649207077824
+  },
   "AO": {
     "name": "Angola",
+    "treatedAs": "AO",
     "alpha3": "AGO",
     "ppp": 0.430109152566474
   },
   "AR": {
     "name": "Argentina",
+    "treatedAs": "AR",
     "alpha3": "ARG",
     "ppp": 0.514528397026015
   },
   "AS": {
     "name": "American Samoa",
-    "alpha3": "ASM",
-    "ppp": 0
+    "treatedAs": "US",
+    "alpha3": "USA",
+    "ppp": 1
   },
   "AT": {
     "name": "Austria",
+    "treatedAs": "AT",
     "alpha3": "AUT",
     "ppp": 0.767362860898836
   },
   "AU": {
-    "name": "Norfolk Island",
+    "name": "Australia",
+    "treatedAs": "AU",
     "alpha3": "AUS",
     "ppp": 1.02979771338267
   },
   "AW": {
     "name": "Aruba",
+    "treatedAs": "AW",
     "alpha3": "ABW",
     "ppp": 0.683089701720721
   },
+  "AX": {
+    "name": "Aland Islands",
+    "treatedAs": "FI",
+    "alpha3": "FIN",
+    "ppp": 0.856165399503894
+  },
   "AZ": {
     "name": "Azerbaijan",
+    "treatedAs": "AZ",
     "alpha3": "AZE",
     "ppp": 0.435371828103398
   },
   "BA": {
     "name": "Bosnia and Herzegovina",
+    "treatedAs": "BA",
     "alpha3": "BIH",
     "ppp": 0.378613831056345
   },
   "BB": {
     "name": "Barbados",
+    "treatedAs": "BB",
     "alpha3": "BRB",
     "ppp": 1.11140225041871
   },
   "BD": {
     "name": "Bangladesh",
+    "treatedAs": "BD",
     "alpha3": "BGD",
     "ppp": 0.363405053031038
   },
   "BE": {
     "name": "Belgium",
+    "treatedAs": "BE",
     "alpha3": "BEL",
     "ppp": 0.762492510947474
   },
   "BF": {
     "name": "Burkina Faso",
+    "treatedAs": "BF",
     "alpha3": "BFA",
     "ppp": 0.325513064550768
   },
   "BG": {
     "name": "Bulgaria",
+    "treatedAs": "BG",
     "alpha3": "BGR",
     "ppp": 0.412888499922163
   },
   "BH": {
     "name": "Bahrain",
+    "treatedAs": "BH",
     "alpha3": "BHR",
     "ppp": 0.492209318922918
   },
   "BI": {
     "name": "Burundi",
+    "treatedAs": "BI",
     "alpha3": "BDI",
     "ppp": 0.309666471754487
   },
   "BJ": {
     "name": "Benin",
+    "treatedAs": "BJ",
     "alpha3": "BEN",
     "ppp": 0.321100807828504
   },
   "BM": {
     "name": "Bermuda",
+    "treatedAs": "BM",
     "alpha3": "BMU",
     "ppp": 1.23893086291142
   },
   "BN": {
     "name": "Brunei",
+    "treatedAs": "BN",
     "alpha3": "BRN",
     "ppp": 0.536126772067226
   },
   "BO": {
     "name": "Bolivia",
+    "treatedAs": "BO",
     "alpha3": "BOL",
     "ppp": 0.36971055615192
   },
+  "BQ": {
+    "name": "Bonaire, Sint Eustatius and Saba",
+    "treatedAs": "NL",
+    "alpha3": "NLD",
+    "ppp": 0.804649207077824
+  },
   "BR": {
     "name": "Brazil",
+    "treatedAs": "BR",
     "alpha3": "BRA",
     "ppp": 0.500216202753316
   },
   "BS": {
     "name": "Bahamas",
+    "treatedAs": "BS",
     "alpha3": "BHS",
     "ppp": 0.768348004928145
   },
   "BT": {
     "name": "Bhutan",
+    "treatedAs": "BT",
     "alpha3": "BTN",
-    "ppp": 0
+    "ppp": 0.27824148720308
+  },
+  "BV": {
+    "name": "Bouvet Island",
+    "treatedAs": "NO",
+    "alpha3": "NOR",
+    "ppp": 0.923846164514172
   },
   "BW": {
     "name": "Botswana",
+    "treatedAs": "BW",
     "alpha3": "BWA",
     "ppp": 0.422200897216486
   },
   "BZ": {
     "name": "Belize",
+    "treatedAs": "BZ",
     "alpha3": "BLZ",
     "ppp": 0.6241556562466
   },
   "CA": {
     "name": "Canada",
+    "treatedAs": "CA",
     "alpha3": "CAN",
     "ppp": 0.941214325952109
   },
+  "CC": {
+    "name": "Cocos Islands",
+    "treatedAs": "AU",
+    "alpha3": "AUS",
+    "ppp": 1.02979771338267
+  },
   "CG": {
     "name": "Republic of Congo",
+    "treatedAs": "CG",
     "alpha3": "COG",
     "ppp": 0.611116818971107
   },
   "CH": {
     "name": "Switzerland",
+    "treatedAs": "CH",
     "alpha3": "CHE",
     "ppp": 1.10171260404312
   },
   "CI": {
     "name": "Cote D’Ivoire",
+    "treatedAs": "CI",
     "alpha3": "CIV",
     "ppp": 0.380158474881072
   },
+  "CK": {
+    "name": "Cook Islands",
+    "treatedAs": "NZ",
+    "alpha3": "NZL",
+    "ppp": 0.928462131859541
+  },
   "CL": {
     "name": "Chile",
+    "treatedAs": "CL",
     "alpha3": "CHL",
     "ppp": 0.508311383727141
   },
   "CM": {
     "name": "Cameroon",
+    "treatedAs": "CM",
     "alpha3": "CMR",
     "ppp": 0.355496032272271
   },
   "CN": {
-    "name": "Taiwan",
+    "name": "China",
+    "treatedAs": "CN",
     "alpha3": "CHN",
     "ppp": 0.592118212383075
   },
   "CO": {
     "name": "Colombia",
+    "treatedAs": "CO",
     "alpha3": "COL",
     "ppp": 0.326817760781196
   },
   "CR": {
     "name": "Costa Rica",
+    "treatedAs": "CR",
     "alpha3": "CRI",
     "ppp": 0.529591227169565
   },
   "CV": {
     "name": "Cape Verde",
+    "treatedAs": "CV",
     "alpha3": "CPV",
     "ppp": 0.43073733970977
   },
   "CW": {
     "name": "Curaçao",
+    "treatedAs": "CW",
     "alpha3": "CUW",
     "ppp": 0.750918938079626
   },
+  "CX": {
+    "name": "Christmas Island",
+    "treatedAs": "AU",
+    "alpha3": "AUS",
+    "ppp": 1.02979771338267
+  },
   "CY": {
     "name": "Cyprus",
+    "treatedAs": "CY",
     "alpha3": "CYP",
     "ppp": 0.624445706783926
   },
   "CZ": {
     "name": "Czech Republic",
+    "treatedAs": "CZ",
     "alpha3": "CZE",
     "ppp": 0.553370638352528
   },
   "DE": {
     "name": "Germany",
+    "treatedAs": "DE",
     "alpha3": "DEU",
     "ppp": 0.766947959735412
   },
   "DJ": {
     "name": "Djibouti",
+    "treatedAs": "DJ",
     "alpha3": "DJI",
     "ppp": 0.532154406590811
   },
   "DK": {
     "name": "Denmark",
+    "treatedAs": "DK",
     "alpha3": "DNK",
     "ppp": 0.905110450489572
   },
   "DM": {
     "name": "Dominica",
+    "treatedAs": "DM",
     "alpha3": "DMA",
     "ppp": 0.616769178547311
   },
   "DO": {
     "name": "Dominican Republic",
+    "treatedAs": "DO",
     "alpha3": "DOM",
     "ppp": 0.442677902040213
   },
   "DZ": {
     "name": "Algeria",
+    "treatedAs": "DZ",
     "alpha3": "DZA",
     "ppp": 0.328321392432264
   },
   "EC": {
     "name": "Ecuador",
+    "treatedAs": "EC",
     "alpha3": "ECU",
     "ppp": 0.498292720124548
   },
   "EE": {
     "name": "Estonia",
+    "treatedAs": "EE",
     "alpha3": "EST",
     "ppp": 0.606728715540858
   },
   "EG": {
     "name": "Egypt",
+    "treatedAs": "EG",
     "alpha3": "EGY",
     "ppp": 0.284539634724069
   },
+  "EH": {
+    "name": "Western Sahara",
+    "treatedAs": "MA",
+    "alpha3": "MAR",
+    "ppp": 0.360506137599157
+  },
   "ER": {
     "name": "Eritrea",
+    "treatedAs": "ER",
     "alpha3": "ERI",
-    "ppp": 0
+    "ppp": 0.36284605961446
   },
   "ES": {
     "name": "Spain",
+    "treatedAs": "ES",
     "alpha3": "ESP",
     "ppp": 0.640481030490275
   },
   "ET": {
     "name": "Ethiopia",
+    "treatedAs": "ET",
     "alpha3": "ETH",
     "ppp": 0.365362173206614
   },
   "FI": {
     "name": "Finland",
+    "treatedAs": "FI",
     "alpha3": "FIN",
     "ppp": 0.856165399503894
   },
   "FJ": {
     "name": "Fiji",
+    "treatedAs": "FJ",
     "alpha3": "FJI",
     "ppp": 0.366053000441318
   },
+  "FK": {
+    "name": "Falkland Islands",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "FM": {
     "name": "Micronesia",
+    "treatedAs": "FM",
     "alpha3": "FSM",
     "ppp": 0.963443285349283
   },
   "FO": {
     "name": "Faroe Islands",
-    "alpha3": "FRO",
-    "ppp": 0
+    "treatedAs": "DK",
+    "alpha3": "DNK",
+    "ppp": 0.905110450489572
   },
   "FR": {
-    "name": "Wallis and Futuna",
+    "name": "France",
+    "treatedAs": "FR",
     "alpha3": "FRA",
     "ppp": 0.738186042282104
   },
   "GA": {
     "name": "Gabon",
+    "treatedAs": "GA",
     "alpha3": "GAB",
     "ppp": 0.535703680012541
   },
   "GB": {
     "name": "United Kingdom",
+    "treatedAs": "GB",
     "alpha3": "GBR",
     "ppp": 0.839712263279154
   },
   "GD": {
     "name": "Grenada",
+    "treatedAs": "GD",
     "alpha3": "GRD",
     "ppp": 0.567180446851118
   },
   "GE": {
     "name": "Georgia",
+    "treatedAs": "GE",
     "alpha3": "GEO",
     "ppp": 0.330900835750446
   },
+  "GF": {
+    "name": "French Guiana",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
+  "GG": {
+    "name": "Guernsey",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "GH": {
     "name": "Ghana",
+    "treatedAs": "GH",
     "alpha3": "GHA",
     "ppp": 0.340418407239637
   },
   "GI": {
     "name": "Gibraltar",
-    "alpha3": "GIB",
-    "ppp": 0
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
   },
   "GL": {
     "name": "Greenland",
-    "alpha3": "GRL",
-    "ppp": 0
+    "treatedAs": "DK",
+    "alpha3": "DNK",
+    "ppp": 0.905110450489572
   },
   "GM": {
     "name": "Gambia",
+    "treatedAs": "GM",
     "alpha3": "GMB",
     "ppp": 0.323765175022554
   },
   "GN": {
     "name": "Guinea",
+    "treatedAs": "GN",
     "alpha3": "GIN",
     "ppp": 0.475261058269472
   },
+  "GP": {
+    "name": "Guadeloupe",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
   "GQ": {
     "name": "Equatorial Guinea",
+    "treatedAs": "GQ",
     "alpha3": "GNQ",
     "ppp": 0.407602914814992
   },
   "GR": {
     "name": "Greece",
+    "treatedAs": "GR",
     "alpha3": "GRC",
     "ppp": 0.562837648303504
   },
+  "GS": {
+    "name": "S. Georgia/ Sandwich Islands",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "GT": {
     "name": "Guatemala",
+    "treatedAs": "GT",
     "alpha3": "GTM",
     "ppp": 0.505759771588746
   },
   "GU": {
     "name": "Guam",
-    "alpha3": "GUM",
-    "ppp": 0
+    "treatedAs": "US",
+    "alpha3": "USA",
+    "ppp": 1
   },
   "GW": {
     "name": "Guinea-Bissau",
+    "treatedAs": "GW",
     "alpha3": "GNB",
     "ppp": 0.35407147148011
   },
   "GY": {
     "name": "Guyana",
+    "treatedAs": "GY",
     "alpha3": "GUY",
     "ppp": 0.432395293982759
   },
   "HK": {
     "name": "Hong Kong",
+    "treatedAs": "HK",
     "alpha3": "HKG",
     "ppp": 0.709164372457881
   },
+  "HM": {
+    "name": "Heard/ Mcdonald Islands",
+    "treatedAs": "AU",
+    "alpha3": "AUS",
+    "ppp": 1.02979771338267
+  },
   "HN": {
     "name": "Honduras",
+    "treatedAs": "HN",
     "alpha3": "HND",
     "ppp": 0.450841500713505
   },
   "HR": {
     "name": "Croatia",
+    "treatedAs": "HR",
     "alpha3": "HRV",
     "ppp": 0.461491017248511
   },
   "HU": {
     "name": "Hungary",
+    "treatedAs": "HU",
     "alpha3": "HUN",
     "ppp": 0.440579384722052
   },
   "ID": {
     "name": "Indonesia",
+    "treatedAs": "ID",
     "alpha3": "IDN",
     "ppp": 0.32665236784616
   },
   "IE": {
     "name": "Ireland",
+    "treatedAs": "IE",
     "alpha3": "IRL",
     "ppp": 0.819816266612844
   },
   "IL": {
     "name": "Israel",
+    "treatedAs": "IL",
     "alpha3": "ISR",
     "ppp": 1.10403384336415
   },
   "IM": {
     "name": "Isle of Man",
-    "alpha3": "IMN",
-    "ppp": 0
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
   },
   "IN": {
     "name": "India",
+    "treatedAs": "IN",
     "alpha3": "IND",
     "ppp": 0.28699739812256
   },
+  "IO": {
+    "name": "Brit. Indian Ocean",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "IQ": {
     "name": "Iraq",
+    "treatedAs": "IQ",
     "alpha3": "IRQ",
     "ppp": 0.54643036557471
   },
   "IS": {
     "name": "Iceland",
+    "treatedAs": "IS",
     "alpha3": "ISL",
     "ppp": 1.05532206845141
   },
   "IT": {
     "name": "Italy",
+    "treatedAs": "IT",
     "alpha3": "ITA",
     "ppp": 0.658594520114789
   },
+  "JE": {
+    "name": "Jersey",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "JM": {
     "name": "Jamaica",
+    "treatedAs": "JM",
     "alpha3": "JAM",
     "ppp": 0.506513662670427
   },
   "JO": {
     "name": "Jordan",
+    "treatedAs": "JO",
     "alpha3": "JOR",
     "ppp": 0.384570865020641
   },
   "JP": {
     "name": "Japan",
+    "treatedAs": "JP",
     "alpha3": "JPN",
     "ppp": 0.742007816009593
   },
   "KE": {
     "name": "Kenya",
+    "treatedAs": "KE",
     "alpha3": "KEN",
     "ppp": 0.364094286921781
   },
   "KG": {
     "name": "Kyrgyzstan",
+    "treatedAs": "KG",
     "alpha3": "KGZ",
     "ppp": 0.276370268447897
   },
   "KH": {
     "name": "Cambodia",
+    "treatedAs": "KH",
     "alpha3": "KHM",
     "ppp": 0.328581052821452
   },
   "KI": {
     "name": "Kiribati",
+    "treatedAs": "KI",
     "alpha3": "KIR",
     "ppp": 0.719494197865904
   },
   "KM": {
     "name": "Comoros",
+    "treatedAs": "KM",
     "alpha3": "COM",
     "ppp": 0.387322307019256
   },
   "KN": {
     "name": "Saint Kitts and Nevis",
+    "treatedAs": "KN",
     "alpha3": "KNA",
     "ppp": 0.596267517526993
   },
   "KR": {
     "name": "South Korea",
+    "treatedAs": "KR",
     "alpha3": "KOR",
     "ppp": 0.644192883066719
   },
   "KW": {
     "name": "Kuwait",
+    "treatedAs": "KW",
     "alpha3": "KWT",
     "ppp": 0.704028755584882
   },
   "KY": {
     "name": "Cayman Islands",
+    "treatedAs": "KY",
     "alpha3": "CYM",
     "ppp": 1.18207563666389
   },
   "KZ": {
     "name": "Kazakhstan",
+    "treatedAs": "KZ",
     "alpha3": "KAZ",
     "ppp": 0.372874755086065
   },
   "LA": {
     "name": "Lao People’s DR",
+    "treatedAs": "LA",
     "alpha3": "LAO",
     "ppp": 0.218850414462158
   },
   "LB": {
     "name": "Lebanon",
+    "treatedAs": "LB",
     "alpha3": "LBN",
     "ppp": 0.246231649735141
   },
   "LC": {
     "name": "Saint Lucia",
+    "treatedAs": "LC",
     "alpha3": "LCA",
     "ppp": 0.730609411164993
   },
   "LI": {
     "name": "Liechtenstein",
-    "alpha3": "LIE",
-    "ppp": 0
+    "treatedAs": "CH",
+    "alpha3": "CHE",
+    "ppp": 1.10171260404312
   },
   "LK": {
     "name": "Sri Lanka",
+    "treatedAs": "LK",
     "alpha3": "LKA",
     "ppp": 0.232778600967816
   },
   "LR": {
     "name": "Liberia",
+    "treatedAs": "LR",
     "alpha3": "LBR",
-    "ppp": 0
+    "ppp": 0.430228722391159
   },
   "LS": {
     "name": "Lesotho",
+    "treatedAs": "LS",
     "alpha3": "LSO",
     "ppp": 0.366542432584275
   },
   "LT": {
     "name": "Lithuania",
+    "treatedAs": "LT",
     "alpha3": "LTU",
     "ppp": 0.512985272725683
   },
   "LU": {
     "name": "Luxembourg",
+    "treatedAs": "LU",
     "alpha3": "LUX",
     "ppp": 0.888985766408564
   },
   "LV": {
     "name": "Latvia",
+    "treatedAs": "LV",
     "alpha3": "LVA",
     "ppp": 0.546876590095333
   },
   "MA": {
-    "name": "Western Sahara",
+    "name": "Morocco",
+    "treatedAs": "MA",
     "alpha3": "MAR",
     "ppp": 0.360506137599157
   },
   "MC": {
     "name": "Monaco",
-    "alpha3": "MCO",
-    "ppp": 0
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
   },
   "MD": {
     "name": "Moldova",
+    "treatedAs": "MD",
     "alpha3": "MDA",
     "ppp": 0.363531138902383
   },
   "ME": {
     "name": "Montenegro",
+    "treatedAs": "ME",
     "alpha3": "MNE",
     "ppp": 0.373450931789809
   },
   "MF": {
     "name": "Saint Martin",
-    "alpha3": "MAF",
-    "ppp": 0
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
   },
   "MG": {
     "name": "Madagascar",
+    "treatedAs": "MG",
     "alpha3": "MDG",
     "ppp": 0.291094458582529
   },
   "MH": {
     "name": "Marshall Islands",
+    "treatedAs": "MH",
     "alpha3": "MHL",
     "ppp": 0.877771461246215
   },
   "MK": {
     "name": "Macedonia",
+    "treatedAs": "MK",
     "alpha3": "MKD",
     "ppp": 0.324242170243404
   },
   "MN": {
     "name": "Mongolia",
+    "treatedAs": "MN",
     "alpha3": "MNG",
     "ppp": 0.353814525953231
   },
   "MO": {
     "name": "Macao",
+    "treatedAs": "MO",
     "alpha3": "MAC",
     "ppp": 0.564826318235837
   },
   "MP": {
     "name": "Northern Mariana Islands",
-    "alpha3": "MNP",
-    "ppp": 0
+    "treatedAs": "US",
+    "alpha3": "USA",
+    "ppp": 1
+  },
+  "MQ": {
+    "name": "Martinique",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
   },
   "MR": {
     "name": "Mauritania",
+    "treatedAs": "MR",
     "alpha3": "MRT",
     "ppp": 0.328022133595706
   },
+  "MS": {
+    "name": "Montserrat",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "MT": {
     "name": "Malta",
+    "treatedAs": "MT",
     "alpha3": "MLT",
     "ppp": 0.610883263624728
   },
   "MU": {
     "name": "Mauritius",
+    "treatedAs": "MU",
     "alpha3": "MUS",
     "ppp": 0.380155308708726
   },
   "MV": {
     "name": "Maldives",
+    "treatedAs": "MV",
     "alpha3": "MDV",
     "ppp": 0.468895523820295
   },
   "MW": {
     "name": "Malawi",
+    "treatedAs": "MW",
     "alpha3": "MWI",
     "ppp": 0.372363592943432
   },
   "MX": {
     "name": "Mexico",
+    "treatedAs": "MX",
     "alpha3": "MEX",
     "ppp": 0.515580441538504
   },
   "MY": {
     "name": "Malaysia",
+    "treatedAs": "MY",
     "alpha3": "MYS",
     "ppp": 0.357735416720704
   },
   "MZ": {
     "name": "Mozambique",
+    "treatedAs": "MZ",
     "alpha3": "MOZ",
     "ppp": 0.377905596736627
   },
   "NA": {
     "name": "Namibia",
+    "treatedAs": "NA",
     "alpha3": "NAM",
     "ppp": 0.436300747081372
   },
   "NC": {
     "name": "New Caledonia",
-    "alpha3": "NCL",
-    "ppp": 0
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
   },
   "NE": {
     "name": "Niger",
+    "treatedAs": "NE",
     "alpha3": "NER",
     "ppp": 0.388833175905449
   },
+  "NF": {
+    "name": "Norfolk Island",
+    "treatedAs": "AU",
+    "alpha3": "AUS",
+    "ppp": 1.02979771338267
+  },
   "NG": {
     "name": "Nigeria",
+    "treatedAs": "NG",
     "alpha3": "NGA",
     "ppp": 0.368909419093729
   },
   "NL": {
-    "name": "Netherlands Antilles",
+    "name": "Netherlands",
+    "treatedAs": "NL",
     "alpha3": "NLD",
     "ppp": 0.804649207077824
   },
   "NO": {
-    "name": "Svalbard and Jan Mayen",
+    "name": "Norway",
+    "treatedAs": "NO",
     "alpha3": "NOR",
     "ppp": 0.923846164514172
   },
   "NP": {
     "name": "Nepal",
+    "treatedAs": "NP",
     "alpha3": "NPL",
     "ppp": 0.282770746037203
   },
   "NR": {
     "name": "Nauru",
+    "treatedAs": "NR",
     "alpha3": "NRU",
     "ppp": 0.919328130502992
   },
+  "NU": {
+    "name": "Niue",
+    "treatedAs": "NZ",
+    "alpha3": "NZL",
+    "ppp": 0.928462131859541
+  },
   "NZ": {
-    "name": "Tokelau",
+    "name": "New Zealand",
+    "treatedAs": "NZ",
     "alpha3": "NZL",
     "ppp": 0.928462131859541
   },
   "OM": {
     "name": "Oman",
+    "treatedAs": "OM",
     "alpha3": "OMN",
     "ppp": 0.600332990087852
   },
   "PA": {
     "name": "Panama",
+    "treatedAs": "PA",
     "alpha3": "PAN",
     "ppp": 0.441752135979506
   },
   "PE": {
     "name": "Peru",
+    "treatedAs": "PE",
     "alpha3": "PER",
     "ppp": 0.473398336606736
   },
   "PF": {
     "name": "French Polynesia",
-    "alpha3": "PYF",
-    "ppp": 0
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
   },
   "PG": {
     "name": "Papua New Guinea",
+    "treatedAs": "PG",
     "alpha3": "PNG",
     "ppp": 0.702925965674262
   },
   "PH": {
     "name": "Philippines",
+    "treatedAs": "PH",
     "alpha3": "PHL",
     "ppp": 0.345138027316521
   },
   "PK": {
     "name": "Pakistan",
+    "treatedAs": "PK",
     "alpha3": "PAK",
     "ppp": 0.250177798383096
   },
   "PL": {
     "name": "Poland",
+    "treatedAs": "PL",
     "alpha3": "POL",
     "ppp": 0.423431881872043
   },
+  "PM": {
+    "name": "Saint Pierre and Miquelon",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
+  "PN": {
+    "name": "Pitcairn",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "PR": {
     "name": "Puerto Rico",
+    "treatedAs": "PR",
     "alpha3": "PRI",
     "ppp": 0.869113173418646
   },
   "PS": {
     "name": "Palestinian Territory",
+    "treatedAs": "PS",
     "alpha3": "PSE",
     "ppp": 0.560632616856183
   },
   "PT": {
     "name": "Portugal",
+    "treatedAs": "PT",
     "alpha3": "PRT",
     "ppp": 0.585610878151753
   },
   "PW": {
     "name": "Palau",
+    "treatedAs": "PW",
     "alpha3": "PLW",
-    "ppp": 0
+    "ppp": 0.829772275273547
   },
   "PY": {
     "name": "Paraguay",
+    "treatedAs": "PY",
     "alpha3": "PRY",
     "ppp": 0.384984542371491
   },
   "QA": {
     "name": "Qatar",
+    "treatedAs": "QA",
     "alpha3": "QAT",
     "ppp": 0.768628176493615
   },
+  "RE": {
+    "name": "Reunion",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
   "RO": {
     "name": "Romania",
+    "treatedAs": "RO",
     "alpha3": "ROU",
     "ppp": 0.382621842212282
   },
   "RS": {
     "name": "Republic of Serbia",
+    "treatedAs": "RS",
     "alpha3": "SRB",
     "ppp": 0.39882969785895
   },
   "RW": {
     "name": "Rwanda",
+    "treatedAs": "RW",
     "alpha3": "RWA",
     "ppp": 0.345924836402368
   },
   "SA": {
     "name": "Saudi Arabia",
+    "treatedAs": "SA",
     "alpha3": "SAU",
     "ppp": 0.513629220348512
   },
   "SB": {
     "name": "Solomon Islands",
+    "treatedAs": "SB",
     "alpha3": "SLB",
     "ppp": 0.830612599112773
   },
   "SC": {
     "name": "Seychelles",
+    "treatedAs": "SC",
     "alpha3": "SYC",
     "ppp": 0.445068138148069
   },
   "SD": {
     "name": "Sudan",
+    "treatedAs": "SD",
     "alpha3": "SDN",
     "ppp": 0.261331827251265
   },
   "SE": {
     "name": "Sweden",
+    "treatedAs": "SE",
     "alpha3": "SWE",
     "ppp": 0.865199880826733
   },
   "SG": {
     "name": "Singapore",
+    "treatedAs": "SG",
     "alpha3": "SGP",
     "ppp": 0.64892795275698
   },
+  "SH": {
+    "name": "Saint Helena",
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
+  },
   "SI": {
     "name": "Slovenia",
+    "treatedAs": "SI",
     "alpha3": "SVN",
     "ppp": 0.588775289309341
   },
+  "SJ": {
+    "name": "Svalbard and Jan Mayen",
+    "treatedAs": "NO",
+    "alpha3": "NOR",
+    "ppp": 0.923846164514172
+  },
   "SK": {
     "name": "Slovakia",
+    "treatedAs": "SK",
     "alpha3": "SVK",
     "ppp": 0.567496335478601
   },
   "SL": {
     "name": "Sierra Leone",
+    "treatedAs": "SL",
     "alpha3": "SLE",
     "ppp": 0.246411284204969
   },
   "SM": {
     "name": "San Marino",
+    "treatedAs": "SM",
     "alpha3": "SMR",
-    "ppp": 0
+    "ppp": 0.808768009126215
   },
   "SN": {
     "name": "Senegal",
+    "treatedAs": "SN",
     "alpha3": "SEN",
     "ppp": 0.37971259162419
   },
   "SR": {
     "name": "Suriname",
+    "treatedAs": "SR",
     "alpha3": "SUR",
     "ppp": 0.329638503923926
   },
   "ST": {
     "name": "Sao Tome and Principe",
+    "treatedAs": "ST",
     "alpha3": "STP",
     "ppp": 0.587594521487337
   },
   "SV": {
     "name": "El Salvador",
+    "treatedAs": "SV",
     "alpha3": "SLV",
     "ppp": 0.462000018928374
   },
   "SZ": {
     "name": "Swaziland",
+    "treatedAs": "SZ",
     "alpha3": "SWZ",
     "ppp": 0.372622165056164
   },
   "TC": {
     "name": "Turks and Caicos Islands",
+    "treatedAs": "TC",
     "alpha3": "TCA",
     "ppp": 1.01822845402677
   },
   "TD": {
     "name": "Chad",
+    "treatedAs": "TD",
     "alpha3": "TCD",
     "ppp": 0.429590611928896
   },
+  "TF": {
+    "name": "French Southern Terr.",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
   "TG": {
     "name": "Togo",
+    "treatedAs": "TG",
     "alpha3": "TGO",
     "ppp": 0.362313788115047
   },
   "TH": {
     "name": "Thailand",
+    "treatedAs": "TH",
     "alpha3": "THA",
     "ppp": 0.334151378781603
   },
   "TJ": {
     "name": "Tajikistan",
+    "treatedAs": "TJ",
     "alpha3": "TJK",
     "ppp": 0.215724311608288
   },
+  "TK": {
+    "name": "Tokelau",
+    "treatedAs": "NZ",
+    "alpha3": "NZL",
+    "ppp": 0.928462131859541
+  },
   "TL": {
     "name": "Timor-Leste",
+    "treatedAs": "TL",
     "alpha3": "TLS",
     "ppp": 0.513012620844746
   },
   "TM": {
     "name": "Turkmenistan",
+    "treatedAs": "TM",
     "alpha3": "TKM",
     "ppp": 0.505024074206154
   },
   "TN": {
     "name": "Tunisia",
+    "treatedAs": "TN",
     "alpha3": "TUN",
     "ppp": 0.300186659088875
   },
   "TO": {
     "name": "Tonga",
+    "treatedAs": "TO",
     "alpha3": "TON",
-    "ppp": 0
+    "ppp": 0.652942267668113
   },
   "TR": {
     "name": "Turkey",
+    "treatedAs": "TR",
     "alpha3": "TUR",
     "ppp": 0.285070331128549
   },
   "TT": {
     "name": "Trinidad and Tobago",
+    "treatedAs": "TT",
     "alpha3": "TTO",
     "ppp": 0.713395958292248
   },
   "TV": {
     "name": "Tuvalu",
+    "treatedAs": "TV",
     "alpha3": "TUV",
     "ppp": 0.962840851778167
   },
+  "TW": {
+    "name": "Taiwan",
+    "treatedAs": "CN",
+    "alpha3": "CHN",
+    "ppp": 0.592118212383075
+  },
   "TZ": {
     "name": "Tanzania",
+    "treatedAs": "TZ",
     "alpha3": "TZA",
     "ppp": 0.384866014701124
   },
   "UA": {
     "name": "Ukraine",
+    "treatedAs": "UA",
     "alpha3": "UKR",
     "ppp": 0.357697789264289
   },
   "UG": {
     "name": "Uganda",
+    "treatedAs": "UG",
     "alpha3": "UGA",
     "ppp": 0.358097692415479
   },
-  "US": {
+  "UM": {
     "name": "United States (M.O.I.)",
+    "treatedAs": "US",
+    "alpha3": "USA",
+    "ppp": 1
+  },
+  "US": {
+    "name": "United States",
+    "treatedAs": "US",
     "alpha3": "USA",
     "ppp": 1
   },
   "UY": {
     "name": "Uruguay",
+    "treatedAs": "UY",
     "alpha3": "URY",
     "ppp": 0.720760217307113
   },
   "UZ": {
     "name": "Uzbekistan",
+    "treatedAs": "UZ",
     "alpha3": "UZB",
     "ppp": 0.236496358214077
   },
+  "VA": {
+    "name": "Holy See/ Vatican City",
+    "treatedAs": "IT",
+    "alpha3": "ITA",
+    "ppp": 0.658594520114789
+  },
   "VC": {
     "name": "Saint Vincent/ Grenadines",
+    "treatedAs": "VC",
     "alpha3": "VCT",
     "ppp": 0.530159014605067
   },
   "VG": {
     "name": "British Virgin Islands",
-    "alpha3": "VGB",
-    "ppp": 0
+    "treatedAs": "GB",
+    "alpha3": "GBR",
+    "ppp": 0.839712263279154
   },
   "VI": {
     "name": "U.S. Virgin Islands",
-    "alpha3": "VIR",
-    "ppp": 0
+    "treatedAs": "US",
+    "alpha3": "USA",
+    "ppp": 1
   },
   "VN": {
     "name": "Vietnam",
+    "treatedAs": "VN",
     "alpha3": "VNM",
     "ppp": 0.30930179958803
   },
   "VU": {
     "name": "Vanuatu",
+    "treatedAs": "VU",
     "alpha3": "VUT",
     "ppp": 0.982003700804498
   },
+  "WF": {
+    "name": "Wallis and Futuna",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
   "WS": {
     "name": "Samoa",
+    "treatedAs": "WS",
     "alpha3": "WSM",
     "ppp": 0.615079098218824
   },
+  "XK": {
+    "name": "Kosovo",
+    "treatedAs": "RS",
+    "alpha3": "SRB",
+    "ppp": 0.39882969785895
+  },
+  "YT": {
+    "name": "Mayotte",
+    "treatedAs": "FR",
+    "alpha3": "FRA",
+    "ppp": 0.738186042282104
+  },
   "ZA": {
     "name": "South Africa",
+    "treatedAs": "ZA",
     "alpha3": "ZAF",
     "ppp": 0.425018872307387
   },
   "ZM": {
     "name": "Zambia",
+    "treatedAs": "ZM",
     "alpha3": "ZMB",
     "ppp": 0.366460744506217
   }
