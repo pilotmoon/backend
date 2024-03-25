@@ -20,12 +20,14 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   const paddleArgs = ZLicenseArgs.passthrough().parse(args);
   const api = getRolo(mode);
   const { date, expiryDate } = dates(paddleArgs);
+  const [product, description] = paddleArgs.product.split("/");
   const info = {
     date,
     expiryDate,
     email: paddleArgs.email,
     name: paddleArgs.name,
-    product: paddleArgs.product,
+    product,
+    description,
     quantity: Number.parseInt(paddleArgs.p_quantity),
     order: paddleArgs.p_order_id,
     origin: "Paddle",
