@@ -1,4 +1,4 @@
-import { type Document } from "mongodb";
+import type { Document } from "mongodb";
 import { z } from "zod";
 import { log } from "../../common/log.js";
 import { ZSaneAlphanum, ZSaneString } from "../../common/saneSchemas.js";
@@ -60,10 +60,12 @@ export function getQueryPipeline(query: unknown) {
           saleGross: {
             $cond: {
               if: "$refunded",
+              // biome-ignore lint/suspicious/noThenProperty: <explanation>
               then: "0.00",
               else: { $ifNull: ["$originData.p_sale_gross", ""] },
             },
           },
+          // biome-ignore lint/suspicious/noThenProperty: <explanation>
           status: { $cond: { if: "$refunded", then: "refunded", else: "" } },
         },
       });

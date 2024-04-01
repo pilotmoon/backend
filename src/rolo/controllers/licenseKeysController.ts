@@ -1,5 +1,5 @@
 import { AquaticPrime } from "@pilotmoon/aquatic-prime";
-import { Document } from "mongodb";
+import type { Document } from "mongodb";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
 import {
@@ -9,14 +9,14 @@ import {
   ZSaneQuantity,
   ZSaneString,
 } from "../../common/saneSchemas.js";
-import { Auth } from "../auth.js";
-import { AuthKind, authKinds } from "../auth.js";
+import type { Auth } from "../auth.js";
+import { type AuthKind, authKinds } from "../auth.js";
 import { hashEmail } from "../canonicalizeEmail.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
-import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
-import { Pagination, paginate } from "../paginate.js";
-import { ProductConfig, ZProductConfig } from "../product.js";
+import { type PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
+import { type Pagination, paginate } from "../paginate.js";
+import { type ProductConfig, ZProductConfig } from "../product.js";
 import { sanitizeName } from "../sanitizeName.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 import { getQueryPipeline } from "./licenseKeysQuery.js";
@@ -344,12 +344,12 @@ export async function listLicenseKeys(
   auth: Auth,
 ): Promise<Document[]> {
   auth.assertAccess(collectionName, undefined, "read");
-  const docs = await paginate(
-    dbc(auth.kind),
-    pagination,
-    getQueryPipeline(query),
-  );
   try {
+    const docs = await paginate(
+      dbc(auth.kind),
+      pagination,
+      getQueryPipeline(query),
+    );
     for (const doc of docs) decryptInPlace(doc);
     return docs;
   } catch (error) {

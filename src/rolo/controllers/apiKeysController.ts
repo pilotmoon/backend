@@ -203,6 +203,11 @@ export async function updateApiKey(
 // does not exist.
 export async function deleteApiKey(id: string, auth: Auth): Promise<boolean> {
   auth.assertAccess(collectionName, id, "delete");
-  const result = await dbc(auth.kind).deleteOne({ _id: id });
-  return result.deletedCount === 1;
+  try {
+    const result = await dbc(auth.kind).deleteOne({ _id: id });
+    return result.deletedCount === 1;
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
+  }
 }
