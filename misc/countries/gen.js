@@ -84,3 +84,6 @@ Object.keys(result).sort().forEach((key) => {
 });
 console.log(JSON.stringify(sorted, null, 2));
 
+// print out a list of countries sotreed form highest to lowest ppp, ppp rounded to 2dp
+const sortedByPPP = Object.entries(result).sort((a, b) => b[1].ppp - a[1].ppp);
+console.log(sortedByPPP.map(([key, value]) => `${key} ${value.ppp.toFixed(2)} (${value.name})`).join('\n'));
