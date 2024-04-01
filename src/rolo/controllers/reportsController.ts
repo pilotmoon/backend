@@ -1,7 +1,7 @@
-import { type Document } from "mongodb";
+import type { Document } from "mongodb";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
-import { Auth, type AuthKind } from "../auth.js";
+import type { Auth, AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { collectionName as licenseKeysCollectionName } from "./licenseKeysController.js";
 

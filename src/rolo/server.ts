@@ -20,6 +20,8 @@ import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
 import { init as initApiKeysController } from "./controllers/apiKeysController.js";
 import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
 import { init as initRegistriesController } from "./controllers/registriesController.js";
+import { init as initLogsController } from "./controllers/logsController.js";
+
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
 import { hours } from "../common/timeIntervals.js";
@@ -28,6 +30,7 @@ import { router as healthRouter } from "./routers/healthRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
 import { router as registriesRouter } from "./routers/registriesRouter.js";
 import { router as reportsRouter } from "./routers/reportsRouter.js";
+import { router as logsRouter } from "./routers/logsRouter.js";
 import { setSecretKey } from "./secrets.js";
 
 // first set the encryption key, if we have one
@@ -42,6 +45,7 @@ mainRouter.use(reportsRouter.routes());
 mainRouter.use(apiKeysRouter.routes());
 mainRouter.use(registriesRouter.routes());
 mainRouter.use(licenseKeysRouter.routes());
+mainRouter.use(logsRouter.routes());
 
 // the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();
@@ -139,6 +143,7 @@ await assertSuccess([
   initApiKeysController(),
   initRegistriesController(),
   initLicenseKeysController(),
+  initLogsController(),
 ]);
 await housekeep();
 log("Startup complete".green);

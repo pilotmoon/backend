@@ -1,13 +1,10 @@
 import { randomUUID } from "node:crypto";
-import TTLCache from "@isaacs/ttlcache";
 import { RouterParamContext } from "@koa/router";
 import { create as createCDH } from "content-disposition-header";
 import { ParameterizedContext } from "koa";
 import _ from "lodash";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
-import { minutes } from "../../common/timeIntervals.js";
-import { AuthKind } from "../auth.js";
 import {
   LicenseKeyRecord,
   ZLicenseKeyInfo,
@@ -23,7 +20,7 @@ import {
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, AppState, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { generateEncryptedToken } from "../token.js";
+import { generateResourceToken } from "../resourceToken.js";
 
 export const router = makeRouter({ prefix: "/licenseKeys" });
 const matchId = {
@@ -35,32 +32,14 @@ const matchFile = {
   uuid: randomUUID(),
 };
 
-const cachedTokens = new TTLCache({
-  max: 1000,
-  ttl: minutes(60),
-});
-function generateToken(id: string, kind: AuthKind): string {
-  // generate a URL to download the license key file, with an access token
-  // that doesn't expire. token is cached so that the same token is returned
-  // on subsequent requests. this is mainly to help testing.
-  const cached = cachedTokens.get(id);
-  if (typeof cached === "string") return cached;
-
-  const resource = `licenseKeys/${id}`;
-  const result = generateEncryptedToken({
-    keyKind: kind,
-    scopes: [`${resource}:read`],
-    expires: undefined,
-    resource: resource,
-  });
-  cachedTokens.set(id, result);
-  return result;
-}
-
 // return full response body including license file and download URL
 async function expand(document: LicenseKeyRecord, ctx: AppContext) {
   const license = await generateLicenseFile(document, ctx.state.auth.kind);
-  const token = generateToken(document._id, ctx.state.auth.kind);
+  const token = generateResourceToken(
+    "licenseKeys",
+    document._id,
+    ctx.state.auth.kind,
+  );
   const url = ctx.getLocation(matchFile.uuid, { id: document._id }, { token });
   return {
     ..._.omit(document, "emailHash"),
