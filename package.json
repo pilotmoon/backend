@@ -63,7 +63,8 @@
     "test-unit": "npx ava dist/test/testUnit.js",
     "test-rolo": "npx ava dist/test/testRolo.js --serial",
     "test-twix": "npx ava dist/test/testTwix.js --serial",
-    "test-local": "npm run build && npm run test-unit && ./scripts/env && (source .env-rolotest && npm run test-rolo) && (source .env-twixtest && npm run test-twix)"
+    "test-rolo-local": "npm run build && npm run test-unit && ./scripts/env && (source .env-rolotest && npm run test-rolo)",
+    "test-local": "npm run test-rolo-local && (source .env-twixtest && npm run test-twix)"
   },
   "type": "module"
 }
