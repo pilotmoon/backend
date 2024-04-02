@@ -26,11 +26,7 @@ router.post("/", async (ctx) => {
     document._id,
     ctx.state.auth.kind,
   );
-  const url = ctx.getLocation(
-    matchId.uuid,
-    { id: document._id },
-    { token, format: "text" },
-  );
+  const url = ctx.getLocation(matchId.uuid, { id: document._id }, { token });
   ctx.body = { ...document, url };
   ctx.status = 201;
 });

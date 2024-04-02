@@ -1,7 +1,7 @@
 import TTLCache from "@isaacs/ttlcache";
 import { generateEncryptedToken } from "./token.js";
-import { AuthKind } from "./auth";
-import { minutes } from "../common/timeIntervals";
+import { AuthKind } from "./auth.js";
+import { minutes } from "../common/timeIntervals.js";
 
 const cachedTokens = new TTLCache({
   max: 1000,
