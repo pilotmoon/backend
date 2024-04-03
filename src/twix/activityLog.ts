@@ -13,12 +13,10 @@ const ZLogResponse = z.object({
 export class ActivityLog {
   messages: string[];
   cursor: number;
-  postQueue: string[];
   id: string | undefined;
   authKind: AuthKind;
   constructor(authKind: AuthKind) {
     this.messages = [];
-    this.postQueue = [];
     this.cursor = 0;
     this.authKind = authKind;
   }
@@ -27,22 +25,20 @@ export class ActivityLog {
       const { data } = await getRolo(this.authKind).post("/logs", { message });
       const { id, url } = ZLogResponse.parse(data);
       this.id = id;
-      this.postRemote();
       return url;
     } catch (error) {
       loge("Failed to create remote log: ", error);
     }
   }
-  async postRemote() {
+  async postRemote(message: string) {
     if (this.id) {
-      while (this.postQueue.length) {
-        const message = this.postQueue.shift();
-        try {
-          await getRolo(this.authKind).patch(`/logs/${this.id}`, { message });
-        } catch (error) {
-          loge("Failed to post message to remote log");
-        }
+      try {
+        await getRolo(this.authKind).patch(`/logs/${this.id}`, { message });
+      } catch (error) {
+        loge("Failed to post message to remote log");
       }
+    } else {
+      loge("No log id to post remote log");
     }
   }
   log(message: string) {
@@ -51,8 +47,7 @@ export class ActivityLog {
         const merged = this.messages.slice(this.cursor).join("\n");
         this.cursor = this.messages.length;
         log(merged);
-        this.postQueue.push(merged);
-        this.postRemote();
+        this.postRemote(merged);
       });
     }
     this.messages.push(message);

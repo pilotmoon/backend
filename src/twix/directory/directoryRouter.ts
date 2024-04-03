@@ -59,7 +59,11 @@ router
     const alog = new ActivityLog(ROLO_AUTH_KIND);
     const logUrl = await alog.prepareRemote();
     alog.log("GitHub webhook received");
-    alog.log(`Remote log: ${ROLO_ROOT}${logUrl}&format=text`);
+    if (logUrl) {
+      alog.log(`Remote log: ${ROLO_ROOT}${logUrl}&format=text`);
+    } else {
+      alog.log("Failed to create remote log");
+    }
     try {
       const params = ZWebhookParams.safeParse(ctx.request.query);
       if (!params.success) {
