@@ -1,6 +1,5 @@
 import Router from "@koa/router";
 import { z } from "zod";
-import { log } from "../../common/log.js";
 import { restClient as gh, validateGithubWebhook } from "../github.js";
 import picomatch, { type Matcher } from "picomatch";
 import { ActivityLog } from "../activityLog.js";
@@ -9,7 +8,7 @@ import { ApiError, getErrorInfo } from "../../common/errors.js";
 export const router = new Router();
 
 // the webhook payload for a tag creation
-const ZGithubTag = z.object({
+const ZGithubTagCreateEvent = z.object({
   ref_type: z.literal("tag"),
   ref: z.string(),
   master_branch: z.string(),
@@ -28,6 +27,21 @@ const ZGithubTag = z.object({
     }),
   }),
 });
+const ZGithubBranchCreateEvent = z.object({
+  ref_type: z.literal("branch"),
+  ref: z.string(),
+});
+const ZGithubRepoCreateEvent = z.object({
+  ref_type: z.literal("repository"),
+  ref: z.null(),
+});
+// these are the three possible ref types of `create` events
+// as per https://docs.github.com/en/rest/using-the-rest-api/github-event-types?apiVersion=2022-11-28#createevent
+const ZGithubPayload = z.union([
+  ZGithubTagCreateEvent,
+  ZGithubBranchCreateEvent,
+  ZGithubRepoCreateEvent,
+]);
 
 const ZNonEmptyString = z.string().min(1);
 //const ZQueryBool = z.string().transform((val) => val === "" || val === "1");
@@ -39,7 +53,7 @@ const ZWebhookParams = z.object({
   include: ZGlobPatternArray,
   exclude: ZGlobPatternArray.optional(),
 });
-const ZGithubTreeEntry = z.object({
+const ZGithubTreeNode = z.object({
   path: z.string(),
   mode: z.enum(["100644", "100755", "040000", "160000", "120000"]),
   type: z.enum(["blob", "tree", "commit"]),
@@ -58,12 +72,12 @@ router
   .post(GH_HOOK_PATH, async (ctx) => {
     const alog = new ActivityLog(ROLO_AUTH_KIND);
     const logUrl = await alog.prepareRemote();
-    alog.log("GitHub webhook received");
     if (logUrl) {
       alog.log(`Remote log: ${ROLO_ROOT}${logUrl}&format=text`);
     } else {
       alog.log("Failed to create remote log");
     }
+    alog.log("GitHub webhook received");
     try {
       const params = ZWebhookParams.safeParse(ctx.request.query);
       if (!params.success) {
@@ -71,14 +85,19 @@ router
         throw params.error;
       }
 
-      const parsedBody = ZGithubTag.safeParse(ctx.request.body);
+      const parsedBody = ZGithubPayload.safeParse(ctx.request.body);
       if (!parsedBody.success) {
         alog.log(`Invalid webhook body: ${pr(ctx.request.body)}`);
         throw parsedBody.error;
       }
-
-      await processTag(parsedBody.data, params.data, alog);
-      ctx.status = 202;
+      alog.log(`Parsed payload: ${pr(parsedBody.data)}`);
+      if (parsedBody.data.ref_type === "tag") {
+        await processTag(parsedBody.data, params.data, alog);
+        ctx.status = 202;
+      } else {
+        alog.log(`Ignoring ref type: ${parsedBody.data.ref_type}`);
+        ctx.status = 200;
+      }
     } catch (err) {
       const info = getErrorInfo(err);
       alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
@@ -103,12 +122,11 @@ function delay(t: number) {
 }
 
 async function processTag(
-  tagInfo: z.infer<typeof ZGithubTag>,
+  tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
   params: z.infer<typeof ZWebhookParams>,
   alog: ActivityLog,
 ) {
   alog.log(`Parsed URL params: ${pr(params)}`);
-  alog.log(`Parsed payload: ${pr(tagInfo)}`);
   alog.log(`Repo: ${tagInfo.repository.full_name}`);
   alog.log(`Tag: ${tagInfo.ref}`);
 
@@ -117,6 +135,11 @@ async function processTag(
     throw new ApiError(400, "The repo must be public");
   }
 
+  // const { data: datac } = await gh().get(
+  //   `/repos/${tagInfo.repository.full_name}/contents/`,
+  // );
+  //log("contents", datac);
+
   // get the tree for the tag
   const { data } = await gh().get(
     `/repos/${tagInfo.repository.full_name}/git/trees/${tagInfo.ref}`,
@@ -124,11 +147,12 @@ async function processTag(
   );
 
   // validate the tree
-  const tree = z.array(ZGithubTreeEntry).safeParse(data.tree);
+  const tree = z.array(ZGithubTreeNode).safeParse(data.tree);
   if (!tree.success) {
     alog.log(`Invalid tree data: ${pr(data.tree)}`);
     throw tree.error;
   }
+  alog.log(`Received tree with ${tree.data.length} entries`);
 
   // generate matchers
   const includers = params.include.map((pattern) => picomatch(pattern));
@@ -154,16 +178,24 @@ async function processTag(
     );
   }
 
-  // process the paths
   alog.log(`Matched ${matchingNodes.length} paths`);
-  for (const node of matchingNodes) {
-    alog.log(`- ${node.path}`);
-  }
 
-  // const { data: datac } = await gh().get(
-  //   `/repos/${tagInfo.repository.full_name}/contents/`,
-  // );
-  //log("contents", datac);
+  // TODO: here we would screen out matching nodes that are already
+  // in the database, and only process the new ones. For now, we'll
+  // just process everything.
+  Promise.all(matchingNodes.map((node) => processNode(node, alog)));
+
   alog.log("Done");
   await delay(0);
+}
+
+async function processNode(
+  node: z.infer<typeof ZGithubTreeNode>,
+  alog: ActivityLog,
+) {
+  alog.log(`Processing node: ${node.path}`);
+  if (node.type !== "tree") {
+    alog.log(`Skipping non-tree node: ${node.type}`);
+    return;
+  }
 }

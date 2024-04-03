@@ -72,7 +72,10 @@ export async function validateGithubWebhook(ctx: Koa.Context, next: Koa.Next) {
 
   // check the event type
   if (ctx.request.headers["x-github-event"] !== "create") {
-    throw new ApiError(400, "Invalid github event");
+    throw new ApiError(
+      400,
+      `Unsupported github event type: ${ctx.request.headers["x-github-event"]}`,
+    );
   }
 
   // unwrap form data if necessary
