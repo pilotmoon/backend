@@ -4,6 +4,11 @@ import { restClient as gh, validateGithubWebhook } from "../github.js";
 import picomatch, { type Matcher } from "picomatch";
 import { ActivityLog } from "../activityLog.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
+import {
+  Config,
+  loadStaticConfig,
+  validateStaticConfig,
+} from "@pilotmoon/fudge";
 
 export const router = new Router();
 
@@ -183,13 +188,17 @@ async function processTag(
   // TODO: here we would screen out matching nodes that are already
   // in the database, and only process the new ones. For now, we'll
   // just process everything.
-  Promise.all(matchingNodes.map((node) => processNode(node, alog)));
+  await Promise.all(
+    matchingNodes.map((node) => processNode(tagInfo, tree.data, node, alog)),
+  );
 
   alog.log("Done");
   await delay(0);
 }
 
 async function processNode(
+  tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
+  tree: z.infer<typeof ZGithubTreeNode>[],
   node: z.infer<typeof ZGithubTreeNode>,
   alog: ActivityLog,
 ) {
@@ -198,4 +207,61 @@ async function processNode(
     alog.log(`Skipping non-tree node: ${node.type}`);
     return;
   }
+
+  // get all files names `Config` or `Config.*` in the root of the tree
+  // process existing tree
+  const matcher = picomatch(`${node.path}/{Config,Config.*}`);
+  const configFiles = tree.filter(
+    (entry) =>
+      matcher(entry.path) &&
+      entry.type === "blob" &&
+      (entry.mode === "100644" || entry.mode === "100755"),
+  );
+
+  if (configFiles.length === 0) {
+    alog.log(`No config files found in ${node.path}`);
+    return;
+  }
+
+  // get the contents of each config file
+  const configs: { name: string; contents: string }[] = [];
+  await Promise.all(
+    configFiles.map(async (configFile) => {
+      const { data } = await gh().get(
+        `/repos/${tagInfo.repository.full_name}/git/blobs/${configFile.sha}`,
+      );
+      const fileData = Buffer.from(data.content, "base64");
+      configs.push({
+        name: configFile.path.split("/").at(-1) ?? "",
+        contents: fileData.toString(),
+      });
+    }),
+  );
+
+  alog.log(`Package ${node.path}: received ${configs.length} config files:`);
+  for (const config of configs) {
+    alog.log(`  ${config.name}: ${config.contents.length}`);
+  }
+
+  let validatedConfig;
+  try {
+    validatedConfig = validateStaticConfig(loadStaticConfig(configs));
+  } catch (err) {
+    alog.log(
+      `Error loading config for ${node.path}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+    return;
+  }
+
+  alog.log(`Validated config: ${pr(validatedConfig)}`);
+
+  // const { data } = await gh().get(
+  //   `/repos/${tagInfo.repository.full_name}/contents/${node.path}`,
+  // );
+  // alog.log(`Received ${data.length} entries in ${node.path}: ${pr(data)}`);
+  // const configFiles = data.filter((entry) =>
+  //   /^Config(\..+)?$/.test(entry.name),
+  // );
 }

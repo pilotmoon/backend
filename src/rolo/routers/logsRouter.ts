@@ -66,13 +66,16 @@ function textFormat(document: LogSchema) {
     `Log ID: ${document._id}\n` +
     `Created: ${document.created.toISOString()}\n\n`;
   return (
-    document.entries.reduce((acc, entry) => {
-      // find time difference between entries
-      const timeDiff = entry.timestamp.getTime() - document.created.getTime();
-      return (
-        acc + `[${formatTimeDifference(timeDiff)}]\n${entry.message.trim()}\n\n`
-      );
-    }, header) + "END"
+    document.entries
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+      .reduce((acc, entry) => {
+        // find time difference between entries
+        const timeDiff = entry.timestamp.getTime() - document.created.getTime();
+        return (
+          acc +
+          `[${formatTimeDifference(timeDiff)}]\n${entry.message.trim()}\n\n`
+        );
+      }, header) + "END"
   );
 }
 
