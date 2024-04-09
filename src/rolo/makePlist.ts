@@ -18,6 +18,9 @@ function makePlistScalar(item: unknown) {
   if (item instanceof Date) {
     return `<date>${item.toISOString().slice(0, -5)}Z</date>`;
   }
+  if (item instanceof Buffer) {
+    return `<data>${item.toString("base64")}</data>`;
+  }
   if (typeof item === "string") {
     return item === "" ? "<string/>" : `<string>${item}</string>`;
   }
@@ -54,7 +57,7 @@ function makePlistArray(items: unknown[], indent = 1) {
   return `<array>\n${result.join("\n")}\n${space(indent - 1)}</array>`;
 }
 function makePlistObject(item: object, indent = 1) {
-  if (item instanceof Date) {
+  if (item instanceof Date || item instanceof Buffer) {
     return makePlistScalar(item);
   }
   if (Object.keys(item).length === 0) {

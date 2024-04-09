@@ -1,14 +1,11 @@
 import Router from "@koa/router";
-import { z } from "zod";
-import { restClient as gh, validateGithubWebhook } from "../github.js";
+import { loadStaticConfig, validateStaticConfig } from "@pilotmoon/fudge";
 import picomatch, { type Matcher } from "picomatch";
-import { ActivityLog } from "../activityLog.js";
+import { z } from "zod";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
-import {
-  Config,
-  loadStaticConfig,
-  validateStaticConfig,
-} from "@pilotmoon/fudge";
+import { ActivityLog } from "../activityLog.js";
+import { restClient as gh, validateGithubWebhook } from "../github.js";
+import { type FileList } from "../../common/fileList.js";
 
 export const router = new Router();
 
@@ -58,14 +55,39 @@ const ZWebhookParams = z.object({
   include: ZGlobPatternArray,
   exclude: ZGlobPatternArray.optional(),
 });
-const ZGithubTreeNode = z.object({
-  path: z.string(),
-  mode: z.enum(["100644", "100755", "040000", "160000", "120000"]),
-  type: z.enum(["blob", "tree", "commit"]),
-  sha: z.string().length(40),
-  size: z.number().int().nonnegative().optional(),
-  url: z.string(),
-});
+const ZGithubTreeNode = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("blob"),
+    path: z.string(),
+    mode: z.enum(["100644", "100755", "120000"]),
+    sha: z.string(),
+    size: z.number().int().nonnegative(),
+    url: z.string(),
+  }),
+  z.object({
+    type: z.literal("tree"),
+    path: z.string(),
+    mode: z.enum(["040000"]),
+    sha: z.string(),
+    url: z.string(),
+  }),
+  z.object({
+    type: z.literal("commit"),
+    path: z.string(),
+    mode: z.enum(["160000"]),
+    sha: z.string(),
+    url: z.string(),
+  }),
+]);
+
+// object({
+//   path: z.string(),
+//   mode: z.enum(["100644", "100755", "040000", "160000", "120000"]),
+//   type: z.enum(["blob", "tree", "commit"]),
+//   sha: z.string().length(40),
+//   size: z.number().int().nonnegative().optional(),
+//   url: z.string(),
+// });
 
 const GH_HOOK_PATH = "/webhooks/gh";
 //const ROLO_ROOT = "https://api.pilotmoon.com/v2"
@@ -189,79 +211,147 @@ async function processTag(
   // in the database, and only process the new ones. For now, we'll
   // just process everything.
   await Promise.all(
-    matchingNodes.map((node) => processNode(tagInfo, tree.data, node, alog)),
+    matchingNodes.map(async (node) => {
+      try {
+        alog.log(`Processing node: ${node.path}`);
+        await processNode(tagInfo, tree.data, node, alog);
+      } catch (err) {
+        alog.log(
+          `Error processing node ${node.path}: ${
+            err instanceof Error ? err.message : "unknown error"
+          }`,
+        );
+      }
+    }),
   );
 
   alog.log("Done");
   await delay(0);
 }
 
+const FILE_MAX_SIZE = 1024 * 1024 * 1;
+const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
+
 async function processNode(
   tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
   tree: z.infer<typeof ZGithubTreeNode>[],
-  node: z.infer<typeof ZGithubTreeNode>,
+  rootNode: z.infer<typeof ZGithubTreeNode>,
   alog: ActivityLog,
 ) {
-  alog.log(`Processing node: ${node.path}`);
-  if (node.type !== "tree") {
-    alog.log(`Skipping non-tree node: ${node.type}`);
+  alog.log(`Processing node: ${rootNode.path}`);
+  if (rootNode.type !== "tree") {
+    alog.log(`Skipping non-tree node: ${rootNode.type}`);
     return;
   }
 
-  // get all files names `Config` or `Config.*` in the root of the tree
-  // process existing tree
-  const matcher = picomatch(`${node.path}/{Config,Config.*}`);
-  const configFiles = tree.filter(
-    (entry) =>
-      matcher(entry.path) &&
-      entry.type === "blob" &&
-      (entry.mode === "100644" || entry.mode === "100755"),
-  );
+  const packageName = rootNode.path.split("/").at(-1)!;
 
+  // filter tree to just the node's children that are not trees
+  // and filter out files with prefix . or _ (hidden files)
+  // and files with extension .mp4 and .gif
+  const nodeMatcher = picomatch(`${rootNode.path}/**`);
+  const extensionMatcher = picomatch(["**/*.mp4", "**/*.gif"]);
+  const filteredChildren = tree.filter((entry) => {
+    // remove rootNode.path from start of entry.path
+    const relativePath = entry.path.slice(rootNode.path.length + 1);
+    // split path by / and check if any part of the path starts with . or _
+    const parts = relativePath.split("/");
+    const hidden = parts.some(
+      (part) => part.startsWith(".") || part.startsWith("_"),
+    );
+    return (
+      entry.type !== "tree" &&
+      !hidden &&
+      nodeMatcher(entry.path) &&
+      !extensionMatcher(entry.path)
+    );
+  });
+
+  // now make sure that:
+  // - tree contains no symlinks
+  // - tree contains no submodules
+  // - no individual file exceeds FILE_MAX_SIZE
+  // - total size of all files does not exceed TOTAL_MAX_SIZE
+  // - no duplicate file names under case insensitive comparison
+  const errors: string[] = [];
+  const seenFiles = new Set<string>();
+  let totalSize = 0;
+  for (const child of filteredChildren) {
+    if (seenFiles.has(child.path.toLowerCase())) {
+      errors.push(`Duplicate file name: ${child.path}`);
+    }
+    if (child.type === "commit") {
+      errors.push(`Submodule found: ${child.path}`);
+    } else if (child.type === "blob") {
+      if (child.mode === "120000") {
+        errors.push(`Symlink found: ${child.path}`);
+      } else {
+        totalSize += child.size;
+        if (child.size > FILE_MAX_SIZE) {
+          errors.push(`File too large: ${child.path}`);
+        }
+      }
+    }
+  }
+  if (totalSize > TOTAL_MAX_SIZE) {
+    errors.push(`Total size exceeds limit: ${totalSize}`);
+  }
+  if (errors.length > 0) {
+    throw new ApiError(400, errors.join("\n"));
+  }
+
+  // identify all files names `Config` or `Config.*` in the root
+  const configMatcher = picomatch(`${rootNode.path}/{Config,Config.*}`);
+  const configFiles = filteredChildren.filter((entry) =>
+    configMatcher(entry.path),
+  );
   if (configFiles.length === 0) {
-    alog.log(`No config files found in ${node.path}`);
+    alog.log(`No config files found in ${rootNode.path}`);
     return;
+  }
+
+  // get the contents of a file from the GitHub API
+  const fileList: FileList = [];
+  async function getFile(node: z.infer<typeof ZGithubTreeNode>) {
+    const { data } = await gh().get(
+      `/repos/${tagInfo.repository.full_name}/git/blobs/${node.sha}`,
+    );
+    const contentsBuffer = Buffer.from(data.content, "base64");
+    // remove the node path from the file path
+    const name = node.path.slice(rootNode.path.length + 1);
+    fileList.push({ name, contentsBuffer });
+    //alog.log(`Received file ${name}: ${contentsBuffer.length} bytes`);
   }
 
   // get the contents of each config file
-  const configs: { name: string; contents: string }[] = [];
-  await Promise.all(
-    configFiles.map(async (configFile) => {
-      const { data } = await gh().get(
-        `/repos/${tagInfo.repository.full_name}/git/blobs/${configFile.sha}`,
-      );
-      const fileData = Buffer.from(data.content, "base64");
-      configs.push({
-        name: configFile.path.split("/").at(-1) ?? "",
-        contents: fileData.toString(),
-      });
-    }),
+  await Promise.all(configFiles.map(getFile));
+
+  alog.log(
+    `Package ${rootNode.path}: received ${fileList.length} config files:`,
   );
-
-  alog.log(`Package ${node.path}: received ${configs.length} config files:`);
-  for (const config of configs) {
-    alog.log(`  ${config.name}: ${config.contents.length}`);
+  for (const config of fileList) {
+    alog.log(`  ${config.name}: ${config.contentsBuffer.length} bytes`);
   }
 
-  let validatedConfig;
-  try {
-    validatedConfig = validateStaticConfig(loadStaticConfig(configs));
-  } catch (err) {
-    alog.log(
-      `Error loading config for ${node.path}: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
-    );
-    return;
-  }
-
+  // validate the config files
+  const validatedConfig = validateStaticConfig(
+    loadStaticConfig(
+      fileList.map(({ name, contentsBuffer }) => {
+        return { name, contents: contentsBuffer.toString() };
+      }),
+    ),
+  );
   alog.log(`Validated config: ${pr(validatedConfig)}`);
+  // TODO: perform further validation on the config
 
-  // const { data } = await gh().get(
-  //   `/repos/${tagInfo.repository.full_name}/contents/${node.path}`,
-  // );
-  // alog.log(`Received ${data.length} entries in ${node.path}: ${pr(data)}`);
-  // const configFiles = data.filter((entry) =>
-  //   /^Config(\..+)?$/.test(entry.name),
-  // );
+  // now add the remaining file contents to the fileList
+  const remainingFiles = filteredChildren.filter(
+    (entry) => !configMatcher(entry.path),
+  );
+  await Promise.all(remainingFiles.map(getFile));
+
+  // now we have all the files we need to process the package
+  // calculate the digest
+  //const digest = calculateDigest(fileList, packageName);
+  //alog.log(`Calculated digest for ${packageName}: ${digest.toString("hex")}`);
 }
