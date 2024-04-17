@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from "axios";
 import { GraphQLClient, gql } from "graphql-request";
 import IPCIDR from "ip-cidr";
 import Koa from "koa";
+import { TwixContext } from "./koaWrapper.js";
 import { z } from "zod";
 import { ApiError } from "../common/errors.js";
 import { log } from "../common/log.js";
@@ -63,30 +64,32 @@ export async function housekeep() {
 }
 
 // middleware to validate and cook the request from github
-export async function validateGithubWebhook(ctx: Koa.Context, next: Koa.Next) {
-  // check the source ip
-  const ip = ctx.request.ip;
-  if (!githubCidrs.some((cidr) => cidr.contains(ip))) {
-    throw new ApiError(403, `Not from github: ${ip}`);
-  }
+export function githubWebhookValidator(expectedEventType: string) {
+  return async (ctx: TwixContext, next: Koa.Next) => {
+    // check the source ip
+    const ip = ctx.request.ip;
+    if (!githubCidrs.some((cidr) => cidr.contains(ip))) {
+      throw new ApiError(403, `Not from GitHub: ${ip}`);
+    }
 
-  // check the event type
-  if (ctx.request.headers["x-github-event"] !== "create") {
-    throw new ApiError(
-      400,
-      `Unsupported github event type: ${ctx.request.headers["x-github-event"]}`,
-    );
-  }
+    // check the event type
+    const eventType = ctx.request.headers["x-github-event"];
+    if (eventType !== expectedEventType) {
+      throw new ApiError(400, `Unsupported GitHub event type: ${eventType}`);
+    }
 
-  // unwrap form data if necessary
-  if (
-    ctx.request.headers["content-type"] === "application/x-www-form-urlencoded"
-  ) {
-    const { payload } = z
-      .object({ payload: z.string() })
-      .parse(ctx.request.body);
-    ctx.request.body = JSON.parse(payload);
-  }
+    // unwrap form data if necessary
+    if (
+      ctx.request.headers["content-type"] ===
+      "application/x-www-form-urlencoded"
+    ) {
+      const { payload } = z
+        .object({ payload: z.string() })
+        .parse(ctx.request.body);
+      ctx.request.body = JSON.parse(payload);
+    }
 
-  await next();
+    ctx.alog.log(`Validated GitHub webhook, event type: ${eventType}`);
+    await next();
+  };
 }

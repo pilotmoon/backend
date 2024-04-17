@@ -1,13 +1,12 @@
-import Router from "@koa/router";
 import { ApiError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
 import { processPrices } from "./storeProcessPrices.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
+import { makeRouter } from "../koaWrapper.js";
 
-export const router = new Router();
+export const router = makeRouter();
 
 router.post("/webhooks/store/generateLicense", async (ctx) => {
   const key = await validateStoreWebhook(ctx);
@@ -29,7 +28,12 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
   if (!key) {
     throw new ApiError(401, "Missing or invalid API key");
   }
-  ctx.body = await processCoupon(ctx.request.body, key.name, key.kind);
+  ctx.body = await processCoupon(
+    ctx.alog,
+    ctx.request.body,
+    key.name,
+    key.kind,
+  );
   ctx.status = 201;
 });
 
@@ -39,9 +43,9 @@ router.get("/frontend/store/getPrices", async (ctx) => {
   if (typeof product !== "string") {
     throw new ApiError(400, "'product' query parameter is required");
   }
-  log(`Request received from IP: ${sourceIp}`);
+  ctx.alog.log(`Request received from IP: ${sourceIp}`);
   const result = await processPrices(sourceIp, product);
-  log("Sending prices for", result.country);
+  ctx.alog.log(`Sending prices for ${result.country}`);
   ctx.set("Cache-Control", "max-age=900");
   ctx.body = result;
 });

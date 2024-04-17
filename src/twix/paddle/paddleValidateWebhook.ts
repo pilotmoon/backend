@@ -1,17 +1,16 @@
 import { createVerify } from "node:crypto";
-import { Context } from "koa";
 import { serialize } from "php-serialize";
 import { z } from "zod";
+import { TwixContext } from "../koaWrapper";
 
 const ZPaddleWebhookData = z
   .object({
     p_signature: z.string(),
   })
   .passthrough();
-type PaddleWebhookData = z.infer<typeof ZPaddleWebhookData>;
 
 // validate webhook signature (based on paddle docs)
-export function validateWebhook(ctx: Context, pubKey: string): boolean {
+export function validateWebhook(ctx: TwixContext, pubKey: string): boolean {
   try {
     const data = ZPaddleWebhookData.parse(ctx.request.body);
     // sort args by key and replace non-string values with stringified values

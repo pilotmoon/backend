@@ -1,20 +1,21 @@
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import { getPaddleVendorsApi } from "../paddle.js";
 import { getCouponOffers } from "./catalog.js";
+import { ActivityLog } from "../activityLog.js";
 
 const ZCouponArgs = z.object({
   offer: z.string(),
 });
 
 export async function processCoupon(
+  alog: ActivityLog,
   args: unknown,
   origin: string,
   mode: "test" | "live",
 ) {
   // create coupon
-  log("mode: ", mode);
+  alog.log(`mode: ${mode}`);
 
   const couponArgs = ZCouponArgs.parse(args);
   const offer = (await getCouponOffers())[couponArgs.offer];
@@ -50,6 +51,6 @@ export async function processCoupon(
     expires: expiryDate.toISOString().slice(0, 10),
     group: origin,
   });
-  log(data);
+  alog.log("Response data:", data);
   return data.response.coupon_codes[0];
 }

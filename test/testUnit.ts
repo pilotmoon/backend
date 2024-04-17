@@ -4,3 +4,4 @@ import "./unit/testScrypt.js";
 import "./unit/testSecrets.js";
 import "./unit/testToken.js";
 import "./unit/testSignext.js";
+import "./unit/testVersionString.js";

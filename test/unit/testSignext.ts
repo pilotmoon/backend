@@ -12,16 +12,18 @@ const testKeyPair = {
 const testData = {
   fileList: [
     {
-      name: "x.txt",
+      type: "buffer" as const,
+      path: "x.txt",
       contentsBuffer: Buffer.from(`xxx`),
+      executable: false,
     },
   ],
   packageName: "x.popclipext",
 };
 
-test("Signer extensionSignature", (t) => {
+test("Signer extensionSignature", async (t) => {
   const signer = new Signer(testKeyPair);
-  const { name, contentsBuffer } = signer.extensionSignature(
+  const { name, contentsBuffer } = await signer.extensionSignature(
     testData.fileList,
     testData.packageName,
   );

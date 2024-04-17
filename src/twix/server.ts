@@ -20,8 +20,10 @@ import { remoteConfigReady } from "./remoteConfig.js";
 import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
+import { makeRouter, makeServer } from "./koaWrapper.js";
+import { openRemoteLog } from "./middleware/openRemoteLog.js";
 
-const router = new Router();
+const router = makeRouter();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
 router.use(directoryRouter.routes());
@@ -31,7 +33,7 @@ router.get("/", (ctx) => {
   ctx.body = `twix ${config.COMMIT_HASH}`;
 });
 
-const app = new Koa({ proxy: true });
+const app = makeServer();
 
 // set up CORS for frontend requests
 app.use(
@@ -61,6 +63,7 @@ const parseJsonBody = bodyParser({
 
 // add all middleware
 app.use(measureResponseTime);
+app.use(openRemoteLog);
 app.use(handleError);
 app.use(parseJsonBody);
 app.use(router.routes());

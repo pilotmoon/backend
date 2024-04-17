@@ -1,16 +1,14 @@
-import Router from "@koa/router";
-import { Context } from "koa";
 import { ApiError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import { config } from "../config.js";
 import { getPaddleCredentials } from "../paddle.js";
 import { processAlert } from "./paddleProcessAlert.js";
 import { processLicense } from "./paddleProcessLicense.js";
 import { validateWebhook } from "./paddleValidateWebhook.js";
+import { TwixContext, makeRouter } from "../koaWrapper.js";
 
-export const router = new Router();
+export const router = makeRouter();
 
-async function validate(ctx: Context) {
+async function validate(ctx: TwixContext) {
   const signers = [
     {
       pubkey: (await getPaddleCredentials()).production.publicKey,
@@ -25,7 +23,7 @@ async function validate(ctx: Context) {
   if (!signed) {
     throw new ApiError(400, "Invalid signature");
   }
-  log("Webhook signature verified, mode:", signed.mode);
+  ctx.alog.log(`Webhook signature verified, mode: ${signed.mode}`);
   return signed;
 }
 

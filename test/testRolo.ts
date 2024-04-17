@@ -3,3 +3,4 @@ import "./rolo/testBasics.js";
 import "./rolo/testLicenseKeys.js";
 import "./rolo/testRegistries.js";
 import "./rolo/testLogs.js";
+import "./rolo/testBlobs.js";

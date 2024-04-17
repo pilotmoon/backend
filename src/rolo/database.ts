@@ -5,6 +5,15 @@ import { config } from "./config.js";
 
 let client: MongoClient;
 
+export function getClient(): MongoClient {
+  if (!client) {
+    throw new Error(
+      "No database connection established. Please connect first.",
+    );
+  }
+  return client;
+}
+
 // Get the database connection
 export function getDb(kind: AuthKind | "logs"): Db {
   if (!client) {

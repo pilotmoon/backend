@@ -24,19 +24,19 @@ function preprocess(ctx: Context, obj: unknown) {
 export function setBodySpecialFormat(ctx: Context, obj: unknown) {
   switch (ctx.query.format) {
     case "json":
-      ctx.set("Content-Type", "application/json");
+      ctx.set("Content-Type", "application/json; charset=utf-8");
       ctx.body = JSON.stringify(preprocess(ctx, obj), null, 2);
       break;
     case "csv":
-      ctx.set("Content-Type", "text/csv");
+      ctx.set("Content-Type", "text/csv; charset=utf-8");
       ctx.body = makeCsv(preprocess(ctx, obj));
       break;
     case "objc":
-      ctx.set("Content-Type", "text/plain");
+      ctx.set("Content-Type", "text/plain; charset=utf-8");
       ctx.body = makeObjc(preprocess(ctx, obj));
       break;
     case "plist":
-      ctx.set("Content-Type", "application/x-plist");
+      ctx.set("Content-Type", "application/x-plist; charset=utf-8");
       ctx.body = makePlist(preprocess(ctx, obj));
       break;
     default:

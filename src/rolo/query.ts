@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+export function arrayFromQuery(
+  query: unknown,
+  key: string,
+  fallback: string[],
+) {
+  if (typeof query !== "object" || query === null) {
+    return fallback;
+  }
+  const val = (query as Record<string, unknown>)[key];
+  const outerArray = Array.isArray(val)
+    ? val
+    : typeof val === "string"
+      ? [val]
+      : [];
+  return outerArray.map((item) => item.split(",")).flat();
+}
+
 export const ZBoolQueryValue = z.enum(["", "1", "0"]);
 
 // convert query value to boolean with fallback

@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { base64ToBigint, bigintToBuf, hexToBigint } from "bigint-conversion";
 import { makePlist } from "./makePlist.js";
-import { FileList } from "../common/fileList.js";
+import { fileListGetBuffer, type FileList } from "../common/fileList.js";
 
 // utility for signing popclip extensions
 
@@ -35,8 +35,8 @@ export class Signer {
     }
   }
 
-  extensionSignature(files: FileList, packageName: string) {
-    const hash = calculateDigest(files, packageName);
+  async extensionSignature(files: FileList, packageName: string) {
+    const hash = await calculateDigest(files, packageName);
     const Signature = signHash(hash, this.keys);
     const name = "_Signature.plist";
     const contentsBuffer = Buffer.from(makePlist({ Signature }));
@@ -67,10 +67,10 @@ function signHash(hash: Buffer, keys: KeyPair) {
   return bigintToBuf(powmod(padHash(hash), keys.privateKey, keys.publicKey));
 }
 
-function calculateDigest(files: FileList, packageName: string) {
+async function calculateDigest(files: FileList, packageName: string) {
   // Sort array with case-insensitive comparison
   const sortedFiles = files.sort((a, b) =>
-    a.name.localeCompare(b.name, "en-US", {
+    a.path.localeCompare(b.path, "en-US", {
       sensitivity: "accent",
       caseFirst: "upper",
     }),
@@ -84,7 +84,7 @@ function calculateDigest(files: FileList, packageName: string) {
     dataList.push(separator);
     dataList.push(Buffer.from(baseName));
     dataList.push(separator);
-    dataList.push(file.contentsBuffer);
+    dataList.push(await fileListGetBuffer(file));
   }
 
   // Return the SHA-1 hash of the concatenated data

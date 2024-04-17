@@ -10,6 +10,25 @@ const ZLogResponse = z.object({
   url: z.string(),
 });
 
+function safeStringify(obj: unknown) {
+  try {
+    return JSON.stringify(obj, undefined, 2);
+  } catch (err) {
+    return "**stringify error**";
+  }
+}
+
+function formatMessage(args: any[]) {
+  return args
+    .map((arg) => {
+      if (typeof arg === "string") {
+        return arg;
+      }
+      return safeStringify(arg);
+    })
+    .join(" ");
+}
+
 export class ActivityLog {
   messages: string[];
   cursor: number;
@@ -41,7 +60,7 @@ export class ActivityLog {
       loge("No log id to post remote log");
     }
   }
-  log(message: string) {
+  next() {
     if (this.cursor === this.messages.length) {
       process.nextTick(() => {
         const merged = this.messages.slice(this.cursor).join("\n");
@@ -50,7 +69,10 @@ export class ActivityLog {
         this.postRemote(merged);
       });
     }
-    this.messages.push(message);
+  }
+  log(...args: any[]) {
+    this.next();
+    this.messages.push(formatMessage(args));
   }
   getString() {
     return this.messages.join("\n");
