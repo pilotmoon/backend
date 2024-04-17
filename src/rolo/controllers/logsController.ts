@@ -5,7 +5,7 @@ import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
-import { minutes } from "../../common/timeIntervals.js";
+import { days, minutes } from "../../common/timeIntervals.js";
 
 const collectionName = "logs";
 // helper function to get the database collection for a given key kind
@@ -18,6 +18,16 @@ export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
+  }
+}
+
+async function deleteLogsOlderThan(date: Date, authKind: AuthKind) {
+  await dbc(authKind).deleteMany({ created: { $lt: date } });
+}
+
+export async function housekeep() {
+  for (const kind of authKinds) {
+    await deleteLogsOlderThan(new Date(Date.now() - days(90)), kind);
   }
 }
 

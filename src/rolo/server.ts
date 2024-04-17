@@ -16,6 +16,7 @@ import { processPagination } from "./middleware/processPagination.js";
 import { asciiHello } from "./static.js";
 
 import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
+import { housekeep as housekeepLogs } from "./controllers/logsController.js";
 
 import { init as initApiKeysController } from "./controllers/apiKeysController.js";
 import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
@@ -100,6 +101,7 @@ app.use(mainRouter.allowedMethods());
 async function housekeep() {
   log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
   await housekeepLogAccess();
+  await housekeepLogs();
 }
 const housekeepingTimer = setInterval(housekeep, hours(1));
 
