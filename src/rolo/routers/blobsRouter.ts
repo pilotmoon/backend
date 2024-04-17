@@ -7,7 +7,7 @@ import {
   getBlobsByHashes,
   readBlob,
 } from "../controllers/blobsController.js";
-import { makeIdentifierPattern } from "../identifiers.js";
+import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 import { arrayFromQuery, boolFromQuery } from "../query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
@@ -15,7 +15,7 @@ import { BlobHash, ZBlobHash } from "../../common/blobSchemas.js";
 
 export const router = makeRouter({ prefix: "/blobs" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "blob"),
+  pattern: makeGenericIdPattern("id"),
   uuid: randomUUID(),
 };
 
@@ -48,17 +48,11 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 });
 
 router.get("/", async (ctx) => {
-  const includeData = boolFromQuery(ctx.query, "includeData", false);
   const hashes: BlobHash[] = z
     .array(ZBlobHash)
     .parse(arrayFromQuery(ctx.query, "hash", []));
   const documents = (
-    await getBlobsByHashes(
-      hashes,
-      ctx.state.auth,
-      ctx.state.pagination,
-      includeData,
-    )
+    await getBlobsByHashes(hashes, ctx.state.auth, ctx.state.pagination)
   ).map((document) =>
     ZBlobBase64Record.parse({
       ...document,

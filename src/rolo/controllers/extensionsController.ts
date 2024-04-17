@@ -5,6 +5,9 @@ import { ZBlobFileList } from "../../common/fileList.js";
 import { log } from "../../common/log.js";
 import {
   NonNegativeSafeInteger,
+  ZLocalizableString,
+  ZSaneIdentifier,
+  ZSaneLongString,
   ZSaneString,
 } from "../../common/saneSchemas.js";
 import { ZVersionString } from "../../common/versionString.js";
@@ -41,16 +44,36 @@ export const ZExtensionOrigin = z.discriminatedUnion("type", [
     nodePath: ZSaneString,
     nodeHash: ZBlobHash,
   }),
+  z.object({
+    type: z.literal("githubGist"),
+  }),
 ]);
-
 // schema for how extensions are submitted using POST /extensions
 // (there is no PUT/PATCH -- only new full extension version submissions)
 export const ZExtensionSubmission = z.object({
   origin: ZExtensionOrigin,
   version: ZVersionString,
-  fileList: ZBlobFileList,
+  files: ZBlobFileList,
 });
 type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
+
+export const ZExtensionAppInfo = z.object({
+  name: ZSaneString,
+  link: ZSaneString,
+  bundleIdentifiers: z.array(ZSaneString).optional(),
+  checkInstalled: z.boolean().optional(),
+});
+
+export const ZExtensionInfo = z.object({
+  name: ZLocalizableString,
+  identifier: ZSaneIdentifier.optional(),
+  description: ZLocalizableString.optional(),
+  keywords: ZSaneString.optional(),
+  icon: ZSaneLongString.optional(),
+  actionTypes: z.array(ZSaneString).optional(),
+  entitlements: z.array(ZSaneString).optional(),
+  apps: z.array(ZExtensionAppInfo).optional(),
+});
 
 // schema for how extensions are stored in the database
 export const ZExtensionSubmissionRecord = ZExtensionSubmission.extend({
@@ -60,7 +83,8 @@ export const ZExtensionSubmissionRecord = ZExtensionSubmission.extend({
   result: z.discriminatedUnion("status", [
     z.object({
       status: z.literal("accepted"),
-      extensionId: z.string(),
+      xid: z.string(),
+      info: ZExtensionInfo,
     }),
     z.object({
       status: z.literal("rejected"),
@@ -77,7 +101,7 @@ export async function createExtensionSubmission(
 ) {
   auth.assertAccess(submissionsCollectionName, undefined, "create");
   log("Received extension submission");
-  const document: ExtensionSubmissionRecord = {
+  const document = ZExtensionSubmissionRecord.parse({
     _id: randomIdentifier("xs"),
     object: "extensionSubmission" as const,
     created: new Date(),
@@ -86,11 +110,24 @@ export async function createExtensionSubmission(
       status: "rejected",
       message: "Not yet implemented",
     },
-  };
+  });
 
   try {
     await dbc(auth.kind).insertOne(document);
     return document;
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
+  }
+}
+
+export async function readExtensionSubmission(id: string, auth: Auth) {
+  auth.assertAccess(submissionsCollectionName, id, "read");
+  const document = await dbc(auth.kind).findOne({ _id: id });
+  if (!document) return null;
+
+  try {
+    return ZExtensionSubmissionRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw error;

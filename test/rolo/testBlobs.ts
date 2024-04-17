@@ -71,25 +71,21 @@ test("read all blobs", async (t) => {
 });
 
 test("read blob by hash", async (t) => {
-  const res = await rolo().get("blobs", {
-    params: { hash: helloWorldHash },
-  });
+  const res = await rolo().get(`blobs/${helloWorldHash}`);
   t.is(res.status, 200);
-  t.is(res.data.object, "list");
-  t.is(res.data.count, 1);
-  t.is(res.data.items[0].id, helloWorldId);
+  t.is(res.data.object, "blob");
+  t.is(res.data.id, helloWorldId);
   t.log(res.data);
 });
 
 test("read blob by hash, including data", async (t) => {
-  const res = await rolo().get("blobs", {
-    params: { hash: helloWorldHash, includeData: 1 },
+  const res = await rolo().get(`blobs/${helloWorldHash}`, {
+    params: { includeData: 1 },
   });
   t.is(res.status, 200);
-  t.is(res.data.object, "list");
-  t.is(res.data.count, 1);
-  t.is(res.data.items[0].id, helloWorldId);
-  t.is(res.data.items[0].data, helloWorldBase64);
+  t.is(res.data.object, "blob");
+  t.is(res.data.id, helloWorldId);
+  t.is(res.data.data, helloWorldBase64);
   t.log(res.data);
 });
 

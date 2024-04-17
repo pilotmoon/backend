@@ -15,3 +15,4 @@ export const ZSaneAlphanum = z
   .string()
   .regex(/^[0-9a-z]+$/i)
   .max(100);
+export const ZLocalizableString = z.union([ZSaneString, z.record(ZSaneString)]);

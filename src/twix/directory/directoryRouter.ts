@@ -392,4 +392,8 @@ async function processNode(
   }
 
   // now we have all the files we need to submit the package
+
+  // TODO:
+  // - parse the version from the tag name
+  // - compile the origin info
 }

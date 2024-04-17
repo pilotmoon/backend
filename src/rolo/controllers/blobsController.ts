@@ -134,10 +134,12 @@ export async function createBlob(data: Buffer, auth: Auth) {
   }
 }
 
-// get a blob by id
+// get a blob by id or hash
 export async function readBlob(id: string, auth: Auth, includeData: boolean) {
   auth.assertAccess(blobsCollectionName, id, "read");
-  const document = await dbc(auth.kind).findOne({ _id: id });
+  const document = await dbc(auth.kind).findOne({
+    $or: [{ _id: id }, { hash: id }],
+  });
   if (!document) return null;
 
   try {
@@ -155,7 +157,6 @@ export async function getBlobsByHashes(
   hashes: BlobHash[],
   auth: Auth,
   pagination: Pagination,
-  includeData: boolean,
 ) {
   auth.assertAccess(blobsCollectionName, undefined, "read");
   try {
@@ -163,9 +164,7 @@ export async function getBlobsByHashes(
     if (hashes.length > 0) {
       pipeline.push({ $match: { hash: { $in: hashes } } });
     }
-    if (!includeData) {
-      pipeline.push({ $project: { data: 0 } });
-    }
+    pipeline.push({ $project: { data: 0 } });
     const documents = await paginate<BlobBinaryRecord>(
       dbc(auth.kind),
       pagination,
@@ -173,10 +172,7 @@ export async function getBlobsByHashes(
     );
 
     return documents.map((document) => {
-      return ZBlobBufferRecord.parse({
-        ...document,
-        dataBuffer: includeData ? Buffer.from(document.data.buffer) : undefined,
-      });
+      return ZBlobBufferRecord.parse(document);
     });
   } catch (error) {
     handleControllerError(error);
