@@ -84,7 +84,7 @@ async function calculateDigest(files: BufferFileList, packageName: string) {
     dataList.push(separator);
     dataList.push(Buffer.from(baseName));
     dataList.push(separator);
-    dataList.push(file.contentsBuffer);
+    dataList.push(file.buffer);
   }
 
   // Return the SHA-1 hash of the concatenated data

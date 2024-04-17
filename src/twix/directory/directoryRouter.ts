@@ -374,8 +374,8 @@ async function processNode(
     // at this point the blob is in the database, so we can add it to the list
     fileList.push({
       path: node.path.slice(rootNode.path.length + 1),
-      contentsHash: node.sha,
-      executable: node.mode === "100755",
+      hash: node.sha,
+      exec: node.mode === "100755",
     });
   }
 

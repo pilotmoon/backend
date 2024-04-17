@@ -12,10 +12,9 @@ const testKeyPair = {
 const testData = {
   fileList: [
     {
-      type: "buffer" as const,
       path: "x.txt",
-      contentsBuffer: Buffer.from(`xxx`),
-      executable: false,
+      buffer: Buffer.from(`xxx`),
+      exec: false,
     },
   ],
   packageName: "x.popclipext",
