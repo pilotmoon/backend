@@ -1,56 +1,33 @@
 import { z } from "zod";
 
-type GetBlobFunction = (entry: FileListEntry) => Promise<Buffer>;
+const ZBaseFileListEntry = z.object({
+  path: z.string(),
+  executable: z.boolean(),
+});
 
-export async function fileListGetBuffer(
-  file: FileListEntry,
-  getBlob?: GetBlobFunction,
-) {
-  if (file.type === "buffer") {
-    return file.contentsBuffer;
-  } else if (file.type === "base64") {
-    return Buffer.from(file.contentsBase64, "base64");
-  } else if (file.type === "blob") {
-    if (!getBlob) throw new Error("getBlob function required");
-    return getBlob(file);
-  } else {
-    throw new Error(`Unknown file type: ${(file as any).type}`);
-  }
-}
-
-export async function fileListBufferify(
-  fileList: FileList,
-  getBlob?: GetBlobFunction,
-) {
-  return fileList.map((file) => ({
-    type: "buffer" as const,
-    path: file.path,
-    contentsBuffer: fileListGetBuffer(file, getBlob),
-    executable: file.executable,
-  }));
-}
-
-const ZFileListEntry = z.discriminatedUnion("type", [
+const ZBufferFileListEntry = ZBaseFileListEntry.merge(
   z.object({
-    type: z.literal("buffer"),
-    path: z.string(),
     contentsBuffer: z.instanceof(Buffer),
-    executable: z.boolean(),
   }),
-  z.object({
-    type: z.literal("base64"),
-    path: z.string(),
-    contentsBase64: z.string(),
-    executable: z.boolean(),
-  }),
-  z.object({
-    type: z.literal("blob"),
-    path: z.string(),
-    contentsHash: z.string(),
-    executable: z.boolean(),
-  }),
-]);
-export type FileListEntry = z.infer<typeof ZFileListEntry>;
+);
 
-export const ZFileList = z.array(ZFileListEntry);
-export type FileList = z.infer<typeof ZFileList>;
+const ZBase64FileListEntry = ZBaseFileListEntry.merge(
+  z.object({
+    contentsBase64: z.string(),
+  }),
+);
+
+const ZBlobFileListEntry = ZBaseFileListEntry.merge(
+  z.object({
+    contentsHash: z.string(),
+  }),
+);
+
+export const ZBufferFileList = z.array(ZBufferFileListEntry);
+export type BufferFileList = z.infer<typeof ZBufferFileList>;
+
+export const ZBase64FileList = z.array(ZBase64FileListEntry);
+export type Base64FileList = z.infer<typeof ZBase64FileList>;
+
+export const ZBlobFileList = z.array(ZBlobFileListEntry);
+export type BlobFileList = z.infer<typeof ZBlobFileList>;

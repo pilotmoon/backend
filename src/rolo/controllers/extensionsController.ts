@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZBlobHash } from "../../common/blobSchemas.js";
 import { handleControllerError } from "../../common/errors.js";
-import { ZFileList } from "../../common/fileList.js";
+import { ZBlobFileList } from "../../common/fileList.js";
 import { log } from "../../common/log.js";
 import {
   NonNegativeSafeInteger,
@@ -41,9 +41,6 @@ export const ZExtensionOrigin = z.discriminatedUnion("type", [
     nodePath: ZSaneString,
     nodeHash: ZBlobHash,
   }),
-  z.object({
-    type: z.literal("githubGist"),
-  }),
 ]);
 
 // schema for how extensions are submitted using POST /extensions
@@ -51,7 +48,7 @@ export const ZExtensionOrigin = z.discriminatedUnion("type", [
 export const ZExtensionSubmission = z.object({
   origin: ZExtensionOrigin,
   version: ZVersionString,
-  fileList: ZFileList,
+  fileList: ZBlobFileList,
 });
 type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 

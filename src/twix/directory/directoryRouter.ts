@@ -5,7 +5,6 @@ import picomatch from "picomatch";
 import { z } from "zod";
 import { ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
-import { type FileList } from "../../common/fileList.js";
 import { ZSaneIdentifier } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog.js";
@@ -13,6 +12,7 @@ import { restClient as gh, githubWebhookValidator } from "../github.js";
 import { makeRouter } from "../koaWrapper.js";
 import { getRolo } from "../rolo.js";
 import { nextTick } from "node:process";
+import { BlobFileList } from "../../common/fileList.js";
 
 export const router = makeRouter();
 
@@ -343,7 +343,7 @@ async function processNode(
   const gotHashes = new Set(z.array(ZBlobHash).parse(data));
 
   // upload any that are not already in the blob store
-  const fileList: FileList = [];
+  const fileList: BlobFileList = [];
   async function getFile(node: z.infer<typeof ZGithubTreeNode>) {
     if (node.type !== "blob") {
       throw new Error("Invalid node type");
@@ -373,7 +373,6 @@ async function processNode(
 
     // at this point the blob is in the database, so we can add it to the list
     fileList.push({
-      type: "blob",
       path: node.path.slice(rootNode.path.length + 1),
       contentsHash: node.sha,
       executable: node.mode === "100755",
