@@ -65,7 +65,7 @@ export class ActivityLog {
       process.nextTick(() => {
         const merged = this.messages.slice(this.cursor).join("\n");
         this.cursor = this.messages.length;
-        log(merged);
+        log(`\n[${new Date().toISOString()}]\n${merged}`);
         this.postRemote(merged);
       });
     }
