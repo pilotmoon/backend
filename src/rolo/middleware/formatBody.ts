@@ -51,8 +51,13 @@ const ZResponse = z.union([
 // and return a 406 (Not Acceptable) if not
 export async function formatBody(ctx: Context, next: Next) {
   await next();
-  // if body is not an object, don't modify it
-  if (typeof ctx.body !== "object" || ctx.body === null) return;
+  // if body is buffer or not an object, don't modify it
+  if (
+    Buffer.isBuffer(ctx.body) ||
+    typeof ctx.body !== "object" ||
+    ctx.body === null
+  )
+    return;
 
   // check that client accepts JSON
   if (!ctx.accepts("application/json")) {

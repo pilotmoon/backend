@@ -9,13 +9,18 @@ import {
 } from "../controllers/blobsController.js";
 import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
-import { arrayFromQuery, boolFromQuery } from "../query.js";
+import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { BlobHash, ZBlobHash } from "../../common/blobSchemas.js";
+import { ApiError } from "../../common/errors.js";
 
 export const router = makeRouter({ prefix: "/blobs" });
 const matchId = {
   pattern: makeGenericIdPattern("id"),
+  uuid: randomUUID(),
+};
+const matchFile = {
+  pattern: `${matchId.pattern}/file`,
   uuid: randomUUID(),
 };
 
@@ -45,6 +50,22 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
       data: document.dataBuffer?.toString("base64"),
     });
   }
+});
+
+// get file
+router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
+  const document = await readBlob(ctx.params.id, ctx.state.auth, true);
+  if (!document) return;
+  if (!document.dataBuffer) {
+    throw new ApiError(500, "Blob data is missing");
+  }
+  const contentType = stringFromQuery(
+    ctx.query,
+    "contentType",
+    "application/octet-stream",
+  );
+  ctx.body = document.dataBuffer;
+  ctx.set("Content-Type", contentType);
 });
 
 router.get("/", async (ctx) => {

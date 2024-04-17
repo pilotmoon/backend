@@ -1,22 +1,5 @@
 import { z } from "zod";
 
-export function arrayFromQuery(
-  query: unknown,
-  key: string,
-  fallback: string[],
-) {
-  if (typeof query !== "object" || query === null) {
-    return fallback;
-  }
-  const val = (query as Record<string, unknown>)[key];
-  const outerArray = Array.isArray(val)
-    ? val
-    : typeof val === "string"
-      ? [val]
-      : [];
-  return outerArray.map((item) => item.split(",")).flat();
-}
-
 export const ZBoolQueryValue = z.enum(["", "1", "0"]);
 
 // convert query value to boolean with fallback
@@ -54,6 +37,25 @@ export function stringFromQuery(query: unknown, key: string, fallback: string) {
     (query as Record<string, unknown>)[key],
     fallback,
   );
+}
+
+// for when we want to split a comma-separated string into an array
+// and merge multiple values into a single array too
+export function arrayFromQuery(
+  query: unknown,
+  key: string,
+  fallback: string[],
+) {
+  if (typeof query !== "object" || query === null) {
+    return fallback;
+  }
+  const val = (query as Record<string, unknown>)[key];
+  const outerArray = Array.isArray(val)
+    ? val
+    : typeof val === "string"
+      ? [val]
+      : [];
+  return outerArray.map((item) => item.split(",")).flat();
 }
 
 // mongodb query for boolean flag field
