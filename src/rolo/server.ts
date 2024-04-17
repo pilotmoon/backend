@@ -76,6 +76,7 @@ app.context.getLocation = (
 // body parser that only accepts JSON
 const parseJsonBody = bodyParser({
   enableTypes: ["json"],
+  jsonLimit: "16mb",
   onerror: () => {
     throw new ApiError(400, "Invalid JSON");
   },

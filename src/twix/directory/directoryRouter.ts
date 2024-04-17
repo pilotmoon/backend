@@ -1,16 +1,18 @@
 import { loadStaticConfig, validateStaticConfig } from "@pilotmoon/fudge";
 import { AxiosError } from "axios";
+import pLimit from "p-limit";
 import picomatch from "picomatch";
 import { z } from "zod";
+import { ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import { type FileList } from "../../common/fileList.js";
+import { ZSaneIdentifier } from "../../common/saneSchemas.js";
+import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh, githubWebhookValidator } from "../github.js";
 import { makeRouter } from "../koaWrapper.js";
-import { ZSaneIdentifier } from "../../common/saneSchemas.js";
-import { sleep } from "../../common/sleep.js";
 import { getRolo } from "../rolo.js";
-import { ZBlobHash } from "../../common/blobSchemas.js";
+import { nextTick } from "node:process";
 
 export const router = makeRouter();
 
@@ -207,20 +209,47 @@ async function processTag(
   // TODO: here we would screen out matching nodes that are already
   // in the database, and only process the new ones. For now, we'll
   // just process everything.
-  await sleep(0); // pause for logging
-  Promise.all(
-    matchingNodes.map(async (node) => {
-      try {
-        await processNode(tagInfo, tree.data, node, alog);
-      } catch (err) {
-        alog.log(
-          `Error processing node ${node.path}:`,
-          err,
-          (err as Error).stack,
-        );
+
+  nextTick(async () => {
+    const limit = pLimit(10);
+    const errors: string[] = [];
+    await Promise.all(
+      matchingNodes.map((node) =>
+        limit(async (node) => {
+          try {
+            await processNode(tagInfo, tree.data, node, alog);
+          } catch (err) {
+            const info = getErrorInfo(err);
+            errors.push(
+              `* Path ${node.path}:\n[${info.type}]\n${info.message}`,
+            );
+            alog.log(
+              `Error processing node ${node.path}:\n[${info.type}]\n${info.message}`,
+            );
+            if (err instanceof AxiosError) {
+              alog.log("Request config:", err.config);
+              alog.log(`Response status: ${err.response?.status}`);
+              alog.log(`Response headers: ${err.response?.headers}`);
+              alog.log("Response data:", err.response?.data);
+            }
+            if (err instanceof Error) {
+              alog.log(`Stack:\n${err.stack}`);
+            }
+          }
+        }, node),
+      ),
+    );
+    await sleep(0);
+    alog.log("All nodes processed");
+    if (errors.length > 0) {
+      alog.log(`There were errors with ${errors.length} nodes`);
+      for (const error of errors) {
+        alog.log(`\n${error}`);
       }
-    }),
-  );
+    } else {
+      alog.log("No errors");
+    }
+  });
 }
 
 const FILE_MAX_SIZE = 1024 * 1024 * 1;
@@ -286,13 +315,15 @@ async function processNode(
       } else {
         totalSize += child.size;
         if (child.size > FILE_MAX_SIZE) {
-          errors.push(`File too large: ${child.path}`);
+          errors.push(
+            `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
+          );
         }
       }
     }
   }
   if (totalSize > TOTAL_MAX_SIZE) {
-    errors.push(`Total size exceeds limit: ${totalSize}`);
+    errors.push(`Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`);
   }
   if (errors.length > 0) {
     throw new ApiError(400, errors.join("\n"));
@@ -306,6 +337,7 @@ async function processNode(
       hash: filteredChildren.map((child) => child.sha).join(","),
       format: "json",
       extract: "hash",
+      limit: filteredChildren.length,
     },
   });
   const gotHashes = new Set(z.array(ZBlobHash).parse(data));
@@ -313,6 +345,9 @@ async function processNode(
   // upload any that are not already in the blob store
   const fileList: FileList = [];
   async function getFile(node: z.infer<typeof ZGithubTreeNode>) {
+    if (node.type !== "blob") {
+      throw new Error("Invalid node type");
+    }
     if (gotHashes.has(node.sha)) {
       alog.log(`Skipping existing blob: ${node.path}`);
     } else {
@@ -321,14 +356,19 @@ async function processNode(
         `/repos/${tagInfo.repository.full_name}/git/blobs/${node.sha}`,
       );
       const ghBlob = ZGithubBlob.parse(ghResponse.data);
-      if (ghBlob.sha !== node.sha) throw new Error("GitHub hash mismatch");
-
-      alog.log(`Uploading blob to database: ${node.path}`);
+      if (ghBlob.sha !== node.sha) {
+        throw new Error("GitHub hash mismatch");
+      }
+      alog.log(
+        `Uploading blob to database: ${node.path} ${ghBlob.size} bytes ${ghBlob.sha}`,
+      );
       const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
         data: ghBlob.content,
       });
       const dbBlob = ZBlobSchema.parse(dbResponse.data);
-      if (dbBlob.hash !== node.sha) throw new Error("DB hash mismatch");
+      if (dbBlob.hash !== node.sha) {
+        throw new Error("DB hash mismatch");
+      }
     }
 
     // at this point the blob is in the database, so we can add it to the list
@@ -341,7 +381,8 @@ async function processNode(
   }
 
   // build the file list
-  await Promise.all(filteredChildren.map(getFile));
+  const limit = pLimit(5);
+  await Promise.all(filteredChildren.map((node) => limit(getFile, node)));
 
   // print something
   alog.log(`Gathered ${fileList.length} files for tree '${rootNode.path}:`);

@@ -12,19 +12,25 @@ const ZLogResponse = z.object({
 
 function safeStringify(obj: unknown) {
   try {
-    return JSON.stringify(obj, undefined, 2);
+    return String(JSON.stringify(obj, undefined, 2) ?? "");
   } catch (err) {
     return "**stringify error**";
   }
 }
 
+function limitString(str: string, limit: number) {
+  return str.length > limit
+    ? str.slice(0, limit) + "***MESSAGE TRUNCATED***"
+    : str;
+}
+
 function formatMessage(args: any[]) {
   return args
     .map((arg) => {
-      if (typeof arg === "string") {
-        return arg;
-      }
-      return safeStringify(arg);
+      return limitString(
+        typeof arg === "string" ? arg : safeStringify(arg),
+        1000,
+      );
     })
     .join(" ");
 }
