@@ -2,14 +2,14 @@ import { randomUUID } from "node:crypto";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 import {
-  ZExtensionSubmission,
   createExtensionSubmission,
   readExtensionSubmission,
 } from "../controllers/extensionsController.js";
+import { ZExtensionSubmission } from "../../common/extensionSchemas.js";
 
-export const router = makeRouter({ prefix: "/extensionSubmissions" });
+export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "xs"),
+  pattern: makeIdentifierPattern("id", "ext"),
   uuid: randomUUID(),
 };
 

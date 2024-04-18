@@ -13,6 +13,10 @@ import { makeRouter } from "../koaWrapper.js";
 import { getRolo } from "../rolo.js";
 import { nextTick } from "node:process";
 import { BlobFileList } from "../../common/fileList.js";
+import {
+  ZExtensionOrigin,
+  ZExtensionSubmission,
+} from "../../common/extensionSchemas.js";
 
 export const router = makeRouter();
 
@@ -343,7 +347,7 @@ async function processNode(
   const gotHashes = new Set(z.array(ZBlobHash).parse(data));
 
   // upload any that are not already in the blob store
-  const fileList: BlobFileList = [];
+  const files: BlobFileList = [];
   async function getFile(node: z.infer<typeof ZGithubTreeNode>) {
     if (node.type !== "blob") {
       throw new Error("Invalid node type");
@@ -372,7 +376,7 @@ async function processNode(
     }
 
     // at this point the blob is in the database, so we can add it to the list
-    fileList.push({
+    files.push({
       path: node.path.slice(rootNode.path.length + 1),
       hash: node.sha,
       exec: node.mode === "100755",
@@ -384,16 +388,26 @@ async function processNode(
   await Promise.all(filteredChildren.map((node) => limit(getFile, node)));
 
   // print something
-  alog.log(`Gathered ${fileList.length} files for tree '${rootNode.path}:`);
-  for (const file of fileList.sort((a, b) =>
+  alog.log(`Gathered ${files.length} files for tree '${rootNode.path}:`);
+  for (const file of files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
   )) {
     alog.log(`  ${file.path}`);
   }
 
   // now we have all the files we need to submit the package
-
-  // TODO:
-  // - parse the version from the tag name
-  // - compile the origin info
+  const version = "0";
+  const origin = ZExtensionOrigin.parse({
+    type: "unknown",
+  });
+  const submission = ZExtensionSubmission.parse({
+    origin,
+    files,
+    version,
+  });
+  const submissionResponse = await getRolo(AUTH_KIND).post(
+    "extensions",
+    submission,
+  );
+  alog.log(`Submitted package. Response:`, submissionResponse.data);
 }
