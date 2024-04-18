@@ -60,16 +60,20 @@ type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
   link: ZSaneString,
-  bundleIdentifiers: z.array(ZSaneString).optional(),
-  checkInstalled: z.boolean().optional(),
+});
+
+const ZIconComponents = z.object({
+  prefix: ZSaneString,
+  payload: ZSaneString,
+  modifiers: z.record(z.unknown()),
 });
 
 export const ZExtensionInfo = z.object({
-  name: ZLocalizableString,
+  name: ZSaneString,
   identifier: ZSaneIdentifier.optional(),
-  description: ZLocalizableString.optional(),
+  description: ZSaneString.optional(),
   keywords: ZSaneString.optional(),
-  icon: ZSaneLongString.optional(),
+  icon: ZIconComponents.optional(),
   actionTypes: z.array(ZSaneString).optional(),
   entitlements: z.array(ZSaneString).optional(),
   apps: z.array(ZExtensionAppInfo).optional(),
