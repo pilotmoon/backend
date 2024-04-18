@@ -13,6 +13,7 @@ import {
   ExtensionSubmission,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
+import { Pagination, paginate } from "../paginate.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
@@ -25,6 +26,8 @@ export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
+    collection.createIndex({ "info.identifier": 1 });
+    collection.createIndex({ shortcode: 1 });
   }
 }
 
@@ -41,7 +44,7 @@ const ZIconComponents = z.object({
 
 export const ZExtensionInfo = z.object({
   name: ZSaneString,
-  identifier: ZSaneIdentifier.optional(),
+  identifier: ZSaneIdentifier,
   description: ZSaneString.optional(),
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
@@ -57,7 +60,7 @@ const ZExtensionCoreRecord = ZExtensionSubmission.extend({
 });
 
 const ZAcceptedExtensionRecord = ZExtensionCoreRecord.extend({
-  xid: z.string(),
+  shortcode: z.string(),
   info: ZExtensionInfo,
   published: z.boolean().optional(),
 });
@@ -73,7 +76,7 @@ export const ZExtensionRecord = z.discriminatedUnion("status", [
 type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
 
 // CRUD
-export async function createExtensionSubmission(
+export async function createExtension(
   submission: ExtensionSubmission,
   auth: Auth,
 ) {
@@ -97,12 +100,23 @@ export async function createExtensionSubmission(
   }
 }
 
-export async function readExtensionSubmission(id: string, auth: Auth) {
+export async function readExtension(id: string, auth: Auth) {
   auth.assertAccess(extensionsCollectionName, id, "read");
   try {
     const document = await dbc(auth.kind).findOne({ _id: id });
     if (!document) return null;
     return ZExtensionRecord.parse(document);
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
+  }
+}
+
+export async function listExtensions(auth: Auth, pagination: Pagination) {
+  auth.assertAccess(extensionsCollectionName, undefined, "read");
+  try {
+    const documents = await paginate(dbc(auth.kind), pagination);
+    return documents.map((document) => ZExtensionRecord.parse(document));
   } catch (error) {
     handleControllerError(error);
     throw error;

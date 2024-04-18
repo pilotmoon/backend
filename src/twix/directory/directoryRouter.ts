@@ -379,7 +379,7 @@ async function processNode(
     files.push({
       path: node.path.slice(rootNode.path.length + 1),
       hash: node.sha,
-      exec: node.mode === "100755",
+      executable: node.mode === "100755" ? true : undefined,
     });
   }
 

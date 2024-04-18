@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const ZBaseFileListEntry = z.object({
   path: z.string(),
-  exec: z.boolean(),
+  executable: z.boolean().optional(),
 });
 
 const ZBufferFileListEntry = ZBaseFileListEntry.merge(
