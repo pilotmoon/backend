@@ -2,6 +2,7 @@ import { z } from "zod";
 
 // sanity checked schemas for common types
 export const NonNegativeSafeInteger = z.number().int().safe().nonnegative();
+export const PositiveSafeInteger = z.number().int().safe().positive();
 export const ZSaneString = z.string().trim().min(1).max(500);
 export const ZSaneLongString = z.string().trim().min(1).max(10000);
 export const ZSaneEmail = z.string().email().max(500);

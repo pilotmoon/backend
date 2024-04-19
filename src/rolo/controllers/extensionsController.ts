@@ -2,6 +2,7 @@ import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import {
+  PositiveSafeInteger,
   ZSaneIdentifier,
   ZSaneLongString,
   ZSaneString,
@@ -51,6 +52,8 @@ export const ZExtensionInfo = z.object({
   actionTypes: z.array(ZSaneString).optional(),
   entitlements: z.array(ZSaneString).optional(),
   apps: z.array(ZExtensionAppInfo).optional(),
+  macosVersion: ZSaneString.optional(),
+  popclipVersion: PositiveSafeInteger.optional(),
 });
 
 const ZExtensionCoreRecord = ZExtensionSubmission.extend({

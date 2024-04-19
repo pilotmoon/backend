@@ -53,7 +53,7 @@ export class Auth implements AuthInfo {
   assertAccess(
     collectionName: (typeof collectionNames)[number],
     resource: string | undefined,
-    action: "create" | "read" | "update" | "delete",
+    action: "create" | "read" | "update" | "delete" | "list",
   ) {
     const acceptedScopes = [
       `${collectionName}:${action}`,

@@ -153,12 +153,12 @@ export async function readBlob(id: string, auth: Auth, includeData: boolean) {
   }
 }
 
-export async function getBlobsByHashes(
+export async function listBlobs(
   hashes: BlobHash[],
   auth: Auth,
   pagination: Pagination,
 ) {
-  auth.assertAccess(blobsCollectionName, undefined, "read");
+  auth.assertAccess(blobsCollectionName, undefined, "list");
   try {
     const pipeline: Document[] = [];
     if (hashes.length > 0) {
