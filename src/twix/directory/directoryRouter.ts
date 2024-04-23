@@ -352,6 +352,9 @@ function getPackageFiles(
         throw new ApiError(400, `Submodules are not supported: ${node.path}`);
       }
       if (entry.type === "blob") {
+        if (entry.mode === "120000") {
+          throw new ApiError(400, `Symlinks are not supported: ${entry.path}`);
+        }
         const relativePath = entry.path.slice(rootPrefix.length);
 
         // hidden if any part of the path starts with . or _
@@ -368,6 +371,9 @@ function getPackageFiles(
       }
     }
   } else if (node.type === "blob") {
+    if (node.mode === "120000") {
+      throw new ApiError(400, `Symlinks are not supported: ${node.path}`);
+    }
     // prefix the filename with #popclip- to signal that it's a snippet
     filtered.push({
       ...node,
@@ -376,7 +382,7 @@ function getPackageFiles(
         : `#popclip-${node.path}`,
     });
   } else {
-    throw new ApiError(400, `Ignoring node type: ${node.type}`);
+    throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
   return filtered;
 }
@@ -403,40 +409,26 @@ async function processPackage(
   }
 
   // now make sure that:
-  // - tree contains no symlinks
-  // - tree contains no submodules
   // - no individual file exceeds FILE_MAX_SIZE
   // - total size of all files does not exceed TOTAL_MAX_SIZE
   // - no duplicate file names under case insensitive comparison
-  // - at least one file is named "Config" or "Config.*" or starts with "#popclip-"
   const errors: string[] = [];
   const seenFiles = new Set<string>();
-  let configCount = 0;
   let totalSize = 0;
   for (const child of blobList) {
     if (seenFiles.has(child.path.toLowerCase())) {
       errors.push(`Duplicate case-insensitive file name: ${child.path}`);
     }
-    if (/^Config(\.[a-zA-Z0-9]+)?$|^#popclip-/.test(child.path)) {
-      configCount++;
-    }
-    if (child.mode === "120000") {
-      errors.push(`Symlinks are not supported: ${child.path}`);
-    } else {
-      totalSize += child.size;
-      if (child.size > FILE_MAX_SIZE) {
-        errors.push(
-          `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
-        );
-      }
+    totalSize += child.size;
+    if (child.size > FILE_MAX_SIZE) {
+      errors.push(
+        `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
+      );
     }
   }
   if (totalSize > TOTAL_MAX_SIZE) {
     errors.push(`Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`);
   }
-  // if (configCount === 0) {
-  //   errors.push("No Config file found");
-  // }
   if (errors.length > 0) {
     throw new ApiError(400, errors.join("\n"));
   }
