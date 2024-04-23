@@ -1,23 +1,26 @@
-import { loadStaticConfig, validateStaticConfig } from "@pilotmoon/fudge";
 import { AxiosError } from "axios";
+import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import picomatch from "picomatch";
 import { z } from "zod";
 import { ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
-import { ZSaneIdentifier } from "../../common/saneSchemas.js";
+import {
+  ZExtensionOrigin,
+  ZExtensionSubmission,
+} from "../../common/extensionSchemas.js";
+import { BlobFileList } from "../../common/fileList.js";
+import {
+  ZSaneDate,
+  ZSaneEmail,
+  ZSaneIdentifier,
+  ZSaneString,
+} from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh, githubWebhookValidator } from "../github.js";
 import { makeRouter } from "../koaWrapper.js";
 import { getRolo } from "../rolo.js";
-import { nextTick } from "node:process";
-import { BlobFileList } from "../../common/fileList.js";
-import {
-  ZExtensionOrigin,
-  ZExtensionSubmission,
-} from "../../common/extensionSchemas.js";
-import { truncate } from "node:fs/promises";
 
 export const router = makeRouter();
 
@@ -109,6 +112,23 @@ export const ZBlobSchema = z.object({
   id: z.string(),
   object: z.literal("blob"),
   hash: ZBlobHash,
+});
+
+const ZGithubRefObject = z.object({
+  ref: z.string(),
+  object: z.object({
+    type: z.literal("commit"),
+    sha: z.string(),
+  }),
+});
+
+const ZGithubCommitObject = z.object({
+  sha: z.string(),
+  committer: z.object({
+    name: ZSaneString,
+    email: ZSaneEmail,
+    date: ZSaneDate,
+  }),
 });
 
 // const ZGistRequest = z.object({
@@ -231,6 +251,21 @@ async function processTag(
     throw new ApiError(400, "No matching paths");
   }
 
+  // get the ref info to find the commit sha
+  const refResponse = await gh().get(
+    `/repos/${tagInfo.repository.full_name}/git/matching-refs/tags/${tagInfo.ref}`,
+  );
+  const refObjects = z.array(ZGithubRefObject).parse(refResponse.data);
+  if (refObjects.length !== 1) {
+    throw new ApiError(400, "Expected exactly one referenced object for tag");
+  }
+  // get the commit info
+  const commitResponse = await gh().get(
+    `/repos/${tagInfo.repository.full_name}/git/commits/${refObjects[0].object.sha}`,
+  );
+  const commit = ZGithubCommitObject.parse(commitResponse.data);
+  alog.log(`Commit:`, commit);
+
   // TODO: here we would screen out matching nodes that are already
   // in the database, and only process the new ones. For now, we'll
   // just process everything.
@@ -245,7 +280,7 @@ async function processTag(
         limit(async (node) => {
           try {
             const files = getPackageFiles(node, tree.tree, alog);
-            await processPackage(tagInfo, files, node.path ?? "<root>", alog);
+            await processPackage(tagInfo, commit, files, node, alog);
           } catch (err) {
             const info = getErrorInfo(err);
             const path = node?.path ?? "<root>";
@@ -309,11 +344,13 @@ function getPackageFiles(
       }
     }
   } else if (node.type === "blob") {
-    // rename the file to "Config" with original extension if any
-    const parts = node.path.split(".");
-    const newPath = parts.length > 1 ? `Config.${parts.at(-1)}` : "Config";
-    alog.log(`Renamed root node from ${node.path} to ${newPath}`);
-    filtered.push({ ...node, path: newPath });
+    // prefix the filename with #popclip- to signal that it's a snippet
+    filtered.push({
+      ...node,
+      path: node.path.startsWith("#popclip-")
+        ? node.path
+        : `#popclip-${node.path}`,
+    });
   } else {
     throw new ApiError(400, `Ignoring node type: ${node.type}`);
   }
@@ -327,8 +364,9 @@ const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
 async function processPackage(
   tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
+  commitInfo: z.infer<typeof ZGithubCommitObject>,
   blobList: GithubBlobNode[],
-  debugName: string,
+  node: GithubNode,
   alog: ActivityLog,
 ) {
   // if no children, return
@@ -346,16 +384,16 @@ async function processPackage(
   // - no individual file exceeds FILE_MAX_SIZE
   // - total size of all files does not exceed TOTAL_MAX_SIZE
   // - no duplicate file names under case insensitive comparison
-  // - at least one file is named "Config" or "Config.*"
+  // - at least one file is named "Config" or "Config.*" or starts with "#popclip-"
   const errors: string[] = [];
   const seenFiles = new Set<string>();
   let configCount = 0;
   let totalSize = 0;
   for (const child of blobList) {
     if (seenFiles.has(child.path.toLowerCase())) {
-      errors.push(`Duplicate file name: ${child.path}`);
+      errors.push(`Duplicate case-insensitive file name: ${child.path}`);
     }
-    if (/^Config(\.[a-zA-Z0-9]+)?$/.test(child.path)) {
+    if (/^Config(\.[a-zA-Z0-9]+)?$|^#popclip-/.test(child.path)) {
       configCount++;
     }
     if (child.mode === "120000") {
@@ -372,11 +410,11 @@ async function processPackage(
   if (totalSize > TOTAL_MAX_SIZE) {
     errors.push(`Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`);
   }
+  if (configCount === 0) {
+    errors.push("No Config file found");
+  }
   if (errors.length > 0) {
     throw new ApiError(400, errors.join("\n"));
-  }
-  if (configCount === 0) {
-    throw new ApiError(400, "No Config file found");
   }
 
   // now we can process the files
@@ -434,18 +472,31 @@ async function processPackage(
   await Promise.all(blobList.map((node) => limit(getFile, node)));
 
   // print something
-  alog.log(`Gathered ${files.length} files '${debugName}':`);
+  alog.log(
+    `Gathered ${files.length} files for ${node.type} at '${node.path}':`,
+  );
   for (const file of files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
   )) {
     alog.log(`  ${file.path}`);
   }
 
-  // now we have all the files we need to submit the package
-  const version = "0";
   const origin = ZExtensionOrigin.parse({
-    type: "unknown",
+    type: "githubRepo",
+    repoId: tagInfo.repository.id,
+    repoName: tagInfo.repository.full_name,
+    repoOwnerId: tagInfo.repository.owner.id,
+    repoOwnerHandle: tagInfo.repository.owner.login,
+    repoOwnerType: tagInfo.repository.owner.type,
+    repoUrl: tagInfo.repository.html_url,
+    commitSha: commitInfo.sha,
+    nodePath: node.path,
+    nodeSha: node.sha,
+    nodeType: node.type,
   });
+  const version = "0";
+
+  // now we have all the files we need to submit the package
   const submission = ZExtensionSubmission.parse({
     origin,
     files,

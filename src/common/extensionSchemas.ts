@@ -13,14 +13,16 @@ export const ZExtensionOrigin = z.discriminatedUnion("type", [
     repoId: NonNegativeSafeInteger,
     repoName: ZSaneString,
     repoOwnerId: NonNegativeSafeInteger,
-    repoOwnerName: ZSaneString,
+    repoOwnerHandle: ZSaneString,
+    repoOwnerType: z.enum(["User", "Organization"]),
     repoUrl: ZSaneString,
-    commit: ZSaneString,
-    nodePath: ZSaneString,
-    nodeHash: ZBlobHash,
+    commitSha: ZBlobHash,
+    nodePath: z.string(),
+    nodeSha: ZBlobHash,
     nodeType: z.enum(["blob", "tree"]),
   }),
 ]);
+export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,

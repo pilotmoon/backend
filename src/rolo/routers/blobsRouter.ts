@@ -7,9 +7,9 @@ import {
   listBlobs,
   readBlob,
 } from "../controllers/blobsController.js";
-import { makeGenericIdPattern, makeIdentifierPattern } from "../identifiers.js";
+import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
-import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
+import { arrayFromQuery, boolFromQuery } from "../query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { BlobHash, ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
