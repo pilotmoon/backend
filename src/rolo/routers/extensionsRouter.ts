@@ -7,7 +7,6 @@ import {
   readExtension,
 } from "../controllers/extensionsController.js";
 import { ZExtensionSubmission } from "../../common/extensionSchemas.js";
-import { Auth } from "../auth.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {

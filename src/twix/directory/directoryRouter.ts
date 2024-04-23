@@ -17,6 +17,7 @@ import {
   ZExtensionOrigin,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
+import { truncate } from "node:fs/promises";
 
 export const router = makeRouter();
 
@@ -24,18 +25,15 @@ export const router = makeRouter();
 const ZGithubTagCreateEvent = z.object({
   ref_type: z.literal("tag"),
   ref: z.string(),
-  master_branch: z.string(),
   repository: z.object({
     html_url: z.string(),
     id: z.number().int().safe().nonnegative(),
-    node_id: z.string(),
     name: z.string(),
     private: z.boolean(),
     full_name: z.string(),
     owner: z.object({
       login: z.string(),
       id: z.number().int().safe().nonnegative(),
-      node_id: z.string(),
       type: z.enum(["User", "Organization"]),
     }),
   }),
@@ -48,6 +46,7 @@ const ZGithubRepoCreateEvent = z.object({
   ref_type: z.literal("repository"),
   ref: z.null(),
 });
+
 // these are the three possible ref types of `create` events
 // as per https://docs.github.com/en/rest/using-the-rest-api/github-event-types?apiVersion=2022-11-28#createevent
 const ZGithubPayload = z.union([
@@ -63,35 +62,41 @@ const ZGlobPatternArray = z.union([
   z.array(ZNonEmptyString),
 ]);
 const ZWebhookParams = z.object({
-  include: ZGlobPatternArray,
+  include: ZGlobPatternArray.optional(),
   exclude: ZGlobPatternArray.optional(),
   tagPrefix: ZSaneIdentifier.optional(),
 });
 
-const ZGithubTreeNode = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("blob"),
-    path: z.string(),
-    mode: z.enum(["100644", "100755", "120000"]),
-    sha: z.string(),
-    size: z.number().int().nonnegative(),
-    url: z.string(),
-  }),
-  z.object({
-    type: z.literal("tree"),
-    path: z.string(),
-    mode: z.enum(["040000"]),
-    sha: z.string(),
-    url: z.string(),
-  }),
-  z.object({
-    type: z.literal("commit"),
-    path: z.string(),
-    mode: z.enum(["160000"]),
-    sha: z.string(),
-    url: z.string(),
-  }),
+const ZGitHubBaseNode = z.object({
+  path: z.string(),
+  sha: z.string(),
+});
+const ZGithubBlobNode = ZGitHubBaseNode.extend({
+  type: z.literal("blob"),
+  mode: z.enum(["100644", "100755", "120000"]),
+  size: z.number().int().nonnegative(),
+});
+type GithubBlobNode = z.infer<typeof ZGithubBlobNode>;
+const ZGithubTreeNode = ZGitHubBaseNode.extend({
+  type: z.literal("tree"),
+  mode: z.enum(["040000"]),
+});
+const ZGithubCommitNode = ZGitHubBaseNode.extend({
+  type: z.literal("commit"),
+  mode: z.enum(["160000"]),
+});
+const ZGithubNode = z.discriminatedUnion("type", [
+  ZGithubBlobNode,
+  ZGithubTreeNode,
+  ZGithubCommitNode,
 ]);
+type GithubNode = z.infer<typeof ZGithubNode>;
+
+const ZGithubTree = z.object({
+  sha: z.string(),
+  tree: z.array(ZGithubNode),
+  truncated: z.boolean(),
+});
 
 const ZGithubBlob = z.object({
   content: z.string(),
@@ -178,42 +183,60 @@ async function processTag(
   );
 
   // validate the tree
-  const tree = z.array(ZGithubTreeNode).safeParse(data.tree);
-  if (!tree.success) {
-    alog.log("Invalid tree data:", data.tree);
-    throw tree.error;
+  const tree = ZGithubTree.parse(data);
+  alog.log(`Received tree ${tree.sha} with ${tree.tree.length} entries`);
+  if (tree.truncated) {
+    throw new ApiError(400, "The tree is truncated; repo is too large");
   }
-  alog.log(`Received tree with ${tree.data.length} entries`);
 
-  // generate matchers
-  const includers = params.include.map((pattern) => picomatch(pattern));
-  const excluders = params.exclude?.map((pattern) => picomatch(pattern)) ?? [];
+  // list of nodes to be processed
+  let matchingNodes: GithubNode[] = [];
 
-  // filter the tree
-  const matchingNodes = tree.data.filter(
-    (entry) =>
-      includers.some((match) => match(entry.path)) &&
-      !excluders.some((match) => match(entry.path)),
-  );
+  // if include rules are defined, get the matching nodes
+  if (!params.include) {
+    throw new ApiError(
+      400,
+      "At least one include pattern must be defined in the webhook query",
+    );
+  }
 
+  if (params.include.length === 1 && params.include[0] === ".") {
+    alog.log("Treating repo root as package directory");
+    matchingNodes.push({
+      type: "tree",
+      path: "",
+      mode: "040000",
+      sha: tree.sha,
+    });
+  } else {
+    const includers = params.include.map((pat) => picomatch(pat));
+    const excluders = params.exclude?.map((pat) => picomatch(pat)) ?? [];
+    for (const node of tree.tree) {
+      if (
+        includers.some((match) => match(node.path)) &&
+        !excluders.some((match) => match(node.path))
+      ) {
+        matchingNodes.push(node);
+      }
+    }
+  }
+
+  // enforce a limit on the number of paths
+  alog.log(`Matched ${matchingNodes.length} paths`);
   const MAX_PATHS = 200;
   if (matchingNodes.length > MAX_PATHS) {
-    throw new ApiError(
-      400,
-      `Too many paths (matched ${matchingNodes.length}, maximum ${MAX_PATHS})`,
-    );
-  } else if (matchingNodes.length === 0) {
-    throw new ApiError(
-      400,
-      "No paths match include/exclude rules, nothing to do",
-    );
+    throw new ApiError(400, `Too many paths (max ${MAX_PATHS})`);
   }
-  alog.log(`Matched ${matchingNodes.length} paths`);
+  if (matchingNodes.length === 0) {
+    throw new ApiError(400, "No matching paths");
+  }
 
   // TODO: here we would screen out matching nodes that are already
   // in the database, and only process the new ones. For now, we'll
   // just process everything.
 
+  // use nexttick so that we return a webhook response before
+  // beginning the processing
   nextTick(async () => {
     const limit = pLimit(10);
     const errors: string[] = [];
@@ -221,14 +244,14 @@ async function processTag(
       matchingNodes.map((node) =>
         limit(async (node) => {
           try {
-            await processNode(tagInfo, tree.data, node, alog);
+            const files = getPackageFiles(node, tree.tree, alog);
+            await processPackage(tagInfo, files, node.path ?? "<root>", alog);
           } catch (err) {
             const info = getErrorInfo(err);
-            errors.push(
-              `* Path ${node.path}:\n[${info.type}]\n${info.message}`,
-            );
+            const path = node?.path ?? "<root>";
+            errors.push(`* Path ${path}:\n[${info.type}]\n${info.message}`);
             alog.log(
-              `Error processing node ${node.path}:\n[${info.type}]\n${info.message}`,
+              `Error processing node ${path}:\n[${info.type}]\n${info.message}`,
             );
             if (err instanceof AxiosError) {
               alog.log("Request config:", err.config);
@@ -256,45 +279,64 @@ async function processTag(
   });
 }
 
+function getPackageFiles(
+  node: z.infer<typeof ZGithubNode>,
+  tree: z.infer<typeof ZGithubNode>[],
+  alog: ActivityLog,
+) {
+  let filtered: GithubBlobNode[] = [];
+  if (node.type === "tree") {
+    const rootPrefix = node.path ? `${node.path}/` : "";
+    const matcher = picomatch(`${rootPrefix}**`);
+    for (const entry of tree) {
+      if (entry.type === "commit") {
+        throw new ApiError(400, `Submodules are not supported: ${node.path}`);
+      }
+      if (entry.type === "blob") {
+        const relativePath = entry.path.slice(rootPrefix.length);
+
+        // hidden if any part of the path starts with . or _
+        const parts = relativePath.split("/");
+        const hidden = parts.some(
+          (part) => part.startsWith(".") || part.startsWith("_"),
+        );
+        if (hidden) continue;
+
+        // finally match the paths
+        if (matcher(entry.path)) {
+          filtered.push({ ...entry, path: relativePath });
+        }
+      }
+    }
+  } else if (node.type === "blob") {
+    // rename the file to "Config" with original extension if any
+    const parts = node.path.split(".");
+    const newPath = parts.length > 1 ? `Config.${parts.at(-1)}` : "Config";
+    alog.log(`Renamed root node from ${node.path} to ${newPath}`);
+    filtered.push({ ...node, path: newPath });
+  } else {
+    throw new ApiError(400, `Ignoring node type: ${node.type}`);
+  }
+  return filtered;
+}
+
+// process list of files forming a package
+// paths on input should be relative to package root
 const FILE_MAX_SIZE = 1024 * 1024 * 1;
 const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
-async function processNode(
+async function processPackage(
   tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
-  tree: z.infer<typeof ZGithubTreeNode>[],
-  rootNode: z.infer<typeof ZGithubTreeNode>,
+  blobList: GithubBlobNode[],
+  debugName: string,
   alog: ActivityLog,
 ) {
-  alog.log(`Processing node: ${rootNode.path}`);
-  if (rootNode.type !== "tree") {
-    alog.log(`Skipping non-tree node: ${rootNode.type}`);
-    return;
-  }
-  if (rootNode.path.length === 0) {
-    alog.log("Skipping root node");
-    return;
-  }
-
-  // filter tree to just the node's children that are not trees
-  // and filter out files and directories with prefix . or _ (hidden files)
-  const nodeMatcher = picomatch(`${rootNode.path}/**`);
-  const filteredChildren = tree.filter((entry) => {
-    // remove rootNode.path from start of entry.path
-    const relativePath = entry.path.slice(rootNode.path.length + 1);
-    // split path by / and check if any part of the path starts with . or _
-    const parts = relativePath.split("/");
-    const hidden = parts.some(
-      (part) => part.startsWith(".") || part.startsWith("_"),
-    );
-    return entry.type !== "tree" && !hidden && nodeMatcher(entry.path);
-  });
-
   // if no children, return
-  if (filteredChildren.length === 0) {
+  if (blobList.length === 0) {
     throw new ApiError(400, "No non-hidden files found in tree");
   }
   // if too many children, return
-  if (filteredChildren.length > MAX_FILE_COUNT) {
+  if (blobList.length > MAX_FILE_COUNT) {
     throw new ApiError(400, "Too many files in tree");
   }
 
@@ -304,25 +346,26 @@ async function processNode(
   // - no individual file exceeds FILE_MAX_SIZE
   // - total size of all files does not exceed TOTAL_MAX_SIZE
   // - no duplicate file names under case insensitive comparison
+  // - at least one file is named "Config" or "Config.*"
   const errors: string[] = [];
   const seenFiles = new Set<string>();
+  let configCount = 0;
   let totalSize = 0;
-  for (const child of filteredChildren) {
+  for (const child of blobList) {
     if (seenFiles.has(child.path.toLowerCase())) {
       errors.push(`Duplicate file name: ${child.path}`);
     }
-    if (child.type === "commit") {
-      errors.push(`Submodule found: ${child.path}`);
-    } else if (child.type === "blob") {
-      if (child.mode === "120000") {
-        errors.push(`Symlink found: ${child.path}`);
-      } else {
-        totalSize += child.size;
-        if (child.size > FILE_MAX_SIZE) {
-          errors.push(
-            `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
-          );
-        }
+    if (/^Config(\.[a-zA-Z0-9]+)?$/.test(child.path)) {
+      configCount++;
+    }
+    if (child.mode === "120000") {
+      errors.push(`Symlinks are not supported: ${child.path}`);
+    } else {
+      totalSize += child.size;
+      if (child.size > FILE_MAX_SIZE) {
+        errors.push(
+          `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
+        );
       }
     }
   }
@@ -332,23 +375,26 @@ async function processNode(
   if (errors.length > 0) {
     throw new ApiError(400, errors.join("\n"));
   }
+  if (configCount === 0) {
+    throw new ApiError(400, "No Config file found");
+  }
 
   // now we can process the files
   // check which files are already in the blob store
   const AUTH_KIND = "test";
   const { data } = await getRolo(AUTH_KIND).get("blobs", {
     params: {
-      hash: filteredChildren.map((child) => child.sha).join(","),
+      hash: blobList.map((child) => child.sha).join(","),
       format: "json",
       extract: "hash",
-      limit: filteredChildren.length,
+      limit: blobList.length,
     },
   });
   const gotHashes = new Set(z.array(ZBlobHash).parse(data));
 
   // upload any that are not already in the blob store
   const files: BlobFileList = [];
-  async function getFile(node: z.infer<typeof ZGithubTreeNode>) {
+  async function getFile(node: z.infer<typeof ZGithubNode>) {
     if (node.type !== "blob") {
       throw new Error("Invalid node type");
     }
@@ -377,7 +423,7 @@ async function processNode(
 
     // at this point the blob is in the database, so we can add it to the list
     files.push({
-      path: node.path.slice(rootNode.path.length + 1),
+      path: node.path,
       hash: node.sha,
       executable: node.mode === "100755" ? true : undefined,
     });
@@ -385,10 +431,10 @@ async function processNode(
 
   // build the file list
   const limit = pLimit(5);
-  await Promise.all(filteredChildren.map((node) => limit(getFile, node)));
+  await Promise.all(blobList.map((node) => limit(getFile, node)));
 
   // print something
-  alog.log(`Gathered ${files.length} files for tree '${rootNode.path}:`);
+  alog.log(`Gathered ${files.length} files '${debugName}':`);
   for (const file of files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
   )) {
