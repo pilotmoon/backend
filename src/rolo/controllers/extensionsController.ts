@@ -16,7 +16,7 @@ import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
-import { arrayFromQuery } from "../query.js";
+import { arrayFromQuery, stringFromQuery } from "../query.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
@@ -130,7 +130,7 @@ export async function listExtensions(
       pagination,
       getQueryPipeline(query),
     );
-    return documents.map((document) => ZExtensionRecord.parse(document));
+    return documents;
   } catch (error) {
     handleControllerError(error);
     throw error;
@@ -142,9 +142,15 @@ export function getQueryPipeline(query: unknown) {
   log("getQueryPipeline", { query });
 
   // nodeSha
-  const nodeShas = arrayFromQuery(query, "nodeSha", []);
+  const nodeShas = arrayFromQuery(query, "origin.nodeSha", []);
   if (nodeShas.length > 0) {
     pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
+  }
+
+  // extract?
+  const extract = stringFromQuery(query, "extract", "");
+  if (extract) {
+    pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });
   }
 
   return pipeline;

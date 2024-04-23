@@ -264,7 +264,7 @@ async function processTag(
   // check which nodes are already processed
   const { data: extensionData } = await getRolo(AUTH_KIND).get("extensions", {
     params: {
-      nodeSha: matchingNodes.map((node) => node.sha).join(","),
+      "origin.nodeSha": matchingNodes.map((node) => node.sha).join(","),
       format: "json",
       extract: "origin.nodeSha",
       limit: matchingNodes.length,
