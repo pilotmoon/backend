@@ -11,7 +11,14 @@ function preprocess(ctx: Context, obj: unknown) {
   if (Array.isArray(obj)) {
     const extract = stringFromQuery(ctx.query, "extract", "");
     if (extract) {
-      return obj.map((item) => item[extract]);
+      const keyPath = extract.split(".");
+      return obj.map((item) => {
+        let value = item;
+        for (const key of keyPath) {
+          value = value[key];
+        }
+        return value;
+      });
     }
     return obj.map((item) => {
       const { _id, object, ...rest } = item;

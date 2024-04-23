@@ -1,5 +1,10 @@
+import type { Document } from "mongodb";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
+import {
+  ExtensionSubmission,
+  ZExtensionSubmission,
+} from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
 import {
   PositiveSafeInteger,
@@ -10,11 +15,8 @@ import {
 import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
-import {
-  ExtensionSubmission,
-  ZExtensionSubmission,
-} from "../../common/extensionSchemas.js";
 import { Pagination, paginate } from "../paginate.js";
+import { arrayFromQuery } from "../query.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
@@ -29,6 +31,7 @@ export async function init() {
     collection.createIndex({ created: 1 });
     collection.createIndex({ "info.identifier": 1 });
     collection.createIndex({ shortcode: 1 });
+    collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
   }
 }
 
@@ -115,13 +118,34 @@ export async function readExtension(id: string, auth: Auth) {
   }
 }
 
-export async function listExtensions(auth: Auth, pagination: Pagination) {
+export async function listExtensions(
+  query: unknown,
+  pagination: Pagination,
+  auth: Auth,
+) {
   auth.assertAccess(extensionsCollectionName, undefined, "read");
   try {
-    const documents = await paginate(dbc(auth.kind), pagination);
+    const documents = await paginate(
+      dbc(auth.kind),
+      pagination,
+      getQueryPipeline(query),
+    );
     return documents.map((document) => ZExtensionRecord.parse(document));
   } catch (error) {
     handleControllerError(error);
     throw error;
   }
+}
+
+export function getQueryPipeline(query: unknown) {
+  const pipeline: Document[] = [];
+  log("getQueryPipeline", { query });
+
+  // nodeSha
+  const nodeShas = arrayFromQuery(query, "nodeSha", []);
+  if (nodeShas.length > 0) {
+    pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
+  }
+
+  return pipeline;
 }

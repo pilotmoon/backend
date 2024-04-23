@@ -22,6 +22,7 @@ import { restClient as gh, githubWebhookValidator } from "../github.js";
 import { makeRouter } from "../koaWrapper.js";
 import { getRolo } from "../rolo.js";
 
+const AUTH_KIND = "test";
 export const router = makeRouter();
 
 // the webhook payload for a tag creation
@@ -154,15 +155,24 @@ router
       }
       ctx.alog.log("Parsed GitHub payload:", parsedBody.data);
       if (parsedBody.data.ref_type === "tag") {
-        await processTag(parsedBody.data, params.data, ctx.alog);
-        ctx.status = 202;
+        const willProcessAsync = await processTag(
+          parsedBody.data,
+          params.data,
+          ctx.alog,
+        );
+        if (willProcessAsync) {
+          ctx.status = 202;
+          ctx.alog.log(
+            `Processing continues asynchronously; check remote log for results`,
+          );
+        } else {
+          ctx.alog.log(`Processing completed synchronously`);
+          ctx.status = 200;
+        }
       } else {
         ctx.alog.log(`Ignoring ref type: ${parsedBody.data.ref_type}`);
         ctx.status = 200;
       }
-      ctx.alog.log(
-        `Processing continues asynchronously; check remote log for results`,
-      );
     } catch (err) {
       const info = getErrorInfo(err);
       ctx.alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
@@ -185,7 +195,7 @@ async function processTag(
   tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
   params: z.infer<typeof ZWebhookParams>,
   alog: ActivityLog,
-) {
+): Promise<boolean> {
   alog.log("Parsed URL params:", params);
   alog.log(`Repo: ${tagInfo.repository.full_name}`);
   alog.log(`Tag: ${tagInfo.ref}`);
@@ -251,6 +261,23 @@ async function processTag(
     throw new ApiError(400, "No matching paths");
   }
 
+  // check which nodes are already processed
+  const { data: extensionData } = await getRolo(AUTH_KIND).get("extensions", {
+    params: {
+      nodeSha: matchingNodes.map((node) => node.sha).join(","),
+      format: "json",
+      extract: "origin.nodeSha",
+      limit: matchingNodes.length,
+    },
+  });
+  const gotNodeShas = new Set(z.array(ZBlobHash).parse(extensionData));
+  matchingNodes = matchingNodes.filter((node) => !gotNodeShas.has(node.sha));
+  if (matchingNodes.length === 0) {
+    alog.log("All paths are already in the database");
+    return false;
+  }
+  alog.log(`Processing ${matchingNodes.length} new paths`);
+
   // get the ref info to find the commit sha
   const refResponse = await gh().get(
     `/repos/${tagInfo.repository.full_name}/git/matching-refs/tags/${tagInfo.ref}`,
@@ -264,11 +291,7 @@ async function processTag(
     `/repos/${tagInfo.repository.full_name}/git/commits/${refObjects[0].object.sha}`,
   );
   const commit = ZGithubCommitObject.parse(commitResponse.data);
-  alog.log(`Commit:`, commit);
-
-  // TODO: here we would screen out matching nodes that are already
-  // in the database, and only process the new ones. For now, we'll
-  // just process everything.
+  alog.log(`Loaded commit info:`, commit);
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
@@ -312,6 +335,7 @@ async function processTag(
       alog.log("No errors");
     }
   });
+  return true;
 }
 
 function getPackageFiles(
@@ -410,16 +434,15 @@ async function processPackage(
   if (totalSize > TOTAL_MAX_SIZE) {
     errors.push(`Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`);
   }
-  if (configCount === 0) {
-    errors.push("No Config file found");
-  }
+  // if (configCount === 0) {
+  //   errors.push("No Config file found");
+  // }
   if (errors.length > 0) {
     throw new ApiError(400, errors.join("\n"));
   }
 
   // now we can process the files
   // check which files are already in the blob store
-  const AUTH_KIND = "test";
   const { data } = await getRolo(AUTH_KIND).get("blobs", {
     params: {
       hash: blobList.map((child) => child.sha).join(","),
@@ -437,9 +460,9 @@ async function processPackage(
       throw new Error("Invalid node type");
     }
     if (gotHashes.has(node.sha)) {
-      alog.log(`Skipping existing blob: ${node.path}`);
+      //alog.log(`Skipping existing blob: ${node.path}`);
     } else {
-      alog.log(`Downloading blob from GitHub: ${node.path}`);
+      //alog.log(`Downloading blob from GitHub: ${node.path}`);
       const ghResponse = await gh().get(
         `/repos/${tagInfo.repository.full_name}/git/blobs/${node.sha}`,
       );
@@ -448,7 +471,7 @@ async function processPackage(
         throw new Error("GitHub hash mismatch");
       }
       alog.log(
-        `Uploading blob to database: ${node.path} ${ghBlob.size} bytes ${ghBlob.sha}`,
+        //`Uploading blob to database: ${node.path} ${ghBlob.size} bytes ${ghBlob.sha}`,
       );
       const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
         data: ghBlob.content,

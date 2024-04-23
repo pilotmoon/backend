@@ -7,6 +7,7 @@ import {
   readExtension,
 } from "../controllers/extensionsController.js";
 import { ZExtensionSubmission } from "../../common/extensionSchemas.js";
+import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -30,6 +31,12 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
 });
 
 router.get("/", async (ctx) => {
-  const documents = await listExtensions(ctx.state.auth, ctx.state.pagination);
-  ctx.body = documents;
+  const documents = await listExtensions(
+    ctx.query,
+    ctx.state.pagination,
+    ctx.state.auth,
+  );
+  if (!setBodySpecialFormat(ctx, documents)) {
+    ctx.body = documents;
+  }
 });
