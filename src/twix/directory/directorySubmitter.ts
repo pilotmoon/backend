@@ -226,15 +226,12 @@ function getPackageFiles(
   let filtered: GithubBlobNode[] = [];
   if (node.type === "tree") {
     const rootPrefix = node.path ? `${node.path}/` : "";
-    const matcher = picomatch(`${rootPrefix}**`);
     for (const entry of tree) {
+      if (!entry.path.startsWith(rootPrefix)) continue;
       if (entry.type === "commit") {
         throw new ApiError(400, `Submodules are not supported: ${node.path}`);
       }
       if (entry.type === "blob") {
-        if (entry.mode === "120000") {
-          throw new ApiError(400, `Symlinks are not supported: ${entry.path}`);
-        }
         const relativePath = entry.path.slice(rootPrefix.length);
 
         // hidden if any part of the path starts with . or _
@@ -242,12 +239,18 @@ function getPackageFiles(
         const hidden = parts.some(
           (part) => part.startsWith(".") || part.startsWith("_"),
         );
-        if (hidden) continue;
+        if (hidden) {
+          alog.log(`Warning, ignoring hidden file: ${entry.path}`);
+          continue;
+        }
+
+        // don't allow symlinks in packages
+        if (entry.mode === "120000") {
+          throw new ApiError(400, `Symlinks are not supported: ${entry.path}`);
+        }
 
         // finally match the paths
-        if (matcher(entry.path)) {
-          filtered.push({ ...entry, path: relativePath });
-        }
+        filtered.push({ ...entry, path: relativePath });
       }
     }
   } else if (node.type === "blob") {
