@@ -3,6 +3,7 @@ import { makeCsv } from "./makeCsv.js";
 import { makeObjc } from "./makeObjc.js";
 import { makePlist } from "./makePlist.js";
 import { stringFromQuery } from "./query.js";
+import makeStableJson from "fast-stable-stringify";
 
 function preprocess(ctx: Context, obj: unknown) {
   if (typeof obj !== "object" || obj === null) {
@@ -32,7 +33,7 @@ export function setBodySpecialFormat(ctx: Context, obj: unknown) {
   switch (ctx.query.format) {
     case "json":
       ctx.set("Content-Type", "application/json; charset=utf-8");
-      ctx.body = JSON.stringify(preprocess(ctx, obj), null, 2);
+      ctx.body = makeStableJson(preprocess(ctx, obj));
       break;
     case "csv":
       ctx.set("Content-Type", "text/csv; charset=utf-8");

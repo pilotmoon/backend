@@ -18,6 +18,7 @@
     "content-type": "1.0.5",
     "cron": "2.4.3",
     "csv-parse": "5.5.5",
+    "fast-stable-stringify": "1.0.0",
     "graphql": "16.8.1",
     "graphql-request": "6.1.0",
     "ip-cidr": "3.1.0",
