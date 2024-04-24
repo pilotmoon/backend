@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export const ZBoolQueryValue = z.enum(["", "1", "0"]);
+export const ZQueryBoolString = z.enum(["", "1", "0"]);
+export const ZQueryBool = z
+  .string()
+  .transform((val) => val === "" || val === "1");
 
 // convert query value to boolean with fallback
 // this is an important design decision for the API.

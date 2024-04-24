@@ -4,7 +4,7 @@ import { log } from "../../common/log.js";
 import { ZSaneAlphanum, ZSaneString } from "../../common/saneSchemas.js";
 import { hashEmail } from "../canonicalizeEmail.js";
 import {
-  ZBoolQueryValue,
+  ZQueryBoolString,
   assignMatch,
   matchExpressionFromQueryValue,
 } from "../query.js";
@@ -25,8 +25,8 @@ export function getQueryPipeline(query: unknown) {
       product: ZSaneString.optional(),
       origin: ZSaneString.optional(),
       order: ZSaneString.optional(),
-      void: ZBoolQueryValue.optional(),
-      refunded: ZBoolQueryValue.optional(),
+      void: ZQueryBoolString.optional(),
+      refunded: ZQueryBoolString.optional(),
       couponPrefix: ZSaneAlphanum.optional(),
       view: z.nativeEnum(View).optional(),
     })
