@@ -1,33 +1,11 @@
 import { AxiosError } from "axios";
-import { z } from "zod";
-import { githubWebhookValidator } from "../github.js";
+import { githubWebhookValidator } from "../githubClient.js";
 import { makeRouter } from "../koaWrapper.js";
-
-import {
-  ZGithubTagCreateEvent,
-  ZWebhookParams,
-  processTag,
-} from "./directorySubmitter.js";
+import { ZWebhookParams, processTagEvent } from "./directorySubmitter.js";
 import { getErrorInfo } from "../../common/errors.js";
+import { ZGithubPayload } from "../githubTypes.js";
 
 export const router = makeRouter();
-
-const ZGithubBranchCreateEvent = z.object({
-  ref_type: z.literal("branch"),
-  ref: z.string(),
-});
-const ZGithubRepoCreateEvent = z.object({
-  ref_type: z.literal("repository"),
-  ref: z.null(),
-});
-
-// these are the three possible ref types of `create` events
-// as per https://docs.github.com/en/rest/using-the-rest-api/github-event-types?apiVersion=2022-11-28#createevent
-const ZGithubPayload = z.union([
-  ZGithubTagCreateEvent,
-  ZGithubBranchCreateEvent,
-  ZGithubRepoCreateEvent,
-]);
 
 const GH_HOOK_PATH = "/webhooks/gh";
 router
@@ -46,7 +24,7 @@ router
       }
       ctx.alog.log("Parsed GitHub payload:", parsedBody.data);
       if (parsedBody.data.ref_type === "tag") {
-        const willProcessAsync = await processTag(
+        const willProcessAsync = await processTagEvent(
           parsedBody.data,
           params.data,
           ctx.alog,

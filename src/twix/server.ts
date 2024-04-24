@@ -1,5 +1,4 @@
 import cors from "@koa/cors";
-import Router from "@koa/router";
 import "colors";
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
@@ -13,7 +12,10 @@ import { config } from "./config.js";
 import { router as directoryRouter } from "./directory/directoryRouter.js";
 import { getConfig as initEmail } from "./email.js";
 import { start as initReports, stop as stopReports } from "./emailReports.js";
-import { housekeep as housekeepGithub, init as initGithub } from "./github.js";
+import {
+  housekeep as housekeepGithub,
+  init as initGithub,
+} from "./githubClient.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { remoteConfigReady } from "./remoteConfig.js";

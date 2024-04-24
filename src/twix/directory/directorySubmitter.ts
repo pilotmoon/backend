@@ -3,122 +3,49 @@ import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
-import { ZBlobHash } from "../../common/blobSchemas.js";
+import { ZBlobHash, ZBlobSchema } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import {
   ZExtensionOrigin,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
 import { BlobFileList } from "../../common/fileList.js";
-import {
-  ZSaneDate,
-  ZSaneEmail,
-  ZSaneIdentifier,
-  ZSaneString,
-} from "../../common/saneSchemas.js";
+import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog";
-import { restClient as gh } from "../github.js";
+import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
+import {
+  GithubBlobNode,
+  GithubCommitObject,
+  GithubNode,
+  GithubTagCreateEvent,
+  ZGithubBlob,
+  ZGithubCommitObject,
+  ZGithubNode,
+  ZGithubRefObject,
+  ZGithubTree,
+} from "../githubTypes.js";
 
 const AUTH_KIND = "test";
 
-const ZGitHubBaseNode = z.object({
-  path: z.string(),
-  sha: z.string(),
-});
-const ZGithubBlobNode = ZGitHubBaseNode.extend({
-  type: z.literal("blob"),
-  mode: z.enum(["100644", "100755", "120000"]),
-  size: z.number().int().nonnegative(),
-});
-type GithubBlobNode = z.infer<typeof ZGithubBlobNode>;
-const ZGithubTreeNode = ZGitHubBaseNode.extend({
-  type: z.literal("tree"),
-  mode: z.enum(["040000"]),
-});
-const ZGithubCommitNode = ZGitHubBaseNode.extend({
-  type: z.literal("commit"),
-  mode: z.enum(["160000"]),
-});
-const ZGithubNode = z.discriminatedUnion("type", [
-  ZGithubBlobNode,
-  ZGithubTreeNode,
-  ZGithubCommitNode,
-]);
-type GithubNode = z.infer<typeof ZGithubNode>;
-
-const ZGithubTree = z.object({
-  sha: z.string(),
-  tree: z.array(ZGithubNode),
-  truncated: z.boolean(),
-});
-
-const ZGithubBlob = z.object({
-  content: z.string(),
-  encoding: z.literal("base64"),
-  sha: z.string(),
-  size: z.number().int().nonnegative(),
-});
-
-export const ZBlobSchema = z.object({
-  id: z.string(),
-  object: z.literal("blob"),
-  hash: ZBlobHash,
-});
-
-const ZGithubRefObject = z.object({
-  ref: z.string(),
-  object: z.object({
-    type: z.literal("commit"),
-    sha: z.string(),
-  }),
-});
-
-const ZGithubCommitObject = z.object({
-  sha: z.string(),
-  committer: z.object({
-    name: ZSaneString,
-    email: ZSaneEmail,
-    date: ZSaneDate,
-  }),
-});
-
+// webhook param
 const ZGlobPatternArray = z.union([
   ZSaneString.transform((str) => [str]),
   z.array(ZSaneString),
 ]);
-
 export const ZWebhookParams = z.object({
   include: ZGlobPatternArray.optional(),
   exclude: ZGlobPatternArray.optional(),
   tagPrefix: ZSaneIdentifier.optional(),
 });
+export type WebhookParams = z.infer<typeof ZWebhookParams>;
 
-// temporary -- move
-export const ZGithubTagCreateEvent = z.object({
-  ref_type: z.literal("tag"),
-  ref: z.string(),
-  repository: z.object({
-    html_url: z.string(),
-    id: z.number().int().safe().nonnegative(),
-    name: z.string(),
-    private: z.boolean(),
-    full_name: z.string(),
-    owner: z.object({
-      login: z.string(),
-      id: z.number().int().safe().nonnegative(),
-      type: z.enum(["User", "Organization"]),
-    }),
-  }),
-});
-
-export async function processTag(
-  tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
-  params: z.infer<typeof ZWebhookParams>,
+export async function processTagEvent(
+  tagInfo: GithubTagCreateEvent,
+  params: WebhookParams,
   alog: ActivityLog,
 ): Promise<boolean> {
-  alog.log("Parsed URL params:", params);
   alog.log(`Repo: ${tagInfo.repository.full_name}`);
   alog.log(`Tag: ${tagInfo.ref}`);
 
@@ -315,8 +242,8 @@ const FILE_MAX_SIZE = 1024 * 1024 * 1;
 const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
 async function processPackage(
-  tagInfo: z.infer<typeof ZGithubTagCreateEvent>,
-  commitInfo: z.infer<typeof ZGithubCommitObject>,
+  tagInfo: GithubTagCreateEvent,
+  commitInfo: GithubCommitObject,
   blobList: GithubBlobNode[],
   node: GithubNode,
   alog: ActivityLog,
