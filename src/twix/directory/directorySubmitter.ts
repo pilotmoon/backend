@@ -125,10 +125,11 @@ export async function processTagEvent(
   const gotNodeShas = new Set(z.array(ZBlobHash).parse(extensionData));
   matchingNodes = matchingNodes.filter((node) => !gotNodeShas.has(node.sha));
   if (matchingNodes.length === 0) {
-    alog.log("All paths are already in the database");
+    alog.log("All nodes are already in the database");
     return false;
   }
-  alog.log(`Processing ${matchingNodes.length} new paths`);
+  alog.log(`${gotNodeShas.size} nodes are already in the database`);
+  alog.log(`Processing ${matchingNodes.length} new nodes`);
 
   // get the ref info to find the commit sha
   const refResponse = await gh().get(
@@ -164,7 +165,7 @@ export async function processTagEvent(
     const errors: string[] = [];
     await Promise.all(
       matchingNodes.map((node) =>
-        limit(async (node) => {
+        limit(async () => {
           try {
             const files = getPackageFiles(node, tree.tree, alog);
             await processPackage(partialOrigin, node, files, alog);
@@ -185,7 +186,7 @@ export async function processTagEvent(
               alog.log(`Stack:\n${err.stack}`);
             }
           }
-        }, node),
+        }),
       ),
     );
     await sleep(0);
