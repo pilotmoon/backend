@@ -6,8 +6,11 @@ import { z } from "zod";
 import { ZBlobHash, ZBlobSchema } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import {
+  PartialExtensionOriginGithub,
   ZExtensionOrigin,
+  ZExtensionOriginGithub,
   ZExtensionSubmission,
+  ZPartialExtensionOriginGithub,
 } from "../../common/extensionSchemas.js";
 import { BlobFileList } from "../../common/fileList.js";
 import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
@@ -139,8 +142,20 @@ export async function processTagEvent(
   const commitResponse = await gh().get(
     `/repos/${tagInfo.repository.full_name}/git/commits/${refObjects[0].object.sha}`,
   );
-  const commit = ZGithubCommitObject.parse(commitResponse.data);
-  alog.log(`Loaded commit info:`, commit);
+  const commitInfo = ZGithubCommitObject.parse(commitResponse.data);
+  alog.log(`Loaded commit info:`, commitInfo);
+
+  // create the partial origin object
+  const partialOrigin = ZPartialExtensionOriginGithub.parse({
+    type: "githubRepo",
+    repoId: tagInfo.repository.id,
+    repoName: tagInfo.repository.full_name,
+    repoOwnerId: tagInfo.repository.owner.id,
+    repoOwnerHandle: tagInfo.repository.owner.login,
+    repoOwnerType: tagInfo.repository.owner.type,
+    repoUrl: tagInfo.repository.html_url,
+    commitSha: commitInfo.sha,
+  });
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
@@ -152,7 +167,7 @@ export async function processTagEvent(
         limit(async (node) => {
           try {
             const files = getPackageFiles(node, tree.tree, alog);
-            await processPackage(tagInfo, commit, files, node, alog);
+            await processPackage(partialOrigin, node, files, alog);
           } catch (err) {
             const info = getErrorInfo(err);
             const path = node?.path ?? "<root>";
@@ -242,10 +257,9 @@ const FILE_MAX_SIZE = 1024 * 1024 * 1;
 const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
 async function processPackage(
-  tagInfo: GithubTagCreateEvent,
-  commitInfo: GithubCommitObject,
+  partialOrigin: PartialExtensionOriginGithub,
+  originNode: GithubNode,
   blobList: GithubBlobNode[],
-  node: GithubNode,
   alog: ActivityLog,
 ) {
   // if no children, return
@@ -305,7 +319,7 @@ async function processPackage(
     } else {
       //alog.log(`Downloading blob from GitHub: ${node.path}`);
       const ghResponse = await gh().get(
-        `/repos/${tagInfo.repository.full_name}/git/blobs/${node.sha}`,
+        `/repos/${partialOrigin.repoName}/git/blobs/${node.sha}`,
       );
       const ghBlob = ZGithubBlob.parse(ghResponse.data);
       if (ghBlob.sha !== node.sha) {
@@ -337,7 +351,7 @@ async function processPackage(
 
   // print something
   alog.log(
-    `Gathered ${files.length} files for ${node.type} at '${node.path}':`,
+    `Gathered ${files.length} files for ${originNode.type} at '${originNode.path}':`,
   );
   for (const file of files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
@@ -345,18 +359,11 @@ async function processPackage(
     alog.log(`  ${file.path}`);
   }
 
-  const origin = ZExtensionOrigin.parse({
-    type: "githubRepo",
-    repoId: tagInfo.repository.id,
-    repoName: tagInfo.repository.full_name,
-    repoOwnerId: tagInfo.repository.owner.id,
-    repoOwnerHandle: tagInfo.repository.owner.login,
-    repoOwnerType: tagInfo.repository.owner.type,
-    repoUrl: tagInfo.repository.html_url,
-    commitSha: commitInfo.sha,
-    nodePath: node.path,
-    nodeSha: node.sha,
-    nodeType: node.type,
+  const origin = ZExtensionOriginGithub.parse({
+    ...partialOrigin,
+    nodeSha: originNode.sha,
+    nodePath: originNode.path,
+    nodeType: originNode.type,
   });
   const version = "0";
 

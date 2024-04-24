@@ -20,7 +20,6 @@ export const ZExtensionOriginGithub = z.object({
 export type ExtensionOriginGithub = z.infer<typeof ZExtensionOriginGithub>;
 
 export const ZPartialExtensionOriginGithub = ZExtensionOriginGithub.omit({
-  commitSha: true,
   nodePath: true,
   nodeSha: true,
   nodeType: true,
