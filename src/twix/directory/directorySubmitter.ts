@@ -119,7 +119,7 @@ export async function processTagEvent(
 
   // enforce a limit on the number of paths
   alog.log(`Matched ${matchingNodes.length} paths`);
-  const MAX_PATHS = 200;
+  const MAX_PATHS = 300;
   if (matchingNodes.length > MAX_PATHS) {
     throw new ApiError(400, `Too many paths (max ${MAX_PATHS})`);
   }
