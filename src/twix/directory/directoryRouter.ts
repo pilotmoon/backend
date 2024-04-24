@@ -1,13 +1,10 @@
 import { AxiosError } from "axios";
 import { githubWebhookValidator } from "../githubClient.js";
 import { TwixContext, makeRouter } from "../koaWrapper.js";
-import {
-  ZDirectoryWebhookParams,
-  processTagEvent,
-} from "./directorySubmitter.js";
+import { ZDirectoryWebhookParams, processTagEvent } from "./processTagEvent.js";
 import { getErrorInfo } from "../../common/errors.js";
-import { ZGithubCreateEvent } from "../githubTypes.js";
-import { ZSubmitGistPayload, processGist } from "./gistHandler.js";
+import { ZGithubCreateEvent } from "../../common/githubTypes.js";
+import { ZSubmitGistPayload, processGist } from "./processGist.js";
 
 export const router = makeRouter();
 

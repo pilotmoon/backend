@@ -3,15 +3,9 @@ import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
-import { ZBlobHash, ZBlobSchema } from "../../common/blobSchemas.js";
+import { ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
-import {
-  PartialExtensionOriginGithub,
-  ZExtensionOriginGithub,
-  ZExtensionSubmission,
-  ZPartialExtensionOriginGithub,
-} from "../../common/extensionSchemas.js";
-import { BlobFileList } from "../../common/fileList.js";
+import { ZExtensionOriginGithubRepo } from "../../common/extensionSchemas.js";
 import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog";
@@ -21,13 +15,13 @@ import {
   GithubBlobNode,
   GithubNode,
   GithubTagCreateEvent,
-  ZGithubBlob,
   ZGithubCommitObject,
   ZGithubNode,
   ZGithubRefObject,
   ZGithubTree,
-} from "../githubTypes.js";
+} from "../../common/githubTypes.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
+import { ZPackageNode, submitPackage } from "./submitPackage.js";
 
 const AUTH_KIND = "test";
 
@@ -161,7 +155,7 @@ export async function processTagEvent(
   alog.log(`Loaded commit info:`, commitInfo);
 
   // create the partial origin object
-  const partialOrigin = ZPartialExtensionOriginGithub.parse({
+  const partialOrigin = {
     type: "githubRepo",
     repoId: tagInfo.repository.id,
     repoName: tagInfo.repository.full_name,
@@ -171,7 +165,7 @@ export async function processTagEvent(
     repoUrl: tagInfo.repository.html_url,
     commitSha: commitInfo.sha,
     commitDate: commitInfo.committer.date,
-  });
+  };
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
@@ -183,7 +177,18 @@ export async function processTagEvent(
         limit(async () => {
           try {
             const files = getPackageFiles(node, tree.tree, alog);
-            await processPackage(partialOrigin, version, node, files, alog);
+            await submitPackage(
+              ZExtensionOriginGithubRepo.parse({
+                ...partialOrigin,
+                nodePath: node.path,
+                nodeSha: node.sha,
+                nodeType: node.type,
+              }),
+              version,
+              files,
+              node.path,
+              alog,
+            );
           } catch (err) {
             const info = getErrorInfo(err);
             const path = node?.path ?? "<root>";
@@ -267,134 +272,7 @@ function getPackageFiles(
   } else {
     throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
-  return filtered;
-}
-
-// process list of files forming a package
-// paths on input should be relative to package root
-const FILE_MAX_SIZE = 1024 * 1024 * 1;
-const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
-const MAX_FILE_COUNT = 100;
-async function processPackage(
-  partialOrigin: PartialExtensionOriginGithub,
-  version: VersionString,
-  originNode: GithubNode,
-  blobList: GithubBlobNode[],
-  alog: ActivityLog,
-) {
-  // if no children, return
-  if (blobList.length === 0) {
-    throw new ApiError(400, "No non-hidden files found in tree");
-  }
-  // if too many children, return
-  if (blobList.length > MAX_FILE_COUNT) {
-    throw new ApiError(400, "Too many files in tree");
-  }
-
-  // now make sure that:
-  // - no individual file exceeds FILE_MAX_SIZE
-  // - total size of all files does not exceed TOTAL_MAX_SIZE
-  // - no duplicate file names under case insensitive comparison
-  const errors: string[] = [];
-  const seenFiles = new Set<string>();
-  let totalSize = 0;
-  for (const child of blobList) {
-    if (seenFiles.has(child.path.toLowerCase())) {
-      errors.push(`Duplicate case-insensitive file name: ${child.path}`);
-    }
-    totalSize += child.size;
-    if (child.size > FILE_MAX_SIZE) {
-      errors.push(
-        `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
-      );
-    }
-  }
-  if (totalSize > TOTAL_MAX_SIZE) {
-    errors.push(`Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`);
-  }
-  if (errors.length > 0) {
-    throw new ApiError(400, errors.join("\n"));
-  }
-
-  // now we can process the files
-  // check which files are already in the blob store
-  const { data } = await getRolo(AUTH_KIND).get("blobs", {
-    params: {
-      hash: blobList.map((child) => child.sha).join(","),
-      format: "json",
-      extract: "hash",
-      limit: blobList.length,
-    },
-  });
-  const gotHashes = new Set(z.array(ZBlobHash).parse(data));
-
-  // upload any that are not already in the blob store
-  const files: BlobFileList = [];
-  async function getFile(node: z.infer<typeof ZGithubNode>) {
-    if (node.type !== "blob") {
-      throw new Error("Invalid node type");
-    }
-    if (gotHashes.has(node.sha)) {
-      //alog.log(`Skipping existing blob: ${node.path}`);
-    } else {
-      //alog.log(`Downloading blob from GitHub: ${node.path}`);
-      const ghResponse = await gh().get(
-        `/repos/${partialOrigin.repoName}/git/blobs/${node.sha}`,
-      );
-      const ghBlob = ZGithubBlob.parse(ghResponse.data);
-      if (ghBlob.sha !== node.sha) {
-        throw new Error("GitHub hash mismatch");
-      }
-      alog.log(
-        //`Uploading blob to database: ${node.path} ${ghBlob.size} bytes ${ghBlob.sha}`,
-      );
-      const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
-        data: ghBlob.content,
-      });
-      const dbBlob = ZBlobSchema.parse(dbResponse.data);
-      if (dbBlob.hash !== node.sha) {
-        throw new Error("DB hash mismatch");
-      }
-    }
-
-    // at this point the blob is in the database, so we can add it to the list
-    files.push({
-      path: node.path,
-      hash: node.sha,
-      executable: node.mode === "100755" ? true : undefined,
-    });
-  }
-
-  // build the file list
-  const limit = pLimit(5);
-  await Promise.all(blobList.map((node) => limit(getFile, node)));
-
-  // print something
-  alog.log(
-    `Gathered ${files.length} files for ${originNode.type} at '${originNode.path}':`,
+  return filtered.map((node) =>
+    ZPackageNode.parse({ ...node, executable: node.mode === "100755" }),
   );
-  for (const file of files.sort((a, b) =>
-    a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
-  )) {
-    alog.log(`  ${file.path}`);
-  }
-
-  const origin = ZExtensionOriginGithub.parse({
-    ...partialOrigin,
-    nodeSha: originNode.sha,
-    nodePath: originNode.path,
-    nodeType: originNode.type,
-  });
-
-  // now we have all the files we need to submit the package
-  const submission = ZExtensionSubmission.parse({
-    origin,
-    files,
-    version,
-  });
-  const submissionResponse = await getRolo(AUTH_KIND).post(
-    "extensions",
-    submission,
-  );
-  alog.log(`Submitted package. Response:`, submissionResponse.data);
 }

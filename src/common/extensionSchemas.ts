@@ -7,14 +7,15 @@ import {
   ZSaneString,
 } from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
+import { ZGitHubUserType } from "./githubTypes.js";
 
-export const ZExtensionOriginGithub = z.object({
+export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),
   repoId: NonNegativeSafeInteger,
   repoName: ZSaneString,
   repoOwnerId: NonNegativeSafeInteger,
   repoOwnerHandle: ZSaneString,
-  repoOwnerType: z.enum(["User", "Organization"]),
+  repoOwnerType: ZGitHubUserType,
   repoUrl: ZSaneString,
   commitSha: ZBlobHash,
   commitDate: ZSaneDate,
@@ -22,22 +23,24 @@ export const ZExtensionOriginGithub = z.object({
   nodeSha: ZBlobHash,
   nodeType: z.enum(["blob", "tree"]),
 });
-export type ExtensionOriginGithub = z.infer<typeof ZExtensionOriginGithub>;
-
-export const ZPartialExtensionOriginGithub = ZExtensionOriginGithub.omit({
-  nodePath: true,
-  nodeSha: true,
-  nodeType: true,
-});
-export type PartialExtensionOriginGithub = z.infer<
-  typeof ZPartialExtensionOriginGithub
+export type ExtensionOriginGithubRepo = z.infer<
+  typeof ZExtensionOriginGithubRepo
 >;
 
+export const ZExtensionOriginGithubGist = z.object({
+  type: z.literal("githubGist"),
+  gistId: ZSaneString,
+  gistOwnerId: NonNegativeSafeInteger,
+  gistOwnerHandle: ZSaneString,
+  gistOwnerType: ZGitHubUserType,
+  gistUrl: ZSaneString,
+  commitSha: ZBlobHash,
+  commitDate: ZSaneDate,
+});
+
 export const ZExtensionOrigin = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("unknown"),
-  }),
-  ZExtensionOriginGithub,
+  ZExtensionOriginGithubRepo,
+  ZExtensionOriginGithubGist,
 ]);
 export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 

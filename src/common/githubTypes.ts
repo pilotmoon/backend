@@ -1,5 +1,23 @@
 import { z } from "zod";
-import { ZSaneDate, ZSaneEmail, ZSaneString } from "../common/saneSchemas.js";
+import {
+  NonNegativeSafeInteger,
+  ZSaneDate,
+  ZSaneEmail,
+  ZSaneString,
+} from "./saneSchemas.js";
+import { ZBlobHash } from "./blobSchemas.js";
+
+/**********************
+  Common GitHub Types
+***********************/
+export const ZGitHubUserType = z.enum(["User", "Organization"]);
+
+export const ZGithubUser = z.object({
+  login: ZSaneString,
+  id: NonNegativeSafeInteger,
+  type: ZGitHubUserType,
+  email: ZSaneEmail.nullish(),
+});
 
 /************************
   GitHub Webhook Events
@@ -10,15 +28,11 @@ export const ZGithubTagCreateEvent = z.object({
   ref: z.string(),
   repository: z.object({
     html_url: z.string(),
-    id: z.number().int().safe().nonnegative(),
+    id: NonNegativeSafeInteger,
     name: z.string(),
     private: z.boolean(),
     full_name: z.string(),
-    owner: z.object({
-      login: z.string(),
-      id: z.number().int().safe().nonnegative(),
-      type: z.enum(["User", "Organization"]),
-    }),
+    owner: ZGithubUser,
   }),
 });
 export type GithubTagCreateEvent = z.infer<typeof ZGithubTagCreateEvent>;
@@ -45,24 +59,24 @@ export const ZGithubCreateEvent = z.discriminatedUnion("ref_type", [
   GitHub Tree
 ***************/
 
-const ZGitHubBaseNode = z.object({
+export const ZGithubBaseNode = z.object({
   path: z.string(),
   sha: z.string(),
 });
 
-export const ZGithubBlobNode = ZGitHubBaseNode.extend({
+export const ZGithubBlobNode = ZGithubBaseNode.extend({
   type: z.literal("blob"),
   mode: z.enum(["100644", "100755", "120000"]),
-  size: z.number().int().nonnegative(),
+  size: NonNegativeSafeInteger,
 });
 export type GithubBlobNode = z.infer<typeof ZGithubBlobNode>;
 
-const ZGithubTreeNode = ZGitHubBaseNode.extend({
+const ZGithubTreeNode = ZGithubBaseNode.extend({
   type: z.literal("tree"),
   mode: z.enum(["040000"]),
 });
 
-const ZGithubCommitNode = ZGitHubBaseNode.extend({
+const ZGithubCommitNode = ZGithubBaseNode.extend({
   type: z.literal("commit"),
   mode: z.enum(["160000"]),
 });
@@ -84,7 +98,34 @@ export const ZGithubBlob = z.object({
   content: z.string(),
   encoding: z.literal("base64"),
   sha: z.string(),
-  size: z.number().int().nonnegative(),
+  size: NonNegativeSafeInteger,
+});
+
+/*******
+  Gist
+********/
+
+export const ZGithubGistFile = z.object({
+  filename: ZSaneString,
+  size: NonNegativeSafeInteger,
+  truncated: z.boolean(),
+  content: z.string(),
+});
+
+export const ZGithubGist = z.object({
+  id: ZSaneString,
+  public: z.boolean(),
+  html_url: ZSaneString,
+  files: z.record(ZGithubGistFile),
+  truncated: z.boolean(),
+  owner: ZGithubUser,
+  history: z.array(
+    z.object({
+      version: ZBlobHash,
+      user: ZGithubUser,
+      committed_at: ZSaneDate,
+    }),
+  ),
 });
 
 /*********************

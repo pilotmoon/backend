@@ -32,6 +32,7 @@ export async function init() {
     collection.createIndex({ "info.identifier": 1 });
     collection.createIndex({ shortcode: 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
+    collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
   }
 }
 
