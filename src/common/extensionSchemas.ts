@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { ZBlobHash } from "./blobSchemas.js";
 import { ZBlobFileList } from "./fileList.js";
-import { NonNegativeSafeInteger, ZSaneString } from "./saneSchemas.js";
+import {
+  NonNegativeSafeInteger,
+  ZSaneDate,
+  ZSaneString,
+} from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
 
 export const ZExtensionOriginGithub = z.object({
@@ -13,6 +17,7 @@ export const ZExtensionOriginGithub = z.object({
   repoOwnerType: z.enum(["User", "Organization"]),
   repoUrl: ZSaneString,
   commitSha: ZBlobHash,
+  commitDate: ZSaneDate,
   nodePath: z.string(),
   nodeSha: ZBlobHash,
   nodeType: z.enum(["blob", "tree"]),

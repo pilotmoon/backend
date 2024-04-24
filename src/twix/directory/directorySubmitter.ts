@@ -7,7 +7,6 @@ import { ZBlobHash, ZBlobSchema } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import {
   PartialExtensionOriginGithub,
-  ZExtensionOrigin,
   ZExtensionOriginGithub,
   ZExtensionSubmission,
   ZPartialExtensionOriginGithub,
@@ -20,7 +19,6 @@ import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
 import {
   GithubBlobNode,
-  GithubCommitObject,
   GithubNode,
   GithubTagCreateEvent,
   ZGithubBlob,
@@ -172,6 +170,7 @@ export async function processTagEvent(
     repoOwnerType: tagInfo.repository.owner.type,
     repoUrl: tagInfo.repository.html_url,
     commitSha: commitInfo.sha,
+    commitDate: commitInfo.committer.date,
   });
 
   // use nexttick so that we return a webhook response before
