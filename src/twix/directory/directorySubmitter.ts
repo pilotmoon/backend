@@ -29,6 +29,7 @@ import {
   ZGithubRefObject,
   ZGithubTree,
 } from "../githubTypes.js";
+import { VersionString, ZVersionString } from "../../common/versionString.js";
 
 const AUTH_KIND = "test";
 
@@ -40,9 +41,21 @@ const ZGlobPatternArray = z.union([
 export const ZWebhookParams = z.object({
   include: ZGlobPatternArray.optional(),
   exclude: ZGlobPatternArray.optional(),
-  tagPrefix: ZSaneIdentifier.optional(),
+  versionPrefix: ZSaneIdentifier.optional(),
 });
 export type WebhookParams = z.infer<typeof ZWebhookParams>;
+
+function parseVersion(tag: string, prefix: string): VersionString {
+  if (!tag.startsWith(prefix)) {
+    throw new ApiError(400, `Tag ${tag} does not start with ${prefix}`);
+  }
+  const version = tag.slice(prefix.length);
+  const result = ZVersionString.safeParse(version);
+  if (!result.success) {
+    throw new ApiError(400, `Invalid version string: ${version}`);
+  }
+  return result.data;
+}
 
 export async function processTagEvent(
   tagInfo: GithubTagCreateEvent,
@@ -70,6 +83,9 @@ export async function processTagEvent(
   if (tree.truncated) {
     throw new ApiError(400, "The tree is truncated; repo is too large");
   }
+
+  // parse the version from the tag name
+  const version = parseVersion(tagInfo.ref, params.versionPrefix ?? "");
 
   // list of nodes to be processed
   let matchingNodes: GithubNode[] = [];
@@ -168,7 +184,7 @@ export async function processTagEvent(
         limit(async () => {
           try {
             const files = getPackageFiles(node, tree.tree, alog);
-            await processPackage(partialOrigin, node, files, alog);
+            await processPackage(partialOrigin, version, node, files, alog);
           } catch (err) {
             const info = getErrorInfo(err);
             const path = node?.path ?? "<root>";
@@ -259,6 +275,7 @@ const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
 async function processPackage(
   partialOrigin: PartialExtensionOriginGithub,
+  version: VersionString,
   originNode: GithubNode,
   blobList: GithubBlobNode[],
   alog: ActivityLog,
@@ -366,7 +383,6 @@ async function processPackage(
     nodePath: originNode.path,
     nodeType: originNode.type,
   });
-  const version = "0";
 
   // now we have all the files we need to submit the package
   const submission = ZExtensionSubmission.parse({
