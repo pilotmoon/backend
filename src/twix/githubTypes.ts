@@ -35,7 +35,7 @@ const ZGithubRepoCreateEvent = z.object({
 
 // these are the three possible ref types of `create` events
 // as per https://docs.github.com/en/rest/using-the-rest-api/github-event-types?apiVersion=2022-11-28#createevent
-export const ZGithubPayload = z.discriminatedUnion("ref_type", [
+export const ZGithubCreateEvent = z.discriminatedUnion("ref_type", [
   ZGithubTagCreateEvent,
   ZGithubBranchCreateEvent,
   ZGithubRepoCreateEvent,

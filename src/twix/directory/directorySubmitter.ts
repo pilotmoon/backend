@@ -36,12 +36,12 @@ const ZGlobPatternArray = z.union([
   ZSaneString.transform((str) => [str]),
   z.array(ZSaneString),
 ]);
-export const ZWebhookParams = z.object({
+export const ZDirectoryWebhookParams = z.object({
   include: ZGlobPatternArray.optional(),
   exclude: ZGlobPatternArray.optional(),
   versionPrefix: ZSaneIdentifier.optional(),
 });
-export type WebhookParams = z.infer<typeof ZWebhookParams>;
+export type DirectoryWebhookParams = z.infer<typeof ZDirectoryWebhookParams>;
 
 function parseVersion(tag: string, prefix: string): VersionString {
   if (!tag.startsWith(prefix)) {
@@ -57,7 +57,7 @@ function parseVersion(tag: string, prefix: string): VersionString {
 
 export async function processTagEvent(
   tagInfo: GithubTagCreateEvent,
-  params: WebhookParams,
+  params: DirectoryWebhookParams,
   alog: ActivityLog,
 ): Promise<boolean> {
   alog.log(`Repo: ${tagInfo.repository.full_name}`);
