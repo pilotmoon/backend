@@ -72,8 +72,7 @@ export async function submitPackage(
     throw new ApiError(400, errors.join("\n"));
   }
 
-  // now we can process the files
-  // check which files are already in the blob store
+  // get a list of hashes we already have
   const { data } = await getRolo(AUTH_KIND).get("blobs", {
     params: {
       hash: fileList.map((child) => child.sha).join(","),
@@ -84,7 +83,6 @@ export async function submitPackage(
   });
   const gotHashes = new Set(z.array(ZBlobHash).parse(data));
 
-  // upload any that are not already in the blob store
   const files: BlobFileList = [];
   async function getFile(node: PackageNode) {
     if (node.type === "blob") {
@@ -134,11 +132,14 @@ export async function submitPackage(
   const limit = pLimit(5);
   await Promise.all(fileList.map((node) => limit(getFile, node)));
 
+  // sort the files (this is not strictly necessary, but it makes the output more predictable)
+  files.sort((a, b) =>
+    a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
+  );
+
   // print something
   alog.log(`Gathered ${files.length} files for '${displayName}':`);
-  for (const file of files.sort((a, b) =>
-    a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
-  )) {
+  for (const file of files) {
     alog.log(`  ${file.path}`);
   }
 

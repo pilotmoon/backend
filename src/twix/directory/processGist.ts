@@ -5,6 +5,8 @@ import { restClient as gh } from "../githubClient.js";
 import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
+import { PackageNode, ZPackageNode, submitPackage } from "./submitPackage.js";
+import { gitHash } from "../../common/blobSchemas.js";
 
 export const ZSubmitGistPayload = z.object({
   url: ZSaneString,
@@ -67,6 +69,25 @@ export async function processGist(
   });
 
   // build file list
+  const packageFiles: PackageNode[] = [];
+  for (const [_, file] of Object.entries(gist.files)) {
+    const contentBuffer = Buffer.from(file.content, "utf-8");
+    if (contentBuffer.length !== file.size) {
+      throw new Error(`Content length mismatch`);
+    }
+    packageFiles.push(
+      ZPackageNode.parse({
+        type: "blob",
+        path: file.filename,
+        size: file.size,
+        sha: gitHash(contentBuffer),
+        executable: false,
+        contentBase64: contentBuffer.toString("base64"),
+      }),
+    );
+  }
 
+  // submit package
+  submitPackage(origin, version.toString(), packageFiles, gistId, alog);
   return false;
 }

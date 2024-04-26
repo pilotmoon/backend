@@ -32,7 +32,6 @@ blob is kept.
 /*/
 
 import { Binary, Document } from "mongodb";
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
@@ -41,7 +40,7 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getClient, getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
-import { BlobHash, ZBlobHash } from "../../common/blobSchemas.js";
+import { BlobHash, ZBlobHash, gitHash } from "../../common/blobSchemas.js";
 
 /*** Database ***/
 
@@ -78,12 +77,6 @@ export const ZBlobBinaryRecord = ZBlobCoreRecord.extend({
   data: z.instanceof(Binary),
 });
 export type BlobBinaryRecord = z.infer<typeof ZBlobBinaryRecord>;
-
-function gitHash(data: Buffer) {
-  const header = `blob ${data.length}\0`;
-  const buffer = Buffer.concat([Buffer.from(header), data]);
-  return createHash("sha1").update(buffer).digest("hex");
-}
 
 /** C.R.U.D. **/
 const maxBlobSize = 5 * 1024 * 1024;
