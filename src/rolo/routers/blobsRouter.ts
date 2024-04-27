@@ -29,7 +29,7 @@ const lookup = {
   mp4: "video/mp4",
   md: "text/markdown",
 };
-const filePattern = `file(?:\.(?:${Object.keys(lookup).join("|")}))?`;
+const filePattern = `file(?:\\.(?:${Object.keys(lookup).join("|")}))?`;
 const matchFile = {
   pattern: `${matchId.pattern}/:filename(${filePattern})`,
   uuid: randomUUID(),
@@ -46,8 +46,6 @@ const ZBlobSubmission = z.object({
 const ZBlobBase64Record = ZBlobCoreRecord.extend({
   data: z.string().optional(),
 });
-
-const PUBLIC_CACHE = "public, max-age=15";
 
 router.post("/", async (ctx) => {
   const submission = ZBlobSubmission.strict().parse(ctx.request.body);
@@ -66,7 +64,6 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
       ...document,
       data: document.dataBuffer?.toString("base64"),
     });
-    ctx.set("Cache-Control", PUBLIC_CACHE);
   }
 });
 
@@ -81,7 +78,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   }
   ctx.body = document.dataBuffer;
   ctx.set("Content-Type", contentType);
-  ctx.set("Cache-Control", PUBLIC_CACHE);
+  ctx.set("Cache-Control", "public, max-age=31536000, immutable");
 });
 
 router.get("/", async (ctx) => {
@@ -99,7 +96,6 @@ router.get("/", async (ctx) => {
   if (!setBodySpecialFormat(ctx, documents)) {
     ctx.body = documents;
   }
-  ctx.set("Cache-Control", PUBLIC_CACHE);
 });
 
 // delete blob
