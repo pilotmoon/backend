@@ -6,7 +6,10 @@ import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
 import { PackageNode, ZPackageNode, submitPackage } from "./submitPackage.js";
-import { gitHash } from "../../common/blobSchemas.js";
+import { ZBlobHash, gitHash } from "../../common/blobSchemas.js";
+import { getRolo } from "../rolo.js";
+
+const AUTH_KIND = "test";
 
 export const ZSubmitGistPayload = z.object({
   url: ZSaneString,
@@ -45,9 +48,26 @@ export async function processGist(
     throw new Error(`Response is truncated`);
   }
 
-  // get commit and author info
+  // get version number
   const version = gist.history.length;
+
+  // check if database already has this commit
+  // TODO: check digest instead in submitPackage
   const commit = gist.history[0];
+  const existing = await getRolo(AUTH_KIND).get("extensions", {
+    params: {
+      "origin.commitSha": [commit.version],
+      format: "json",
+      extract: "origin.commitSha",
+    },
+  });
+  const gotShas = z.array(ZBlobHash).parse(existing.data);
+  if (gotShas.length) {
+    alog.log("Gist is already in the database");
+    return false;
+  }
+
+  // fetch user info
   const userResponse = await gh().get(`/users/${commit.user.login}`);
   log("user", userResponse.data);
   const user = ZGithubUser.parse(userResponse.data);
@@ -63,6 +83,7 @@ export async function processGist(
     commitSha: commit.version,
     commitDate: commit.committed_at,
   });
+
   alog.log("Gist info:", {
     version,
     origin,
