@@ -77,11 +77,9 @@ export async function processGist(
     }
     packageFiles.push(
       ZPackageNode.parse({
-        type: "blob",
         path: file.filename,
         size: file.size,
-        sha: gitHash(contentBuffer),
-        executable: false,
+        hash: gitHash(contentBuffer),
         contentBase64: contentBuffer.toString("base64"),
       }),
     );

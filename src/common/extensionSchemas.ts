@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZBlobHash } from "./blobSchemas.js";
-import { ZBlobFileList } from "./fileList.js";
+import { BlobFileList, ZBlobFileList } from "./fileList.js";
 import {
   NonNegativeSafeInteger,
   ZSaneDate,
@@ -50,3 +50,39 @@ export const ZExtensionSubmission = z.object({
   files: ZBlobFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
+
+const FILE_MAX_SIZE = 1024 * 1024 * 1;
+const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
+const MAX_FILE_COUNT = 100;
+export function validateFileList(fileList: BlobFileList) {
+  const errors: string[] = [];
+  if (fileList.length === 0) {
+    errors.push("No files in tree");
+  } else if (fileList.length > MAX_FILE_COUNT) {
+    errors.push("Too many files in tree");
+  } else {
+    // make sure that:
+    // - no individual file exceeds FILE_MAX_SIZE
+    // - total size of all files does not exceed TOTAL_MAX_SIZE
+    // - no duplicate file names under case insensitive comparison
+    const seenFiles = new Set<string>();
+    let totalSize = 0;
+    for (const child of fileList) {
+      if (seenFiles.has(child.path.toLowerCase())) {
+        errors.push(`Duplicate case-insensitive file name: ${child.path}`);
+      }
+      totalSize += child.size;
+      if (child.size > FILE_MAX_SIZE) {
+        errors.push(
+          `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
+        );
+      }
+    }
+    if (totalSize > TOTAL_MAX_SIZE) {
+      errors.push(
+        `Total size too large (${totalSize}; limit ${TOTAL_MAX_SIZE})`,
+      );
+    }
+  }
+  return errors;
+}

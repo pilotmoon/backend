@@ -1,9 +1,17 @@
 import { createHash } from "crypto";
 import { base64ToBigint, bigintToBuf, hexToBigint } from "bigint-conversion";
 import { makePlist } from "./makePlist.js";
-import { type BufferFileList } from "../common/fileList.js";
+import { z } from "zod";
 
 // utility for signing popclip extensions
+
+export const ZBufferFileListEntry = z.object({
+  path: z.string(),
+  executable: z.boolean().optional(),
+  buffer: z.instanceof(Buffer),
+});
+export const ZBufferFileList = z.array(ZBufferFileListEntry);
+export type BufferFileList = z.infer<typeof ZBufferFileList>;
 
 export type KeyPair = { publicKey: bigint; privateKey: bigint };
 
