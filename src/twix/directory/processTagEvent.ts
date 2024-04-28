@@ -273,6 +273,10 @@ function getPackageFiles(
     throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
   return filtered.map((node) =>
-    ZPackageNode.parse({ ...node, executable: node.mode === "100755" }),
+    ZPackageNode.parse({
+      ...node,
+      hash: node.sha,
+      executable: node.mode === "100755",
+    }),
   );
 }

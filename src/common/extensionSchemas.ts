@@ -51,6 +51,14 @@ export const ZExtensionSubmission = z.object({
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 
+export function isConfigFileName(name: string) {
+  return /^Config(?:[.][^.\/]+)?$/.test(name);
+}
+
+export function isSnippetFileName(name: string) {
+  return /^#popclip(?:[^\/]+)?$/i.test(name);
+}
+
 const FILE_MAX_SIZE = 1024 * 1024 * 1;
 const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
@@ -59,15 +67,22 @@ export function validateFileList(fileList: BlobFileList) {
   if (fileList.length === 0) {
     errors.push("No files in tree");
   } else if (fileList.length > MAX_FILE_COUNT) {
-    errors.push("Too many files in tree");
+    errors.push(
+      `Too many files in tree (${fileList.length}; limit ${MAX_FILE_COUNT})`,
+    );
   } else {
     // make sure that:
     // - no individual file exceeds FILE_MAX_SIZE
     // - total size of all files does not exceed TOTAL_MAX_SIZE
     // - no duplicate file names under case insensitive comparison
+    // - exactly one file is named as a config file
     const seenFiles = new Set<string>();
     let totalSize = 0;
+    let configCount = 0;
     for (const child of fileList) {
+      if (isConfigFileName(child.path) || isSnippetFileName(child.path)) {
+        configCount++;
+      }
       if (seenFiles.has(child.path.toLowerCase())) {
         errors.push(`Duplicate case-insensitive file name: ${child.path}`);
       }
@@ -77,6 +92,12 @@ export function validateFileList(fileList: BlobFileList) {
           `File too large: ${child.path} (${child.size}; limit ${FILE_MAX_SIZE})`,
         );
       }
+    }
+    if (configCount === 0) {
+      errors.push("No Config file");
+    }
+    if (configCount > 1) {
+      errors.push("More than one Config file");
     }
     if (totalSize > TOTAL_MAX_SIZE) {
       errors.push(

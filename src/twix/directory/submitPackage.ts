@@ -32,7 +32,7 @@ export async function submitPackage(
 ) {
   const errors = validateFileList(fileList);
   if (errors.length > 0) {
-    throw new ApiError(400, errors.join("\n"));
+    throw new Error(errors.join("\n"));
   }
   // get a list of hashes we already have
   const { data } = await getRolo(AUTH_KIND).get("blobs", {

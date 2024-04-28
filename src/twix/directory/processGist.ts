@@ -86,6 +86,6 @@ export async function processGist(
   }
 
   // submit package
-  submitPackage(origin, version.toString(), packageFiles, gistId, alog);
+  await submitPackage(origin, version.toString(), packageFiles, gistId, alog);
   return false;
 }
