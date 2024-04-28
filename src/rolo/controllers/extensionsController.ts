@@ -142,6 +142,12 @@ export function getQueryPipeline(query: unknown) {
   const pipeline: Document[] = [];
   log("getQueryPipeline", { query });
 
+  // commitSha
+  const commitShas = arrayFromQuery(query, "origin.commitSha", []);
+  if (commitShas.length > 0) {
+    pipeline.push({ $match: { "origin.commitSha": { $in: commitShas } } });
+  }
+
   // nodeSha
   const nodeShas = arrayFromQuery(query, "origin.nodeSha", []);
   if (nodeShas.length > 0) {

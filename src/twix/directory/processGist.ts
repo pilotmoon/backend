@@ -56,14 +56,14 @@ export async function processGist(
   const commit = gist.history[0];
   const existing = await getRolo(AUTH_KIND).get("extensions", {
     params: {
-      "origin.commitSha": [commit.version],
+      "origin.commitSha": commit.version,
       format: "json",
       extract: "origin.commitSha",
     },
   });
   const gotShas = z.array(ZBlobHash).parse(existing.data);
   if (gotShas.length) {
-    alog.log("Gist is already in the database");
+    alog.log("Gist is already in the database", commit.version, gotShas);
     return false;
   }
 
