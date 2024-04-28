@@ -3,6 +3,8 @@ import { rolo } from "./setup.js";
 import { randomString } from "@pilotmoon/chewit";
 
 const emptyFileHash = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
+const emptyFileHash2 =
+  "473a0f4c3be8a93681a267e3b1e9a7dcda1185436fe141f7749120a303721813";
 let helloWorldId = "";
 let helloWorldHash = "";
 let helloWorldString = `hello world ${randomString({ length: 10 })}`;
@@ -60,6 +62,7 @@ test("create blob with empty data; hashes should be the standard git hash for em
   });
   t.is(res2.status, 201);
   t.is(res2.data.hash, emptyFileHash);
+  t.is(res2.data.hash2, emptyFileHash2);
 });
 
 test("read all blobs", async (t) => {
@@ -92,7 +95,7 @@ test("read blob by hash, including data", async (t) => {
 test("read multiple blobs by hash", async (t) => {
   const res = await rolo().get("blobs", {
     params: {
-      hash: [helloWorldHash, emptyFileHash].join(","),
+      hash: [helloWorldHash, emptyFileHash2].join(","),
       limit: 100,
     },
   });

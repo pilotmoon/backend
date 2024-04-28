@@ -11,7 +11,12 @@ import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 import { arrayFromQuery, boolFromQuery } from "../query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { BlobHash, ZBlobHash } from "../../common/blobSchemas.js";
+import {
+  BlobHash,
+  BlobHash2,
+  ZBlobHash,
+  ZBlobHash2,
+} from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 
@@ -78,12 +83,13 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   }
   ctx.body = document.dataBuffer;
   ctx.set("Content-Type", contentType);
-  ctx.set("Cache-Control", "public, max-age=31536000, immutable");
+  // TODO put this in ctx.set("Cache-Control", "public, max-age=31536000, immutable");
+  ctx.set("Cache-Control", "public, max-age=86400");
 });
 
 router.get("/", async (ctx) => {
-  const hashes: BlobHash[] = z
-    .array(ZBlobHash)
+  const hashes: string[] = z
+    .array(z.union([ZBlobHash, ZBlobHash2]))
     .parse(arrayFromQuery(ctx.query, "hash", []));
   const documents = (
     await listBlobs(hashes, ctx.state.auth, ctx.state.pagination)

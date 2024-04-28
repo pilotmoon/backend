@@ -19,7 +19,8 @@ Blob store layout:
     object: "blob",
     data: <blob binary data>,
     size: <size of blob data in bytes>,
-    hash: "<20 bytes lowercase hex>",
+    hash: "<20 bytes lowercase hex>", # git hash sha1
+    hash2: "<32 bytes lowercase hex>", # git hash sha256
     ]
 }
 ```
@@ -40,7 +41,13 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getClient, getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
-import { BlobHash, ZBlobHash, gitHash } from "../../common/blobSchemas.js";
+import {
+  BlobHash,
+  BlobHash2,
+  ZBlobHash,
+  ZBlobHash2,
+  gitHash,
+} from "../../common/blobSchemas.js";
 
 /*** Database ***/
 
@@ -56,6 +63,7 @@ export async function init() {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
     collection.createIndex({ hash: 1 }, { unique: true });
+    collection.createIndex({ hash2: 1 }, { unique: true });
   }
 }
 
@@ -65,6 +73,7 @@ export const ZBlobCoreRecord = z.object({
   object: z.literal("blob"),
   created: z.date(),
   hash: ZBlobHash,
+  hash2: ZBlobHash2,
   size: NonNegativeSafeInteger,
 });
 
@@ -91,6 +100,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
 
   // prepare hash
   const hash = gitHash(data);
+  const hash2 = gitHash(data, "sha256");
 
   // check if blob already exists
   const session = getClient().startSession();
@@ -100,7 +110,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
     let isDuplicate = false;
     await session.withTransaction(async () => {
       // check if blob already exists
-      const existingDocument = await collection.findOne({ hash });
+      const existingDocument = await collection.findOne({ hash2 });
       if (existingDocument) {
         log(`Blob already exists, id ${existingDocument._id}`);
         document = existingDocument;
@@ -113,6 +123,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
         object: "blob",
         created: new Date(),
         hash,
+        hash2,
         size: data.length,
         data: new Binary(data),
       };
@@ -131,7 +142,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
 export async function readBlob(id: string, auth: Auth, includeData: boolean) {
   auth.assertAccess(blobsCollectionName, id, "read");
   const document = await dbc(auth.kind).findOne({
-    $or: [{ _id: id }, { hash: id }],
+    $or: [{ _id: id }, { hash: id }, { hash2: id }],
   });
   if (!document) return null;
 
@@ -147,7 +158,7 @@ export async function readBlob(id: string, auth: Auth, includeData: boolean) {
 }
 
 export async function listBlobs(
-  hashes: BlobHash[],
+  hashes: string[],
   auth: Auth,
   pagination: Pagination,
 ) {
@@ -155,7 +166,18 @@ export async function listBlobs(
   try {
     const pipeline: Document[] = [];
     if (hashes.length > 0) {
-      pipeline.push({ $match: { hash: { $in: hashes } } });
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              hash: { $in: hashes },
+            },
+            {
+              hash2: { $in: hashes },
+            },
+          ],
+        },
+      });
     }
     pipeline.push({ $project: { data: 0 } });
     const documents = await paginate<BlobBinaryRecord>(
