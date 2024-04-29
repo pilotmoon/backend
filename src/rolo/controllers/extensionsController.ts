@@ -3,7 +3,7 @@ import { handleControllerError } from "../../common/errors.js";
 import { ExtensionSubmission } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
 import { authKinds, type Auth, type AuthKind } from "../auth.js";
-import { getDb } from "../database.js";
+import { getClient, getDb } from "../database.js";
 import { Pagination, paginate } from "../paginate.js";
 import { arrayFromQuery, stringFromQuery } from "../query.js";
 import {
@@ -37,10 +37,20 @@ export async function createExtension(
   auth: Auth,
 ) {
   auth.assertAccess(extensionsCollectionName, undefined, "create");
+  const session = getClient().startSession();
+
   try {
-    const document = await processSubmission(submission, dbc(auth.kind));
-    await dbc(auth.kind).insertOne(ZExtensionRecord.parse(document));
-    return document;
+    let document: ExtensionRecord | null = null;
+    await session.withTransaction(async () => {
+      document = ZExtensionRecord.parse(
+        await processSubmission(submission, dbc(auth.kind)),
+      );
+      await dbc(auth.kind).insertOne(document);
+    });
+    if (!document) {
+      throw new Error("Failed to process extension submission");
+    }
+    return document as ExtensionRecord;
   } catch (error) {
     handleControllerError(error);
     throw error;
