@@ -55,8 +55,8 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
-  files: ZExtensionFileList,
   filesDigest: ZBlobHash2,
+  files: ZExtensionFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 
@@ -136,7 +136,7 @@ export function calculateDigest(fileList: ExtensionFileList) {
   const hasher = createHash("sha256");
   hasher.update(`files ${fileList.length}\0`);
   for (const file of fileList) {
-    hasher.update(`${file.hash} ${file.executable ? "x" : "-"} ${file.path}\0`);
+    hasher.update(`${file.hash} ${file.executable ? "1" : "0"} ${file.path}\0`);
   }
   return hasher.digest("hex");
 }
