@@ -40,8 +40,12 @@ import { NonNegativeSafeInteger } from "../../common/saneSchemas.js";
 import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getClient, getDb } from "../database.js";
 import { Pagination, paginate } from "../paginate.js";
-import { ZBlobHash, ZBlobHash2, gitHash } from "../../common/blobSchemas.js";
-import { alphabets, baseEncode } from "@pilotmoon/chewit";
+import {
+  ZBlobHash,
+  ZBlobHash2,
+  gitHash,
+  truncatedHash,
+} from "../../common/blobSchemas.js";
 
 /*** Database ***/
 
@@ -98,15 +102,6 @@ export async function createBlob(data: Buffer, auth: Auth) {
   const gitHashSha256 = gitHash(data, "sha256");
   const h2 = gitHashSha256.toString("hex");
 
-  // we use the last 20 characters of the base58 encoded sha256 hash as the unique identifier
-  const h2Base58Truncated = baseEncode(
-    [...gitHashSha256],
-    alphabets.base58Flickr,
-    {
-      trim: false,
-    },
-  ).slice(-20);
-
   // check if blob already exists
   const session = getClient().startSession();
   const collection = dbc(auth.kind);
@@ -124,7 +119,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
       }
       // create new blob
       document = {
-        _id: `blob_${h2Base58Truncated}`,
+        _id: `blob_${truncatedHash(gitHashSha256)}`,
         object: "blob",
         created: new Date(),
         h1,
