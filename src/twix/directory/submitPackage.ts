@@ -1,10 +1,11 @@
 import pLimit from "p-limit";
 import { z } from "zod";
 import { ZBlobHash, ZBlobSchema } from "../../common/blobSchemas.js";
-import { ApiError } from "../../common/errors.js";
 import {
   ExtensionOrigin,
   ZExtensionSubmission,
+  calculateDigest,
+  canonicalSort,
   validateFileList,
 } from "../../common/extensionSchemas.js";
 import { BlobFileList, ZBlobFileListEntry } from "../../common/fileList.js";
@@ -34,8 +35,27 @@ export async function submitPackage(
   if (errors.length > 0) {
     throw new Error(errors.join("\n"));
   }
+
+  // note, this sorts the files
+  const digest = calculateDigest(fileList);
+  alog.log(`Package digest: ${digest}`);
+
+  // check if extension with this digest already exists
+  const existingExtensions = await getRolo(AUTH_KIND).get("extensions", {
+    params: {
+      digest: digest,
+      format: "json",
+      extract: "digest",
+      limit: 1,
+    },
+  });
+  const gotDigests = z.array(ZBlobHash).parse(existingExtensions.data);
+  if (gotDigests.length > 0) {
+    throw new Error(`Extension with this digest already exists`);
+  }
+
   // get a list of hashes we already have
-  const { data } = await getRolo(AUTH_KIND).get("blobs", {
+  const existingBlobs = await getRolo(AUTH_KIND).get("blobs", {
     params: {
       hash: fileList.map((child) => child.hash).join(","),
       format: "json",
@@ -43,41 +63,39 @@ export async function submitPackage(
       limit: fileList.length,
     },
   });
-  const gotHashes = new Set(z.array(ZBlobHash).parse(data));
+  const gotHashes = new Set(z.array(ZBlobHash).parse(existingBlobs.data));
 
   const files: BlobFileList = [];
   async function getFile(node: PackageNode) {
-    if (gotHashes.has(node.hash)) {
-      //alog.log(`Skipping existing blob: ${node.path}`);
-      return;
-    }
-    if (!node.contentBase64) {
-      if (origin.type !== "githubRepo") {
-        throw new Error("Missing content only allowed for GitHub repos");
+    if (!gotHashes.has(node.hash)) {
+      if (!node.contentBase64) {
+        if (origin.type !== "githubRepo") {
+          throw new Error("Missing content only allowed for GitHub repos");
+        }
+        //alog.log(`Downloading blob from GitHub: ${node.path}`);
+        const ghResponse = await gh().get(
+          `/repos/${origin.repoName}/git/blobs/${node.hash}`,
+        );
+        const ghBlob = ZGithubBlob.parse(ghResponse.data);
+        if (ghBlob.sha !== node.hash) {
+          throw new Error("GitHub hash mismatch");
+        }
+        if (ghBlob.size !== node.size) {
+          throw new Error("GitHub size mismatch");
+        }
+        node.contentBase64 = ghBlob.content;
       }
-      //alog.log(`Downloading blob from GitHub: ${node.path}`);
-      const ghResponse = await gh().get(
-        `/repos/${origin.repoName}/git/blobs/${node.hash}`,
-      );
-      const ghBlob = ZGithubBlob.parse(ghResponse.data);
-      if (ghBlob.sha !== node.hash) {
-        throw new Error("GitHub hash mismatch");
-      }
-      if (ghBlob.size !== node.size) {
-        throw new Error("GitHub size mismatch");
-      }
-      node.contentBase64 = ghBlob.content;
-    }
 
-    alog.log(
-      //`Uploading blob to database: ${node.path} ${node.size} bytes ${node.sha}`,
-    );
-    const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
-      data: node.contentBase64,
-    });
-    const dbBlob = ZBlobSchema.parse(dbResponse.data);
-    if (dbBlob.hash !== node.hash) {
-      throw new Error("DB hash mismatch");
+      alog.log(
+        //`Uploading blob to database: ${node.path} ${node.size} bytes ${node.sha}`,
+      );
+      const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
+        data: node.contentBase64,
+      });
+      const dbBlob = ZBlobSchema.parse(dbResponse.data);
+      if (dbBlob.hash !== node.hash) {
+        throw new Error("DB hash mismatch");
+      }
     }
 
     // at this point the blob is in the database, so we can add it to the list
@@ -92,11 +110,7 @@ export async function submitPackage(
   // build the file list
   const limit = pLimit(5);
   await Promise.all(fileList.map((node) => limit(getFile, node)));
-
-  // sort the files (this is not strictly necessary, but it makes the output more predictable)
-  files.sort((a, b) =>
-    a.path.localeCompare(b.path, "en-US", { sensitivity: "accent" }),
-  );
+  canonicalSort(files);
 
   // print something
   alog.log(`Gathered ${files.length} files for '${displayName}':`);
@@ -108,6 +122,7 @@ export async function submitPackage(
   const submission = ZExtensionSubmission.parse({
     origin,
     files,
+    digest,
     version,
   });
   const submissionResponse = await getRolo(AUTH_KIND).post(

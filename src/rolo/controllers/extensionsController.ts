@@ -4,6 +4,8 @@ import { handleControllerError } from "../../common/errors.js";
 import {
   ExtensionSubmission,
   ZExtensionSubmission,
+  calculateDigest,
+  canonicalSort,
 } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
 import {
@@ -33,6 +35,7 @@ export async function init() {
     collection.createIndex({ shortcode: 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
     collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
+    collection.createIndex({ digest: 1 }, { unique: true });
   }
 }
 
@@ -89,6 +92,12 @@ export async function createExtension(
 ) {
   auth.assertAccess(extensionsCollectionName, undefined, "create");
   log("Received extension submission");
+
+  // note -- this sorts the files array in place
+  if (submission.digest !== calculateDigest(submission.files)) {
+    throw new Error("Digest mismatch");
+  }
+
   const document: ExtensionRecord = {
     _id: randomIdentifier("ext"),
     object: "extension",
@@ -141,6 +150,12 @@ export async function listExtensions(
 export function getQueryPipeline(query: unknown) {
   const pipeline: Document[] = [];
   log("getQueryPipeline", { query });
+
+  // digest
+  const digests = arrayFromQuery(query, "digest", []);
+  if (digests.length > 0) {
+    pipeline.push({ $match: { digest: { $in: digests } } });
+  }
 
   // commitSha
   const commitShas = arrayFromQuery(query, "origin.commitSha", []);

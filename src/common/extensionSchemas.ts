@@ -8,6 +8,7 @@ import {
 } from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
 import { ZGitHubUserType } from "./githubTypes.js";
+import { createHash } from "node:crypto";
 
 export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),
@@ -47,6 +48,7 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
+  digest: ZBlobHash,
   files: ZBlobFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
@@ -86,6 +88,7 @@ export function validateFileList(fileList: BlobFileList) {
       if (seenFiles.has(child.path.toLowerCase())) {
         errors.push(`Duplicate case-insensitive file name: ${child.path}`);
       }
+      seenFiles.add(child.path.toLowerCase());
       totalSize += child.size;
       if (child.size > FILE_MAX_SIZE) {
         errors.push(
@@ -106,4 +109,28 @@ export function validateFileList(fileList: BlobFileList) {
     }
   }
   return errors;
+}
+
+// this is equivalent to the original extension objc-c digest algorithm
+// sort order
+export function canonicalSort(fileList: BlobFileList) {
+  fileList.sort((a, b) =>
+    a.path.localeCompare(b.path, "en-US", {
+      sensitivity: "accent",
+      caseFirst: "upper",
+    }),
+  );
+}
+
+// this is the "internal" digest, not the one used for extension signing
+// which requires the full contents of each file to be hashed
+export function calculateDigest(fileList: BlobFileList) {
+  canonicalSort(fileList);
+  const hasher = createHash("sha1");
+  for (const child of fileList) {
+    hasher.update(
+      `${child.hash} ${child.executable ? "x" : "-"} ${child.path}\0`,
+    );
+  }
+  return hasher.digest("hex");
 }
