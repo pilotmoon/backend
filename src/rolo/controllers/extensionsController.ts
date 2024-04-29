@@ -54,6 +54,8 @@ export async function createExtension(
   } catch (error) {
     handleControllerError(error);
     throw error;
+  } finally {
+    session.endSession();
   }
 }
 
