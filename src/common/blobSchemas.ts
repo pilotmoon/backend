@@ -8,8 +8,8 @@ export type BlobHash2 = z.infer<typeof ZBlobHash2>;
 export const ZBlobSchema = z.object({
   id: z.string(),
   object: z.literal("blob"),
-  hash: ZBlobHash,
-  hash2: ZBlobHash2,
+  h1: ZBlobHash,
+  h2: ZBlobHash2,
   size: NonNegativeSafeInteger,
 });
 

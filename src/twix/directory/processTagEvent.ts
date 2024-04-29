@@ -271,7 +271,7 @@ function getPackageFiles(
   return filtered.map((node) => {
     return {
       ...node,
-      type: "gitSha1",
+      type: "gitSha1File",
       hash: node.sha,
       executable: node.mode === "100755",
     };

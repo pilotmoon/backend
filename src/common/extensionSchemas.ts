@@ -11,7 +11,7 @@ import { ZGitHubUserType } from "./githubTypes.js";
 import { createHash } from "node:crypto";
 
 export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
-  hash2: ZBlobHash2,
+  hash: ZBlobHash2,
 });
 
 export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
@@ -135,9 +135,7 @@ export function calculateDigest(fileList: ExtensionFileList) {
   const hasher = createHash("sha256");
   hasher.update(`list\0`);
   for (const file of fileList) {
-    hasher.update(
-      `${file.hash2} ${file.executable ? "x" : "-"} ${file.path}\0`,
-    );
+    hasher.update(`${file.hash} ${file.executable ? "x" : "-"} ${file.path}\0`);
   }
   return hasher.digest("hex");
 }

@@ -93,9 +93,10 @@ export async function processGist(
       throw new Error(`Content length mismatch`);
     }
     packageFiles.push({
-      type: "content",
+      type: "gitSha256File",
       path: file.filename,
       size: file.size,
+      hash: gitHash(contentBuffer, "sha256"),
       content: contentBuffer,
       executable: false,
     });
