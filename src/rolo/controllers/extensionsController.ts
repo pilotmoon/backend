@@ -1,24 +1,16 @@
 import type { Document } from "mongodb";
-import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
-import {
-  ExtensionSubmission,
-  ZExtensionSubmission,
-  calculateDigest,
-  canonicalSort,
-} from "../../common/extensionSchemas.js";
+import { ExtensionSubmission } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
-import {
-  PositiveSafeInteger,
-  ZSaneIdentifier,
-  ZSaneLongString,
-  ZSaneString,
-} from "../../common/saneSchemas.js";
 import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getDb } from "../database.js";
-import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
 import { arrayFromQuery, stringFromQuery } from "../query.js";
+import {
+  ExtensionRecord,
+  ZExtensionRecord,
+  processSubmission,
+} from "./extensionsProcessor.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
@@ -35,55 +27,9 @@ export async function init() {
     collection.createIndex({ shortcode: 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
     collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
-    collection.createIndex({ digest: 1 }, { unique: true });
+    collection.createIndex({ filesDigest: 1 }, { unique: true });
   }
 }
-
-export const ZExtensionAppInfo = z.object({
-  name: ZSaneString,
-  link: ZSaneString,
-});
-
-const ZIconComponents = z.object({
-  prefix: ZSaneString,
-  payload: ZSaneString,
-  modifiers: z.record(z.unknown()),
-});
-
-export const ZExtensionInfo = z.object({
-  name: ZSaneString,
-  identifier: ZSaneIdentifier,
-  description: ZSaneString.optional(),
-  keywords: ZSaneString.optional(),
-  icon: ZIconComponents.optional(),
-  actionTypes: z.array(ZSaneString).optional(),
-  entitlements: z.array(ZSaneString).optional(),
-  apps: z.array(ZExtensionAppInfo).optional(),
-  macosVersion: ZSaneString.optional(),
-  popclipVersion: PositiveSafeInteger.optional(),
-});
-
-const ZExtensionCoreRecord = ZExtensionSubmission.extend({
-  _id: z.string(),
-  object: z.literal("extension"),
-  created: z.date(),
-});
-
-const ZAcceptedExtensionRecord = ZExtensionCoreRecord.extend({
-  shortcode: z.string(),
-  info: ZExtensionInfo,
-  published: z.boolean().optional(),
-});
-
-const ZRejectedExtensionRecord = ZExtensionCoreRecord.extend({
-  message: ZSaneLongString,
-});
-
-export const ZExtensionRecord = z.discriminatedUnion("status", [
-  ZAcceptedExtensionRecord.extend({ status: z.literal("accepted") }),
-  ZRejectedExtensionRecord.extend({ status: z.literal("rejected") }),
-]);
-type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
 
 // CRUD
 export async function createExtension(
@@ -91,18 +37,8 @@ export async function createExtension(
   auth: Auth,
 ) {
   auth.assertAccess(extensionsCollectionName, undefined, "create");
-  log("Received extension submission");
-
-  const document: ExtensionRecord = {
-    _id: randomIdentifier("ext"),
-    object: "extension",
-    created: new Date(),
-    ...submission,
-    status: "rejected",
-    message: "Not implemented",
-  };
-
   try {
+    const document = await processSubmission(submission, dbc(auth.kind));
     await dbc(auth.kind).insertOne(ZExtensionRecord.parse(document));
     return document;
   } catch (error) {

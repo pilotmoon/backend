@@ -8,7 +8,9 @@ import {
 } from "../../common/blobSchemas.js";
 import {
   ExtensionOrigin,
+  ExtensionSubmission,
   ZExtensionSubmission,
+  calculateDigest,
   canonicalSort,
   validateFileList,
 } from "../../common/extensionSchemas.js";
@@ -129,6 +131,12 @@ export async function submitPackage(
         );
         const ghBlob = ZGithubBlob.parse(ghResponse.data);
         const content = Buffer.from(ghBlob.content, "base64");
+        if (content.length !== ghBlob.size || content.length !== file.size) {
+          throw new Error("Size mismatch");
+        }
+        if (gitHash(content, "sha1") !== file.hash) {
+          throw new Error("Hash mismatch");
+        }
         processedFile = {
           ...file,
           type: "gitSha256File" as const,
@@ -148,14 +156,15 @@ export async function submitPackage(
         throw new Error("Size mismatch");
       }
     }
-
     processedFiles.push(processedFile);
   }
 
   // build the file list
   const limit = pLimit(5);
   await Promise.all(fileList.map((node) => limit(processFile, node)));
-  canonicalSort(processedFiles);
+
+  // calculate digest; note that this sorts the files too
+  const digest = calculateDigest(processedFiles);
 
   // print something
   alog.log(`Gathered ${processedFiles.length} files for '${displayName}':`);
@@ -164,14 +173,15 @@ export async function submitPackage(
   }
 
   // now we have all the files we need to submit the package
-  const submission = ZExtensionSubmission.parse({
+  const submission: ExtensionSubmission = {
     origin,
     version,
     files: processedFiles,
-  });
+    filesDigest: digest,
+  };
   const submissionResponse = await getRolo(AUTH_KIND).post(
     "extensions",
-    submission,
+    ZExtensionSubmission.parse(submission),
   );
   alog.log(`Submitted package. Response:`, submissionResponse.data);
 }

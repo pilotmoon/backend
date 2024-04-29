@@ -56,6 +56,7 @@ export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
   files: ZExtensionFileList,
+  filesDigest: ZBlobHash2,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 
@@ -133,7 +134,7 @@ export function canonicalSort(fileList: CoreFileList) {
 export function calculateDigest(fileList: ExtensionFileList) {
   canonicalSort(fileList);
   const hasher = createHash("sha256");
-  hasher.update(`list\0`);
+  hasher.update(`files ${fileList.length}\0`);
   for (const file of fileList) {
     hasher.update(`${file.hash} ${file.executable ? "x" : "-"} ${file.path}\0`);
   }
