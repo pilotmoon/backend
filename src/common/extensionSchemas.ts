@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ZBlobHash } from "./blobSchemas.js";
-import { BlobFileList, ZBlobFileList } from "./fileList.js";
+import { ZBlobHash, ZBlobHash2 } from "./blobSchemas.js";
+import { CoreFileList, ZCoreFileListEntry } from "./fileList.js";
 import {
   NonNegativeSafeInteger,
   ZSaneDate,
@@ -9,7 +9,13 @@ import {
 import { ZVersionString } from "./versionString.js";
 import { ZGitHubUserType } from "./githubTypes.js";
 import { createHash } from "node:crypto";
-import { log } from "./log.js";
+
+export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
+  hash2: ZBlobHash2,
+});
+
+export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
+export type ExtensionFileList = z.infer<typeof ZExtensionFileList>;
 
 export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),
@@ -49,7 +55,7 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
-  files: ZBlobFileList,
+  files: ZExtensionFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 
@@ -64,7 +70,7 @@ export function isSnippetFileName(name: string) {
 const FILE_MAX_SIZE = 1024 * 1024 * 1;
 const TOTAL_MAX_SIZE = 1024 * 1024 * 2;
 const MAX_FILE_COUNT = 100;
-export function validateFileList(fileList: BlobFileList) {
+export function validateFileList(fileList: CoreFileList) {
   const errors: string[] = [];
   if (fileList.length === 0) {
     errors.push("No files in tree");
@@ -113,7 +119,7 @@ export function validateFileList(fileList: BlobFileList) {
 
 // this is equivalent to the original extension objc-c digest algorithm
 // sort order
-export function canonicalSort(fileList: BlobFileList) {
+export function canonicalSort(fileList: CoreFileList) {
   fileList.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", {
       sensitivity: "accent",
@@ -124,12 +130,14 @@ export function canonicalSort(fileList: BlobFileList) {
 
 // this is the "internal" digest, not the one used for extension signing
 // which requires the full contents of each file to be hashed
-export function calculateDigest(fileList: BlobFileList) {
+export function calculateDigest(fileList: ExtensionFileList) {
   canonicalSort(fileList);
-  const hasher = createHash("sha1");
-  hasher.update(`list ${fileList.length}\0`);
+  const hasher = createHash("sha256");
+  hasher.update(`list\0`);
   for (const file of fileList) {
-    hasher.update(`${file.hash} ${file.executable ? "x" : "-"} ${file.path}\0`);
+    hasher.update(
+      `${file.hash2} ${file.executable ? "x" : "-"} ${file.path}\0`,
+    );
   }
   return hasher.digest("hex");
 }

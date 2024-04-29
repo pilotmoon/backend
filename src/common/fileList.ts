@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { NonNegativeSafeInteger } from "./saneSchemas.js";
 
-export const ZBlobFileListEntry = z.object({
+export const ZCoreFileListEntry = z.object({
   path: z.string(),
-  hash: z.string(),
   size: NonNegativeSafeInteger,
-  executable: z.boolean().optional(),
+  executable: z.boolean(),
 });
 
-export const ZBlobFileList = z.array(ZBlobFileListEntry);
-export type BlobFileList = z.infer<typeof ZBlobFileList>;
+export const ZCoreFileList = z.array(ZCoreFileListEntry);
+export type CoreFileList = z.infer<typeof ZCoreFileList>;

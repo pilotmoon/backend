@@ -6,9 +6,9 @@ import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
 import {
-  PackageNode,
-  ZPackageNode,
-  existingHashes,
+  PackageFile,
+  ZPackageFile,
+  existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
 import { gitHash } from "../../common/blobSchemas.js";
@@ -55,7 +55,9 @@ export async function processGist(
 
   // check if database already has this commit
   const commit = gist.history[0];
-  const existing = await existingHashes("origin.commitSha", [commit.version]);
+  const existing = await existingExtensions("origin.commitSha", [
+    commit.version,
+  ]);
   if (existing.has(commit.version)) {
     alog.log("Gist is already in the database");
     return false;
@@ -84,20 +86,19 @@ export async function processGist(
   });
 
   // build file list
-  const packageFiles: PackageNode[] = [];
+  const packageFiles: PackageFile[] = [];
   for (const [_, file] of Object.entries(gist.files)) {
     const contentBuffer = Buffer.from(file.content, "utf-8");
     if (contentBuffer.length !== file.size) {
       throw new Error(`Content length mismatch`);
     }
-    packageFiles.push(
-      ZPackageNode.parse({
-        path: file.filename,
-        size: file.size,
-        hash: gitHash(contentBuffer),
-        contentBase64: contentBuffer.toString("base64"),
-      }),
-    );
+    packageFiles.push({
+      type: "content",
+      path: file.filename,
+      size: file.size,
+      content: contentBuffer,
+      executable: false,
+    });
   }
 
   // submit package

@@ -20,8 +20,9 @@ import {
 } from "../../common/githubTypes.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
 import {
-  ZPackageNode,
-  existingHashes,
+  PackageFile,
+  ZPackageFile,
+  existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
 
@@ -122,7 +123,7 @@ export async function processTagEvent(
   }
 
   // check which nodes are already processed
-  const gotNodeShas = await existingHashes(
+  const gotNodeShas = await existingExtensions(
     "origin.nodeSha",
     matchingNodes.map((n) => n.sha),
   );
@@ -222,7 +223,7 @@ function getPackageFiles(
   node: z.infer<typeof ZGithubNode>,
   tree: z.infer<typeof ZGithubNode>[],
   alog: ActivityLog,
-) {
+): PackageFile[] {
   let filtered: GithubBlobNode[] = [];
   if (node.type === "tree") {
     const rootPrefix = node.path ? `${node.path}/` : "";
@@ -267,11 +268,12 @@ function getPackageFiles(
   } else {
     throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
-  return filtered.map((node) =>
-    ZPackageNode.parse({
+  return filtered.map((node) => {
+    return {
       ...node,
+      type: "gitSha1",
       hash: node.sha,
       executable: node.mode === "100755",
-    }),
-  );
+    };
+  });
 }
