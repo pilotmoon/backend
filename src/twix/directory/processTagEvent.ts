@@ -273,7 +273,7 @@ function getPackageFiles(
       ...node,
       type: "gitSha1File",
       hash: node.sha,
-      executable: node.mode === "100755",
+      executable: node.mode === "100755" ? true : undefined,
     };
   });
 }

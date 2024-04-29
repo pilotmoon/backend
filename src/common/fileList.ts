@@ -4,7 +4,7 @@ import { NonNegativeSafeInteger } from "./saneSchemas.js";
 export const ZCoreFileListEntry = z.object({
   path: z.string(),
   size: NonNegativeSafeInteger,
-  executable: z.boolean(),
+  executable: z.boolean().optional(),
 });
 
 export const ZCoreFileList = z.array(ZCoreFileListEntry);

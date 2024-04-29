@@ -98,7 +98,6 @@ export async function processGist(
       size: file.size,
       hash: gitHash(contentBuffer, "sha256").toString("hex"),
       content: contentBuffer,
-      executable: false,
     });
   }
 
