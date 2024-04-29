@@ -15,7 +15,7 @@ Blob store layout:
 
 ```
 {
-    _id: blob_unique_id,
+    _id: blob_<base58 encoded h2, truncated to last 20 chars>,
     object: "blob",
     data: <blob binary data>,
     size: <size of blob data in bytes>,
@@ -26,7 +26,7 @@ Blob store layout:
 ```
 
 Indexes:
-- `hashes` is indexed with a unique constraint to ensure that no two blobs have the same hash.
+- `h1` and `h2` indexed with a unique constraint to ensure that no two blobs have the same hashes.
 
 If a new blob is added with a hash that already exists, the new blob is ignored and the existing
 blob is kept.
@@ -39,9 +39,9 @@ import { log } from "../../common/log.js";
 import { NonNegativeSafeInteger } from "../../common/saneSchemas.js";
 import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getClient, getDb } from "../database.js";
-import { randomIdentifier } from "../identifiers.js";
 import { Pagination, paginate } from "../paginate.js";
 import { ZBlobHash, ZBlobHash2, gitHash } from "../../common/blobSchemas.js";
+import { alphabets, baseEncode } from "@pilotmoon/chewit";
 
 /*** Database ***/
 
@@ -92,9 +92,20 @@ export async function createBlob(data: Buffer, auth: Auth) {
     throw new Error(`Blob size exceeds the maximum of ${maxBlobSize} bytes`);
   }
 
-  // prepare hash
-  const h1 = gitHash(data);
-  const h2 = gitHash(data, "sha256");
+  // prepare hashes
+  const gitHashSha1 = gitHash(data);
+  const h1 = gitHashSha1.toString("hex");
+  const gitHashSha256 = gitHash(data, "sha256");
+  const h2 = gitHashSha256.toString("hex");
+
+  // we use the last 20 characters of the base58 encoded sha256 hash as the unique identifier
+  const h2Base58Truncated = baseEncode(
+    [...gitHashSha256],
+    alphabets.base58Flickr,
+    {
+      trim: false,
+    },
+  ).slice(-20);
 
   // check if blob already exists
   const session = getClient().startSession();
@@ -113,7 +124,7 @@ export async function createBlob(data: Buffer, auth: Auth) {
       }
       // create new blob
       document = {
-        _id: randomIdentifier("blob"),
+        _id: `blob_${h2Base58Truncated}`,
         object: "blob",
         created: new Date(),
         h1,
@@ -135,12 +146,23 @@ export async function createBlob(data: Buffer, auth: Auth) {
 // get a blob by id or hash
 export async function readBlob(id: string, auth: Auth, includeData: boolean) {
   auth.assertAccess(blobsCollectionName, id, "read");
-  const document = await dbc(auth.kind).findOne({
-    $or: [{ _id: id }, { h1: id }, { h2: id }],
-  });
-  if (!document) return null;
-
   try {
+    const filter = ((id: string) => {
+      if (id.startsWith("blob_")) {
+        return { _id: id };
+      } else if (id.length === 20) {
+        return { _id: `blob_${id}` };
+      } else if (id.length === 40) {
+        return { h1: id };
+      } else if (id.length === 64) {
+        return { h2: id };
+      } else {
+        return null;
+      }
+    })(id);
+    if (!filter) return null;
+    const document = await dbc(auth.kind).findOne(filter);
+    if (!document) return null;
     return ZBlobBufferRecord.parse({
       ...document,
       dataBuffer: includeData ? Buffer.from(document.data.buffer) : undefined,

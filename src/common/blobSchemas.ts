@@ -16,5 +16,5 @@ export const ZBlobSchema = z.object({
 export function gitHash(data: Buffer, algorithm: "sha1" | "sha256" = "sha1") {
   const header = `blob ${data.length}\0`;
   const buffer = Buffer.concat([Buffer.from(header), data]);
-  return createHash(algorithm).update(buffer).digest("hex");
+  return createHash(algorithm).update(buffer).digest();
 }

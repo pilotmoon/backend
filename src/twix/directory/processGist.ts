@@ -96,7 +96,7 @@ export async function processGist(
       type: "gitSha256File",
       path: file.filename,
       size: file.size,
-      hash: gitHash(contentBuffer, "sha256"),
+      hash: gitHash(contentBuffer, "sha256").toString("hex"),
       content: contentBuffer,
       executable: false,
     });

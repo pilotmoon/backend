@@ -134,14 +134,14 @@ export async function submitPackage(
         if (content.length !== ghBlob.size || content.length !== file.size) {
           throw new Error("Size mismatch");
         }
-        if (gitHash(content, "sha1") !== file.hash) {
+        if (gitHash(content, "sha1").toString("hex") !== file.hash) {
           throw new Error("Hash mismatch");
         }
         processedFile = {
           ...file,
           type: "gitSha256File" as const,
           content,
-          hash: gitHash(content, "sha256"),
+          hash: gitHash(content, "sha256").toString("hex"),
         };
       }
     }
