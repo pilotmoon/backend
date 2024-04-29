@@ -32,13 +32,12 @@ If a new blob is added with a hash that already exists, the new blob is ignored 
 blob is kept.
 /*/
 
-import { Binary, Document } from "mongodb";
+import { Binary, Document, MongoServerError } from "mongodb";
 import { z } from "zod";
 import { handleControllerError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import { NonNegativeSafeInteger } from "../../common/saneSchemas.js";
 import { Auth, AuthKind, authKinds } from "../auth.js";
-import { getClient, getDb } from "../database.js";
+import { getDb } from "../database.js";
 import { Pagination, paginate } from "../paginate.js";
 import {
   ZBlobHash,
@@ -46,6 +45,7 @@ import {
   gitHash,
   truncatedHash,
 } from "../../common/blobSchemas.js";
+import { log } from "../../common/log.js";
 
 /*** Database ***/
 
@@ -97,44 +97,34 @@ export async function createBlob(data: Buffer, auth: Auth) {
   }
 
   // prepare hashes
-  const gitHashSha1 = gitHash(data);
-  const h1 = gitHashSha1.toString("hex");
+  const gitHashSha1 = gitHash(data, "sha1");
   const gitHashSha256 = gitHash(data, "sha256");
-  const h2 = gitHashSha256.toString("hex");
 
-  // check if blob already exists
-  const session = getClient().startSession();
   const collection = dbc(auth.kind);
   try {
-    let document: BlobBinaryRecord | null = null;
+    const document: BlobBinaryRecord = {
+      _id: `blob_${truncatedHash(gitHashSha256)}`,
+      object: "blob",
+      created: new Date(),
+      h1: gitHashSha1.toString("hex"),
+      h2: gitHashSha256.toString("hex"),
+      size: data.length,
+      data: new Binary(data),
+    };
     let isDuplicate = false;
-    await session.withTransaction(async () => {
-      // check if blob already exists
-      const existingDocument = await collection.findOne({ h2 });
-      if (existingDocument) {
-        log(`Blob already exists, id ${existingDocument._id}`);
-        document = existingDocument;
-        isDuplicate = true;
-        return;
-      }
-      // create new blob
-      document = {
-        _id: `blob_${truncatedHash(gitHashSha256)}`,
-        object: "blob",
-        created: new Date(),
-        h1,
-        h2,
-        size: data.length,
-        data: new Binary(data),
-      };
-      await collection.insertOne(document);
-    });
+    // use this method to ensure the check and set are atomic
+    // in unlikely case of collision of any hash (such that any of
+    // _id, h1 or h2 is repeated in another blob record), this will throw
+    // a duplicate key error
+    await collection.replaceOne(
+      { _id: document._id, h1: document.h1, h2: document.h2 },
+      document,
+      { upsert: true },
+    );
     return { document: ZBlobCoreRecord.parse(document), isDuplicate };
   } catch (error) {
     handleControllerError(error);
     throw error;
-  } finally {
-    session.endSession();
   }
 }
 

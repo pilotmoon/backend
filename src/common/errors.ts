@@ -5,7 +5,10 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -13,7 +16,7 @@ export class ApiError extends Error {
 
 export function handleControllerError(error: unknown) {
   if (error instanceof MongoServerError && error.code === 11000) {
-    throw new ApiError(409, "Unique constraint violation");
+    throw new ApiError(409, `Unique constraint violation: ${error.message}`);
   }
   if (error instanceof ZodError) {
     throw new ApiError(500, `Invalid document: ${error.message}`);
