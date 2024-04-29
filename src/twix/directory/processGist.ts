@@ -5,11 +5,13 @@ import { restClient as gh } from "../githubClient.js";
 import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
-import { PackageNode, ZPackageNode, submitPackage } from "./submitPackage.js";
-import { ZBlobHash, gitHash } from "../../common/blobSchemas.js";
-import { getRolo } from "../rolo.js";
-
-const AUTH_KIND = "test";
+import {
+  PackageNode,
+  ZPackageNode,
+  existingHashes,
+  submitPackage,
+} from "./submitPackage.js";
+import { gitHash } from "../../common/blobSchemas.js";
 
 export const ZSubmitGistPayload = z.object({
   url: ZSaneString,
@@ -52,18 +54,10 @@ export async function processGist(
   const version = gist.history.length;
 
   // check if database already has this commit
-  // TODO: check digest instead in submitPackage
   const commit = gist.history[0];
-  const existing = await getRolo(AUTH_KIND).get("extensions", {
-    params: {
-      "origin.commitSha": commit.version,
-      format: "json",
-      extract: "origin.commitSha",
-    },
-  });
-  const gotShas = z.array(ZBlobHash).parse(existing.data);
-  if (gotShas.length) {
-    alog.log("Gist is already in the database", commit.version, gotShas);
+  const existing = await existingHashes("origin.commitSha", [commit.version]);
+  if (existing.has(commit.version)) {
+    alog.log("Gist is already in the database");
     return false;
   }
 

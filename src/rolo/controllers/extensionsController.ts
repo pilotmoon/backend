@@ -93,11 +93,6 @@ export async function createExtension(
   auth.assertAccess(extensionsCollectionName, undefined, "create");
   log("Received extension submission");
 
-  // note -- this sorts the files array in place
-  if (submission.digest !== calculateDigest(submission.files)) {
-    throw new Error("Digest mismatch");
-  }
-
   const document: ExtensionRecord = {
     _id: randomIdentifier("ext"),
     object: "extension",

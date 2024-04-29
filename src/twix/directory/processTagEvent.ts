@@ -3,14 +3,12 @@ import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
-import { ZBlobHash } from "../../common/blobSchemas.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import { ZExtensionOriginGithubRepo } from "../../common/extensionSchemas.js";
 import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog";
 import { restClient as gh } from "../githubClient.js";
-import { getRolo } from "../rolo.js";
 import {
   GithubBlobNode,
   GithubNode,
@@ -21,9 +19,11 @@ import {
   ZGithubTree,
 } from "../../common/githubTypes.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
-import { ZPackageNode, submitPackage } from "./submitPackage.js";
-
-const AUTH_KIND = "test";
+import {
+  ZPackageNode,
+  existingHashes,
+  submitPackage,
+} from "./submitPackage.js";
 
 // webhook param
 const ZGlobPatternArray = z.union([
@@ -122,15 +122,10 @@ export async function processTagEvent(
   }
 
   // check which nodes are already processed
-  const { data: extensionData } = await getRolo(AUTH_KIND).get("extensions", {
-    params: {
-      "origin.nodeSha": matchingNodes.map((node) => node.sha).join(","),
-      format: "json",
-      extract: "origin.nodeSha",
-      limit: matchingNodes.length,
-    },
-  });
-  const gotNodeShas = new Set(z.array(ZBlobHash).parse(extensionData));
+  const gotNodeShas = await existingHashes(
+    "origin.nodeSha",
+    matchingNodes.map((n) => n.sha),
+  );
   matchingNodes = matchingNodes.filter((node) => !gotNodeShas.has(node.sha));
   if (matchingNodes.length === 0) {
     alog.log("All nodes are already in the database");

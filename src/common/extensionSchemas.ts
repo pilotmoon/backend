@@ -9,6 +9,7 @@ import {
 import { ZVersionString } from "./versionString.js";
 import { ZGitHubUserType } from "./githubTypes.js";
 import { createHash } from "node:crypto";
+import { log } from "./log.js";
 
 export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),
@@ -48,7 +49,6 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
-  digest: ZBlobHash,
   files: ZBlobFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
@@ -127,10 +127,9 @@ export function canonicalSort(fileList: BlobFileList) {
 export function calculateDigest(fileList: BlobFileList) {
   canonicalSort(fileList);
   const hasher = createHash("sha1");
-  for (const child of fileList) {
-    hasher.update(
-      `${child.hash} ${child.executable ? "x" : "-"} ${child.path}\0`,
-    );
+  hasher.update(`list ${fileList.length}\0`);
+  for (const file of fileList) {
+    hasher.update(`${file.hash} ${file.executable ? "x" : "-"} ${file.path}\0`);
   }
   return hasher.digest("hex");
 }

@@ -22,6 +22,23 @@ export const ZPackageNode = ZBlobFileListEntry.extend({
 });
 export type PackageNode = z.infer<typeof ZPackageNode>;
 
+// given a list of hashes, return a set of hashes that we already have
+// in the database for the given field
+export async function existingHashes(
+  field: "origin.nodeSha" | "origin.commitSha" | "digest",
+  values: string[],
+) {
+  const { data: extensionData } = await getRolo(AUTH_KIND).get("extensions", {
+    params: {
+      [field]: values.join(","),
+      format: "json",
+      extract: field,
+      limit: values.length,
+    },
+  });
+  return new Set(z.array(ZBlobHash).parse(extensionData));
+}
+
 // process list of files forming a package
 // paths on input should be relative to package root
 export async function submitPackage(
@@ -34,24 +51,6 @@ export async function submitPackage(
   const errors = validateFileList(fileList);
   if (errors.length > 0) {
     throw new Error(errors.join("\n"));
-  }
-
-  // note, this sorts the files
-  const digest = calculateDigest(fileList);
-  alog.log(`Package digest: ${digest}`);
-
-  // check if extension with this digest already exists
-  const existingExtensions = await getRolo(AUTH_KIND).get("extensions", {
-    params: {
-      digest: digest,
-      format: "json",
-      extract: "digest",
-      limit: 1,
-    },
-  });
-  const gotDigests = z.array(ZBlobHash).parse(existingExtensions.data);
-  if (gotDigests.length > 0) {
-    throw new Error(`Extension with this digest already exists`);
   }
 
   // get a list of hashes we already have
@@ -122,7 +121,6 @@ export async function submitPackage(
   const submission = ZExtensionSubmission.parse({
     origin,
     files,
-    digest,
     version,
   });
   const submissionResponse = await getRolo(AUTH_KIND).post(
