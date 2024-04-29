@@ -14,7 +14,7 @@ test("create new blob", async (t) => {
     data: helloWorldBase64,
   });
   helloWorldId = res.data.id;
-  helloWorldHash = res.data.hash;
+  helloWorldHash = res.data.h1;
   t.is(res.status, 201);
   t.is(res.data.data, undefined);
   t.is(res.headers.location, `/blobs/${helloWorldId}`);
@@ -61,8 +61,8 @@ test("create blob with empty data; hashes should be the standard git hash for em
     data: "",
   });
   t.is(res2.status, 201);
-  t.is(res2.data.hash, emptyFileHash);
-  t.is(res2.data.hash2, emptyFileHash2);
+  t.is(res2.data.h1, emptyFileHash);
+  t.is(res2.data.h2, emptyFileHash2);
 });
 
 test("read all blobs", async (t) => {

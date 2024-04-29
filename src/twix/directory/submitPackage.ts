@@ -91,15 +91,15 @@ export async function existingBlobs(fileList: PackageFile[]) {
         object: z.literal("list"),
         items: z.array(
           z.object({
-            hash: ZBlobHash,
-            hash2: ZBlobHash2,
+            h1: ZBlobHash,
+            h2: ZBlobHash2,
           }),
         ),
       })
       .parse(data)
       .items.flatMap((item) => [
-        [item.hash, item],
-        [item.hash2, item],
+        [item.h1, item],
+        [item.h2, item],
       ]),
   );
 }
@@ -131,7 +131,7 @@ export async function submitPackage(
         processedFiles.push({
           ...file,
           type: "gitSha256",
-          hash2: existing.hash2,
+          hash2: existing.h2,
         });
       } else {
         const ghResponse = await gh().get(
