@@ -162,26 +162,25 @@ export async function submitPackage(
   // build the file list
   const limit = pLimit(5);
   await Promise.all(fileList.map((node) => limit(processFile, node)));
-
-  // calculate digest; note that this sorts the files too
-  const digest = calculateDigest(processedFiles);
+  canonicalSort(processedFiles);
 
   // print something
   alog.log(`Gathered ${processedFiles.length} files for '${displayName}':`);
   for (const node of processedFiles) {
     alog.log(`  ${node.path}`);
   }
+  alog.log(`Version: ${version}`);
 
   // now we have all the files we need to submit the package
   const submission: ExtensionSubmission = {
     origin,
     version,
     files: processedFiles,
-    filesDigest: digest,
   };
   const submissionResponse = await getRolo(AUTH_KIND).post(
     "extensions",
     ZExtensionSubmission.parse(submission),
   );
+  // submissionResponse.data.files = `${submission.files.length} files`;
   alog.log(`Submitted package. Response:`, submissionResponse.data);
 }

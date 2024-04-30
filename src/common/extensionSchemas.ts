@@ -55,7 +55,6 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString,
   origin: ZExtensionOrigin,
-  filesDigest: ZBlobHash2,
   files: ZExtensionFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;

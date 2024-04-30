@@ -43,7 +43,7 @@ export async function createExtension(
     let document: ExtensionRecord | null = null;
     await session.withTransaction(async () => {
       document = ZExtensionRecord.parse(
-        await processSubmission(submission, dbc(auth.kind)),
+        await processSubmission(submission, dbc(auth.kind), auth),
       );
       await dbc(auth.kind).insertOne(document);
     });
