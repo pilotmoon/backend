@@ -158,6 +158,22 @@ export async function readBlob(id: string, auth: Auth, includeData: boolean) {
   }
 }
 
+// get object for internal application use
+export async function readBlobInternal(
+  identifier: string,
+  kind: AuthKind,
+  includeData: boolean,
+) {
+  return await readBlob(
+    identifier,
+    new Auth({
+      scopes: [`blobs/${identifier}:read`],
+      kind: kind,
+    }),
+    includeData,
+  );
+}
+
 export async function listBlobs(
   hashes: string[],
   auth: Auth,
