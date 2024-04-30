@@ -61,7 +61,7 @@ export const ZExtensionOrigin = z.discriminatedUnion("type", [
 export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 
 export const ZExtensionSubmission = z.object({
-  version: ZVersionString,
+  version: ZVersionString.nullable(),
   origin: ZExtensionOrigin,
   files: ZExtensionFileList,
 });

@@ -5,7 +5,8 @@ import {
   ExtensionFileList,
   ExtensionOrigin,
   ExtensionSubmission,
-  ZExtensionSubmission,
+  ZExtensionFileList,
+  ZExtensionOrigin,
   calculateDigest,
   isConfigFileName,
   isSnippetFileName,
@@ -30,7 +31,10 @@ import { alphabets, baseEncode } from "@pilotmoon/chewit";
 import { createHash } from "node:crypto";
 import { ApiError } from "../../common/errors.js";
 import { randomIdentifier } from "../identifiers.js";
-import { compareVersionStrings } from "../../common/versionString.js";
+import {
+  ZVersionString,
+  compareVersionStrings,
+} from "../../common/versionString.js";
 
 export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
@@ -55,15 +59,20 @@ export const ZExtensionInfo = z.object({
   macosVersion: ZSaneString.optional(),
   popclipVersion: PositiveSafeInteger.optional(),
 });
+type ExtensionInfo = z.infer<typeof ZExtensionInfo>;
 
-export const ZExtensionRecord = ZExtensionSubmission.extend({
+export const ZExtensionRecord = z.object({
   _id: z.string(),
   object: z.literal("extension"),
   created: z.date(),
-  filesDigest: ZBlobHash2,
   shortcode: z.string(),
+  version: ZVersionString,
   info: ZExtensionInfo,
-  published: z.boolean().optional(),
+  origin: ZExtensionOrigin,
+  filesDigest: ZBlobHash2,
+  files: ZExtensionFileList,
+  published: z.boolean(),
+  allowOriginChange: z.boolean().optional(),
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
 
@@ -154,7 +163,11 @@ async function getConfigFile(files: ExtensionDataFileList) {
 
 function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
   if (existing.type === "githubRepo" && candidate.type === "githubRepo") {
-    return existing.repoId === candidate.repoId;
+    return (
+      existing.repoId === candidate.repoId &&
+      existing.nodePath === candidate.nodePath &&
+      existing.nodeType === candidate.nodeType
+    );
   }
   if (existing.type === "githubGist" && candidate.type === "githubGist") {
     return existing.gistId === candidate.gistId;
@@ -164,7 +177,9 @@ function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
 
 function originDescription(origin: ExtensionOrigin) {
   if (origin.type === "githubRepo") {
-    return `GitHub repo ${origin.repoId} (${origin.repoOwnerHandle}/${origin.repoName})`;
+    return `GitHub repo ${origin.repoId} (${origin.repoOwnerHandle}/${
+      origin.repoName
+    }/${origin.nodePath}${origin.nodeType === "tree" ? "/" : ""}})`;
   } else if (origin.type === "githubGist") {
     return `GitHub gist ${origin.gistId} (${origin.gistOwnerHandle})`;
   } else {
@@ -251,10 +266,9 @@ export async function processSubmission(
   }
 
   // check pilotmoon prefix
-  if (
-    info.identifier.startsWith("com.pilotmoon.") &&
-    githubOwnerIdFromOrigin(submission.origin) !== PILOTMOON_OWNER_ID
-  ) {
+  const originIsPilotmoon =
+    githubOwnerIdFromOrigin(submission.origin) === PILOTMOON_OWNER_ID;
+  if (info.identifier.startsWith("com.pilotmoon.") && !originIsPilotmoon) {
     throw new ApiError(
       400,
       "Extensions with identifiers starting with 'com.pilotmoon.' are reserved for @pilotmoon.",
@@ -269,17 +283,36 @@ export async function processSubmission(
   );
   if (mostRecent) {
     const mostRecentParsed = ZExtensionRecord.parse(mostRecent);
-    // version must be newer
-    if (
-      compareVersionStrings(submission.version, mostRecentParsed.version) <= 0
-    ) {
-      throw new ApiError(
-        400,
-        `Version ${submission.version} is not newer than ${mostRecentParsed.version}`,
-      );
+    if (!mostRecentParsed.version) {
+      throw new Error("Most recent submission has no version");
     }
+    if (submission.version) {
+      // version must be newer
+      if (
+        compareVersionStrings(submission.version, mostRecentParsed.version) <= 0
+      ) {
+        throw new ApiError(
+          400,
+          `Version ${submission.version} is not newer than ${mostRecentParsed.version}`,
+        );
+      }
+    } else {
+      // auto version. most recent must be integer
+      if (!mostRecentParsed.version.match(/^[1-9][0-9]*$/)) {
+        throw new ApiError(
+          400,
+          `Using auto version and most recent version (${mostRecentParsed.version}) is not a integer`,
+        );
+      }
+      // add 1
+      submission.version = (parseInt(mostRecentParsed.version) + 1).toString();
+    }
+
     // origin must be same
-    if (!sameOrigin(mostRecentParsed.origin, submission.origin)) {
+    if (
+      !mostRecentParsed.allowOriginChange &&
+      !sameOrigin(mostRecentParsed.origin, submission.origin)
+    ) {
       throw new ApiError(
         400,
         `Extension identifier '${
@@ -293,6 +326,8 @@ export async function processSubmission(
     mlog(`Using previous submission shortcode: ${shortcode}`);
   } else {
     mlog(`No previous submission found this identifier`);
+
+    // generate a new shortcode
     let hashInput = config.identifier;
     let count = 0;
     while (count < 10 && !shortcode) {
@@ -305,14 +340,26 @@ export async function processSubmission(
         hashInput = candidate + "+";
         count++;
         mlog(`Shortcode ${candidate} already exists, trying again (${count})`);
-        continue;
+      } else {
+        shortcode = candidate;
+        mlog(`Generated unique shortcode ${shortcode}`);
+        break;
       }
-      shortcode = candidate;
-      break;
+    }
+
+    // auto version, start at 1 for new submissions
+    if (!submission.version) {
+      mlog(`Starting auto version at 1`);
+      submission.version = "1";
     }
   }
+
+  // by now we should have shortcode and version
   if (!shortcode) {
     throw new Error("Failed to generate unique shortcode");
+  }
+  if (!submission.version) {
+    throw new Error("Failed to generate version");
   }
 
   // calculate the digest of the files we're going to store
@@ -323,10 +370,16 @@ export async function processSubmission(
     _id: randomIdentifier("ext"),
     object: "extension",
     created: new Date(),
-    filesDigest,
-    ...submission,
-    info,
+    version: submission.version,
     shortcode,
-    published: false,
+    info,
+    origin: submission.origin,
+    filesDigest,
+    files: submission.files,
+    published: shouldPublish(submission.origin, info),
   };
+}
+
+function shouldPublish(origin: ExtensionOrigin, info: ExtensionInfo) {
+  return githubOwnerIdFromOrigin(origin) === PILOTMOON_OWNER_ID;
 }

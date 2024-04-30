@@ -91,7 +91,7 @@ export async function existingBlobs(fileList: PackageFile[]) {
 // paths on input should be relative to package root
 export async function submitPackage(
   origin: ExtensionOrigin,
-  version: VersionString,
+  version: VersionString | null,
   fileList: PackageFile[],
   displayName: string,
   alog: ActivityLog,

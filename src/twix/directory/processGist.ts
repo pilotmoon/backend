@@ -7,7 +7,6 @@ import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
 import {
   PackageFile,
-  ZPackageFile,
   existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
@@ -50,16 +49,13 @@ export async function processGist(
     throw new Error(`Response is truncated`);
   }
 
-  // get version number
-  const version = gist.history.length;
-
   // check if database already has this commit
   const commit = gist.history[0];
   const existing = await existingExtensions("origin.commitSha", [
     commit.version,
   ]);
   if (existing.has(commit.version)) {
-    alog.log("Gist is already in the database");
+    alog.log(`Gist commit ${commit.version} is already in the database`);
     return false;
   }
 
@@ -80,10 +76,7 @@ export async function processGist(
     commitDate: commit.committed_at,
   });
 
-  alog.log("Gist info:", {
-    version,
-    origin,
-  });
+  alog.log("Gist origin:", origin);
 
   // build file list
   const packageFiles: PackageFile[] = [];
@@ -102,6 +95,6 @@ export async function processGist(
   }
 
   // submit package
-  await submitPackage(origin, version.toString(), packageFiles, gistId, alog);
+  await submitPackage(origin, null, packageFiles, gistId, alog);
   return false;
 }
