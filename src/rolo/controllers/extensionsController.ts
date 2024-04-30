@@ -25,7 +25,7 @@ export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: -1 });
-    collection.createIndex({ shortcode: 1 });
+    collection.createIndex({ shortcode: 1, version: 1 }, { unique: true });
     collection.createIndex(
       { "info.identifier": 1, version: 1 },
       { unique: true },
