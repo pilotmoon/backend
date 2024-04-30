@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  ExtensionDataFileList,
+  ExtensionDataFileListEntry,
+  ExtensionFileList,
+  ExtensionOrigin,
   ExtensionSubmission,
   ZExtensionSubmission,
   calculateDigest,
@@ -9,18 +13,24 @@ import {
 import {
   PositiveSafeInteger,
   ZSaneIdentifier,
-  ZSaneLongString,
   ZSaneString,
 } from "../../common/saneSchemas.js";
-import { ApiError } from "../../common/errors.js";
 import { Collection } from "mongodb";
-import { randomIdentifier } from "../identifiers.js";
 import { readBlobInternal } from "./blobsController.js";
-import { Auth } from "../auth.js";
+import { Auth, AuthKind } from "../auth.js";
 import { ZBlobHash2, gitHash } from "../../common/blobSchemas.js";
 import { log } from "../../common/log.js";
-import { loadStaticConfig, validateStaticConfig } from "@pilotmoon/fudge";
+import {
+  extractSummary,
+  loadStaticConfig,
+  validateStaticConfig,
+} from "@pilotmoon/fudge";
 import { configFromText } from "@pilotmoon/fudge";
+import { alphabets, baseEncode } from "@pilotmoon/chewit";
+import { createHash } from "node:crypto";
+import { ApiError } from "../../common/errors.js";
+import { randomIdentifier } from "../identifiers.js";
+import { compareVersionStrings } from "../../common/versionString.js";
 
 export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
@@ -35,7 +45,7 @@ const ZIconComponents = z.object({
 
 export const ZExtensionInfo = z.object({
   name: ZSaneString,
-  identifier: ZSaneIdentifier,
+  identifier: ZSaneIdentifier.optional(),
   description: ZSaneString.optional(),
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
@@ -46,45 +56,42 @@ export const ZExtensionInfo = z.object({
   popclipVersion: PositiveSafeInteger.optional(),
 });
 
-const ZExtensionCoreRecord = ZExtensionSubmission.extend({
+export const ZExtensionRecord = ZExtensionSubmission.extend({
   _id: z.string(),
   object: z.literal("extension"),
   created: z.date(),
   filesDigest: ZBlobHash2,
-});
-
-const ZAcceptedExtensionRecord = ZExtensionCoreRecord.extend({
   shortcode: z.string(),
   info: ZExtensionInfo,
   published: z.boolean().optional(),
 });
-
-const ZRejectedExtensionRecord = ZExtensionCoreRecord.extend({
-  message: ZSaneLongString,
-});
-
-export const ZExtensionRecord = z.discriminatedUnion("status", [
-  ZAcceptedExtensionRecord.extend({ status: z.literal("accepted") }),
-  ZRejectedExtensionRecord.extend({ status: z.literal("rejected") }),
-]);
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
+
+function stripUndefined(obj: object) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined),
+  );
+}
+
+export function sha256Base32(message: string) {
+  return baseEncode(
+    Array.from(createHash("sha256").update(message).digest()),
+    alphabets.base32Crockford,
+  ).toLowerCase();
+}
 
 // return the part after the last dot in the file name, else ""
 function fileNameSuffix(fileName: string) {
   return fileName.slice(fileName.lastIndexOf(".") + 1);
 }
 
-export async function processSubmission(
-  submission: ExtensionSubmission,
-  dbc: Collection<ExtensionRecord>,
-  auth: Auth,
-): Promise<ExtensionRecord> {
-  const errors: string[] = [];
-
-  // first load all the files for this extension, and check the hashes
-  const files = await Promise.all(
-    submission.files.map(async (file) => {
-      const data = (await readBlobInternal(file.hash, auth.kind, true))
+async function getFiles(
+  files: ExtensionFileList,
+  authKind: AuthKind,
+): Promise<ExtensionDataFileList> {
+  return await Promise.all(
+    files.map(async (file) => {
+      const data = (await readBlobInternal(file.hash, authKind, true))
         ?.dataBuffer;
       if (!data) {
         throw new Error(`File not found in blob store`);
@@ -92,17 +99,20 @@ export async function processSubmission(
       return { ...file, data };
     }),
   );
-  for (const file of files) {
-    if (file.data.length !== file.size) {
-      throw new Error(`File size mismatch`);
-    }
-    const dataHash = gitHash(file.data, "sha256").toString("hex");
-    if (dataHash !== file.hash) {
-      throw new Error(`File hash mismatch`);
-    }
-    log(`File ${file.hash} OK`);
-  }
+}
 
+const PILOTMOON_OWNER_ID = 17520;
+function githubOwnerIdFromOrigin(origin: ExtensionOrigin) {
+  if (origin.type === "githubRepo") {
+    return origin.repoOwnerId;
+  } else if (origin.type === "githubGist") {
+    return origin.gistOwnerId;
+  } else {
+    return null;
+  }
+}
+
+async function getConfigFile(files: ExtensionDataFileList) {
   // find a single config file if present
   const configs = files.filter((file) => isConfigFileName(file.path));
   if (configs.length > 1) {
@@ -122,7 +132,7 @@ export async function processSubmission(
     throw new Error("Both config and snippet files found");
   }
 
-  let processedConfigFile;
+  let processedConfigFile: ExtensionDataFileListEntry;
   if (theSnippetFile) {
     const contentsString = theSnippetFile.data.toString("utf8");
     const parsed = configFromText(
@@ -135,62 +145,197 @@ export async function processSubmission(
       throw new Error(`Failed to parse snippet file '${snippets[0].path}'`);
     }
     processedConfigFile = {
-      name: parsed.fileName,
-      contents: contentsString,
+      ...theSnippetFile,
+      path: parsed.fileName,
+      executable: parsed.isExecutable ? true : undefined,
     };
-    // modify the snippet file object in place to add the path and executable
-    const snippetFileEntry = submission.files.find(
-      (file) => file.hash === theSnippetFile.hash,
-    )!;
-    snippetFileEntry.path = parsed.fileName;
-    snippetFileEntry.executable ??= parsed.isExecutable;
     log("snippetfile", theSnippetFile);
   } else if (theConfigFile) {
-    processedConfigFile = {
-      name: theConfigFile.path,
-      contents: theConfigFile.data.toString("utf8"),
-    };
+    processedConfigFile = theConfigFile;
   } else {
     throw new Error("No config or snippet file found");
   }
-  if (!processedConfigFile) {
-    throw new Error("No config or snippet file found");
+  return processedConfigFile;
+}
+
+function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
+  if (existing.type === "githubRepo" && candidate.type === "githubRepo") {
+    return existing.repoId === candidate.repoId;
   }
-  log(`Config file ${processedConfigFile.name}`);
-  const config = validateStaticConfig(loadStaticConfig([processedConfigFile]));
-  log(`Config validated: ${config}`);
-  if (!config.identifier) {
-    throw new Error("No identifier found in config");
+  if (existing.type === "githubGist" && candidate.type === "githubGist") {
+    return existing.gistId === candidate.gistId;
+  }
+  return false;
+}
+
+function originDescription(origin: ExtensionOrigin) {
+  if (origin.type === "githubRepo") {
+    return `GitHub repo ${origin.repoId} (${origin.repoOwnerHandle}/${origin.repoName})`;
+  } else if (origin.type === "githubGist") {
+    return `GitHub gist ${origin.gistId} (${origin.gistOwnerHandle})`;
+  } else {
+    return "unknown origin";
+  }
+}
+
+export async function processSubmission(
+  submission: ExtensionSubmission,
+  dbc: Collection<ExtensionRecord>,
+  auth: Auth,
+): Promise<ExtensionRecord> {
+  const messages: string[] = [];
+  function mlog(message: string) {
+    messages.push(message);
+    log(message);
   }
 
-  // look for most recent accepted submission (by created date) with the same identifier
-  const mostRecent = await dbc.findOne(
-    {
-      "info.identifier": config.identifier,
-    },
-    { sort: { created: -1 } },
+  // first load all the files for this extension
+  const files = await getFiles(submission.files, auth.kind);
+  for (const file of files) {
+    if (file.data.length !== file.size) {
+      throw new Error(`File size mismatch`);
+    }
+    const dataHash = gitHash(file.data, "sha256").toString("hex");
+    if (dataHash !== file.hash) {
+      throw new Error(`File hash mismatch`);
+    }
+    mlog(`File ${file.hash} ${file.path} OK`);
+  }
+
+  // find the config file
+  const configFile = await getConfigFile(files);
+
+  // modify the file list entry
+  const configFileEntry = submission.files.find(
+    (file) => file.hash === configFile.hash,
+  )!;
+  configFileEntry.path = configFile.path;
+  configFileEntry.executable = configFile.executable;
+  mlog(`Config file ${configFile.path} from ${configFileEntry.path}`);
+
+  let config;
+  try {
+    config = validateStaticConfig(
+      loadStaticConfig([
+        {
+          name: configFile.path,
+          contents: configFile.data.toString("utf8"),
+        },
+      ]),
+    );
+  } catch (e) {
+    throw new ApiError(
+      400,
+      `Failed to validate config: ${
+        e instanceof Error ? e.message : "unknown"
+      }`,
+    );
+  }
+  mlog("Config validated OK");
+  if (!config.identifier) {
+    throw new ApiError(400, "No identifier found in config");
+  }
+  mlog(`Identifier is ${config.identifier}`);
+
+  // get the info from the config
+  const info = ZExtensionInfo.parse(stripUndefined(extractSummary(config)));
+
+  // make sure we have identifier and description
+  if (!info.identifier) {
+    throw new ApiError(400, "Extension 'identifier' field is required.");
+  }
+  if (!info.description) {
+    throw new ApiError(400, "Extension 'description' field is required.");
+  }
+
+  // might use this for something in future
+  if (info.identifier.startsWith("app.popclip.")) {
+    throw new ApiError(
+      400,
+      "Identifier starting with 'app.popclip.' is reserved",
+    );
+  }
+
+  // check pilotmoon prefix
+  if (
+    info.identifier.startsWith("com.pilotmoon.") &&
+    githubOwnerIdFromOrigin(submission.origin) !== PILOTMOON_OWNER_ID
+  ) {
+    throw new ApiError(
+      400,
+      "Extensions with identifiers starting with 'com.pilotmoon.' are reserved for @pilotmoon.",
+    );
+  }
+
+  // look for most recent submission (by created date) with the same identifier
+  let shortcode;
+  const mostRecent = ZExtensionRecord.safeParse(
+    await dbc.findOne(
+      { "info.identifier": config.identifier },
+      { sort: { created: -1 } },
+    ),
   );
-  if (mostRecent) {
-    log(`Most recent submission:`, mostRecent);
+  if (mostRecent.success) {
+    // version must be newer
+    if (
+      compareVersionStrings(submission.version, mostRecent.data.version) <= 0
+    ) {
+      throw new ApiError(
+        400,
+        `Version ${submission.version} is not newer than ${mostRecent.data.version}`,
+      );
+    }
+
+    // orign must be same
+    if (!sameOrigin(mostRecent.data.origin, submission.origin)) {
+      throw new ApiError(
+        400,
+        `Extension identifier '${
+          mostRecent.data.info.identifier
+        }' may only be updated from the same origin: ${originDescription(
+          mostRecent.data.origin,
+        )}`,
+      );
+    }
+
+    mlog(`Using previous submission shortcode: ${mostRecent.data.shortcode}`);
+    shortcode = mostRecent.data.shortcode;
+  } else {
+    mlog(`No previous submission found this identifier`);
+    let hashInput = config.identifier;
+    let count = 0;
+    while (count < 10 && !shortcode) {
+      const candidate = sha256Base32(hashInput).slice(-6);
+      const existing = await dbc.findOne(
+        { shortcode: candidate },
+        { projection: { _id: 1 } },
+      );
+      if (existing) {
+        hashInput = candidate + "+";
+        count++;
+        mlog(`Shortcode ${candidate} already exists, trying again (${count})`);
+        continue;
+      }
+      shortcode = candidate;
+      break;
+    }
+  }
+  if (!shortcode) {
+    throw new Error("Failed to generate unique shortcode");
   }
 
   // calculate the digest of the files we're going to store
-  const filesDigest = calculateDigest(submission.files);
-  log("files", submission.files);
-  log("filesDigest", filesDigest);
+  const filesDigest = calculateDigest(submission.files).toString("hex");
+  mlog(`filesDigest ${filesDigest}`);
 
-  errors.push("Not implemented");
-  if (errors.length > 0) {
-    return {
-      _id: randomIdentifier("ext"),
-      object: "extension",
-      created: new Date(),
-      filesDigest,
-      ...submission,
-      status: "rejected",
-      message: errors.join("\n"),
-    };
-  } else {
-    throw new ApiError(400, "Not implemented");
-  }
+  return {
+    _id: randomIdentifier("ext"),
+    object: "extension",
+    created: new Date(),
+    filesDigest,
+    ...submission,
+    info,
+    shortcode,
+    published: false,
+  };
 }

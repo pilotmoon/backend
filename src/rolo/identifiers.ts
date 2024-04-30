@@ -43,7 +43,7 @@ export const secretKeyRegex = new RegExp(
   )}$`,
 );
 export const idRegex = new RegExp(
-  `(${idPrefixes.join("|")})_${base62(idLength)}`,
+  `^(${idPrefixes.join("|")})_${base62(idLength)}`,
 );
 // generate a random identifier with the given prefix
 export function randomIdentifier(prefix: string): string {
@@ -67,8 +67,9 @@ export function makeIdentifierPattern(
   varName: string,
   prefix: string,
   fixedIdentifiers: string[] = [],
+  length = idLength,
 ): string {
-  const patterns = [`${prefix}_${base62(idLength)}`].concat(fixedIdentifiers);
+  const patterns = [`${prefix}_${base62(length)}`].concat(fixedIdentifiers);
   return `/:${varName}(${patterns.join("|")})`;
 }
 

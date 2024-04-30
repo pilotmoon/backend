@@ -42,7 +42,7 @@ test("create same blob again, id should be the same", async (t) => {
   const res = await rolo().post("blobs", {
     data: helloWorldBase64,
   });
-  t.is(res.status, 200); // note not 201 this time
+  t.is(res.status, 201);
   t.is(res.data.id, helloWorldId);
 });
 

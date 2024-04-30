@@ -13,9 +13,17 @@ import { createHash } from "node:crypto";
 export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
   hash: ZBlobHash2,
 });
-
 export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
 export type ExtensionFileList = z.infer<typeof ZExtensionFileList>;
+
+export const ZExtensionDataFileListEntry = ZExtensionFileListEntry.extend({
+  data: z.instanceof(Buffer),
+});
+export type ExtensionDataFileListEntry = z.infer<
+  typeof ZExtensionDataFileListEntry
+>;
+export const ZExtensionDataFileList = z.array(ZExtensionDataFileListEntry);
+export type ExtensionDataFileList = z.infer<typeof ZExtensionDataFileList>;
 
 export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),
@@ -137,5 +145,5 @@ export function calculateDigest(fileList: ExtensionFileList) {
   for (const file of fileList) {
     hasher.update(`${file.hash} ${file.executable ? "1" : "0"} ${file.path}\0`);
   }
-  return hasher.digest("hex");
+  return hasher.digest();
 }

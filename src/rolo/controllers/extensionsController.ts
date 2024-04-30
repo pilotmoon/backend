@@ -22,12 +22,15 @@ function dbc(kind: AuthKind) {
 export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
-    collection.createIndex({ created: 1 });
-    collection.createIndex({ "info.identifier": 1 });
+    collection.createIndex({ created: -1 });
     collection.createIndex({ shortcode: 1 });
+    collection.createIndex(
+      { "info.identifier": 1, version: 1 },
+      { unique: true },
+    );
+    collection.createIndex({ filesDigest: 1 }, { unique: true });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
     collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
-    collection.createIndex({ filesDigest: 1 }, { unique: true });
   }
 }
 
@@ -45,6 +48,8 @@ export async function createExtension(
       document = ZExtensionRecord.parse(
         await processSubmission(submission, dbc(auth.kind), auth),
       );
+      log("inserting", document);
+      // do replaceOne upsert on filesDigest key
       await dbc(auth.kind).insertOne(document);
     });
     if (!document) {

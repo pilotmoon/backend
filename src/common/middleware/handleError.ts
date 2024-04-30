@@ -2,6 +2,10 @@ import { Context, Next } from "koa";
 import { formatResponse, getErrorInfo, prettyFormatStatus } from "../errors.js";
 import { log } from "../log.js";
 
+function cleanHttpHeaderString(s: string) {
+  return s.replace(/[\n\r]/g, " ");
+}
+
 export async function handleError(ctx: Context, next: Next) {
   let info;
   try {
@@ -10,7 +14,7 @@ export async function handleError(ctx: Context, next: Next) {
   } catch (error) {
     info = getErrorInfo(error);
     ctx.body = formatResponse(info);
-    ctx.set("X-Error-Message", info.message);
+    ctx.set("X-Error-Message", cleanHttpHeaderString(info.message));
     ctx.status = info.status;
   } finally {
     log(
