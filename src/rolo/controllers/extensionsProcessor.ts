@@ -297,15 +297,10 @@ export async function processSubmission(
         );
       }
     } else {
-      // auto version. most recent must be integer
-      if (!mostRecentParsed.version.match(/^[1-9][0-9]*$/)) {
-        throw new ApiError(
-          400,
-          `Using auto version and most recent version (${mostRecentParsed.version}) is not a integer`,
-        );
-      }
       // add 1
-      submission.version = (parseInt(mostRecentParsed.version) + 1).toString();
+      submission.version = (
+        Number.parseInt(mostRecentParsed.version) + 1
+      ).toString();
     }
 
     // origin must be same
