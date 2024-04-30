@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   ExtensionDataFileList,
-  ExtensionDataFileListEntry,
   ExtensionFileList,
   ExtensionOrigin,
   ExtensionSubmission,
@@ -9,7 +8,6 @@ import {
   ZExtensionOrigin,
   calculateDigest,
   isConfigFileName,
-  isSnippetFileName,
 } from "../../common/extensionSchemas.js";
 import {
   PositiveSafeInteger,
@@ -116,49 +114,40 @@ function githubOwnerIdFromOrigin(origin: ExtensionOrigin) {
 }
 
 async function getConfigFile(files: ExtensionDataFileList) {
-  // find a single config file if present
+  let result;
   const configs = files.filter((file) => isConfigFileName(file.path));
   if (configs.length > 1) {
-    throw new Error("More than one config file found");
-  }
-  const theConfigFile = configs[0];
-
-  // find a single snippet file if present
-  const snippets = files.filter((file) => isSnippetFileName(file.path));
-  if (snippets.length > 1) {
-    throw new Error("More than one snippet file found");
-  }
-  const theSnippetFile = snippets[0];
-
-  // check we have exactly one
-  if (theSnippetFile && theConfigFile) {
-    throw new Error("Both config and snippet files found");
-  }
-
-  let processedConfigFile: ExtensionDataFileListEntry;
-  if (theSnippetFile) {
-    const contentsString = theSnippetFile.data.toString("utf8");
-    const parsed = configFromText(
-      contentsString,
-      fileNameSuffix(theSnippetFile.path),
-    );
-    log("path", theSnippetFile.path);
-    log("parsed", parsed);
-    if (!parsed) {
-      throw new Error(`Failed to parse snippet file '${snippets[0].path}'`);
+    throw new Error("Only one config file is allowed");
+  } else if (configs.length === 1) {
+    result = configs[0];
+  } else {
+    const snippets = [];
+    for (const file of files) {
+      const parsed = configFromText(
+        file.data.toString("utf8"),
+        fileNameSuffix(file.path),
+      );
+      if (parsed) {
+        snippets.push({ file, parsed });
+      }
     }
-    processedConfigFile = {
-      ...theSnippetFile,
+    if (snippets.length === 0) {
+      throw new Error("Expected a Config file or a snippet in the files");
+    }
+    if (snippets.length > 1) {
+      throw new Error("Found more than one snippet in the files");
+    }
+    const { parsed, file } = snippets[0];
+    log("snippet path", file.path);
+    log("parsed", parsed);
+    result = {
+      ...file,
       path: parsed.fileName,
       executable: parsed.isExecutable ? true : undefined,
     };
-    log("snippetfile", theSnippetFile);
-  } else if (theConfigFile) {
-    processedConfigFile = theConfigFile;
-  } else {
-    throw new Error("No config or snippet file found");
+    log("result", file);
   }
-  return processedConfigFile;
+  return result;
 }
 
 function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
@@ -224,20 +213,20 @@ export async function processSubmission(
 
   let config;
   try {
-    config = validateStaticConfig(
-      loadStaticConfig([
-        {
-          name: configFile.path,
-          contents: configFile.data.toString("utf8"),
-        },
-      ]),
-    );
+    const staticConfig = loadStaticConfig([
+      {
+        name: configFile.path,
+        contents: configFile.data.toString("utf8"),
+      },
+    ]);
+    if (!staticConfig || Object.keys(staticConfig).length === 0) {
+      throw new Error(`No config found in ${configFile.path}`);
+    }
+    config = validateStaticConfig(staticConfig);
   } catch (e) {
     throw new ApiError(
       400,
-      `Failed to validate config: ${
-        e instanceof Error ? e.message : "unknown"
-      }`,
+      `Config load error: ${e instanceof Error ? e.message : "unknown"}`,
     );
   }
   mlog("Config validated OK");

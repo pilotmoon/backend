@@ -21,7 +21,6 @@ import {
 import { VersionString, ZVersionString } from "../../common/versionString.js";
 import {
   PackageFile,
-  ZPackageFile,
   existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
@@ -258,13 +257,7 @@ function getPackageFiles(
     if (node.mode === "120000") {
       throw new ApiError(400, `Symlinks are not supported: ${node.path}`);
     }
-    // prefix the filename with #popclip- to signal that it's a snippet
-    filtered.push({
-      ...node,
-      path: node.path.startsWith("#popclip-")
-        ? node.path
-        : `#popclip-${node.path}`,
-    });
+    filtered.push(node);
   } else {
     throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
