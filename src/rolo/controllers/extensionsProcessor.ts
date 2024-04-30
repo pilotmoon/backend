@@ -67,12 +67,6 @@ export const ZExtensionRecord = ZExtensionSubmission.extend({
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
 
-function stripUndefined(obj: object) {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([_, v]) => v !== undefined),
-  );
-}
-
 export function sha256Base32(message: string) {
   return baseEncode(
     Array.from(createHash("sha256").update(message).digest()),
@@ -238,7 +232,7 @@ export async function processSubmission(
   mlog(`Identifier is ${config.identifier}`);
 
   // get the info from the config
-  const info = ZExtensionInfo.parse(stripUndefined(extractSummary(config)));
+  const info = ZExtensionInfo.parse(extractSummary(config));
 
   // make sure we have identifier and description
   if (!info.identifier) {
@@ -269,37 +263,34 @@ export async function processSubmission(
 
   // look for most recent submission (by created date) with the same identifier
   let shortcode;
-  const mostRecent = ZExtensionRecord.safeParse(
-    await dbc.findOne(
-      { "info.identifier": config.identifier },
-      { sort: { created: -1 } },
-    ),
+  const mostRecent = await dbc.findOne(
+    { "info.identifier": config.identifier },
+    { sort: { created: -1 } },
   );
-  if (mostRecent.success) {
+  if (mostRecent) {
+    const mostRecentParsed = ZExtensionRecord.parse(mostRecent);
     // version must be newer
     if (
-      compareVersionStrings(submission.version, mostRecent.data.version) <= 0
+      compareVersionStrings(submission.version, mostRecentParsed.version) <= 0
     ) {
       throw new ApiError(
         400,
-        `Version ${submission.version} is not newer than ${mostRecent.data.version}`,
+        `Version ${submission.version} is not newer than ${mostRecentParsed.version}`,
       );
     }
-
-    // orign must be same
-    if (!sameOrigin(mostRecent.data.origin, submission.origin)) {
+    // origin must be same
+    if (!sameOrigin(mostRecentParsed.origin, submission.origin)) {
       throw new ApiError(
         400,
         `Extension identifier '${
-          mostRecent.data.info.identifier
+          mostRecentParsed.info.identifier
         }' may only be updated from the same origin: ${originDescription(
-          mostRecent.data.origin,
+          mostRecentParsed.origin,
         )}`,
       );
     }
-
-    mlog(`Using previous submission shortcode: ${mostRecent.data.shortcode}`);
-    shortcode = mostRecent.data.shortcode;
+    shortcode = mostRecentParsed.shortcode;
+    mlog(`Using previous submission shortcode: ${shortcode}`);
   } else {
     mlog(`No previous submission found this identifier`);
     let hashInput = config.identifier;

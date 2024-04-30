@@ -15,7 +15,9 @@ import {
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
-  return getDb(kind).collection<ExtensionRecord>(extensionsCollectionName);
+  return getDb(kind).collection<ExtensionRecord>(extensionsCollectionName, {
+    ignoreUndefined: true,
+  });
 }
 
 // called at server startup to create indexes
@@ -121,6 +123,24 @@ export function getQueryPipeline(query: unknown) {
   const extract = stringFromQuery(query, "extract", "");
   if (extract) {
     pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });
+  }
+
+  // identifier
+  const identifier = stringFromQuery(query, "info.identifier", "");
+  if (identifier) {
+    pipeline.push({ $match: { "info.identifier": identifier } });
+  }
+
+  // shortcode
+  const shortcode = stringFromQuery(query, "shortcode", "");
+  if (shortcode) {
+    pipeline.push({ $match: { shortcode } });
+  }
+
+  // version
+  const version = stringFromQuery(query, "version", "");
+  if (version) {
+    pipeline.push({ $match: { version } });
   }
 
   return pipeline;

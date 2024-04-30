@@ -5,7 +5,7 @@
     "@koa/router": "12.0.0",
     "@pilotmoon/aquatic-prime": "0.2.0",
     "@pilotmoon/chewit": "0.3.0",
-    "@pilotmoon/fudge": "pilotmoon/fudge#385f5bf",
+    "@pilotmoon/fudge": "pilotmoon/fudge#d60aabd",
     "@types/content-type": "1.1.6",
     "@types/koa-bodyparser": "4.3.10",
     "@types/lodash": "4.14.191",

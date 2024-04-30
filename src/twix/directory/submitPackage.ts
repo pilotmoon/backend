@@ -10,7 +10,6 @@ import {
   ExtensionOrigin,
   ExtensionSubmission,
   ZExtensionSubmission,
-  calculateDigest,
   canonicalSort,
   validateFileList,
 } from "../../common/extensionSchemas.js";
