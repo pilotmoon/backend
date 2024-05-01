@@ -4,7 +4,15 @@ import { logw } from "../common/log.js";
 import { AuthKind, authKinds } from "./auth.js";
 
 // the collection names, object types and corresponding key prefixes
-export const idPrefixes = ["ak", "reg", "lk", "log", "ext", "blob"] as const;
+export const idPrefixes = [
+  "ak",
+  "reg",
+  "lk",
+  "log",
+  "ext",
+  "blob",
+  "au",
+] as const;
 export const collectionNames = [
   "apiKeys",
   "registries",
@@ -14,6 +22,7 @@ export const collectionNames = [
   "logs",
   "extensions",
   "blobs",
+  "authors",
 ] as const;
 export const objectNames = [
   "apiKey",
@@ -22,6 +31,7 @@ export const objectNames = [
   "log",
   "extension",
   "blob",
+  "author",
 ] as const;
 export const objectNamesWithoutId = [
   "health",

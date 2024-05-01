@@ -1,0 +1,172 @@
+// authors collection records who has created extensions
+// currently all authors are only on github but there may be other sources in the future
+// authors record:
+// {
+//   _id: au_<12 base62 random>, // primary key
+//  object: "author",
+//  created: <date>,
+//  verified: <boolean>, //optional
+//  autoPublish: <boolean>, //optional
+//    type: "github", // discriminator
+//    githubId: <github user id>, // sparse unique index
+//    githubHandle: <github handle>,
+//    githubType: <User or Organization>,
+//    githubUrl: <github html_url>,
+//    avatarUrl: <github avatar url>, //optional
+//    websiteUrl: <github blog>, //optional
+//    name: <github name>, //optional
+//    email: <github email>, //optional
+//    bio: <github bio>, //optional
+//    company: <github company>, //optional
+//    location: <github location>, //optional
+//  ... end of "github"" type
+
+import { z } from "zod";
+import { Auth, AuthKind, authKinds } from "../auth.js";
+import {
+  NonNegativeSafeInteger,
+  ZSaneString,
+} from "../../common/saneSchemas.js";
+import { ZGitHubUserType } from "../../common/githubTypes.js";
+import { getDb } from "../database.js";
+import { randomIdentifier } from "../identifiers.js";
+import { ApiError, handleControllerError } from "../../common/errors.js";
+import { Pagination, paginate } from "../paginate.js";
+import { Document } from "mongodb";
+import { log } from "../../common/log.js";
+
+// creation is done by findAndUpdateOne based on the githubId
+// so that we can update the record if it already exists without
+// having to check if it exists first
+
+export const ZGithubAuthorInfo = z.object({
+  type: z.literal("github"),
+  githubId: NonNegativeSafeInteger,
+  githubHandle: ZSaneString,
+  githubType: ZGitHubUserType,
+  githubUrl: ZSaneString,
+  avatarUrl: ZSaneString.optional(),
+  websiteUrl: ZSaneString.optional(),
+  name: ZSaneString.optional(),
+  email: ZSaneString.optional(),
+  bio: ZSaneString.optional(),
+  company: ZSaneString.optional(),
+  location: ZSaneString.optional(),
+});
+
+// what is passed in on creation
+export const ZAuthorInfo = z.discriminatedUnion("type", [ZGithubAuthorInfo]);
+export type AuthorInfo = z.infer<typeof ZAuthorInfo>;
+
+export const ZAuthorPatch = z.object({
+  verified: z.boolean().optional(),
+  autoPublish: z.boolean().optional(),
+});
+export type AuthorPatch = z.infer<typeof ZAuthorPatch>;
+
+// as stored in the database
+export const ZAuthorRecord = ZAuthorPatch.extend({
+  _id: z.string(),
+  object: z.literal("author"),
+  created: z.date(),
+  info: ZAuthorInfo,
+});
+export type AuthorRecord = z.infer<typeof ZAuthorRecord>;
+
+const authorsCollectionName = "authors";
+// helper function to get the database collection for a given key kind
+function dbc(kind: AuthKind) {
+  return getDb(kind).collection<AuthorRecord>(authorsCollectionName, {
+    ignoreUndefined: true,
+  });
+}
+
+// called at server startup to create indexes
+export async function init() {
+  for (const kind of authKinds) {
+    const collection = dbc(kind);
+    collection.createIndex({ created: 1 });
+    collection.createIndex(
+      { "info.githubId": 1 },
+      { sparse: true, unique: true },
+    );
+  }
+}
+
+// CRUD
+export async function createAuthor(info: AuthorInfo, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, undefined, "create");
+  const now = new Date();
+  const record: Document = {
+    _id: randomIdentifier("au"),
+    object: "author",
+    created: now,
+  };
+  try {
+    if (info.type !== "github") {
+      throw new Error(`Unsupported author type ${info.type}`);
+    }
+    const result = await dbc(auth.kind).findOneAndUpdate(
+      { "info.githubId": info.githubId },
+      { $setOnInsert: record, $set: { info } },
+      { upsert: true, returnDocument: "after" },
+    );
+    log("result", JSON.stringify(result, null, 2));
+    if (!result.value) {
+      throw new Error("Error inserting document");
+    }
+    return result.value;
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}
+
+export async function readAuthor(id: string, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, id, "read");
+  try {
+    const document = await dbc(auth.kind).findOne({ _id: id });
+    if (!document) return null;
+    return ZAuthorRecord.parse(document);
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}
+
+export async function listAuthors(pagination: Pagination, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, undefined, "read");
+  try {
+    const documents = await paginate(dbc(auth.kind), pagination);
+    return documents;
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}
+
+export async function updateAuthor(id: string, patch: AuthorPatch, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, id, "update");
+  try {
+    const result = await dbc(auth.kind).findOneAndUpdate(
+      { _id: id },
+      { $set: patch },
+      { returnDocument: "after" },
+    );
+    return !!result.value;
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}
+
+export async function deleteAuthor(id: string, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, id, "delete");
+  try {
+    const result = await dbc(auth.kind).deleteOne({ _id: id });
+    return result.deletedCount == 1;
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}

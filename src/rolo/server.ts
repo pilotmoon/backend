@@ -24,6 +24,7 @@ import { init as initRegistriesController } from "./controllers/registriesContro
 import { init as initLogsController } from "./controllers/logsController.js";
 import { init as initBlobsController } from "./controllers/blobsController.js";
 import { init as initExtensionsController } from "./controllers/extensionsController.js";
+import { init as initAuthorsController } from "./controllers/authorsController.js";
 
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
@@ -36,6 +37,7 @@ import { router as reportsRouter } from "./routers/reportsRouter.js";
 import { router as logsRouter } from "./routers/logsRouter.js";
 import { router as blobsRouter } from "./routers/blobsRouter.js";
 import { router as extensionsRouter } from "./routers/extensionsRouter.js";
+import { router as authorsRouter } from "./routers/authorsRouter.js";
 import { setSecretKey } from "./secrets.js";
 
 // first set the encryption key, if we have one
@@ -53,6 +55,7 @@ mainRouter.use(licenseKeysRouter.routes());
 mainRouter.use(logsRouter.routes());
 mainRouter.use(blobsRouter.routes());
 mainRouter.use(extensionsRouter.routes());
+mainRouter.use(authorsRouter.routes());
 
 // the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();
@@ -155,6 +158,7 @@ await assertSuccess([
   initLogsController(),
   initBlobsController(),
   initExtensionsController(),
+  initAuthorsController(),
 ]);
 await housekeep();
 log("Startup complete".green);
