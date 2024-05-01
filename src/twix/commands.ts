@@ -35,7 +35,10 @@ router.get("/webhooks/rebuildSite2f997c6", async (ctx) => {
     (run) => run.status === "in_progress",
   );
   if (inProgess) {
-    throw new ApiError(409, "A build is already in progress");
+    throw new ApiError(
+      409,
+      `A build is already in progress: ${inProgess.html_url}`,
+    );
   }
   const lastGood = info.workflow_runs.find(
     (run) => run.conclusion === "success" && run.status === "completed",
@@ -49,6 +52,5 @@ router.get("/webhooks/rebuildSite2f997c6", async (ctx) => {
   if (response2.status !== 201) {
     throw new ApiError(500, `Failed to re-run build: ${response2.status}`);
   }
-  ctx.body = `Re-running last successful build: ${lastGood.html_url}
-New run: ${lastGood.html_url}`;
+  ctx.body = `Re-running last successful build: ${lastGood.html_url}`;
 });
