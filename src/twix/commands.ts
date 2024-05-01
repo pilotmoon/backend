@@ -32,12 +32,16 @@ router.get("/webhooks/rebuildSite2f997c6", async (ctx) => {
   const info = ZGithubWorkflowRun.parse(response.data);
   log("recent runs", info.workflow_runs.slice(0, 5));
   const inProgess = info.workflow_runs.find(
-    (run) => run.status === "in_progress",
+    // in_progress, queued, waiting, pending, or requested
+    (run) =>
+      ["in_progress", "queued", "waiting", "pending", "requested"].includes(
+        run.status,
+      ),
   );
   if (inProgess) {
     throw new ApiError(
       409,
-      `A build is already in progress: ${inProgess.html_url}`,
+      `A build is already active (${inProgess.status}): ${inProgess.html_url}`,
     );
   }
   const lastGood = info.workflow_runs.find(
