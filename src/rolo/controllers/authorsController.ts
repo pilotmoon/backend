@@ -23,36 +23,13 @@
 
 import { z } from "zod";
 import { Auth, AuthKind, authKinds } from "../auth.js";
-import {
-  NonNegativeSafeInteger,
-  ZSaneString,
-} from "../../common/saneSchemas.js";
-import { ZGitHubUserType } from "../../common/githubTypes.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
-import { ApiError, handleControllerError } from "../../common/errors.js";
+import { handleControllerError } from "../../common/errors.js";
 import { Pagination, paginate } from "../paginate.js";
 import { Document } from "mongodb";
 import { log } from "../../common/log.js";
-
-// creation is done by findAndUpdateOne based on the githubId
-// so that we can update the record if it already exists without
-// having to check if it exists first
-
-export const ZGithubAuthorInfo = z.object({
-  type: z.literal("github"),
-  githubId: NonNegativeSafeInteger,
-  githubHandle: ZSaneString,
-  githubType: ZGitHubUserType,
-  githubUrl: ZSaneString,
-  avatarUrl: ZSaneString.optional(),
-  websiteUrl: ZSaneString.optional(),
-  name: ZSaneString.optional(),
-  email: ZSaneString.optional(),
-  bio: ZSaneString.optional(),
-  company: ZSaneString.optional(),
-  location: ZSaneString.optional(),
-});
+import { ZGithubAuthorInfo } from "../../common/extensionSchemas.js";
 
 // what is passed in on creation
 export const ZAuthorInfo = z.discriminatedUnion("type", [ZGithubAuthorInfo]);
@@ -122,6 +99,19 @@ export async function createAuthor(info: AuthorInfo, auth: Auth) {
   }
 }
 
+export async function createAuthorInternal(
+  info: AuthorInfo,
+  authKind: AuthKind,
+) {
+  return await createAuthor(
+    info,
+    new Auth({
+      scopes: [`authors:create`],
+      kind: authKind,
+    }),
+  );
+}
+
 export async function readAuthor(id: string, auth: Auth) {
   auth.assertAccess(authorsCollectionName, id, "read");
   try {
@@ -132,6 +122,33 @@ export async function readAuthor(id: string, auth: Auth) {
     handleControllerError(e);
     throw e;
   }
+}
+
+export async function readAuthorByGithubId(githubId: number, auth: Auth) {
+  auth.assertAccess(authorsCollectionName, `github:${githubId}`, "read");
+  try {
+    const document = await dbc(auth.kind).findOne({
+      "info.githubId": githubId,
+    });
+    if (!document) return null;
+    return ZAuthorRecord.parse(document);
+  } catch (e) {
+    handleControllerError(e);
+    throw e;
+  }
+}
+
+export async function readAuthorByGithubIdInternal(
+  githubId: number,
+  authKind: AuthKind,
+) {
+  return await readAuthorByGithubId(
+    githubId,
+    new Auth({
+      scopes: [`authors/github:${githubId}:read`],
+      kind: authKind,
+    }),
+  );
 }
 
 export async function listAuthors(pagination: Pagination, auth: Auth) {

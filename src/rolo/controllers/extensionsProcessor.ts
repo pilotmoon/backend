@@ -34,6 +34,10 @@ import {
   ZVersionString,
   compareVersionStrings,
 } from "../../common/versionString.js";
+import {
+  createAuthorInternal,
+  readAuthorByGithubIdInternal,
+} from "./authorsController.js";
 
 export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
@@ -349,6 +353,9 @@ export async function processSubmission(
     throw new Error("Failed to generate version");
   }
 
+  // save the author info
+  createAuthorInternal(submission.author, auth.kind);
+
   // calculate the digest of the files we're going to store
   const filesDigest = calculateDigest(submission.files).toString("hex");
   mlog(`filesDigest ${filesDigest}`);
@@ -363,10 +370,17 @@ export async function processSubmission(
     origin: submission.origin,
     filesDigest,
     files: submission.files,
-    published: shouldPublish(submission.origin, info),
+    published: await shouldPublish(submission.origin, info, auth.kind),
   };
 }
 
-function shouldPublish(origin: ExtensionOrigin, info: ExtensionInfo) {
-  return githubOwnerIdFromOrigin(origin) === PILOTMOON_OWNER_ID;
+async function shouldPublish(
+  origin: ExtensionOrigin,
+  _: ExtensionInfo,
+  authKind: AuthKind,
+) {
+  const githubId = githubOwnerIdFromOrigin(origin);
+  if (githubId === null) return false;
+  const author = await readAuthorByGithubIdInternal(githubId, authKind);
+  return !!author?.autoPublish;
 }

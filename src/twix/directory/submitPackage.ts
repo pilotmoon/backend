@@ -19,6 +19,7 @@ import { VersionString } from "../../common/versionString.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
+import { AuthorInfo } from "../../rolo/controllers/authorsController.js";
 
 const AUTH_KIND = "test";
 
@@ -91,6 +92,7 @@ export async function existingBlobs(fileList: PackageFile[]) {
 // paths on input should be relative to package root
 export async function submitPackage(
   origin: ExtensionOrigin,
+  author: AuthorInfo,
   version: VersionString | null,
   fileList: PackageFile[],
   displayName: string,
@@ -172,8 +174,9 @@ export async function submitPackage(
 
   // now we have all the files we need to submit the package
   const submission: ExtensionSubmission = {
-    origin,
     version,
+    origin,
+    author,
     files: processedFiles,
   };
   const submissionResponse = await getRolo(AUTH_KIND).post(

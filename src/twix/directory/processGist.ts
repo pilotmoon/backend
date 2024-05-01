@@ -4,7 +4,10 @@ import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
-import { ZExtensionOriginGithubGist } from "../../common/extensionSchemas.js";
+import {
+  ZExtensionOriginGithubGist,
+  githubAuthorInfoFromUser,
+} from "../../common/extensionSchemas.js";
 import {
   PackageFile,
   existingExtensions,
@@ -61,8 +64,11 @@ export async function processGist(
 
   // fetch user info
   const userResponse = await gh().get(`/users/${commit.user.login}`);
-  log("user", userResponse.data);
   const user = ZGithubUser.parse(userResponse.data);
+
+  // create author object
+  const author = githubAuthorInfoFromUser(user);
+  alog.log("Author:", author);
 
   // construct origin object
   const origin = ZExtensionOriginGithubGist.parse({
@@ -75,8 +81,7 @@ export async function processGist(
     commitSha: commit.version,
     commitDate: commit.committed_at,
   });
-
-  alog.log("Gist origin:", origin);
+  alog.log("Origin:", origin);
 
   // build file list
   const packageFiles: PackageFile[] = [];
@@ -95,6 +100,6 @@ export async function processGist(
   }
 
   // submit package
-  await submitPackage(origin, null, packageFiles, gistId, alog);
+  await submitPackage(origin, author, null, packageFiles, gistId, alog);
   return false;
 }

@@ -66,6 +66,13 @@ test("get author by id again and check autoPublish", async (t) => {
   t.is(res.data.autoPublish, true);
 });
 
+test("get author by github id", async (t) => {
+  const res = await rolo().get(`authors/github/${plodGithubId}`);
+  t.is(res.status, 200);
+  t.log(res.data);
+  t.is(res.data.id, plodId);
+});
+
 test("update info for author", async (t) => {
   const res = await rolo().post(`authors`, {
     type: "github",

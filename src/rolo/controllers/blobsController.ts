@@ -45,7 +45,6 @@ import {
   gitHash,
   truncatedHash,
 } from "../../common/blobSchemas.js";
-import { log } from "../../common/log.js";
 
 /*** Database ***/
 

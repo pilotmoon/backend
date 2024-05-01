@@ -7,8 +7,23 @@ import {
   ZSaneString,
 } from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
-import { ZGitHubUserType } from "./githubTypes.js";
+import { GithubUser, ZGitHubUserType } from "./githubTypes.js";
 import { createHash } from "node:crypto";
+
+export const ZGithubAuthorInfo = z.object({
+  type: z.literal("github"),
+  githubId: NonNegativeSafeInteger,
+  githubHandle: ZSaneString,
+  githubType: ZGitHubUserType,
+  githubUrl: ZSaneString,
+  websiteUrl: ZSaneString.optional(),
+  name: ZSaneString.optional(),
+  email: ZSaneString.optional(),
+  bio: ZSaneString.optional(),
+  company: ZSaneString.optional(),
+  location: ZSaneString.optional(),
+});
+export type GithubAuthorInfo = z.infer<typeof ZGithubAuthorInfo>;
 
 export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
   hash: ZBlobHash2,
@@ -63,6 +78,7 @@ export type ExtensionOrigin = z.infer<typeof ZExtensionOrigin>;
 export const ZExtensionSubmission = z.object({
   version: ZVersionString.nullable(),
   origin: ZExtensionOrigin,
+  author: ZGithubAuthorInfo,
   files: ZExtensionFileList,
 });
 export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
@@ -138,4 +154,20 @@ export function calculateDigest(fileList: ExtensionFileList) {
     hasher.update(`${file.hash} ${file.executable ? "1" : "0"} ${file.path}\0`);
   }
   return hasher.digest();
+}
+
+export function githubAuthorInfoFromUser(user: GithubUser): GithubAuthorInfo {
+  return {
+    type: "github",
+    githubId: user.id,
+    githubHandle: user.login,
+    githubType: user.type,
+    githubUrl: user.html_url,
+    websiteUrl: user.blog ?? undefined,
+    name: user.name ?? undefined,
+    email: user.email ?? undefined,
+    bio: user.bio ?? undefined,
+    company: user.company ?? undefined,
+    location: user.location ?? undefined,
+  };
 }

@@ -16,8 +16,17 @@ export const ZGithubUser = z.object({
   login: ZSaneString,
   id: NonNegativeSafeInteger,
   type: ZGitHubUserType,
+  avatar_url: ZSaneString,
+  html_url: ZSaneString,
   email: ZSaneEmail.nullish(),
+  name: ZSaneString.nullish(),
+  blog: ZSaneString.nullish(),
+  bio: ZSaneString.nullish(),
+  company: ZSaneString.nullish(),
+  location: ZSaneString.nullish(),
+  twitter_username: ZSaneString.nullish(),
 });
+export type GithubUser = z.infer<typeof ZGithubUser>;
 
 /************************
   GitHub Webhook Events

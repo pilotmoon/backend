@@ -8,6 +8,7 @@ import {
   deleteAuthor,
   listAuthors,
   readAuthor,
+  readAuthorByGithubId,
   updateAuthor,
 } from "../controllers/authorsController.js";
 
@@ -19,6 +20,17 @@ const matchId = {
 
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readAuthor(ctx.params.id, ctx.state.auth);
+  if (document) {
+    ctx.body = document;
+  }
+});
+
+// get by github id
+router.get("/github/:githubId", async (ctx) => {
+  const document = await readAuthorByGithubId(
+    parseInt(ctx.params.githubId),
+    ctx.state.auth,
+  );
   if (document) {
     ctx.body = document;
   }

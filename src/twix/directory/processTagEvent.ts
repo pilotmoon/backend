@@ -4,7 +4,11 @@ import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
-import { ZExtensionOriginGithubRepo } from "../../common/extensionSchemas.js";
+import {
+  GithubAuthorInfo,
+  ZExtensionOriginGithubRepo,
+  githubAuthorInfoFromUser,
+} from "../../common/extensionSchemas.js";
 import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { ActivityLog } from "../activityLog";
@@ -17,6 +21,7 @@ import {
   ZGithubNode,
   ZGithubRefObject,
   ZGithubTree,
+  ZGithubUser,
 } from "../../common/githubTypes.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
 import {
@@ -24,6 +29,7 @@ import {
   existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
+import { log } from "../../common/log.js";
 
 // webhook param
 const ZGlobPatternArray = z.union([
@@ -149,6 +155,16 @@ export async function processTagEvent(
   const commitInfo = ZGithubCommitObject.parse(commitResponse.data);
   alog.log(`Loaded commit info:`, commitInfo);
 
+  // fetch user info
+  const userResponse = await gh().get(
+    `/users/${tagInfo.repository.owner.login}`,
+  );
+  const user = ZGithubUser.parse(userResponse.data);
+
+  // create author object
+  const author = githubAuthorInfoFromUser(user);
+  alog.log("Author:", author);
+
   // create the partial origin object
   const partialOrigin = {
     type: "githubRepo",
@@ -161,6 +177,7 @@ export async function processTagEvent(
     commitSha: commitInfo.sha,
     commitDate: commitInfo.committer.date,
   };
+  alog.log("Origin:", origin);
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
@@ -179,6 +196,7 @@ export async function processTagEvent(
                 nodeSha: node.sha,
                 nodeType: node.type,
               }),
+              author,
               version,
               files,
               node.path,
