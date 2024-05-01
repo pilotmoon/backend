@@ -8,6 +8,7 @@ import { log, loge } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { hours } from "../common/timeIntervals.js";
+import { router as commandsRouter } from "./commands.js";
 import { config } from "./config.js";
 import { router as directoryRouter } from "./directory/directoryRouter.js";
 import { getConfig as initEmail } from "./email.js";
@@ -16,19 +17,20 @@ import {
   housekeep as housekeepGithub,
   init as initGithub,
 } from "./githubClient.js";
+import { makeRouter, makeServer } from "./koaWrapper.js";
+import { openRemoteLog } from "./middleware/openRemoteLog.js";
 import { getPaddleCredentials as initPaddle } from "./paddle.js";
 import { router as paddleRouter } from "./paddle/paddleRouter.js";
 import { remoteConfigReady } from "./remoteConfig.js";
 import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
-import { makeRouter, makeServer } from "./koaWrapper.js";
-import { openRemoteLog } from "./middleware/openRemoteLog.js";
 
 const router = makeRouter();
 router.use(paddleRouter.routes());
 router.use(storeRouter.routes());
 router.use(directoryRouter.routes());
+router.use(commandsRouter.routes());
 
 // serve a title screen
 router.get("/", (ctx) => {
