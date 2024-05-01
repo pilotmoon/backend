@@ -47,6 +47,7 @@ const ZIconComponents = z.object({
 });
 
 export const ZExtensionInfo = z.object({
+  type: z.literal("popclip"),
   name: ZSaneString,
   identifier: ZSaneIdentifier.optional(),
   description: ZSaneString.optional(),
@@ -235,7 +236,10 @@ export async function processSubmission(
   mlog(`Identifier is ${config.identifier}`);
 
   // get the info from the config
-  const info = ZExtensionInfo.parse(extractSummary(config));
+  const info = ZExtensionInfo.parse({
+    ...extractSummary(config),
+    type: "popclip",
+  });
 
   // make sure we have identifier and description
   if (!info.identifier) {
