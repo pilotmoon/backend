@@ -177,7 +177,7 @@ export async function processTagEvent(
     commitSha: commitInfo.sha,
     commitDate: commitInfo.committer.date,
   };
-  alog.log("Origin:", origin);
+  alog.log("Origin:", partialOrigin);
 
   // use nexttick so that we return a webhook response before
   // beginning the processing

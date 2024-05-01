@@ -173,11 +173,11 @@ function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
 
 function originDescription(origin: ExtensionOrigin) {
   if (origin.type === "githubRepo") {
-    return `GitHub repo ${origin.repoId} (${origin.repoOwnerHandle}/${
-      origin.repoName
-    }/${origin.nodePath}${origin.nodeType === "tree" ? "/" : ""}})`;
+    return `githubRepo:${origin.repoName}/${origin.nodePath}${
+      origin.nodeType === "tree" ? "/" : ""
+    } (repoId:${origin.repoId})`;
   } else if (origin.type === "githubGist") {
-    return `GitHub gist ${origin.gistId} (${origin.gistOwnerHandle})`;
+    return `githubGist:${origin.gistId} (owner:${origin.gistOwnerHandle})`;
   } else {
     return "unknown origin";
   }
@@ -285,6 +285,22 @@ export async function processSubmission(
     if (!mostRecentParsed.version) {
       throw new Error("Most recent submission has no version");
     }
+
+    // origin must be same
+    if (
+      !mostRecentParsed.allowOriginChange &&
+      !sameOrigin(mostRecentParsed.origin, submission.origin)
+    ) {
+      throw new ApiError(
+        400,
+        `Extension identifier '${
+          mostRecentParsed.info.identifier
+        }' may only be updated from the same origin: ${originDescription(
+          mostRecentParsed.origin,
+        )}`,
+      );
+    }
+
     if (submission.version) {
       // version must be newer
       if (
@@ -302,20 +318,6 @@ export async function processSubmission(
       ).toString();
     }
 
-    // origin must be same
-    if (
-      !mostRecentParsed.allowOriginChange &&
-      !sameOrigin(mostRecentParsed.origin, submission.origin)
-    ) {
-      throw new ApiError(
-        400,
-        `Extension identifier '${
-          mostRecentParsed.info.identifier
-        }' may only be updated from the same origin: ${originDescription(
-          mostRecentParsed.origin,
-        )}`,
-      );
-    }
     shortcode = mostRecentParsed.shortcode;
     mlog(`Using previous submission shortcode: ${shortcode}`);
   } else {
