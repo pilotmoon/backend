@@ -23,6 +23,7 @@ export async function handleError(ctx: Context, next: Next) {
     );
     if (info) {
       log(`${info.type.black.bgWhite} ${info.message}`);
+      log("Stack:", info?.stack ?? "No stack available");
     }
   }
 }

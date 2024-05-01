@@ -121,7 +121,7 @@ async function getConfigFile(files: ExtensionDataFileList) {
   let result;
   const configs = files.filter((file) => isConfigFileName(file.path));
   if (configs.length > 1) {
-    throw new Error("Only one config file is allowed");
+    throw new ApiError(400, "Only one config file is allowed");
   } else if (configs.length === 1) {
     result = configs[0];
   } else {
@@ -136,10 +136,13 @@ async function getConfigFile(files: ExtensionDataFileList) {
       }
     }
     if (snippets.length === 0) {
-      throw new Error("Expected a Config file or a snippet in the files");
+      throw new ApiError(
+        400,
+        "Expected a Config file or a snippet in the files",
+      );
     }
     if (snippets.length > 1) {
-      throw new Error("Found more than one snippet in the files");
+      throw new ApiError(400, "Found more than one snippet in the files");
     }
     const { parsed, file } = snippets[0];
     log("snippet path", file.path);

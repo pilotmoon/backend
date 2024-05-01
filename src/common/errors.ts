@@ -28,6 +28,7 @@ interface ErrorInfo {
   message: string;
   type: string;
   status: number;
+  stack?: string;
 }
 
 // extract concrete info from an unknown error
@@ -73,7 +74,12 @@ export function getErrorInfo(error: unknown): ErrorInfo {
     status = 400;
   }
 
-  return { message, type, status };
+  let stack = undefined;
+  if (error instanceof Error) {
+    stack = error.stack;
+  }
+
+  return { message, type, status, stack };
 }
 
 // get the string for a status code
