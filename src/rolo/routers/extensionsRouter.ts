@@ -5,8 +5,12 @@ import {
   createExtension,
   listExtensions,
   readExtension,
+  updateExtension,
 } from "../controllers/extensionsController.js";
-import { ZExtensionSubmission } from "../../common/extensionSchemas.js";
+import {
+  ZExtensionPatch,
+  ZExtensionSubmission,
+} from "../../common/extensionSchemas.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
@@ -38,5 +42,17 @@ router.get("/", async (ctx) => {
   );
   if (!setBodySpecialFormat(ctx, documents)) {
     ctx.body = documents;
+  }
+});
+
+router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
+  if (
+    await updateExtension(
+      ctx.params.id,
+      ZExtensionPatch.parse(ctx.request.body),
+      ctx.state.auth,
+    )
+  ) {
+    ctx.status = 204;
   }
 });

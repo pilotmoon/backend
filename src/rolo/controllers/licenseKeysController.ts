@@ -12,7 +12,7 @@ import {
 import type { Auth } from "../auth.js";
 import { type AuthKind, authKinds } from "../auth.js";
 import { hashEmail } from "../canonicalizeEmail.js";
-import { getDb } from "../database.js";
+import { getClient, getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
 import { type PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
 import { type Pagination, paginate } from "../paginate.js";
@@ -315,23 +315,27 @@ export async function updateLicenseKey(
   auth: Auth,
 ): Promise<boolean> {
   auth.assertAccess(collectionName, id, "update");
-  const document = await dbc(auth.kind).findOne({ _id: id });
-  if (!document) return false;
-
+  const session = getClient().startSession();
   try {
-    decryptInPlace(document);
-    if (update.email) document.emailHash = hashEmail(update.email);
-    const updated = { ...document, ...update };
+    let document: LicenseKeyRecord | null = null;
+    await session.withTransaction(async () => {
+      document = await dbc(auth.kind).findOne({ _id: id });
+      if (!document) return;
 
-    // generate the hashes array if needed
-    if (!Array.isArray(updated.hashes)) updated.hashes = [];
-    // if the hash has changed, add it to the hashes array
-    const { hash } = await generateLicenseFile(updated, auth.kind);
-    if (!updated.hashes.includes(hash)) updated.hashes.push(hash);
+      decryptInPlace(document);
+      if (update.email) document.emailHash = hashEmail(update.email);
+      const updated = { ...document, ...update };
 
-    encryptInPlace(updated, encryptedFields);
-    await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
-    return true;
+      // generate the hashes array if needed
+      if (!Array.isArray(updated.hashes)) updated.hashes = [];
+      // if the hash has changed, add it to the hashes array
+      const { hash } = await generateLicenseFile(updated, auth.kind);
+      if (!updated.hashes.includes(hash)) updated.hashes.push(hash);
+
+      encryptInPlace(updated, encryptedFields);
+      await dbc(auth.kind).updateOne({ _id: id }, { $set: updated });
+    });
+    return !!document;
   } catch (error) {
     handleControllerError(error);
     throw error;

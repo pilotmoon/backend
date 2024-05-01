@@ -1,6 +1,9 @@
 import type { Document } from "mongodb";
 import { handleControllerError } from "../../common/errors.js";
-import { ExtensionSubmission } from "../../common/extensionSchemas.js";
+import {
+  ExtensionPatch,
+  ExtensionSubmission,
+} from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
 import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getClient, getDb } from "../database.js";
@@ -78,6 +81,25 @@ export async function readExtension(id: string, auth: Auth) {
   }
 }
 
+export async function updateExtension(
+  id: string,
+  patch: ExtensionPatch,
+  auth: Auth,
+) {
+  auth.assertAccess(extensionsCollectionName, id, "update");
+  try {
+    const result = await dbc(auth.kind).findOneAndUpdate(
+      { _id: id },
+      { $set: patch },
+      { returnDocument: "after" },
+    );
+    return !!result.value;
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
+  }
+}
+
 export async function listExtensions(
   query: unknown,
   pagination: Pagination,
@@ -119,7 +141,7 @@ export function getQueryPipeline(query: unknown) {
     pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
   }
 
-  // extract?
+  // extract
   const extract = stringFromQuery(query, "extract", "");
   if (extract) {
     pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });

@@ -6,6 +6,7 @@ import {
   ExtensionSubmission,
   ZExtensionFileList,
   ZExtensionOrigin,
+  ZExtensionPatch,
   calculateDigest,
   isConfigFileName,
 } from "../../common/extensionSchemas.js";
@@ -59,7 +60,7 @@ export const ZExtensionInfo = z.object({
 });
 type ExtensionInfo = z.infer<typeof ZExtensionInfo>;
 
-export const ZExtensionRecord = z.object({
+export const ZExtensionRecord = ZExtensionPatch.extend({
   _id: z.string(),
   object: z.literal("extension"),
   created: z.date(),
@@ -69,8 +70,6 @@ export const ZExtensionRecord = z.object({
   origin: ZExtensionOrigin,
   filesDigest: ZBlobHash2,
   files: ZExtensionFileList,
-  published: z.boolean(),
-  allowOriginChange: z.boolean().optional(),
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
 
