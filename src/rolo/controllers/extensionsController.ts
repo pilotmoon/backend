@@ -107,7 +107,7 @@ export async function listExtensions(
   pagination: Pagination,
   auth: Auth,
 ) {
-  auth.assertAccess(extensionsCollectionName, undefined, "read");
+  auth.assertAccess(extensionsCollectionName, undefined, "list");
   try {
     const documents = await paginate(
       dbc(auth.kind),

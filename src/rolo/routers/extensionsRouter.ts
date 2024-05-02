@@ -76,6 +76,8 @@ router.get("/", async (ctx) => {
   if (view === "popclip") {
     query.published = "1";
     query["info.type"] = "popclip";
+    query.extract = undefined;
+    query.project = undefined;
   }
   let documents: Document = await listExtensions(
     query,
@@ -103,8 +105,8 @@ const ZPopClipDirectoryView = z.object({
   description: z.string(),
   descriptionHtml: z.string(),
   keywords: z.string(),
-  demoUrl: z.string().nullable(),
-  readmeUrl: z.string().nullable(),
+  demo: z.string().nullable(),
+  readme: z.string().nullable(),
   // actionTypes: z.array(z.string()),
   // entitlements: z.array(z.string()),
   // apps: z.array(ZExtensionAppInfo),
@@ -127,6 +129,10 @@ function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
   return description;
 }
 
+function thash(hash: string) {
+  return truncatedHash(Buffer.from(hash, "hex"));
+}
+
 function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   if (icon.prefix === "file") {
     const fileName = icon.payload;
@@ -137,13 +143,21 @@ function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
       if (hash) {
         return {
           prefix: "blob",
-          payload: `${fileNameExt},${truncatedHash(Buffer.from(hash, "hex"))}`,
+          payload: `${fileNameExt},${thash(hash)}`,
           modifiers: icon.modifiers,
         };
       }
     }
   }
   return icon;
+}
+
+// suffux e.g. (-)readme.md or (-)demo.mp4
+function findFileBlob(suffix: string, files: ExtensionFileList) {
+  const regex = new RegExp(`(?:-${suffix}$|^${suffix}$)`, "i");
+  const file = files.find((f) => regex.test(f.path));
+  const fileExt = file?.path.split(".").pop();
+  return file ? `/blobs/${thash(file.hash)}/file.${fileExt}` : null;
 }
 
 function popclipView(doc: AugmentedExtensionRecord) {
@@ -164,8 +178,10 @@ function popclipView(doc: AugmentedExtensionRecord) {
     description,
     descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
-    demoUrl: null,
-    readmeUrl: null,
+    demo:
+      findFileBlob("demo.mp4", doc.files) ??
+      findFileBlob("demo.gif", doc.files),
+    readme: findFileBlob("readme.md", doc.files),
     actionTypes: doc.info.actionTypes ?? [],
     entitlements: doc.info.entitlements ?? [],
     apps: doc.info.apps ?? [],
