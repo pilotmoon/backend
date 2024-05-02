@@ -114,7 +114,7 @@ export async function listExtensions(
       pagination,
       getQueryPipeline(query),
     );
-    return documents.map((d) => ZAugmentedExtensionRecord.parse(d));
+    return documents;
   } catch (error) {
     handleControllerError(error);
     throw error;

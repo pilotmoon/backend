@@ -429,17 +429,17 @@ async function blobbifyIcon(
       throw new ApiError(400, "Unsupported data URL encoding");
     }
   }
-  if (!data || !fileExt) {
-    throw new ApiError(400, "Error parsing data URL");
+  if (data && fileExt) {
+    // upload to blob store
+    const blobRecord = await createBlobInternal(data, authKind);
+    return {
+      prefix: "blob",
+      payload: `${fileExt},${blobRecord.document._id.slice("blob_".length)}`,
+      modifiers: components.modifiers,
+    };
+  } else {
+    return components;
   }
-  // upload to blob store
-  const blobRecord = await createBlobInternal(data, authKind);
-  const truncHash = blobRecord.document._id.slice("blob_".length);
-  return {
-    prefix: "blob",
-    payload: `${fileExt},${truncHash}`,
-    modifiers: components.modifiers,
-  };
 }
 
 async function shouldPublish(

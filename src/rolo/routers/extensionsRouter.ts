@@ -2,6 +2,7 @@ import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
+  ExtensionFileList,
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
@@ -33,6 +34,8 @@ import { stringFromQuery } from "../query.js";
 import { decodeFirstSync } from "cbor";
 import { ZVersionString } from "../../common/versionString.js";
 import { descriptorStringFromComponents } from "@pilotmoon/fudge";
+import { log } from "../../common/log.js";
+import { truncatedHash } from "../../common/blobSchemas.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -124,8 +127,30 @@ function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
   return description;
 }
 
+function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
+  if (icon.prefix === "file") {
+    const fileName = icon.payload;
+    const fileNameExt = fileName.split(".").pop();
+    if (fileNameExt === "png" || fileNameExt === "svg") {
+      // look for named icon in the package files
+      const hash = files.find((f) => f.path === icon.payload)?.hash;
+      if (hash) {
+        return {
+          prefix: "blob",
+          payload: `${fileNameExt},${truncatedHash(Buffer.from(hash, "hex"))}`,
+          modifiers: icon.modifiers,
+        };
+      }
+    }
+  }
+  return icon;
+}
+
 function popclipView(doc: AugmentedExtensionRecord) {
   const description = extractLocalizedString(doc.info.description ?? "");
+  const icon = doc.info.icon
+    ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
+    : null;
   return ZPopClipDirectoryView.parse({
     _id: doc._id,
     object: "extension",
@@ -135,7 +160,7 @@ function popclipView(doc: AugmentedExtensionRecord) {
     identifier: doc.info.identifier,
     version: doc.version,
     name: extractLocalizedString(doc.info.name),
-    icon: doc.info.icon ? descriptorStringFromComponents(doc.info.icon) : null,
+    icon,
     description,
     descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
