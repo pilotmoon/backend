@@ -11,12 +11,7 @@ import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 import { arrayFromQuery, boolFromQuery } from "../query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import {
-  BlobHash,
-  BlobHash2,
-  ZBlobHash,
-  ZBlobHash2,
-} from "../../common/blobSchemas.js";
+import { ZBlobHash, ZBlobHash2 } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 
@@ -55,9 +50,9 @@ const ZBlobBase64Record = ZBlobCoreRecord.extend({
 router.post("/", async (ctx) => {
   const submission = ZBlobSubmission.strict().parse(ctx.request.body);
   const data = Buffer.from(submission.data, "base64");
-  const { document, isDuplicate } = await createBlob(data, ctx.state.auth);
+  const { document } = await createBlob(data, ctx.state.auth);
   ctx.body = document;
-  ctx.status = isDuplicate ? 200 : 201;
+  ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
 });
 

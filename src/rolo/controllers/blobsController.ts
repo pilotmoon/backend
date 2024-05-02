@@ -110,21 +110,33 @@ export async function createBlob(data: Buffer, auth: Auth) {
       size: data.length,
       data: new Binary(data),
     };
-    let isDuplicate = false;
+
     // use this method to ensure the check and set are atomic
     // in unlikely case of collision of any hash (such that any of
     // _id, h1 or h2 is repeated in another blob record), this will throw
     // a duplicate key error
-    await collection.replaceOne(
+    const result = await collection.replaceOne(
       { _id: document._id, h1: document.h1, h2: document.h2 },
       document,
       { upsert: true },
     );
+    const isDuplicate = result.modifiedCount === 1;
     return { document: ZBlobCoreRecord.parse(document), isDuplicate };
   } catch (error) {
     handleControllerError(error);
     throw error;
   }
+}
+
+// create object from internal application
+export async function createBlobInternal(data: Buffer, kind: AuthKind) {
+  return createBlob(
+    data,
+    new Auth({
+      scopes: [`blobs:create`],
+      kind: kind,
+    }),
+  );
 }
 
 // get a blob by id or hash

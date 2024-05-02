@@ -42,7 +42,7 @@ actions:
 const validSnippetBuffer = Buffer.from(validSnippet);
 let validSnippetBlobHash: string;
 
-const invalidConfig = "dhfkjdhfjk";
+const invalidConfig = randomString();
 const invalidConfigBuffer = Buffer.from(invalidConfig);
 let invalidConfigBlobHash: string;
 
