@@ -12,6 +12,7 @@ import {
 } from "../../common/extensionSchemas.js";
 import {
   PositiveSafeInteger,
+  ZLocalizableString,
   ZSaneIdentifier,
   ZSaneString,
 } from "../../common/saneSchemas.js";
@@ -52,9 +53,9 @@ const ZIconComponents = z.object({
 
 export const ZExtensionInfo = z.object({
   type: z.literal("popclip"),
-  name: ZSaneString,
+  name: ZLocalizableString,
   identifier: ZSaneIdentifier.optional(),
-  description: ZSaneString.optional(),
+  description: ZLocalizableString.optional(),
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
   actionTypes: z.array(ZSaneString).optional(),
