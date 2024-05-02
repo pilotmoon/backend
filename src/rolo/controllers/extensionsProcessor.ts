@@ -14,10 +14,11 @@ import {
   PositiveSafeInteger,
   ZLocalizableString,
   ZSaneIdentifier,
+  ZSaneLongString,
   ZSaneString,
 } from "../../common/saneSchemas.js";
 import { Collection } from "mongodb";
-import { readBlobInternal } from "./blobsController.js";
+import { createBlobInternal, readBlobInternal } from "./blobsController.js";
 import { Auth, AuthKind } from "../auth.js";
 import { ZBlobHash2, gitHash } from "../../common/blobSchemas.js";
 import { log } from "../../common/log.js";
@@ -44,12 +45,14 @@ export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
   link: ZSaneString,
 });
+export type ExtensionAppInfo = z.infer<typeof ZExtensionAppInfo>;
 
 const ZIconComponents = z.object({
   prefix: ZSaneString,
-  payload: ZSaneString,
+  payload: ZSaneLongString,
   modifiers: z.record(z.unknown()),
 });
+export type IconComponents = z.infer<typeof ZIconComponents>;
 
 export const ZExtensionInfo = z.object({
   type: z.literal("popclip"),
@@ -78,6 +81,13 @@ export const ZExtensionRecord = ZExtensionPatch.extend({
   files: ZExtensionFileList,
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
+
+export const ZAugmentedExtensionRecord = ZExtensionRecord.extend({
+  firstCreated: z.date(),
+});
+export type AugmentedExtensionRecord = z.infer<
+  typeof ZAugmentedExtensionRecord
+>;
 
 export function sha256Base32(message: string) {
   return baseEncode(
@@ -359,6 +369,11 @@ export async function processSubmission(
     throw new Error("Failed to generate version");
   }
 
+  // save icon data to blob if needed
+  if (info.icon) {
+    info.icon = await blobbifyIcon(info.icon, auth.kind);
+  }
+
   // save the author info
   createAuthorInternal(submission.author, auth.kind);
 
@@ -377,6 +392,53 @@ export async function processSubmission(
     digest,
     files: submission.files,
     published: await shouldPublish(submission.origin, info, auth.kind),
+  };
+}
+
+// if the icon is svg: or data:, store it as a blob
+async function blobbifyIcon(
+  components: IconComponents,
+  authKind: AuthKind,
+): Promise<IconComponents> {
+  let data = null;
+  let fileExt = null;
+  if (components.prefix === "svg") {
+    data = Buffer.from(components.payload);
+    fileExt = "svg";
+  } else if (components.prefix === "data") {
+    const match = components.payload.match(
+      /^((?<mediatype>[^;]+)?(;(?<encoding>base64))?,(?<payload>.+))$/s,
+    );
+    if (!match) {
+      throw new ApiError(400, "Unsupported data URL");
+    }
+    log(match.groups);
+    if (match.groups?.mediatype === "image/svg+xml") {
+      fileExt = "svg";
+    } else if (match.groups?.mediatype === "image/png") {
+      fileExt = "png";
+    } else {
+      throw new ApiError(400, "Unsupported data URL media type");
+    }
+    if (match.groups?.encoding === "base64") {
+      data = Buffer.from(match.groups.payload, "base64");
+    } else if (!match.groups?.encoding) {
+      // remove percent encoding if present
+      data = Buffer.from(decodeURIComponent(match.groups.payload));
+    } else {
+      throw new ApiError(400, "Unsupported data URL encoding");
+    }
+  }
+  if (!data || !fileExt) {
+    throw new ApiError(400, "Error parsing data URL");
+  }
+  // upload to blob store
+  const blobRecord = await createBlobInternal(data, authKind);
+  const truncHash = blobRecord.document._id.slice("blob_".length);
+  return {
+    prefix: "blob",
+    payload: `${fileExt},${truncHash}`,
+    modifiers: components.modifiers,
   };
 }
 

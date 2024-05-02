@@ -11,6 +11,7 @@ import { Pagination, paginate } from "../paginate.js";
 import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
 import {
   ExtensionRecord,
+  ZAugmentedExtensionRecord,
   ZExtensionRecord,
   processSubmission,
 } from "./extensionsProcessor.js";
@@ -34,6 +35,8 @@ export async function init() {
       { unique: true },
     );
     collection.createIndex({ digest: 1 }, { unique: true });
+    collection.createIndex({ "info.type": 1 });
+    collection.createIndex({ "info.published": 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
     collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
   }
@@ -111,7 +114,7 @@ export async function listExtensions(
       pagination,
       getQueryPipeline(query),
     );
-    return documents;
+    return documents.map((d) => ZAugmentedExtensionRecord.parse(d));
   } catch (error) {
     handleControllerError(error);
     throw error;
@@ -185,6 +188,12 @@ export function getQueryPipeline(query: unknown) {
   const nodeShas = arrayFromQuery(query, "origin.nodeSha", []);
   if (nodeShas.length > 0) {
     pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
+  }
+
+  // type
+  const types = arrayFromQuery(query, "info.type", []);
+  if (types.length > 0) {
+    pipeline.push({ $match: { "info.type": { $in: types } } });
   }
 
   /*** SPECIAL: VERSION ***/
