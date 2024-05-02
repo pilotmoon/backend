@@ -203,12 +203,22 @@ export function getQueryPipeline(query: unknown) {
     }
   }
 
-  /*** SPECIAL: EXTRACT ONE FIELD ***/
+  /*** SPECIAL: EXTRACT / PROJECT ***/
 
-  // extract
+  // project one field only
   const extract = stringFromQuery(query, "extract", "");
   if (extract) {
     pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });
+  }
+
+  // project multiple fields
+  const project = arrayFromQuery(query, "project", []);
+  if (project.length > 0) {
+    const projection: Document = { object: 1, created: 1 };
+    project.forEach((field) => {
+      projection[field] = 1;
+    });
+    pipeline.push({ $project: projection });
   }
 
   return pipeline;
