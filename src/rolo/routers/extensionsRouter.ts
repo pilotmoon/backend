@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   ExtensionFileList,
+  ExtensionOrigin,
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
@@ -107,6 +108,8 @@ const ZPopClipDirectoryView = z.object({
   keywords: z.string(),
   demo: z.string().nullable(),
   readme: z.string().nullable(),
+  source: z.string().nullable(),
+  owner: z.string().nullable(),
   // actionTypes: z.array(z.string()),
   // entitlements: z.array(z.string()),
   // apps: z.array(ZExtensionAppInfo),
@@ -116,6 +119,24 @@ const ZPopClipDirectoryView = z.object({
 
 function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
   return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
+}
+
+function extractSourceUrl(origin: ExtensionOrigin) {
+  if (origin.type === "githubGist") {
+    return `https://gist.github.com/${origin.gistOwnerHandle}/${origin.gistId}/${origin.commitSha}`;
+  } else if (origin.type === "githubRepo") {
+    return `${origin.repoUrl}/tree/${origin.commitSha}/${origin.nodePath}`;
+  }
+  return null;
+}
+
+function extractOwnerTag(origin: ExtensionOrigin) {
+  if (origin.type === "githubGist") {
+    return `github:${origin.gistOwnerId}`;
+  } else if (origin.type === "githubRepo") {
+    return `github:${origin.repoOwnerId}`;
+  }
+  return null;
 }
 
 function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
@@ -182,6 +203,8 @@ function popclipView(doc: AugmentedExtensionRecord) {
       findFileBlob("demo.mp4", doc.files) ??
       findFileBlob("demo.gif", doc.files),
     readme: findFileBlob("readme.md", doc.files),
+    source: extractSourceUrl(doc.origin),
+    owner: extractOwnerTag(doc.origin),
     actionTypes: doc.info.actionTypes ?? [],
     entitlements: doc.info.entitlements ?? [],
     apps: doc.info.apps ?? [],
