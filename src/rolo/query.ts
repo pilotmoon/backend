@@ -10,7 +10,10 @@ export const ZQueryBool = z
 // we define "presence of parameter" and "1" as explicitly true,
 // and "0" as explicitly false. for any other value, the
 // fallback value is used.
-export function boolFromQueryValue(val: unknown, fallback: boolean) {
+export function boolFromQueryValue(
+  val: unknown,
+  fallback: boolean | undefined,
+) {
   if (val === "" || val === "1") {
     return true;
   }
@@ -21,7 +24,11 @@ export function boolFromQueryValue(val: unknown, fallback: boolean) {
 }
 
 // wrapper for boolFromQueryValue that extracts the value from a query object
-export function boolFromQuery(query: unknown, key: string, fallback: boolean) {
+export function boolFromQuery(
+  query: unknown,
+  key: string,
+  fallback: boolean | undefined,
+) {
   if (typeof query !== "object" || query === null) {
     return fallback;
   }

@@ -1,16 +1,17 @@
+import makeStableJson from "fast-stable-stringify";
 import { randomUUID } from "node:crypto";
-import { makeIdentifierPattern } from "../identifiers.js";
-import { makeRouter } from "../koaWrapper.js";
+import {
+  ZExtensionPatch,
+  ZExtensionSubmission,
+} from "../../common/extensionSchemas.js";
 import {
   createExtension,
   listExtensions,
   readExtension,
   updateExtension,
 } from "../controllers/extensionsController.js";
-import {
-  ZExtensionPatch,
-  ZExtensionSubmission,
-} from "../../common/extensionSchemas.js";
+import { makeIdentifierPattern } from "../identifiers.js";
+import { makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/extensions" });

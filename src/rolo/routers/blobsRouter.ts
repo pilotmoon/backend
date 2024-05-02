@@ -62,7 +62,7 @@ router.post("/", async (ctx) => {
 });
 
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
-  const includeData = boolFromQuery(ctx.query, "includeData", false);
+  const includeData = !!boolFromQuery(ctx.query, "includeData", false);
   const document = await readBlob(ctx.params.id, ctx.state.auth, includeData);
   if (document) {
     ctx.body = ZBlobBase64Record.parse({
