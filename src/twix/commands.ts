@@ -58,3 +58,8 @@ router.get("/webhooks/rebuildSite2f997c6", async (ctx) => {
   }
   ctx.body = `Re-running last successful build: ${lastGood.html_url}`;
 });
+
+router.put("/webhooks/crashReport", async (ctx) => {
+  ctx.alog.log("crashReport", ctx.request.headers, ctx.request.body);
+  ctx.status = 204;
+});

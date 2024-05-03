@@ -7,10 +7,8 @@ import { randomString } from "@pilotmoon/chewit";
 const origin: ExtensionOrigin = {
   type: "githubGist",
   gistId: "1234",
-  gistOwnerId: 5678,
-  gistOwnerHandle: "bilbo",
-  gistOwnerType: "User",
-  gistUrl: "https://gist.github.com/bilbo/1234",
+  ownerId: 5678,
+  ownerHandle: "bilbo",
   commitSha: "aaaabbbbaaaabbbbaaaabbbbaaaabbbbaaaabbbb",
   commitDate: new Date(),
 };

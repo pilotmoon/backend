@@ -5,7 +5,6 @@ import { default as picomatch } from "picomatch";
 import { z } from "zod";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import {
-  GithubAuthorInfo,
   ZExtensionOriginGithubRepo,
   githubAuthorInfoFromUser,
 } from "../../common/extensionSchemas.js";
@@ -169,11 +168,9 @@ export async function processTagEvent(
   const partialOrigin = {
     type: "githubRepo",
     repoId: tagInfo.repository.id,
-    repoName: tagInfo.repository.full_name,
-    repoOwnerId: tagInfo.repository.owner.id,
-    repoOwnerHandle: tagInfo.repository.owner.login,
-    repoOwnerType: tagInfo.repository.owner.type,
-    repoUrl: tagInfo.repository.html_url,
+    repoName: tagInfo.repository.name,
+    ownerId: tagInfo.repository.owner.id,
+    ownerHandle: tagInfo.repository.owner.login,
     commitSha: commitInfo.sha,
     commitDate: commitInfo.committer.date,
   };

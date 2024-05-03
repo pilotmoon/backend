@@ -120,9 +120,9 @@ async function getFiles(
 const PILOTMOON_OWNER_ID = 17520;
 function githubOwnerIdFromOrigin(origin: ExtensionOrigin) {
   if (origin.type === "githubRepo") {
-    return origin.repoOwnerId;
+    return origin.ownerId;
   } else if (origin.type === "githubGist") {
-    return origin.gistOwnerId;
+    return origin.ownerId;
   } else {
     return null;
   }
@@ -184,11 +184,11 @@ function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
 
 function originDescription(origin: ExtensionOrigin) {
   if (origin.type === "githubRepo") {
-    return `githubRepo:${origin.repoName}/${origin.nodePath}${
-      origin.nodeType === "tree" ? "/" : ""
-    } (repoId:${origin.repoId})`;
+    return `githubRepo:${origin.ownerHandle}/${origin.repoName}/${
+      origin.nodePath
+    }${origin.nodeType === "tree" ? "/" : ""} (repoId:${origin.repoId})`;
   } else if (origin.type === "githubGist") {
-    return `githubGist:${origin.gistId} (owner:${origin.gistOwnerHandle})`;
+    return `githubGist:${origin.gistId} (owner:${origin.ownerHandle})`;
   } else {
     return "unknown origin";
   }

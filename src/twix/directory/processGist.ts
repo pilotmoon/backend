@@ -74,10 +74,8 @@ export async function processGist(
   const origin = ZExtensionOriginGithubGist.parse({
     type: "githubGist",
     gistId,
-    gistOwnerId: user.id,
-    gistOwnerHandle: user.login,
-    gistOwnerType: user.type,
-    gistUrl: gist.html_url,
+    ownerId: user.id,
+    ownerHandle: user.login,
     commitSha: commit.version,
     commitDate: commit.committed_at,
   });

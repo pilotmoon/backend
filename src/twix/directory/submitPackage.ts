@@ -128,7 +128,7 @@ export async function submitPackage(
         };
       } else {
         const ghResponse = await gh().get(
-          `/repos/${origin.repoName}/git/blobs/${file.hash}`,
+          `/repos/${origin.ownerHandle}/${origin.repoName}/git/blobs/${file.hash}`,
         );
         const ghBlob = ZGithubBlob.parse(ghResponse.data);
         const content = Buffer.from(ghBlob.content, "base64");

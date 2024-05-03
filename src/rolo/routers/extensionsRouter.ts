@@ -123,18 +123,18 @@ function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
 
 function extractSourceUrl(origin: ExtensionOrigin) {
   if (origin.type === "githubGist") {
-    return `https://gist.github.com/${origin.gistOwnerHandle}/${origin.gistId}/${origin.commitSha}`;
+    return `https://gist.github.com/${origin.ownerHandle}/${origin.gistId}/${origin.commitSha}`;
   } else if (origin.type === "githubRepo") {
-    return `${origin.repoUrl}/tree/${origin.commitSha}/${origin.nodePath}`;
+    return `https://github.com/${origin.ownerHandle}/${origin.repoName}/tree/${origin.commitSha}/${origin.nodePath}`;
   }
   return null;
 }
 
 function extractOwnerTag(origin: ExtensionOrigin) {
   if (origin.type === "githubGist") {
-    return `github:${origin.gistOwnerId}`;
+    return `github:${origin.ownerId}`;
   } else if (origin.type === "githubRepo") {
-    return `github:${origin.repoOwnerId}`;
+    return `github:${origin.ownerId}`;
   }
   return null;
 }
