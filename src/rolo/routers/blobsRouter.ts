@@ -28,6 +28,9 @@ const lookup = {
   gif: "image/gif",
   mp4: "video/mp4",
   md: "text/markdown",
+  webp: "image/webp",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
 };
 const filePattern = `file(?:\\.(?:${Object.keys(lookup).join("|")}))?`;
 const matchFile = {
@@ -37,6 +40,10 @@ const matchFile = {
 function contentTypeFromFileName(filename: string): string {
   const ext = filename.split(".").pop() ?? "";
   return (lookup as Record<string, string>)[ext] ?? "application/octet-stream";
+}
+export function endpointFileName(filename: string) {
+  const ext = filename.split(".").pop() ?? "";
+  return (lookup as Record<string, string>)[ext] ? `file.${ext}` : "file";
 }
 
 const ZBlobSubmission = z.object({

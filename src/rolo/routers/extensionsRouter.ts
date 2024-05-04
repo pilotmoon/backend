@@ -37,6 +37,7 @@ import { ZVersionString } from "../../common/versionString.js";
 import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { log } from "../../common/log.js";
 import { truncatedHash } from "../../common/blobSchemas.js";
+import { endpointFileName } from "./blobsRouter.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -104,7 +105,7 @@ const ZPopClipDirectoryView = z.object({
   name: z.string(),
   icon: z.string().nullable(),
   description: z.string(),
-  descriptionHtml: z.string(),
+  // descriptionHtml: z.string(),
   keywords: z.string(),
   demo: z.string().nullable(),
   readme: z.string().nullable(),
@@ -112,9 +113,16 @@ const ZPopClipDirectoryView = z.object({
   owner: z.string().nullable(),
   // actionTypes: z.array(z.string()),
   // entitlements: z.array(z.string()),
-  // apps: z.array(ZExtensionAppInfo),
+  apps: z.array(ZExtensionAppInfo),
   // macosVersion: z.string().nullable(),
   // popclipVersion: PositiveSafeInteger.nullable(),
+  files: z.array(
+    z.object({
+      path: z.string(),
+      url: z.string(),
+      executable: z.boolean().optional(),
+    }),
+  ),
 });
 
 function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
@@ -125,7 +133,9 @@ function extractSourceUrl(origin: ExtensionOrigin) {
   if (origin.type === "githubGist") {
     return `https://gist.github.com/${origin.ownerHandle}/${origin.gistId}/${origin.commitSha}`;
   } else if (origin.type === "githubRepo") {
-    return `https://github.com/${origin.ownerHandle}/${origin.repoName}/tree/${origin.commitSha}/${origin.nodePath}`;
+    return `https://github.com/${origin.ownerHandle}/${origin.repoName}/tree/${
+      origin.commitSha
+    }/${origin.nodePath}${origin.nodeType === "tree" ? "/" : ""}`;
   }
   return null;
 }
@@ -137,17 +147,6 @@ function extractOwnerTag(origin: ExtensionOrigin) {
     return `github:${origin.ownerId}`;
   }
   return null;
-}
-
-function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
-  // replace app names with html link to apps
-  for (const app of apps) {
-    description = description.replace(
-      new RegExp(`\\b${app.name}\\b`, "g"),
-      `<a href="${app.link}">${app.name}</a>`,
-    );
-  }
-  return description;
 }
 
 function thash(hash: string) {
@@ -197,7 +196,7 @@ function popclipView(doc: AugmentedExtensionRecord) {
     name: extractLocalizedString(doc.info.name),
     icon,
     description,
-    descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
+    // descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
     demo:
       findFileBlob("demo.mp4", doc.files) ??
@@ -210,5 +209,10 @@ function popclipView(doc: AugmentedExtensionRecord) {
     apps: doc.info.apps ?? [],
     macosVersion: doc.info.macosVersion ?? null,
     popclipVersion: doc.info.popclipVersion ?? null,
+    files: doc.files.map((f) => ({
+      path: f.path,
+      url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
+      executable: f.executable || undefined,
+    })),
   });
 }

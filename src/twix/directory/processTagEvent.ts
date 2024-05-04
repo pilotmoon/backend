@@ -250,14 +250,15 @@ function getPackageFiles(
         const relativePath = entry.path.slice(rootPrefix.length);
 
         // hidden if any part of the path starts with . or _
-        const parts = relativePath.split("/");
-        const hidden = parts.some(
-          (part) => part.startsWith(".") || part.startsWith("_"),
-        );
-        if (hidden) {
-          alog.log(`Warning, ignoring hidden file: ${entry.path}`);
-          continue;
-        }
+        // TODO: move this to the extension signer stage
+        // const parts = relativePath.split("/");
+        // const hidden = parts.some(
+        //   (part) => part.startsWith(".") || part.startsWith("_"),
+        // );
+        // if (hidden) {
+        //   alog.log(`Warning, ignoring hidden file: ${entry.path}`);
+        //   continue;
+        // }
 
         // don't allow symlinks in packages
         if (entry.mode === "120000") {
