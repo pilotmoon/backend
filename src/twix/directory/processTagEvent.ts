@@ -16,6 +16,7 @@ import {
   GithubBlobNode,
   GithubNode,
   GithubTagCreateEvent,
+  ZGithubBlob,
   ZGithubCommitObject,
   ZGithubNode,
   ZGithubRefObject,
@@ -29,6 +30,7 @@ import {
   submitPackage,
 } from "./submitPackage.js";
 import { log } from "../../common/log.js";
+import path from "node:path";
 
 // webhook param
 const ZGlobPatternArray = z.union([
@@ -185,7 +187,12 @@ export async function processTagEvent(
       matchingNodes.map((node) =>
         limit(async () => {
           try {
-            const files = getPackageFiles(node, tree.tree, alog);
+            const files = await getPackageFiles(
+              node,
+              tree.tree,
+              tagInfo.repository.full_name,
+              alog,
+            );
             await submitPackage(
               ZExtensionOriginGithubRepo.parse({
                 ...partialOrigin,
@@ -233,11 +240,69 @@ export async function processTagEvent(
   return true;
 }
 
-function getPackageFiles(
-  node: z.infer<typeof ZGithubNode>,
-  tree: z.infer<typeof ZGithubNode>[],
+// if symlink is relative link to a blob in the repo, resolve it
+// as a blob. if it's a link to a tree, non-relative, or outside
+// the repo, throw error
+async function resolveSymlink(
+  entry: GithubBlobNode,
+  tree: GithubNode[],
+  repoFullName: string,
+): Promise<GithubBlobNode> {
+  // first fetch the blob content
+  const blobResponse = await gh().get(
+    `/repos/${repoFullName}/git/blobs/${entry.sha}`,
+  );
+  const blob = ZGithubBlob.parse(blobResponse.data);
+  const symlinkPath = Buffer.from(blob.content, "base64").toString("utf-8");
+  if (path.isAbsolute(symlinkPath)) {
+    throw new ApiError(
+      400,
+      `Absolute symlink not supported: ${entry.path} => ${symlinkPath}`,
+    );
+  }
+  const targetPath = path.join(path.dirname(entry.path), symlinkPath);
+  if (targetPath.startsWith("../")) {
+    throw new ApiError(
+      400,
+      `Symlink outside the repo not supported: ${entry.path} => ${symlinkPath}`,
+    );
+  }
+  if (targetPath === entry.path) {
+    throw new ApiError(
+      400,
+      `Symlink to itself not supported: ${entry.path} => ${symlinkPath}`,
+    );
+  }
+  const matchingNode = tree.find((n) => n.path === targetPath);
+  if (matchingNode) {
+    if (matchingNode.type === "tree") {
+      throw new ApiError(
+        400,
+        `Directory symlink not supported: ${entry.path} => ${symlinkPath}`,
+      );
+    }
+    if (matchingNode.type === "blob") {
+      if (matchingNode.mode === "120000") {
+        throw new ApiError(
+          400,
+          `Symlink to a symlink not supported: ${entry.path} => ${symlinkPath}`,
+        );
+      }
+      return matchingNode;
+    }
+  }
+  throw new ApiError(
+    400,
+    `Could not resolve symlink: ${entry.path} => ${symlinkPath}`,
+  );
+}
+
+async function getPackageFiles(
+  node: GithubNode,
+  tree: GithubNode[],
+  repoFullName: string,
   alog: ActivityLog,
-): PackageFile[] {
+): Promise<PackageFile[]> {
   let filtered: GithubBlobNode[] = [];
   if (node.type === "tree") {
     const rootPrefix = node.path ? `${node.path}/` : "";
@@ -248,30 +313,17 @@ function getPackageFiles(
       }
       if (entry.type === "blob") {
         const relativePath = entry.path.slice(rootPrefix.length);
-
-        // hidden if any part of the path starts with . or _
-        // TODO: move this to the extension signer stage
-        // const parts = relativePath.split("/");
-        // const hidden = parts.some(
-        //   (part) => part.startsWith(".") || part.startsWith("_"),
-        // );
-        // if (hidden) {
-        //   alog.log(`Warning, ignoring hidden file: ${entry.path}`);
-        //   continue;
-        // }
-
-        // don't allow symlinks in packages
         if (entry.mode === "120000") {
-          throw new ApiError(400, `Symlinks are not supported: ${entry.path}`);
+          const resolved = await resolveSymlink(entry, tree, repoFullName);
+          filtered.push({ ...resolved, path: relativePath });
+        } else {
+          filtered.push({ ...entry, path: relativePath });
         }
-
-        // finally match the paths
-        filtered.push({ ...entry, path: relativePath });
       }
     }
   } else if (node.type === "blob") {
     if (node.mode === "120000") {
-      throw new ApiError(400, `Symlinks are not supported: ${node.path}`);
+      throw new ApiError(400, `Included path cannot be symlink: ${node.path}`);
     }
     filtered.push(node);
   } else {

@@ -38,6 +38,7 @@ import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { log } from "../../common/log.js";
 import { truncatedHash } from "../../common/blobSchemas.js";
 import { endpointFileName } from "./blobsRouter.js";
+import path from "node:path";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -156,7 +157,7 @@ function thash(hash: string) {
 function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   if (icon.prefix === "file") {
     const fileName = icon.payload;
-    const fileNameExt = fileName.split(".").pop();
+    const fileNameExt = path.extname(fileName).slice(1);
     if (fileNameExt === "png" || fileNameExt === "svg") {
       // look for named icon in the package files
       const hash = files.find((f) => f.path === icon.payload)?.hash;

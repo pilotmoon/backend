@@ -14,6 +14,7 @@ import { setBodySpecialFormat } from "../makeFormats.js";
 import { ZBlobHash, ZBlobHash2 } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
+import path from "node:path";
 
 export const router = makeRouter({ prefix: "/blobs" });
 const matchId = {
@@ -38,11 +39,11 @@ const matchFile = {
   uuid: randomUUID(),
 };
 function contentTypeFromFileName(filename: string): string {
-  const ext = filename.split(".").pop() ?? "";
+  const ext = path.extname(filename).slice(1);
   return (lookup as Record<string, string>)[ext] ?? "application/octet-stream";
 }
 export function endpointFileName(filename: string) {
-  const ext = filename.split(".").pop() ?? "";
+  const ext = path.extname(filename).slice(1);
   return (lookup as Record<string, string>)[ext] ? `file.${ext}` : "file";
 }
 
