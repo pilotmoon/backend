@@ -58,7 +58,7 @@ export const ZExtensionInfo = z.object({
   type: z.literal("popclip"),
   name: ZLocalizableString,
   identifier: ZSaneIdentifier,
-  description: ZLocalizableString.optional(),
+  description: ZLocalizableString,
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
   actionTypes: z.array(ZSaneString).optional(),
@@ -241,23 +241,18 @@ export async function processSubmission(
   }
   mlog("Config validated OK");
   if (!config.identifier) {
-    throw new ApiError(400, "No identifier found in config");
+    throw new ApiError(400, "Extension 'identifier' field is required.");
   }
-  mlog(`Identifier is ${config.identifier}`);
+  if (!config.description) {
+    throw new ApiError(400, "Extension 'description' field is required.");
+  }
 
   // get the info from the config
   const info = ZExtensionInfo.parse({
     ...extractSummary(config),
     type: "popclip",
   });
-
-  // make sure we have identifier and description
-  if (!info.identifier) {
-    throw new ApiError(400, "Extension 'identifier' field is required.");
-  }
-  if (!info.description) {
-    throw new ApiError(400, "Extension 'description' field is required.");
-  }
+  mlog(`Identifier is ${info.identifier}`);
 
   // might use this for something in future
   if (info.identifier.startsWith("app.popclip.")) {
@@ -280,7 +275,7 @@ export async function processSubmission(
   // look for most recent submission (by created date) with the same identifier
   let shortcode;
   const mostRecent = await dbc.findOne(
-    { "info.identifier": config.identifier },
+    { "info.identifier": info.identifier },
     { sort: { created: -1 } },
   );
   if (mostRecent) {
@@ -327,7 +322,7 @@ export async function processSubmission(
     mlog(`No previous submission found this identifier`);
 
     // generate a new shortcode
-    let hashInput = config.identifier;
+    let hashInput = info.identifier;
     let count = 0;
     while (count < 10 && !shortcode) {
       const candidate = sha256Base32(hashInput).slice(-6);
