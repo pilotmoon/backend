@@ -77,7 +77,6 @@ export const ZExtensionRecord = ZExtensionPatch.extend({
   version: ZVersionString,
   info: ZExtensionInfo,
   origin: ZExtensionOrigin,
-  digest: ZBlobHash2,
   files: ZExtensionFileList,
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
@@ -377,10 +376,6 @@ export async function processSubmission(
   // save the author info
   createAuthorInternal(submission.author, auth.kind);
 
-  // calculate the digest of the files we're going to store
-  const digest = calculateDigest(submission.files).toString("hex");
-  mlog(`digest ${digest}`);
-
   return {
     _id: randomIdentifier("ext"),
     object: "extension",
@@ -389,7 +384,6 @@ export async function processSubmission(
     shortcode,
     info,
     origin: submission.origin,
-    digest,
     files: submission.files,
     published: await shouldPublish(submission.origin, info, auth.kind),
   };

@@ -11,7 +11,6 @@ import { Pagination, paginate } from "../paginate.js";
 import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
 import {
   ExtensionRecord,
-  ZAugmentedExtensionRecord,
   ZExtensionRecord,
   processSubmission,
 } from "./extensionsProcessor.js";
@@ -34,7 +33,6 @@ export async function init() {
       { "info.identifier": 1, version: 1 },
       { unique: true },
     );
-    collection.createIndex({ digest: 1 }, { unique: true });
     collection.createIndex({ "info.type": 1 });
     collection.createIndex({ "info.published": 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
