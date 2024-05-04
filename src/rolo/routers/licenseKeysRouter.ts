@@ -127,13 +127,3 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
     ctx.status = 204;
   }
 });
-function makeFormats(
-  ctx: ParameterizedContext<
-    AppState,
-    AppContext & RouterParamContext<AppState, AppContext>,
-    unknown
-  >,
-  documents: import("bson").Document[],
-) {
-  throw new Error("Function not implemented.");
-}

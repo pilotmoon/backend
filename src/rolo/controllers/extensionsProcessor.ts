@@ -57,7 +57,7 @@ export type IconComponents = z.infer<typeof ZIconComponents>;
 export const ZExtensionInfo = z.object({
   type: z.literal("popclip"),
   name: ZLocalizableString,
-  identifier: ZSaneIdentifier.optional(),
+  identifier: ZSaneIdentifier,
   description: ZLocalizableString.optional(),
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
@@ -80,13 +80,6 @@ export const ZExtensionRecord = ZExtensionPatch.extend({
   files: ZExtensionFileList,
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
-
-export const ZAugmentedExtensionRecord = ZExtensionRecord.extend({
-  firstCreated: z.date(),
-});
-export type AugmentedExtensionRecord = z.infer<
-  typeof ZAugmentedExtensionRecord
->;
 
 export function sha256Base32(message: string) {
   return baseEncode(

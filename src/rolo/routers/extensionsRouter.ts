@@ -22,17 +22,15 @@ import {
   updateExtension,
 } from "../controllers/extensionsController.js";
 import {
-  AugmentedExtensionRecord,
-  ExtensionAppInfo,
   ExtensionRecord,
   IconComponents,
   ZExtensionAppInfo,
+  ZExtensionRecord,
 } from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
-import { makeRouter } from "../koaWrapper.js";
+import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { stringFromQuery } from "../query.js";
-import { decodeFirstSync } from "cbor";
 import { ZVersionString } from "../../common/versionString.js";
 import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { log } from "../../common/log.js";
@@ -40,9 +38,21 @@ import { truncatedHash } from "../../common/blobSchemas.js";
 import { endpointFileName } from "./blobsRouter.js";
 import path from "node:path";
 
+export const ZAugmentedExtensionRecord = ZExtensionRecord.extend({
+  firstCreated: z.date(),
+  download: z.string().nullish(),
+});
+export type AugmentedExtensionRecord = z.infer<
+  typeof ZAugmentedExtensionRecord
+>;
+
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
   pattern: makeIdentifierPattern("id", "ext"),
+  uuid: randomUUID(),
+};
+const matchFile = {
+  pattern: `${matchId.pattern}/file`,
   uuid: randomUUID(),
 };
 
@@ -52,13 +62,6 @@ router.post("/", async (ctx) => {
   ctx.body = document;
   ctx.status = 201;
   ctx.set("Location", ctx.getLocation(matchId.uuid, { id: document._id }));
-});
-
-router.get(matchId.uuid, matchId.pattern, async (ctx) => {
-  const document = await readExtension(ctx.params.id, ctx.state.auth);
-  if (document) {
-    ctx.body = document;
-  }
 });
 
 router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
@@ -73,6 +76,31 @@ router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
   }
 });
 
+// add download url field
+function expand<T extends ExtensionRecord>(document: T, ctx: AppContext) {
+  const url = ctx.getLocation(matchFile.uuid, {
+    id: document._id,
+  });
+  return {
+    ...document,
+    download: document.published ? url : null,
+  };
+}
+
+router.get(matchId.uuid, matchId.pattern, async (ctx) => {
+  const document = await readExtension(ctx.params.id, ctx.state.auth);
+  if (document) {
+    ctx.body = expand(document, ctx);
+  }
+});
+
+// get file by shortcode and version
+router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
+  const document = await readExtension(ctx.params.id, ctx.state.auth);
+  throw new Error("Not implemented");
+  // TODO: implement file download
+});
+
 router.get("/", async (ctx) => {
   const view = stringFromQuery(ctx.query, "view", "");
   const query = ctx.query;
@@ -82,14 +110,23 @@ router.get("/", async (ctx) => {
     query.extract = undefined;
     query.project = undefined;
   }
-  let documents: Document = await listExtensions(
+  let documents: Document[] = await listExtensions(
     query,
     ctx.state.pagination,
     ctx.state.auth,
   );
-  if (view === "popclip") {
-    documents = documents.map(popclipView);
-  }
+  documents = documents.map((doc) => {
+    const parsed = ZAugmentedExtensionRecord.safeParse(doc);
+    if (!parsed.success) {
+      return document;
+    }
+    const expanded = expand(parsed.data, ctx);
+    if (view === "popclip") {
+      return popclipView(expanded);
+    }
+    return expanded;
+  });
+
   if (!setBodySpecialFormat(ctx, documents)) {
     ctx.body = documents;
   }
@@ -108,6 +145,7 @@ const ZPopClipDirectoryView = z.object({
   description: z.string(),
   // descriptionHtml: z.string(),
   keywords: z.string(),
+  download: z.string().nullable(),
   demo: z.string().nullable(),
   readme: z.string().nullable(),
   source: z.string().nullable(),
@@ -125,6 +163,7 @@ const ZPopClipDirectoryView = z.object({
     }),
   ),
 });
+type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
 
 function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
   return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
@@ -186,7 +225,7 @@ function popclipView(doc: AugmentedExtensionRecord) {
   const icon = doc.info.icon
     ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
     : null;
-  return ZPopClipDirectoryView.parse({
+  const view: PopClipDirectoryView = {
     _id: doc._id,
     object: "extension",
     created: doc.created,
@@ -199,21 +238,23 @@ function popclipView(doc: AugmentedExtensionRecord) {
     description,
     // descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
+    download: doc.download ?? null,
     demo:
       findFileBlob("demo.mp4", doc.files) ??
       findFileBlob("demo.gif", doc.files),
     readme: findFileBlob("readme.md", doc.files),
     source: extractSourceUrl(doc.origin),
     owner: extractOwnerTag(doc.origin),
-    actionTypes: doc.info.actionTypes ?? [],
-    entitlements: doc.info.entitlements ?? [],
+    //actionTypes: doc.info.actionTypes ?? [],
+    //entitlements: doc.info.entitlements ?? [],
     apps: doc.info.apps ?? [],
-    macosVersion: doc.info.macosVersion ?? null,
-    popclipVersion: doc.info.popclipVersion ?? null,
+    //macosVersion: doc.info.macosVersion ?? null,
+    //popclipVersion: doc.info.popclipVersion ?? null,
     files: doc.files.map((f) => ({
       path: f.path,
       url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
       executable: f.executable || undefined,
     })),
-  });
+  };
+  return ZPopClipDirectoryView.parse(view);
 }
