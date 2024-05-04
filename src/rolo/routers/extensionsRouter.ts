@@ -19,6 +19,7 @@ import {
   createExtension,
   listExtensions,
   readExtension,
+  readExtensionWithData,
   updateExtension,
 } from "../controllers/extensionsController.js";
 import {
@@ -30,7 +31,7 @@ import {
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { stringFromQuery } from "../query.js";
+import { boolFromQuery, stringFromQuery } from "../query.js";
 import { ZVersionString } from "../../common/versionString.js";
 import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { log } from "../../common/log.js";
@@ -87,14 +88,26 @@ function expand<T extends ExtensionRecord>(document: T, ctx: AppContext) {
   };
 }
 
+// get extension data, optionally including file data
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
-  const document = await readExtension(ctx.params.id, ctx.state.auth);
+  const includeData = !!boolFromQuery(ctx.query, "includeData", false);
+  let document;
+  if (includeData) {
+    document = await readExtensionWithData(ctx.params.id, ctx.state.auth);
+  } else {
+    document = await readExtension(ctx.params.id, ctx.state.auth);
+  }
   if (document) {
     ctx.body = expand(document, ctx);
+    for (const file of (document as Document).files) {
+      if (file.data instanceof Buffer) {
+        file.data = file.data.toString("base64");
+      }
+    }
   }
 });
 
-// get file by shortcode and version
+// get file
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   const document = await readExtension(ctx.params.id, ctx.state.auth);
   throw new Error("Not implemented");

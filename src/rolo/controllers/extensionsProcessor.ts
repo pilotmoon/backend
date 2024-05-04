@@ -4,6 +4,7 @@ import {
   ExtensionFileList,
   ExtensionOrigin,
   ExtensionSubmission,
+  ZExtensionDataFileList,
   ZExtensionFileList,
   ZExtensionOrigin,
   ZExtensionPatch,
@@ -80,6 +81,10 @@ export const ZExtensionRecord = ZExtensionPatch.extend({
   files: ZExtensionFileList,
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
+
+export const ZExtensionRecordWithData = ZExtensionRecord.extend({
+  files: ZExtensionDataFileList,
+});
 
 export function sha256Base32(message: string) {
   return baseEncode(

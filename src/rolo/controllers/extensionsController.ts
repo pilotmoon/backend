@@ -12,6 +12,7 @@ import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
 import {
   ExtensionRecord,
   ZExtensionRecord,
+  ZExtensionRecordWithData,
   processSubmission,
 } from "./extensionsProcessor.js";
 
@@ -66,6 +67,61 @@ export async function createExtension(
     throw error;
   } finally {
     session.endSession();
+  }
+}
+
+export async function readExtensionWithData(id: string, auth: Auth) {
+  auth.assertAccess(extensionsCollectionName, id, "read");
+  try {
+    // for each file in files array, look up the data from the blob store and add it in to that entry
+    const pipeline = [
+      { $match: { _id: id } },
+      // unwind the files array so that we can look up each file
+      { $unwind: "$files" },
+      // look up the file in the blob store
+      {
+        $lookup: {
+          from: "blobs",
+          localField: "files.hash",
+          foreignField: "h2",
+          as: "files.blob",
+        },
+      },
+      // unwind the blob array so that we can merge the blob data into the file data
+      { $unwind: "$files.blob" },
+      // merge the blob data into the file data
+      { $addFields: { "files.data": "$files.blob.data" } },
+      // group the files back into an array
+      {
+        $group: {
+          _id: "$_id",
+          files: { $push: "$files" },
+          data: { $first: "$$ROOT" },
+        },
+      },
+      // replace the files array with the new files array
+      {
+        $replaceRoot: {
+          newRoot: { $mergeObjects: ["$data", { files: "$files" }] },
+        },
+      },
+      // project out the blob data
+      {
+        $project: { "files.blob": 0 },
+      },
+    ];
+    const document = await dbc(auth.kind).aggregate(pipeline).next();
+    if (!document) return null;
+    // replace the Binary with Buffer object
+    document.files = document.files.map((file: any) => ({
+      ...file,
+      data: Buffer.from(file.data.buffer),
+    }));
+
+    return ZExtensionRecordWithData.parse(document);
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
   }
 }
 
