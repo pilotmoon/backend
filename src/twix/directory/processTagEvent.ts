@@ -322,12 +322,10 @@ async function getPackageFiles(
       }
     }
   } else if (node.type === "blob") {
-    const relativePath = path.basename(node.path);
     if (node.mode === "120000") {
-      const resolved = await resolveSymlink(node, tree, repoFullName);
-      filtered.push({ ...resolved, path: relativePath });
+      throw new ApiError(400, `Matched path may not be symlink: ${node.path}`);
     }
-    filtered.push({ ...node, path: relativePath });
+    filtered.push({ ...node, path: path.basename(node.path) });
   } else {
     throw new ApiError(400, `Node type '${node.type}' is not supported`);
   }
