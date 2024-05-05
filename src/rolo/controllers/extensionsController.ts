@@ -199,27 +199,11 @@ export function getQueryPipeline(query: unknown) {
     pipeline.push({ $match: { shortcode } });
   }
 
-  /** SPECIAL AGGREGATION TO ADD firstCreated FIELD **/
-  pipeline.push(
-    { $sort: { created: -1 } },
-    {
-      $group: {
-        _id: "$info.identifier",
-        documents: { $push: "$$ROOT" },
-        oldestCreated: { $last: "$created" },
-      },
-    },
-    // Deconstruct the grouped documents back to a stream of documents
-    { $unwind: "$documents" },
-    // Re-add the firstCreated field to the documents
-    {
-      $addFields: {
-        "documents.firstCreated": "$oldestCreated",
-      },
-    },
-    // Use $replaceRoot to promote the documents fields back to the top level
-    { $replaceRoot: { newRoot: "$documents" } },
-  );
+  // type
+  const types = arrayFromQuery(query, "info.type", []);
+  if (types.length > 0) {
+    pipeline.push({ $match: { "info.type": { $in: types } } });
+  }
 
   /*** FLAGS */
 
@@ -229,64 +213,93 @@ export function getQueryPipeline(query: unknown) {
     pipeline.push({ $match: { published } });
   }
 
-  /*** ARRAYS TO SELECT SPECIFIC EXTENSIONS ***/
+  /** SPECIAL AGGREGATION TO GET LATEST VERSION ONLY, ADD PREVIOUS VERSION INFO
+  TO EACH DOCUMENT, AND CALCULATE firstCreated **/
+  if (boolFromQuery(query, "flatten", false)) {
+    pipeline.push(
+      { $sort: { created: -1 } },
+      // Group by identifer and push all documents into an array
+      {
+        $group: {
+          _id: "$info.identifier",
+          latest: { $first: "$$ROOT" },
+          firstCreated: { $last: "$created" },
+          previousVersions: {
+            $topN: {
+              n: 30,
+              sortBy: { created: -1 },
+              output: { $unsetField: { field: "files", input: "$$ROOT" } },
+            },
+          },
+        },
+      },
+      // Add the firstCreated field to each document
+      {
+        $addFields: {
+          "latest.firstCreated": "$firstCreated",
+          "latest.previousVersions": {
+            $filter: {
+              input: "$previousVersions",
+              as: "version",
+              cond: {
+                $lt: ["$$version.created", "$latest.created"],
+              },
+            },
+          },
+        },
+      },
+      // Use $replaceRoot to promote the documents fields back to the top level
+      { $replaceRoot: { newRoot: "$latest" } },
+    );
+  } else {
+    // not flattening
+    /*** ARRAYS TO SELECT SPECIFIC EXTENSIONS ***/
 
-  // digest
-  const digests = arrayFromQuery(query, "digest", []);
-  if (digests.length > 0) {
-    pipeline.push({ $match: { digest: { $in: digests } } });
-  }
-
-  // commitSha
-  const commitShas = arrayFromQuery(query, "origin.commitSha", []);
-  if (commitShas.length > 0) {
-    pipeline.push({ $match: { "origin.commitSha": { $in: commitShas } } });
-  }
-
-  // nodeSha
-  const nodeShas = arrayFromQuery(query, "origin.nodeSha", []);
-  if (nodeShas.length > 0) {
-    pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
-  }
-
-  // type
-  const types = arrayFromQuery(query, "info.type", []);
-  if (types.length > 0) {
-    pipeline.push({ $match: { "info.type": { $in: types } } });
-  }
-
-  /*** SPECIAL: VERSION ***/
-
-  // version
-  const version = stringFromQuery(query, "version", "");
-  if (version) {
-    if (version === "latest") {
-      pipeline.push({ $sort: { created: -1 } });
-      pipeline.push({
-        $group: { _id: "$info.identifier", newestDoc: { $first: "$$ROOT" } },
-      });
-      pipeline.push({ $replaceRoot: { newRoot: "$newestDoc" } });
-    } else {
-      pipeline.push({ $match: { version } });
+    // commitSha
+    const commitShas = arrayFromQuery(query, "origin.commitSha", []);
+    if (commitShas.length > 0) {
+      pipeline.push({ $match: { "origin.commitSha": { $in: commitShas } } });
     }
-  }
 
-  /*** SPECIAL: EXTRACT / PROJECT ***/
+    // nodeSha
+    const nodeShas = arrayFromQuery(query, "origin.nodeSha", []);
+    if (nodeShas.length > 0) {
+      pipeline.push({ $match: { "origin.nodeSha": { $in: nodeShas } } });
+    }
 
-  // project one field only
-  const extract = stringFromQuery(query, "extract", "");
-  if (extract) {
-    pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });
-  }
+    /*** SPECIAL: VERSION ***/
 
-  // project multiple fields
-  const project = arrayFromQuery(query, "project", []);
-  if (project.length > 0) {
-    const projection: Document = { object: 1, created: 1 };
-    project.forEach((field) => {
-      projection[field] = 1;
-    });
-    pipeline.push({ $project: projection });
+    // version
+    const version = stringFromQuery(query, "version", "");
+    if (version) {
+      if (version === "latest") {
+        pipeline.push({ $sort: { created: -1 } });
+        pipeline.push({
+          $group: { _id: "$info.identifier", newestDoc: { $first: "$$ROOT" } },
+        });
+        pipeline.push({ $replaceRoot: { newRoot: "$newestDoc" } });
+      } else {
+        pipeline.push({ $match: { version } });
+      }
+    }
+
+    /*** SPECIAL: EXTRACT / PROJECT ***/
+
+    // project one field only
+    const extract = stringFromQuery(query, "extract", "");
+    if (extract) {
+      pipeline.push({ $project: { object: 1, created: 1, [`${extract}`]: 1 } });
+    }
+
+    // project multiple fields
+    const project = arrayFromQuery(query, "project", []);
+    if (project.length > 0) {
+      const projection: Document = { object: 1, created: 1 };
+      project.forEach((field) => {
+        projection[field] = 1;
+      });
+      pipeline.push({ $project: projection });
+    }
   }
 
   return pipeline;

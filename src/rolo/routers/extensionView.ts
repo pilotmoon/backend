@@ -20,30 +20,33 @@ import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { truncatedHash } from "../../common/blobSchemas.js";
 import path from "node:path";
 
-const ZPopClipDirectoryView = z.object({
+export const ZExtensionRecordWithHistory = ZExtensionRecord.extend({
+  previousVersions: z.array(ZExtensionRecord.omit({ files: true })),
+});
+export type ExtensionRecordWithHistory = z.infer<
+  typeof ZExtensionRecordWithHistory
+>;
+
+const ZPartialPopClipDirectoryView = z.object({
+  version: ZVersionString,
+  name: z.string(),
+  download: z.string().nullable(),
+  source: z.string().nullable(),
+  sourceDate: ZSaneDate.nullable(),
+});
+
+const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   _id: z.string(),
   created: ZSaneDate,
   firstCreated: ZSaneDate,
   object: z.literal("extension"),
   shortcode: z.string(),
   identifier: ZSaneIdentifier,
-  version: ZVersionString,
-  name: z.string(),
   icon: z.string().nullable(),
   description: z.string(),
-  // descriptionHtml: z.string(),
   keywords: z.string(),
-  download: z.string().nullable(),
-  // demo: z.string().nullable(),
-  // readme: z.string().nullable(),
-  source: z.string().nullable(),
-  sourceDate: ZSaneDate.nullable(),
   owner: z.string().nullable(),
-  // actionTypes: z.array(z.string()),
-  // entitlements: z.array(z.string()),
   apps: z.array(ZExtensionAppInfo),
-  // macosVersion: z.string().nullable(),
-  // popclipVersion: PositiveSafeInteger.nullable(),
   files: z.array(
     z.object({
       path: z.string(),
@@ -51,6 +54,7 @@ const ZPopClipDirectoryView = z.object({
       executable: z.boolean().optional(),
     }),
   ),
+  previousVersions: z.array(ZPartialPopClipDirectoryView),
 });
 type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
 
@@ -108,7 +112,7 @@ function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   return icon;
 }
 
-export function popclipView(doc: ExtensionRecord) {
+export function popclipView(doc: ExtensionRecordWithHistory) {
   const view: PopClipDirectoryView = {
     _id: doc._id,
     object: "extension",
@@ -136,6 +140,14 @@ export function popclipView(doc: ExtensionRecord) {
       path: f.path,
       url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
       executable: f.executable || undefined,
+    })),
+    previousVersions: doc.previousVersions.map((pv) => ({
+      created: pv.created,
+      version: pv.version,
+      name: extractLocalizedString(pv.info.name),
+      download: pv.download ?? null,
+      source: extractSourceUrl(pv.origin),
+      sourceDate: extractSourceDate(pv.origin),
     })),
   };
   return ZPopClipDirectoryView.parse(view);
