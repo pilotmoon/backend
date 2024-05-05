@@ -14,6 +14,7 @@ import {
   submitPackage,
 } from "./submitPackage.js";
 import { gitHash } from "../../common/blobSchemas.js";
+import { ApiError } from "../../common/errors.js";
 
 export const ZSubmitGistPayload = z.object({
   url: ZSaneString,
@@ -44,7 +45,7 @@ export async function processGist(
 
   // check the gist is public
   if (!gist.public) {
-    throw new Error(`Gist is not public`);
+    throw new ApiError(400, `Gist is not public`);
   }
 
   // check the gist is not truncated
