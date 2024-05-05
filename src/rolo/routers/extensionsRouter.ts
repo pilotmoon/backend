@@ -98,12 +98,14 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
     document = await readExtension(ctx.params.id, ctx.state.auth);
   }
   if (document) {
-    ctx.body = expand(document, ctx);
+    document = expand(document, ctx);
+    // final step: convert buffers to base64
     for (const file of (document as Document).files) {
-      if (file.data instanceof Buffer) {
+      if (Buffer.isBuffer(file.data)) {
         file.data = file.data.toString("base64");
       }
     }
+    ctx.body = document;
   }
 });
 
@@ -159,8 +161,8 @@ const ZPopClipDirectoryView = z.object({
   // descriptionHtml: z.string(),
   keywords: z.string(),
   download: z.string().nullable(),
-  demo: z.string().nullable(),
-  readme: z.string().nullable(),
+  // demo: z.string().nullable(),
+  // readme: z.string().nullable(),
   source: z.string().nullable(),
   owner: z.string().nullable(),
   // actionTypes: z.array(z.string()),
@@ -225,14 +227,6 @@ function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   return icon;
 }
 
-// suffux e.g. (-)readme.md or (-)demo.mp4
-function findFileBlob(suffix: string, files: ExtensionFileList) {
-  const regex = new RegExp(`(?:-${suffix}$|^${suffix}$)`, "i");
-  const file = files.find((f) => regex.test(f.path));
-  const fileExt = file?.path.split(".").pop();
-  return file ? `/blobs/${thash(file.hash)}/file.${fileExt}` : null;
-}
-
 function popclipView(doc: AugmentedExtensionRecord) {
   const description = extractLocalizedString(doc.info.description ?? "");
   const icon = doc.info.icon
@@ -252,10 +246,6 @@ function popclipView(doc: AugmentedExtensionRecord) {
     // descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
     download: doc.download ?? null,
-    demo:
-      findFileBlob("demo.mp4", doc.files) ??
-      findFileBlob("demo.gif", doc.files),
-    readme: findFileBlob("readme.md", doc.files),
     source: extractSourceUrl(doc.origin),
     owner: extractOwnerTag(doc.origin),
     //actionTypes: doc.info.actionTypes ?? [],
