@@ -17,6 +17,7 @@ import {
   GithubNode,
   GithubTagCreateEvent,
   ZGithubBlob,
+  ZGithubCommitListEntry,
   ZGithubCommitObject,
   ZGithubNode,
   ZGithubRefObject,
@@ -150,11 +151,11 @@ export async function processTagEvent(
     throw new ApiError(400, "Expected exactly one referenced object for tag");
   }
   // get the commit info
-  const commitResponse = await gh().get(
+  const taggedCommitResponse = await gh().get(
     `/repos/${tagInfo.repository.full_name}/git/commits/${refObjects[0].object.sha}`,
   );
-  const commitInfo = ZGithubCommitObject.parse(commitResponse.data);
-  alog.log(`Loaded commit info:`, commitInfo);
+  const taggedCommitInfo = ZGithubCommitObject.parse(taggedCommitResponse.data);
+  alog.log(`Loaded tagged commit info:`, taggedCommitInfo);
 
   // fetch user info
   const userResponse = await gh().get(
@@ -167,16 +168,14 @@ export async function processTagEvent(
   alog.log("Author:", author);
 
   // create the partial origin object
-  const partialOrigin = {
+  const repoOrigin = {
     type: "githubRepo",
     repoId: tagInfo.repository.id,
     repoName: tagInfo.repository.name,
     ownerId: tagInfo.repository.owner.id,
     ownerHandle: tagInfo.repository.owner.login,
-    commitSha: commitInfo.sha,
-    commitDate: commitInfo.committer.date,
   };
-  alog.log("Origin:", partialOrigin);
+  alog.log("Repo Origin:", repoOrigin);
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
@@ -187,6 +186,19 @@ export async function processTagEvent(
       matchingNodes.map((node) =>
         limit(async () => {
           try {
+            const commit = await getChangeCommit(
+              node,
+              tagInfo.repository.full_name,
+              taggedCommitInfo.sha,
+            );
+            const nodeOrigin = ZExtensionOriginGithubRepo.parse({
+              ...repoOrigin,
+              commitSha: commit.sha,
+              commitDate: commit.date,
+              nodePath: node.path,
+              nodeSha: node.sha,
+              nodeType: node.type,
+            });
             const files = await getPackageFiles(
               node,
               tree.tree,
@@ -194,12 +206,7 @@ export async function processTagEvent(
               alog,
             );
             await submitPackage(
-              ZExtensionOriginGithubRepo.parse({
-                ...partialOrigin,
-                nodePath: node.path,
-                nodeSha: node.sha,
-                nodeType: node.type,
-              }),
+              nodeOrigin,
               author,
               version,
               files,
@@ -337,4 +344,24 @@ async function getPackageFiles(
       executable: node.mode === "100755" ? true : undefined,
     };
   });
+}
+
+// find the most recent commit in which the node was changed
+async function getChangeCommit(
+  node: GithubNode,
+  repoFullName: string,
+  fromSha: string,
+) {
+  // use github api to list commits for the node
+  const commitsResponse = await gh().get(
+    `/repos/${repoFullName}/commits?path=${node.path}&sha=${fromSha}`,
+  );
+  const commits = z
+    .array(ZGithubCommitListEntry)
+    .nonempty()
+    .parse(commitsResponse.data);
+  return {
+    date: commits[0].commit.committer.date,
+    sha: commits[0].sha,
+  };
 }

@@ -1,20 +1,9 @@
 import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { z } from "zod";
 import {
-  ExtensionFileList,
-  ExtensionOrigin,
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
-import {
-  PositiveSafeInteger,
-  ZLocalizableString,
-  ZSaneDate,
-  ZSaneIdentifier,
-  ZSaneLongString,
-  ZSaneString,
-} from "../../common/saneSchemas.js";
 import {
   createExtension,
   listExtensions,
@@ -22,30 +11,13 @@ import {
   readExtensionWithData,
   updateExtension,
 } from "../controllers/extensionsController.js";
-import {
-  ExtensionRecord,
-  IconComponents,
-  ZExtensionAppInfo,
-  ZExtensionRecord,
-} from "../controllers/extensionsProcessor.js";
+import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { boolFromQuery, stringFromQuery } from "../query.js";
-import { ZVersionString } from "../../common/versionString.js";
-import { descriptorStringFromComponents } from "@pilotmoon/fudge";
-import { log } from "../../common/log.js";
-import { truncatedHash } from "../../common/blobSchemas.js";
-import { endpointFileName } from "./blobsRouter.js";
-import path from "node:path";
-
-export const ZAugmentedExtensionRecord = ZExtensionRecord.extend({
-  firstCreated: z.date(),
-  download: z.string().nullish(),
-});
-export type AugmentedExtensionRecord = z.infer<
-  typeof ZAugmentedExtensionRecord
->;
+import { stringFromQuery } from "../query.js";
+import { ZAugmentedExtensionRecord, popclipView } from "./extensionView.js";
+import { filesExcludeRegex } from "./extensionFile.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -90,37 +62,30 @@ function expand<T extends ExtensionRecord>(document: T, ctx: AppContext) {
 
 // get extension data, optionally including file data
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
-  const includeData = !!boolFromQuery(ctx.query, "includeData", false);
-  const excludePathsRegex = stringFromQuery(ctx.query, "excludePathsRegex", "");
-  let document;
-  if (includeData) {
-    document = await readExtensionWithData(
-      ctx.params.id,
-      ctx.state.auth,
-      excludePathsRegex ? new RegExp(excludePathsRegex, "i") : undefined,
-    );
-  } else {
-    document = await readExtension(ctx.params.id, ctx.state.auth);
-  }
+  const document = await readExtension(ctx.params.id, ctx.state.auth);
   if (document) {
-    document = expand(document, ctx);
-    // final step: convert buffers to base64
-    for (const file of (document as Document).files) {
-      if (Buffer.isBuffer(file.data)) {
-        file.data = file.data.toString("base64");
-      }
-    }
-    ctx.body = document;
+    ctx.body = expand(document, ctx);
   }
 });
 
 // get file
 router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
-  const document = await readExtension(ctx.params.id, ctx.state.auth);
-  throw new Error("Not implemented");
+  const document = await readExtensionWithData(
+    ctx.params.id,
+    ctx.state.auth,
+    filesExcludeRegex(),
+  );
+  if (document) {
+    for (const file of document.files) {
+      delete (file as any).data;
+    }
+    ctx.body = expand(document, ctx);
+  }
+  //throw new Error("Not implemented");
   // TODO: implement file download
 });
 
+// get a list of extensions with query parameters
 router.get("/", async (ctx) => {
   const view = stringFromQuery(ctx.query, "view", "");
   const query = ctx.query;
@@ -151,118 +116,3 @@ router.get("/", async (ctx) => {
     ctx.body = documents;
   }
 });
-
-const ZPopClipDirectoryView = z.object({
-  _id: z.string(),
-  created: ZSaneDate,
-  firstCreated: ZSaneDate,
-  object: z.literal("extension"),
-  shortcode: z.string(),
-  identifier: ZSaneIdentifier,
-  version: ZVersionString,
-  name: z.string(),
-  icon: z.string().nullable(),
-  description: z.string(),
-  // descriptionHtml: z.string(),
-  keywords: z.string(),
-  download: z.string().nullable(),
-  // demo: z.string().nullable(),
-  // readme: z.string().nullable(),
-  source: z.string().nullable(),
-  owner: z.string().nullable(),
-  // actionTypes: z.array(z.string()),
-  // entitlements: z.array(z.string()),
-  apps: z.array(ZExtensionAppInfo),
-  // macosVersion: z.string().nullable(),
-  // popclipVersion: PositiveSafeInteger.nullable(),
-  files: z.array(
-    z.object({
-      path: z.string(),
-      url: z.string(),
-      executable: z.boolean().optional(),
-    }),
-  ),
-});
-type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
-
-function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
-  return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
-}
-
-function extractSourceUrl(origin: ExtensionOrigin) {
-  if (origin.type === "githubGist") {
-    return `https://gist.github.com/${origin.ownerHandle}/${origin.gistId}/${origin.commitSha}`;
-  } else if (origin.type === "githubRepo") {
-    return `https://github.com/${origin.ownerHandle}/${origin.repoName}/tree/${
-      origin.commitSha
-    }/${origin.nodePath}${origin.nodeType === "tree" ? "/" : ""}`;
-  }
-  return null;
-}
-
-function extractOwnerTag(origin: ExtensionOrigin) {
-  if (origin.type === "githubGist") {
-    return `github:${origin.ownerId}`;
-  } else if (origin.type === "githubRepo") {
-    return `github:${origin.ownerId}`;
-  }
-  return null;
-}
-
-function thash(hash: string) {
-  return truncatedHash(Buffer.from(hash, "hex"));
-}
-
-function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
-  if (icon.prefix === "file") {
-    const fileName = icon.payload;
-    const fileNameExt = path.extname(fileName).slice(1);
-    if (fileNameExt === "png" || fileNameExt === "svg") {
-      // look for named icon in the package files
-      const hash = files.find((f) => f.path === icon.payload)?.hash;
-      if (hash) {
-        return {
-          prefix: "blob",
-          payload: `${fileNameExt},${thash(hash)}`,
-          modifiers: icon.modifiers,
-        };
-      }
-    }
-  }
-  return icon;
-}
-
-function popclipView(doc: AugmentedExtensionRecord) {
-  const description = extractLocalizedString(doc.info.description ?? "");
-  const icon = doc.info.icon
-    ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
-    : null;
-  const view: PopClipDirectoryView = {
-    _id: doc._id,
-    object: "extension",
-    created: doc.created,
-    firstCreated: doc.firstCreated,
-    shortcode: doc.shortcode,
-    identifier: doc.info.identifier,
-    version: doc.version,
-    name: extractLocalizedString(doc.info.name),
-    icon,
-    description,
-    // descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
-    keywords: extractLocalizedString(doc.info.keywords ?? ""),
-    download: doc.download ?? null,
-    source: extractSourceUrl(doc.origin),
-    owner: extractOwnerTag(doc.origin),
-    //actionTypes: doc.info.actionTypes ?? [],
-    //entitlements: doc.info.entitlements ?? [],
-    apps: doc.info.apps ?? [],
-    //macosVersion: doc.info.macosVersion ?? null,
-    //popclipVersion: doc.info.popclipVersion ?? null,
-    files: doc.files.map((f) => ({
-      path: f.path,
-      url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
-      executable: f.executable || undefined,
-    })),
-  };
-  return ZPopClipDirectoryView.parse(view);
-}

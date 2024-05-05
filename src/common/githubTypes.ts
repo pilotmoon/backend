@@ -149,6 +149,7 @@ export const ZGithubRefObject = z.object({
   }),
 });
 
+// response from .../git/commits endpoint
 export const ZGithubCommitObject = z.object({
   sha: z.string(),
   committer: z.object({
@@ -158,3 +159,14 @@ export const ZGithubCommitObject = z.object({
   }),
 });
 export type GithubCommitObject = z.infer<typeof ZGithubCommitObject>;
+
+// response from .../commits endpoint is an array of these
+export const ZGithubCommitListEntry = z.object({
+  sha: z.string(),
+  commit: z.object({
+    committer: z.object({
+      date: ZSaneDate,
+    }),
+  }),
+});
+export type GithubCommitListEntry = z.infer<typeof ZGithubCommitListEntry>;
