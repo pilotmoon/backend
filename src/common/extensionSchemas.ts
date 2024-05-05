@@ -27,18 +27,10 @@ export type GithubAuthorInfo = z.infer<typeof ZGithubAuthorInfo>;
 
 export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
   hash: ZBlobHash2,
+  data: z.instanceof(Buffer).optional(),
 });
 export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
 export type ExtensionFileList = z.infer<typeof ZExtensionFileList>;
-
-export const ZExtensionDataFileListEntry = ZExtensionFileListEntry.extend({
-  data: z.instanceof(Buffer),
-});
-export type ExtensionDataFileListEntry = z.infer<
-  typeof ZExtensionDataFileListEntry
->;
-export const ZExtensionDataFileList = z.array(ZExtensionDataFileListEntry);
-export type ExtensionDataFileList = z.infer<typeof ZExtensionDataFileList>;
 
 export const ZExtensionOriginGithubRepo = z.object({
   type: z.literal("githubRepo"),

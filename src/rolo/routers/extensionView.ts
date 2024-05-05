@@ -6,6 +6,7 @@ import {
 } from "../../common/saneSchemas.js";
 import { ZVersionString } from "../../common/versionString.js";
 import {
+  ExtensionRecord,
   IconComponents,
   ZExtensionAppInfo,
   ZExtensionRecord,
@@ -107,31 +108,20 @@ function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   return icon;
 }
 
-export const ZAugmentedExtensionRecord = ZExtensionRecord.extend({
-  firstCreated: z.date(),
-  download: z.string().nullish(),
-});
-export type AugmentedExtensionRecord = z.infer<
-  typeof ZAugmentedExtensionRecord
->;
-
-export function popclipView(doc: AugmentedExtensionRecord) {
-  const description = extractLocalizedString(doc.info.description ?? "");
-  const icon = doc.info.icon
-    ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
-    : null;
+export function popclipView(doc: ExtensionRecord) {
   const view: PopClipDirectoryView = {
     _id: doc._id,
     object: "extension",
     created: doc.created,
-    firstCreated: doc.firstCreated,
+    firstCreated: doc.firstCreated!,
     shortcode: doc.shortcode,
     identifier: doc.info.identifier,
     version: doc.version,
     name: extractLocalizedString(doc.info.name),
-    icon,
-    description,
-    // descriptionHtml: linkifyDescription(description, doc.info.apps ?? []),
+    icon: doc.info.icon
+      ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
+      : null,
+    description: extractLocalizedString(doc.info.description ?? ""),
     keywords: extractLocalizedString(doc.info.keywords ?? ""),
     download: doc.download ?? null,
     source: extractSourceUrl(doc.origin),

@@ -1,16 +1,25 @@
-import { z } from "zod";
+import { alphabets, baseEncode } from "@pilotmoon/chewit";
 import {
-  ExtensionDataFileList,
+  configFromText,
+  extractSummary,
+  loadStaticConfig,
+  validateStaticConfig,
+} from "@pilotmoon/fudge";
+import { Collection } from "mongodb";
+import { createHash } from "node:crypto";
+import { z } from "zod";
+import { gitHash } from "../../common/blobSchemas.js";
+import { ApiError } from "../../common/errors.js";
+import {
   ExtensionFileList,
   ExtensionOrigin,
   ExtensionSubmission,
-  ZExtensionDataFileList,
   ZExtensionFileList,
   ZExtensionOrigin,
   ZExtensionPatch,
-  calculateDigest,
   isConfigFileName,
 } from "../../common/extensionSchemas.js";
+import { log } from "../../common/log.js";
 import {
   PositiveSafeInteger,
   ZLocalizableString,
@@ -18,29 +27,17 @@ import {
   ZSaneLongString,
   ZSaneString,
 } from "../../common/saneSchemas.js";
-import { Collection } from "mongodb";
-import { createBlobInternal, readBlobInternal } from "./blobsController.js";
-import { Auth, AuthKind } from "../auth.js";
-import { ZBlobHash2, gitHash } from "../../common/blobSchemas.js";
-import { log } from "../../common/log.js";
-import {
-  extractSummary,
-  loadStaticConfig,
-  validateStaticConfig,
-} from "@pilotmoon/fudge";
-import { configFromText } from "@pilotmoon/fudge";
-import { alphabets, baseEncode } from "@pilotmoon/chewit";
-import { createHash } from "node:crypto";
-import { ApiError } from "../../common/errors.js";
-import { randomIdentifier } from "../identifiers.js";
 import {
   ZVersionString,
   compareVersionStrings,
 } from "../../common/versionString.js";
+import { Auth, AuthKind } from "../auth.js";
+import { randomIdentifier } from "../identifiers.js";
 import {
   createAuthorInternal,
   readAuthorByGithubIdInternal,
 } from "./authorsController.js";
+import { createBlobInternal, readBlobInternal } from "./blobsController.js";
 
 export const ZExtensionAppInfo = z.object({
   name: ZSaneString,
@@ -79,12 +76,11 @@ export const ZExtensionRecord = ZExtensionPatch.extend({
   info: ZExtensionInfo,
   origin: ZExtensionOrigin,
   files: ZExtensionFileList,
+  // can be added in post-processing
+  firstCreated: z.date().optional(),
+  download: z.string().optional(),
 });
 export type ExtensionRecord = z.infer<typeof ZExtensionRecord>;
-
-export const ZExtensionRecordWithData = ZExtensionRecord.extend({
-  files: ZExtensionDataFileList,
-});
 
 export function sha256Base32(message: string) {
   return baseEncode(
@@ -101,7 +97,7 @@ function fileNameSuffix(fileName: string) {
 async function getFiles(
   files: ExtensionFileList,
   authKind: AuthKind,
-): Promise<ExtensionDataFileList> {
+): Promise<ExtensionFileList> {
   return await Promise.all(
     files.map(async (file) => {
       const data = (await readBlobInternal(file.hash, authKind, true))
@@ -125,7 +121,7 @@ function githubOwnerIdFromOrigin(origin: ExtensionOrigin) {
   }
 }
 
-async function getConfigFile(files: ExtensionDataFileList) {
+async function getConfigFile(files: ExtensionFileList) {
   let result;
   const configs = files.filter((file) => isConfigFileName(file.path));
   if (configs.length > 1) {
@@ -135,6 +131,9 @@ async function getConfigFile(files: ExtensionDataFileList) {
   } else {
     const snippets = [];
     for (const file of files) {
+      if (!file.data) {
+        throw new Error("File data is missing");
+      }
       const parsed = configFromText(
         file.data.toString("utf8"),
         fileNameSuffix(file.path),
@@ -205,6 +204,9 @@ export async function processSubmission(
   // first load all the files for this extension
   const files = await getFiles(submission.files, auth.kind);
   for (const file of files) {
+    if (!file.data) {
+      throw new Error("File data is missing");
+    }
     if (file.data.length !== file.size) {
       throw new Error(`File size mismatch`);
     }
@@ -217,6 +219,9 @@ export async function processSubmission(
 
   // find the config file
   const configFile = await getConfigFile(files);
+  if (!configFile.data) {
+    throw new Error("File data is missing");
+  }
 
   // modify the file list entry
   const configFileEntry = submission.files.find(

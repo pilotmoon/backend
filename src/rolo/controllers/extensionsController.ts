@@ -12,7 +12,6 @@ import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
 import {
   ExtensionRecord,
   ZExtensionRecord,
-  ZExtensionRecordWithData,
   processSubmission,
 } from "./extensionsProcessor.js";
 
@@ -125,7 +124,7 @@ export async function readExtensionWithData(
       data: Buffer.from(file.data.buffer),
     }));
 
-    return ZExtensionRecordWithData.parse(document);
+    return ZExtensionRecord.parse(document);
   } catch (error) {
     handleControllerError(error);
     throw error;
@@ -201,7 +200,6 @@ export function getQueryPipeline(query: unknown) {
   }
 
   /** SPECIAL AGGREGATION TO ADD firstCreated FIELD **/
-
   pipeline.push(
     { $sort: { created: -1 } },
     {

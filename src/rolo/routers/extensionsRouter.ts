@@ -11,12 +11,15 @@ import {
   readExtensionWithData,
   updateExtension,
 } from "../controllers/extensionsController.js";
-import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
+import {
+  ExtensionRecord,
+  ZExtensionRecord,
+} from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { stringFromQuery } from "../query.js";
-import { ZAugmentedExtensionRecord, popclipView } from "./extensionView.js";
+import { popclipView } from "./extensionView.js";
 import { filesExcludeRegex } from "./extensionFile.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
@@ -101,7 +104,7 @@ router.get("/", async (ctx) => {
     ctx.state.auth,
   );
   documents = documents.map((doc) => {
-    const parsed = ZAugmentedExtensionRecord.safeParse(doc);
+    const parsed = ZExtensionRecord.safeParse(doc);
     if (!parsed.success) {
       return doc;
     }
