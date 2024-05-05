@@ -70,14 +70,21 @@ export async function createExtension(
   }
 }
 
-export async function readExtensionWithData(id: string, auth: Auth) {
+export async function readExtensionWithData(
+  id: string,
+  auth: Auth,
+  excludeRegex?: RegExp,
+) {
   auth.assertAccess(extensionsCollectionName, id, "read");
+  excludeRegex = excludeRegex || /^$/;
   try {
     // for each file in files array, look up the data from the blob store and add it in to that entry
     const pipeline = [
       { $match: { _id: id } },
       // unwind the files array so that we can look up each file
       { $unwind: "$files" },
+      // filter out files that match the exclude regex
+      { $match: { "files.path": { $not: { $regex: excludeRegex } } } },
       // look up the file in the blob store
       {
         $lookup: {

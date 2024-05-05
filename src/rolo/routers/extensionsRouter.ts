@@ -91,9 +91,14 @@ function expand<T extends ExtensionRecord>(document: T, ctx: AppContext) {
 // get extension data, optionally including file data
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const includeData = !!boolFromQuery(ctx.query, "includeData", false);
+  const excludePathsRegex = stringFromQuery(ctx.query, "excludePathsRegex", "");
   let document;
   if (includeData) {
-    document = await readExtensionWithData(ctx.params.id, ctx.state.auth);
+    document = await readExtensionWithData(
+      ctx.params.id,
+      ctx.state.auth,
+      excludePathsRegex ? new RegExp(excludePathsRegex, "i") : undefined,
+    );
   } else {
     document = await readExtension(ctx.params.id, ctx.state.auth);
   }
@@ -133,7 +138,7 @@ router.get("/", async (ctx) => {
   documents = documents.map((doc) => {
     const parsed = ZAugmentedExtensionRecord.safeParse(doc);
     if (!parsed.success) {
-      return document;
+      return doc;
     }
     const expanded = expand(parsed.data, ctx);
     if (view === "popclip") {
