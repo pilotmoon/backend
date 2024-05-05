@@ -146,7 +146,7 @@ test("submit exact same extension files with different version", async (t) => {
     version: "1.1",
     files: [file],
   });
-  t.is(extension.status, 409);
+  t.is(extension.status, 201);
   t.log(extension.data);
 });
 
@@ -174,7 +174,7 @@ test("submit modified extension files with same version", async (t) => {
   const extension = await rolo().post("/extensions", {
     origin,
     author,
-    version: "1.0",
+    version: "1.1",
     files: await validUniqueFiles(),
   });
   t.is(extension.status, 400);
@@ -185,7 +185,7 @@ test("submit modified extension files with higher version", async (t) => {
   const extension = await rolo().post("/extensions", {
     origin,
     author,
-    version: "1.1",
+    version: "1.2",
     files: await validUniqueFiles(),
   });
   t.is(extension.status, 201);
