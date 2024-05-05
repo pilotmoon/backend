@@ -44,6 +44,8 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   identifier: ZSaneIdentifier,
   icon: z.string().nullable(),
   description: z.string(),
+  altNames: z.record(z.string()),
+  altDescriptions: z.record(z.string()),
   keywords: z.string(),
   owner: z.string().nullable(),
   apps: z.array(ZExtensionAppInfo),
@@ -58,8 +60,14 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
 });
 type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
 
-function extractLocalizedString(ls: z.infer<typeof ZLocalizableString>) {
+function extractDefaultString(ls: z.infer<typeof ZLocalizableString>) {
   return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
+}
+
+function extractAltStrings(ls: z.infer<typeof ZLocalizableString>) {
+  if (typeof ls === "string") return {};
+  const { en, ...rest } = ls ?? {};
+  return rest;
 }
 
 function extractSourceUrl(origin: ExtensionOrigin) {
@@ -121,12 +129,14 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
     shortcode: doc.shortcode,
     identifier: doc.info.identifier,
     version: doc.version,
-    name: extractLocalizedString(doc.info.name),
+    name: extractDefaultString(doc.info.name),
     icon: doc.info.icon
       ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
       : null,
-    description: extractLocalizedString(doc.info.description ?? ""),
-    keywords: extractLocalizedString(doc.info.keywords ?? ""),
+    description: extractDefaultString(doc.info.description ?? ""),
+    altNames: extractAltStrings(doc.info.name),
+    altDescriptions: extractAltStrings(doc.info.description),
+    keywords: extractDefaultString(doc.info.keywords ?? ""),
     download: doc.download ?? null,
     source: extractSourceUrl(doc.origin),
     sourceDate: extractSourceDate(doc.origin),
@@ -144,7 +154,7 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
     previousVersions: doc.previousVersions.map((pv) => ({
       created: pv.created,
       version: pv.version,
-      name: extractLocalizedString(pv.info.name),
+      name: extractDefaultString(pv.info.name),
       download: pv.download ?? null,
       source: extractSourceUrl(pv.origin),
       sourceDate: extractSourceDate(pv.origin),
