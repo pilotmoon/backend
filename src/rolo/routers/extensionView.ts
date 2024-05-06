@@ -87,7 +87,11 @@ function extractAltStrings(
   };
   processEntries(name, "name");
   processEntries(description, "description");
-  return altStrings.size ? Array.from(altStrings.values()) : null;
+  // sort by lang key
+  if (!altStrings.size) return null;
+  return Array.from(altStrings.values()).sort((a, b) =>
+    a.lang.localeCompare(b.lang),
+  );
 }
 
 function extractSourceUrl(origin: ExtensionOrigin) {
