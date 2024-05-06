@@ -24,3 +24,4 @@ export const ZLocalizableString = z.union([
     })
     .catchall(ZSaneString),
 ]);
+export type LocalizableString = z.infer<typeof ZLocalizableString>;

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  LocalizableString,
   ZLocalizableString,
   ZSaneDate,
   ZSaneIdentifier,
@@ -35,6 +36,13 @@ const ZPartialPopClipDirectoryView = z.object({
   sourceDate: ZSaneDate.nullable(),
 });
 
+const ZAltString = z.object({
+  lang: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+});
+type AltString = z.infer<typeof ZAltString>;
+
 const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   _id: z.string(),
   created: ZSaneDate,
@@ -44,8 +52,7 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   identifier: ZSaneIdentifier,
   icon: z.string().nullable(),
   description: z.string(),
-  altNames: z.record(z.string()),
-  altDescriptions: z.record(z.string()),
+  altStrings: z.array(ZAltString).nullable(),
   keywords: z.string(),
   owner: z.string().nullable(),
   apps: z.array(ZExtensionAppInfo),
@@ -60,14 +67,27 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
 });
 type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
 
-function extractDefaultString(ls: z.infer<typeof ZLocalizableString>) {
+function extractDefaultString(ls?: LocalizableString) {
   return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
 }
 
-function extractAltStrings(ls: z.infer<typeof ZLocalizableString>) {
-  if (typeof ls === "string") return {};
-  const { en, ...rest } = ls ?? {};
-  return rest;
+function extractAltStrings(
+  name: LocalizableString,
+  description: LocalizableString,
+) {
+  const altStrings = new Map<string, AltString>();
+  const processEntries = (ls: LocalizableString, key: string) => {
+    if (typeof ls === "object") {
+      Object.entries(ls).forEach(([lang, value]) => {
+        if (lang !== "en") {
+          altStrings.set(lang, { ...altStrings.get(lang), lang, [key]: value });
+        }
+      });
+    }
+  };
+  processEntries(name, "name");
+  processEntries(description, "description");
+  return altStrings.size ? Array.from(altStrings.values()) : null;
 }
 
 function extractSourceUrl(origin: ExtensionOrigin) {
@@ -120,6 +140,14 @@ function swapFileIcon(icon: IconComponents, files: ExtensionFileList) {
   return icon;
 }
 
+function processIcon(
+  icon: IconComponents | undefined,
+  files: ExtensionFileList,
+) {
+  if (!icon) return null;
+  return descriptorStringFromComponents(swapFileIcon(icon, files));
+}
+
 export function popclipView(doc: ExtensionRecordWithHistory) {
   const view: PopClipDirectoryView = {
     _id: doc._id,
@@ -130,22 +158,15 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
     identifier: doc.info.identifier,
     version: doc.version,
     name: extractDefaultString(doc.info.name),
-    icon: doc.info.icon
-      ? descriptorStringFromComponents(swapFileIcon(doc.info.icon, doc.files))
-      : null,
+    icon: processIcon(doc.info.icon, doc.files),
     description: extractDefaultString(doc.info.description ?? ""),
-    altNames: extractAltStrings(doc.info.name),
-    altDescriptions: extractAltStrings(doc.info.description),
+    altStrings: extractAltStrings(doc.info.name, doc.info.description),
     keywords: extractDefaultString(doc.info.keywords ?? ""),
     download: doc.download ?? null,
     source: extractSourceUrl(doc.origin),
     sourceDate: extractSourceDate(doc.origin),
     owner: extractOwnerTag(doc.origin),
-    //actionTypes: doc.info.actionTypes ?? [],
-    //entitlements: doc.info.entitlements ?? [],
     apps: doc.info.apps ?? [],
-    //macosVersion: doc.info.macosVersion ?? null,
-    //popclipVersion: doc.info.popclipVersion ?? null,
     files: doc.files.map((f) => ({
       path: f.path,
       url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
