@@ -3,7 +3,7 @@ import { z } from "zod";
 export const ZVersionString = z
   .string()
   .max(100)
-  .regex(/^(?:[1-9]\d+|\d)(?:\.(?:[1-9]\d+|\d))*$/);
+  .regex(/^(?:[1-9]\d+|\d)(?:\.(?:[1-9]\d+|\d)){1,3}$/);
 export type VersionString = z.infer<typeof ZVersionString>;
 
 export function compareVersionStrings(
