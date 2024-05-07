@@ -4,6 +4,7 @@ import {
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
+import { stringFromQuery } from "../../common/query.js";
 import {
   createExtension,
   listExtensions,
@@ -11,18 +12,12 @@ import {
   readExtensionWithData,
   updateExtension,
 } from "../controllers/extensionsController.js";
-import {
-  ExtensionRecord,
-  ZExtensionRecord,
-} from "../controllers/extensionsProcessor.js";
+import { ZExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { stringFromQuery } from "../../common/query.js";
-import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 import { filesExcludeRegex } from "./extensionFile.js";
-import { z } from "zod";
-import { loge } from "../../common/log.js";
+import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
