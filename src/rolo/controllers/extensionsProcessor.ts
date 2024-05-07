@@ -290,9 +290,7 @@ export async function processSubmission(
   );
   if (mostRecent) {
     const mostRecentParsed = ZExtensionRecord.parse(mostRecent);
-    if (!mostRecentParsed.version) {
-      throw new Error("Most recent submission has no version");
-    }
+    mlog(`Most recent submission is ${mostRecentParsed.version}`);
 
     // origin must be same
     if (
