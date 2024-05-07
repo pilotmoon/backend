@@ -9,7 +9,7 @@ import {
 } from "../controllers/blobsController.js";
 import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
-import { arrayFromQuery, boolFromQuery } from "../query.js";
+import { arrayFromQuery, boolFromQuery } from "../../common/query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { ZBlobHash, ZBlobHash2 } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";

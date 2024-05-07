@@ -8,7 +8,11 @@ import { log } from "../../common/log.js";
 import { authKinds, type Auth, type AuthKind } from "../auth.js";
 import { getClient, getDb } from "../database.js";
 import { Pagination, paginate } from "../paginate.js";
-import { arrayFromQuery, boolFromQuery, stringFromQuery } from "../query.js";
+import {
+  arrayFromQuery,
+  boolFromQuery,
+  stringFromQuery,
+} from "../../common/query.js";
 import {
   ExtensionRecord,
   ZExtensionRecord,

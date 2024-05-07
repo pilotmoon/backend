@@ -18,7 +18,7 @@ import {
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { stringFromQuery } from "../query.js";
+import { stringFromQuery } from "../../common/query.js";
 import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 import { filesExcludeRegex } from "./extensionFile.js";
 import { z } from "zod";

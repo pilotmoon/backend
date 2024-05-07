@@ -2,7 +2,7 @@ import { Context } from "koa";
 import { makeCsv } from "./makeCsv.js";
 import { makeObjc } from "./makeObjc.js";
 import { makePlist } from "./makePlist.js";
-import { stringFromQuery } from "./query.js";
+import { stringFromQuery } from "../common/query.js";
 import makeStableJson from "fast-stable-stringify";
 
 function preprocess(ctx: Context, obj: unknown) {

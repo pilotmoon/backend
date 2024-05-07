@@ -7,7 +7,7 @@ import { randomIdentifier } from "../identifiers.js";
 import { ZPortableKeyPair } from "../keyPair.js";
 import { Pagination, paginate } from "../paginate.js";
 import { ZProductConfig } from "../product.js";
-import { boolFromQuery } from "../query.js";
+import { boolFromQuery } from "../../common/query.js";
 import { decryptInPlace, encryptInPlace } from "../secrets.js";
 
 /*** Database ***/

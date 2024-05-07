@@ -7,7 +7,7 @@ import {
   ZQueryBoolString,
   assignMatch,
   matchExpressionFromQueryValue,
-} from "../query.js";
+} from "../../common/query.js";
 
 export function getQueryPipeline(query: unknown) {
   const pipeline: Document[] = [];
