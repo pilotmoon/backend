@@ -311,16 +311,14 @@ export async function processSubmission(
 
     if (submission.version) {
       // version must be newer
-      if (submission.origin.ownerId !== PILOTMOON_OWNER_ID) {
-        if (
-          compareVersionStrings(submission.version, mostRecentParsed.version) <=
-          0
-        ) {
-          throw new ApiError(
-            400,
-            `Version ${submission.version} is not newer than ${mostRecentParsed.version}`,
-          );
-        }
+      if (
+        !mostRecentParsed.allowLowerVersion &&
+        compareVersionStrings(submission.version, mostRecentParsed.version) <= 0
+      ) {
+        throw new ApiError(
+          400,
+          `Version ${submission.version} is not higher than ${mostRecentParsed.version}`,
+        );
       }
     } else {
       // add 1

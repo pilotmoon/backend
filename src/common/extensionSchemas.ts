@@ -75,6 +75,7 @@ export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 export const ZExtensionPatch = z.object({
   published: z.boolean().optional(),
   allowOriginChange: z.boolean().optional(),
+  allowLowerVersion: z.boolean().optional(),
 });
 export type ExtensionPatch = z.infer<typeof ZExtensionPatch>;
 
