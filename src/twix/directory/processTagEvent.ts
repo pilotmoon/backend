@@ -144,15 +144,13 @@ export async function processTagEvent(
 
   // get the ref info to find the commit sha
   const refResponse = await gh().get(
-    `/repos/${tagInfo.repository.full_name}/git/matching-refs/tags/${tagInfo.ref}`,
+    `/repos/${tagInfo.repository.full_name}/git/ref/tags/${tagInfo.ref}`,
   );
-  const refObjects = z.array(ZGithubRefObject).parse(refResponse.data);
-  if (refObjects.length !== 1) {
-    throw new ApiError(400, "Expected exactly one referenced object for tag");
-  }
+  const refObject = ZGithubRefObject.parse(refResponse.data);
+
   // get the commit info
   const taggedCommitResponse = await gh().get(
-    `/repos/${tagInfo.repository.full_name}/git/commits/${refObjects[0].object.sha}`,
+    `/repos/${tagInfo.repository.full_name}/git/commits/${refObject.object.sha}`,
   );
   const taggedCommitInfo = ZGithubCommitObject.parse(taggedCommitResponse.data);
   alog.log(`Loaded tagged commit info:`, taggedCommitInfo);
