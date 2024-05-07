@@ -237,7 +237,7 @@ export function getQueryPipeline(query: unknown) {
           },
         },
       },
-      // Add the firstCreated field to each document
+      // Add the firstCreated and previousVersions field to each document
       {
         $addFields: {
           "latest.firstCreated": "$firstCreated",
@@ -246,7 +246,7 @@ export function getQueryPipeline(query: unknown) {
               input: "$previousVersions",
               as: "version",
               cond: {
-                $lt: ["$$version.created", "$latest.created"],
+                $ne: ["$$version.version", "$latest.version"],
               },
             },
           },
