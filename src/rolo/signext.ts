@@ -35,7 +35,7 @@ export class Signer {
     packageName: string,
     meta: Record<string, string>,
   ) {
-    log("signing", { meta });
+    log("signing", { packageName, meta });
     const Signature = signData_v1(
       dataToSign(files, { mode: "v1", packageName }),
       this.privateKey_v1,
@@ -70,7 +70,7 @@ export type DigestOptions =
     };
 
 function dataToSign(files: DataFileListEntry[], opts: DigestOptions) {
-  // Sort array with case-insensitive comparison
+  // Sort array with case-insensitive comparison as required by PopClip
   const sortedFiles = files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", {
       sensitivity: "accent",
@@ -94,23 +94,25 @@ function dataToSign(files: DataFileListEntry[], opts: DigestOptions) {
       dataList.push(file.data);
     }
   } else {
-    const dataList = [Buffer.from(`popclipext ${sortedFiles.length}\0`)];
-    // identifier ${opts.identifier}\0shortcode ${opts.shortcode}\0version ${opts.version}\0\0
-    const metaString = Object.entries(opts.meta)
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .map(([key, value]) => `${key} ${value}\0`)
-      .join("");
-    log({ metaString });
-    dataList.push(Buffer.from(`${metaString}\0`));
+    dataList.push(Buffer.from(`popclipext ${sortedFiles.length}\x1E`));
+    let sortedMeta = Object.entries(opts.meta).sort(([keyA], [keyB]) =>
+      keyA.localeCompare(keyB, "en-US"),
+    );
+    for (const [key, value] of sortedMeta) {
+      dataList.push(Buffer.from(`${key} ${value}\x1E`));
+    }
+    dataList.push(Buffer.from(`\x1E`));
     for (const file of sortedFiles) {
-      dataList.push(
-        Buffer.from(
-          `${file.hash} ${file.executable ? "1" : "0"} ${file.size} ${
-            file.path
-          }\0}`,
-        ),
-      );
+      let hash = crypto.createHash("sha256").update(file.data).digest("hex");
+      let exe = file.executable ? "1" : "0";
+      let str = `${hash} ${exe} ${file.size} ${file.path}\x1E`;
+      dataList.push(Buffer.from(str));
     }
   }
-  return Buffer.concat(dataList);
+  let buf = Buffer.concat(dataList);
+  log({
+    mode: opts.mode,
+    bufSha256: crypto.createHash("sha256").update(buf).digest("hex"),
+  });
+  return buf;
 }
