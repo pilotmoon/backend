@@ -86,6 +86,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   ctx.body = data;
   ctx.set("Content-Type", "application/octet-stream");
   ctx.set("Content-Disposition", createCDH(name));
+  //ctx.set("Cache-Control", "public, max-age=60"); // TODO - lengthen
 });
 
 // get a list of extensions with query parameters

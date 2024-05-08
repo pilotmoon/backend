@@ -1,14 +1,13 @@
+import AdmZip from "adm-zip";
+import { kebabCase } from "case-anything";
+import { z } from "zod";
+import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { AuthKind } from "../auth.js";
 import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
-import { kebabCase } from "case-anything";
-import { extractDefaultString } from "./extensionView.js";
-import { ApiError } from "../../common/errors.js";
-import AdmZip from "adm-zip";
-import { PortableKeyPair, ZPortableKeyPair } from "../keyPair.js";
 import { getRegistryObjectInternal } from "../controllers/registriesController.js";
-import { DataFileListEntry, Signer } from "../signext.js";
-import { z } from "zod";
+import { extractDefaultString } from "./extensionView.js";
+import { Signer } from "../signext.js";
 
 let _excludeRegex: RegExp;
 export function filesExcludeRegex() {
@@ -49,9 +48,8 @@ export async function generateExtensionFile(
       file.executable ? 0o755 : 0o644,
     );
   }
-  let key = await getExtensionSigningKey("com.pilotmoon.popclip", authKind);
-  let signer = new Signer(key);
-  let signature = signer.extensionSignature(
+  let key = await getExtensionSigningKey(authKind);
+  let signature = new Signer(key).extensionSignature(
     ext.files.map((file) => ({
       path: file.path,
       data: file.data!,
@@ -67,22 +65,27 @@ export async function generateExtensionFile(
   return { data: zip.toBuffer(), name };
 }
 
-async function getExtensionSigningKey(
-  product: string,
-  authKind: AuthKind,
-): Promise<string> {
-  const keys = await getRegistryObjectInternal(
-    product,
+const keyMap = new Map<AuthKind, string>();
+async function getExtensionSigningKey(authKind: AuthKind) {
+  let key = keyMap.get(authKind);
+  if (key) return key;
+
+  const keysRecord = await getRegistryObjectInternal(
+    "com.pilotmoon.popclip",
     "extensionSigningKey",
     authKind,
   );
-  if (!keys) {
-    throw new Error(`No extension signing key found for product ${product}`);
+  if (!keysRecord) {
+    throw new Error(`No popclipext signing key found for kind ${authKind}`);
   }
-  return z
+
+  key = z
     .object({
       object: z.literal("record"),
       record: z.object({ privateKey: z.string() }),
     })
-    .parse(keys).record.privateKey;
+    .parse(keysRecord).record.privateKey;
+
+  keyMap.set(authKind, key);
+  return key;
 }
