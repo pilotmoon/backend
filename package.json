@@ -3,6 +3,7 @@
     "@isaacs/ttlcache": "1.2.1",
     "@koa/cors": "5.0.0",
     "@koa/router": "12.0.0",
+    "@noble/ed25519": "2.1.0",
     "@pilotmoon/aquatic-prime": "0.2.0",
     "@pilotmoon/chewit": "0.3.0",
     "@pilotmoon/fudge": "pilotmoon/fudge#57969b9",
