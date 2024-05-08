@@ -36,9 +36,9 @@ export async function generateExtensionFile(
     throw new ApiError(404, "Extension is not published");
   }
 
+  // add files to zip
   let packageName = `@${ext.shortcode}.${ext.info.identifier}.popclipext`;
   let zip = new AdmZip();
-  //zip.addFile(`${packageName}/test.txt`, Buffer.from("todo"));
   for (let file of ext.files) {
     // note, files list has been pre-filtered in the aggregation
     zip.addFile(
@@ -48,6 +48,8 @@ export async function generateExtensionFile(
       file.executable ? 0o755 : 0o644,
     );
   }
+
+  // add signature file
   let key = await getExtensionSigningKey(authKind);
   let signature = new Signer(key).extensionSignature(
     ext.files.map((file) => ({
@@ -59,6 +61,7 @@ export async function generateExtensionFile(
   );
   zip.addFile(`${packageName}/${signature.name}`, signature.contentsBuffer);
 
+  // return zip buffer
   let name = `${
     kebabCase(extractDefaultString(ext.info.name)) ?? "extension"
   }-${ext.version}-${ext.shortcode}.popclipextz`;
@@ -86,6 +89,7 @@ async function getExtensionSigningKey(authKind: AuthKind) {
     })
     .parse(keysRecord).record.privateKey;
 
+  log("Loaded extension signing key", { authKind });
   keyMap.set(authKind, key);
   return key;
 }

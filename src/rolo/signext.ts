@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { base64ToBigint, bigintToBuf, hexToBigint } from "bigint-conversion";
 import { makePlist } from "./makePlist.js";
 import { ZExtensionFileListEntry } from "../common/extensionSchemas.js";
 import { z } from "zod";
@@ -24,22 +23,14 @@ export class Signer {
   }
 
   extensionSignature(files: DataFileListEntry[], packageName: string) {
-    const data = dataToSign(files, packageName);
-    const Signature = signData(data, this.privateKey);
-    const name = "_Signature.plist";
+    const Signature = signData(dataToSign(files, packageName), this.privateKey);
     const contentsBuffer = Buffer.from(makePlist({ Signature }));
-    return { name, contentsBuffer };
+    return { name: "_Signature.plist", contentsBuffer };
   }
 }
 
-// zero padding??
 function signData(data: Buffer, key: crypto.KeyObject) {
-  // import the private key
-  const signer = crypto.createSign("RSA-SHA1");
-  signer.update(data);
-  const sig = signer.sign(key);
-  console.log({ sig, b64: sig.toString("base64") });
-  return sig;
+  return crypto.createSign("RSA-SHA1").update(data).sign(key);
 }
 
 function dataToSign(files: DataFileListEntry[], packageName: string) {
@@ -62,7 +53,4 @@ function dataToSign(files: DataFileListEntry[], packageName: string) {
     dataList.push(file.data);
   }
   return Buffer.concat(dataList);
-
-  // Return the SHA-1 hash of the concatenated data
-  // return crypto.createHash("sha1").update(Buffer.concat(dataList)).digest();
 }
