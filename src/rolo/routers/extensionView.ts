@@ -67,7 +67,7 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
 });
 type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
 
-function extractDefaultString(ls?: LocalizableString) {
+export function extractDefaultString(ls?: LocalizableString) {
   return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
 }
 

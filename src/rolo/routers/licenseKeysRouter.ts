@@ -1,7 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { RouterParamContext } from "@koa/router";
 import { create as createCDH } from "content-disposition-header";
-import { ParameterizedContext } from "koa";
 import _ from "lodash";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
@@ -18,7 +16,7 @@ import {
   updateLicenseKey,
 } from "../controllers/licenseKeysController.js";
 import { makeIdentifierPattern } from "../identifiers.js";
-import { AppContext, AppState, makeRouter } from "../koaWrapper.js";
+import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { generateResourceToken } from "../resourceToken.js";
 
@@ -105,19 +103,17 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   }
 
   // generate license key file object
-  const licenseFile = await generateLicenseFile(document, ctx.state.auth.kind);
+  const { plist, name } = await generateLicenseFile(
+    document,
+    ctx.state.auth.kind,
+  );
 
-  // if client accepts octet-stream, return the file as-is
-  if (ctx.accepts("application/octet-stream")) {
-    // decode the base64-encoded file
-    ctx.body = licenseFile.plist;
-    ctx.set("Content-Type", "application/octet-stream");
-    // fallback should contain only ASCII characters
-    const fallback = licenseFile.name.replace(/[^\x20-\x7e]/g, "?");
-    ctx.set("Content-Disposition", createCDH(licenseFile.name, { fallback }));
-  } else {
-    throw new ApiError(406, "Client does not accept application/octet-stream");
-  }
+  // decode the base64-encoded file
+  ctx.body = plist;
+  ctx.set("Content-Type", "application/octet-stream");
+  // fallback should contain only ASCII characters
+  const fallback = name.replace(/[^\x20-\x7e]/g, "?");
+  ctx.set("Content-Disposition", createCDH(name, { fallback }));
 });
 
 // Update a license key

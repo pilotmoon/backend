@@ -1,5 +1,7 @@
+import { create as createCDH } from "content-disposition-header";
 import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
+import { ApiError } from "../../common/errors.js";
 import {
   ZExtensionPatch,
   ZExtensionSubmission,
@@ -16,7 +18,7 @@ import { ZExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { filesExcludeRegex } from "./extensionFile.js";
+import { filesExcludeRegex, generateExtensionFile } from "./extensionFile.js";
 import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
@@ -75,14 +77,15 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
     ctx.state.auth,
     filesExcludeRegex(),
   );
-  if (document) {
-    for (const file of document.files) {
-      delete (file as any).data;
-    }
-    ctx.body = expand(document, ctx);
-  }
-  //throw new Error("Not implemented");
-  // TODO: implement file download
+  if (!document) return;
+
+  const { data, name } = await generateExtensionFile(
+    document,
+    ctx.state.auth.kind,
+  );
+  ctx.body = data;
+  ctx.set("Content-Type", "application/octet-stream");
+  ctx.set("Content-Disposition", createCDH(name));
 });
 
 // get a list of extensions with query parameters

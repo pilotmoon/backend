@@ -1,81 +1,48 @@
-import { createHash } from "crypto";
+import crypto from "crypto";
 import { base64ToBigint, bigintToBuf, hexToBigint } from "bigint-conversion";
 import { makePlist } from "./makePlist.js";
+import { ZExtensionFileListEntry } from "../common/extensionSchemas.js";
 import { z } from "zod";
+import path from "node:path";
 
 // utility for signing popclip extensions
 
-export const ZBufferFileListEntry = z.object({
-  path: z.string(),
-  executable: z.boolean().optional(),
-  buffer: z.instanceof(Buffer),
-});
-export const ZBufferFileList = z.array(ZBufferFileListEntry);
-export type BufferFileList = z.infer<typeof ZBufferFileList>;
+export const ZDataFileListEntry = ZExtensionFileListEntry.omit({
+  hash: true,
+  size: true,
+}).required();
+export type DataFileListEntry = z.infer<typeof ZDataFileListEntry>;
 
 export type KeyPair = { publicKey: bigint; privateKey: bigint };
 
 export class Signer {
-  private keys: KeyPair;
+  private privateKey: crypto.KeyObject;
 
   // Create a new AquaticPrime instance with a public and private key
-  constructor({
-    publicKey,
-    privateKey,
-    keyFormat,
-  }: {
-    publicKey: string;
-    privateKey: string;
-    keyFormat: "hex" | "base64";
-  }) {
-    if (keyFormat === "hex") {
-      this.keys = {
-        publicKey: hexToBigint(publicKey),
-        privateKey: hexToBigint(privateKey),
-      };
-    } else if (keyFormat === "base64") {
-      this.keys = {
-        publicKey: base64ToBigint(publicKey),
-        privateKey: base64ToBigint(privateKey),
-      };
-    } else {
-      throw new Error(`Unknown key format: ${keyFormat}`);
-    }
+  constructor(privateKeyPem: string) {
+    this.privateKey = crypto.createPrivateKey(privateKeyPem);
   }
 
-  async extensionSignature(files: BufferFileList, packageName: string) {
-    const hash = await calculateDigest(files, packageName);
-    const Signature = signHash(hash, this.keys);
+  extensionSignature(files: DataFileListEntry[], packageName: string) {
+    const data = dataToSign(files, packageName);
+    const Signature = signData(data, this.privateKey);
     const name = "_Signature.plist";
     const contentsBuffer = Buffer.from(makePlist({ Signature }));
     return { name, contentsBuffer };
   }
 }
 
-// Modular exponentiation
-const powmod = (base: bigint, exponent: bigint, modulus: bigint): bigint => {
-  let e = exponent;
-  let b = base;
-  let r = 1n; // result
-  while (e > 0n) {
-    if (e % 2n === 1n) {
-      r = (r * b) % modulus;
-    }
-    e = e >> 1n;
-    b = (b * b) % modulus;
-  }
-  return r;
-};
-
-function padHash(hash: Buffer) {
-  return BigInt(`0x0001${"ff".repeat(105)}00${hash.toString("hex")}`);
+// zero padding??
+function signData(data: Buffer, key: crypto.KeyObject) {
+  // import the private key
+  const signer = crypto.createSign("RSA-SHA1");
+  signer.update(data);
+  const sig = signer.sign(key);
+  console.log({ sig, b64: sig.toString("base64") });
+  return sig;
 }
 
-function signHash(hash: Buffer, keys: KeyPair) {
-  return bigintToBuf(powmod(padHash(hash), keys.privateKey, keys.publicKey));
-}
-
-async function calculateDigest(files: BufferFileList, packageName: string) {
+function dataToSign(files: DataFileListEntry[], packageName: string) {
   // Sort array with case-insensitive comparison
   const sortedFiles = files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", {
@@ -88,13 +55,14 @@ async function calculateDigest(files: BufferFileList, packageName: string) {
   const separator = Buffer.from("+++");
   const dataList = [Buffer.from(packageName)];
   for (const file of sortedFiles) {
-    const baseName = packageName.split("/").at(-1)!;
+    const baseName = path.basename(file.path);
     dataList.push(separator);
     dataList.push(Buffer.from(baseName));
     dataList.push(separator);
-    dataList.push(file.buffer);
+    dataList.push(file.data);
   }
+  return Buffer.concat(dataList);
 
   // Return the SHA-1 hash of the concatenated data
-  return createHash("sha1").update(Buffer.concat(dataList)).digest();
+  // return crypto.createHash("sha1").update(Buffer.concat(dataList)).digest();
 }

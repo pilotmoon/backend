@@ -9,6 +9,7 @@
     "@types/content-type": "1.1.6",
     "@types/koa-bodyparser": "4.3.10",
     "@types/lodash": "4.14.191",
+    "adm-zip": "0.5.12",
     "axios": "1.6.8",
     "bigint-conversion": "2.4.3",
     "case-anything": "2.1.13",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.6.2",
     "@faker-js/faker": "7.6.0",
+    "@types/adm-zip": "0.5.5",
     "@types/js-yaml": "4.0.9",
     "@types/jsbn": "1.2.33",
     "@types/koa": "2.13.5",
