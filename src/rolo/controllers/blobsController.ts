@@ -40,7 +40,7 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
 import { Pagination, paginate } from "../paginate.js";
 import {
-  ZBlobHash,
+  ZBlobHash1,
   ZBlobHash2,
   gitHash,
   truncatedHash,
@@ -69,7 +69,7 @@ export const ZBlobCoreRecord = z.object({
   _id: z.string(),
   object: z.literal("blob"),
   created: z.date(),
-  h1: ZBlobHash,
+  h1: ZBlobHash1,
   h2: ZBlobHash2,
   size: NonNegativeSafeInteger,
 });

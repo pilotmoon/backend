@@ -1,7 +1,7 @@
 import pLimit from "p-limit";
 import { z } from "zod";
 import {
-  ZBlobHash,
+  ZBlobHash1,
   ZBlobHash2,
   ZBlobSchema,
   gitHash,
@@ -25,7 +25,7 @@ const AUTH_KIND = "test";
 
 export const ZGitSha1File = ZCoreFileListEntry.extend({
   type: z.literal("gitSha1File"),
-  hash: ZBlobHash,
+  hash: ZBlobHash1,
   content: z.instanceof(Buffer).optional(),
 });
 export type GitSha1File = z.infer<typeof ZGitSha1File>;
@@ -57,7 +57,7 @@ export async function existingExtensions(
       limit: values.length,
     },
   });
-  return new Set(z.array(ZBlobHash).parse(data));
+  return new Set(z.array(ZBlobHash1).parse(data));
 }
 
 // get a list of which files are already have in the blob store
@@ -75,7 +75,7 @@ export async function existingBlobs(fileList: PackageFile[]) {
         object: z.literal("list"),
         items: z.array(
           z.object({
-            h1: ZBlobHash,
+            h1: ZBlobHash1,
             h2: ZBlobHash2,
           }),
         ),

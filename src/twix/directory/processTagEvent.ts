@@ -218,15 +218,15 @@ export async function processTagEvent(
             alog.log(
               `Error processing node ${path}:\n[${info.type}]\n${info.message}`,
             );
-            if (err instanceof AxiosError) {
-              alog.log("Request config:", err.config);
-              alog.log(`Response status: ${err.response?.status}`);
-              alog.log(`Response headers: ${err.response?.headers}`);
-              alog.log("Response data:", err.response?.data);
-            }
-            if (err instanceof Error) {
-              alog.log(`Stack:\n${err.stack}`);
-            }
+            // if (err instanceof AxiosError) {
+            //   alog.log("Request config:", err.config);
+            //   alog.log(`Response status: ${err.response?.status}`);
+            //   alog.log(`Response headers: ${err.response?.headers}`);
+            //   alog.log("Response data:", err.response?.data);
+            // }
+            // if (err instanceof Error) {
+            //   alog.log(`Stack:\n${err.stack}`);
+            // }
           }
         }),
       ),

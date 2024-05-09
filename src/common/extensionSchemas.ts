@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZBlobHash, ZBlobHash2 } from "./blobSchemas.js";
+import { ZBlobHash1, ZBlobHash2 } from "./blobSchemas.js";
 import { CoreFileList, ZCoreFileListEntry } from "./fileList.js";
 import {
   NonNegativeSafeInteger,
@@ -38,10 +38,10 @@ export const ZExtensionOriginGithubRepo = z.object({
   repoName: ZSaneString,
   ownerId: NonNegativeSafeInteger,
   ownerHandle: ZSaneString,
-  commitSha: ZBlobHash,
+  commitSha: ZBlobHash1,
   commitDate: ZSaneDate,
   nodePath: z.string(),
-  nodeSha: ZBlobHash,
+  nodeSha: ZBlobHash1,
   nodeType: z.enum(["blob", "tree"]),
 });
 export type ExtensionOriginGithubRepo = z.infer<
@@ -53,7 +53,7 @@ export const ZExtensionOriginGithubGist = z.object({
   gistId: ZSaneString,
   ownerId: NonNegativeSafeInteger,
   ownerHandle: ZSaneString,
-  commitSha: ZBlobHash,
+  commitSha: ZBlobHash1,
   commitDate: ZSaneDate,
 });
 

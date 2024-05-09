@@ -5,7 +5,7 @@ import {
   ZSaneEmail,
   ZSaneString,
 } from "./saneSchemas.js";
-import { ZBlobHash } from "./blobSchemas.js";
+import { ZBlobHash1 } from "./blobSchemas.js";
 
 /**********************
   Common GitHub Types
@@ -129,7 +129,7 @@ export const ZGithubGist = z.object({
   owner: ZGithubUser,
   history: z.array(
     z.object({
-      version: ZBlobHash,
+      version: ZBlobHash1,
       user: ZGithubUser,
       committed_at: ZSaneDate,
     }),

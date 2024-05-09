@@ -11,7 +11,7 @@ import { makeGenericIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
 import { arrayFromQuery, boolFromQuery } from "../../common/query.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
-import { ZBlobHash, ZBlobHash2 } from "../../common/blobSchemas.js";
+import { ZBlobHash1, ZBlobHash2 } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import path from "node:path";
@@ -92,7 +92,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
 
 router.get("/", async (ctx) => {
   const hashes: string[] = z
-    .array(z.union([ZBlobHash, ZBlobHash2]))
+    .array(z.union([ZBlobHash1, ZBlobHash2]))
     .parse(arrayFromQuery(ctx.query, "hash", []));
   const documents = (
     await listBlobs(hashes, ctx.state.auth, ctx.state.pagination)

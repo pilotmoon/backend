@@ -2,7 +2,7 @@ import { AxiosError } from "axios";
 import { githubWebhookValidator } from "../githubClient.js";
 import { TwixContext, makeRouter } from "../koaWrapper.js";
 import { ZDirectoryWebhookParams, processTagEvent } from "./processTagEvent.js";
-import { getErrorInfo } from "../../common/errors.js";
+import { ApiError, getErrorInfo } from "../../common/errors.js";
 import { ZGithubCreateEvent } from "../../common/githubTypes.js";
 import { ZSubmitGistPayload, processGist } from "./processGist.js";
 
@@ -23,15 +23,15 @@ async function processAsync(willProcessAsync: boolean, ctx: TwixContext) {
 function processError(err: unknown, ctx: TwixContext) {
   const info = getErrorInfo(err);
   ctx.alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
-  if (err instanceof AxiosError) {
-    ctx.alog.log("Request config:", err.config);
-    ctx.alog.log(`Response status: ${err.response?.status}`);
-    ctx.alog.log(`Response headers: ${err.response?.headers}`);
-    ctx.alog.log("Response data:", err.response?.data);
-  }
-  if (err instanceof Error) {
-    ctx.alog.log(`Stack:\n${err.stack}`);
-  }
+  // if (err instanceof AxiosError) {
+  //   ctx.alog.log("Request config:", err.config);
+  //   ctx.alog.log(`Response status: ${err.response?.status}`);
+  //   ctx.alog.log(`Response headers: ${err.response?.headers}`);
+  //   ctx.alog.log("Response data:", err.response?.data);
+  // }
+  // if (err instanceof Error) {
+  //   ctx.alog.log(`Stack:\n${err.stack}`);
+  // }
   ctx.status = info.status;
 }
 
