@@ -105,6 +105,8 @@ export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 // what can be patched in an extension
 export const ZExtensionPatch = z.object({
   published: z.boolean().optional(),
+  reviewed: z.boolean().optional(),
+  reviewComments: z.string().optional(),
   allowOriginChange: z.boolean().optional(),
   allowLowerVersion: z.boolean().optional(),
 });
@@ -119,7 +121,7 @@ export const ZPartialExtensionRecord = ZExtensionPatch.extend({
   origin: ZExtensionOrigin,
   files: ZExtensionFileList,
 });
-export type ExtensionRecord = z.infer<typeof ZPartialExtensionRecord>;
+export type PartialExtensionRecord = z.infer<typeof ZPartialExtensionRecord>;
 
 export function isConfigFileName(name: string) {
   return /^Config(?:[.][^.\/]+)?$/.test(name);

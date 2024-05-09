@@ -5,7 +5,7 @@ import { Auth, AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
 import { handleControllerError } from "../../common/errors.js";
 import { Pagination, paginate } from "../paginate.js";
-import { EventInfo, ZEventInfo } from "../../twix/directory/eventRecord.js";
+import { EventInfo, ZEventInfo } from "../../common/events.js";
 import { days } from "../../common/timeIntervals.js";
 
 // as stored in the database

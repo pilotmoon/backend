@@ -28,7 +28,7 @@ import {
   RepoTagEvent,
   SubmissionResult,
   describeResultArray,
-} from "./eventRecord.js";
+} from "../../common/events.js";
 import {
   PackageFile,
   existingExtensions,
@@ -229,9 +229,7 @@ export async function processTagEvent(
       type: "githubRepoTag",
       timestamp: alog.created,
       logUrl: alog.url ?? null,
-      ownerId: tagInfo.repository.owner.id,
       ownerHandle: tagInfo.repository.owner.login,
-      repoId: tagInfo.repository.id,
       repoName: tagInfo.repository.name,
       repoTag: tagInfo.ref,
       submissions: results,

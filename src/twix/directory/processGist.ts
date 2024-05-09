@@ -14,7 +14,7 @@ import {
 } from "./submitPackage.js";
 import { gitHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
-import { GistEvent, describeResultArray } from "./eventRecord.js";
+import { GistEvent, describeResultArray } from "../../common/events.js";
 import { getRolo } from "../rolo.js";
 
 export const ZSubmitGistPayload = z.object({
@@ -116,10 +116,7 @@ export async function processGist(
     type: "githubGistSubmit",
     timestamp: alog.created,
     logUrl: alog.url ?? null,
-    ownerId: origin.ownerId,
-    ownerHandle: origin.ownerHandle,
-    gistId: origin.gistId,
-    submissions: [submissionResult],
+    submission: submissionResult,
   };
   await getRolo("test").post("events", event);
   return false;

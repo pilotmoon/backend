@@ -6,6 +6,8 @@ import {
   ZBlobSchema,
   gitHash,
 } from "../../common/blobSchemas.js";
+import { getErrorInfo } from "../../common/errors.js";
+import { SubmissionResult, reviewStatus } from "../../common/events.js";
 import {
   ExtensionOrigin,
   ExtensionSubmission,
@@ -17,13 +19,10 @@ import {
 import { ZCoreFileListEntry } from "../../common/fileList.js";
 import { ZGithubBlob } from "../../common/githubTypes.js";
 import { VersionString } from "../../common/versionString.js";
+import { AuthorInfo } from "../../rolo/controllers/authorsController.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
-import { AuthorInfo } from "../../rolo/controllers/authorsController.js";
-import { SubmissionResult, ZEventInfo } from "./eventRecord.js";
-import { ApiError, getErrorInfo } from "../../common/errors.js";
-import { AxiosError } from "axios";
 
 const AUTH_KIND = "test";
 
@@ -199,6 +198,8 @@ export async function submitPackage(
       shortcode: extensionRecord.shortcode,
       version: extensionRecord.version,
       info: extensionRecord.info,
+      reviewStatus: reviewStatus(extensionRecord),
+      reviewComments: extensionRecord.reviewComments ?? null,
     };
   } catch (e) {
     let { stack, innerMessage, ...errorInfo } = getErrorInfo(e);
@@ -206,7 +207,7 @@ export async function submitPackage(
       status: "error",
       origin,
       details: {
-        type: "https://www.pilotmoon.com/api-errors#submit-package",
+        type: "https://pilotmoon.com/api-errors#submit-package",
         title: "Failed to submit package",
         detail: innerMessage ?? errorInfo.message,
         errorInfo,

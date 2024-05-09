@@ -4,28 +4,31 @@ import {
   ZSaneDate,
   ZSaneString,
   extractDefaultString,
-} from "../../common/saneSchemas.js";
-import { ZVersionString } from "../../common/versionString.js";
+} from "./saneSchemas.js";
+import { ZVersionString } from "./versionString.js";
 import {
+  ExtensionPatch,
   ZExtensionInfo,
   ZExtensionOrigin,
-} from "../../common/extensionSchemas.js";
-import { ZProblemDetails } from "../../common/errors.js";
+} from "./extensionSchemas.js";
+import { ZProblemDetails } from "./errors.js";
 
-const ZSubmissionResultCore = z.object({
-  origin: ZExtensionOrigin,
-});
+const ZReviewStatus = z.enum(["pending", "published", "rejected"]);
 
 export const ZSubmissionResult = z.discriminatedUnion("status", [
-  ZSubmissionResultCore.extend({
+  z.object({
     status: z.literal("ok"),
+    origin: ZExtensionOrigin,
     id: z.string(),
     shortcode: z.string(),
     version: ZVersionString,
     info: ZExtensionInfo,
+    reviewStatus: ZReviewStatus,
+    reviewComments: z.string().nullable(),
   }),
-  ZSubmissionResultCore.extend({
+  z.object({
     status: z.literal("error"),
+    origin: ZExtensionOrigin,
     details: ZProblemDetails,
   }),
 ]);
@@ -34,30 +37,41 @@ export type SubmissionResult = z.infer<typeof ZSubmissionResult>;
 const ZEventCommon = z.object({
   timestamp: ZSaneDate,
   logUrl: ZSaneString.nullable(),
-  ownerId: NonNegativeSafeInteger,
-  ownerHandle: ZSaneString,
-  submissions: z.array(ZSubmissionResult),
 });
+
+export const ZStatusChangeEvent = ZEventCommon.extend({
+  type: z.literal("statusChange"),
+  submission: ZSubmissionResult,
+});
+export type StatusChangeEvent = z.infer<typeof ZStatusChangeEvent>;
 
 const ZRepoTagEvent = ZEventCommon.extend({
   type: z.literal("githubRepoTag"),
-  repoId: NonNegativeSafeInteger,
+  ownerHandle: ZSaneString,
   repoName: ZSaneString,
   repoTag: ZSaneString,
+  submissions: z.array(ZSubmissionResult),
 });
 export type RepoTagEvent = z.infer<typeof ZRepoTagEvent>;
 
 const ZGistEvent = ZEventCommon.extend({
   type: z.literal("githubGistSubmit"),
-  gistId: ZSaneString,
+  submission: ZSubmissionResult,
 });
 export type GistEvent = z.infer<typeof ZGistEvent>;
 
 export const ZEventInfo = z.discriminatedUnion("type", [
   ZRepoTagEvent,
   ZGistEvent,
+  ZStatusChangeEvent,
 ]);
 export type EventInfo = z.infer<typeof ZEventInfo>;
+
+export function reviewStatus(rec: ExtensionPatch) {
+  if (rec.published) return "published" as const;
+  if (rec.reviewed) return "rejected" as const;
+  return "pending" as const;
+}
 
 export function describeResult(r: SubmissionResult) {
   if (r.origin.type === "githubRepo") {

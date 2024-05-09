@@ -18,6 +18,9 @@ import {
   ZExtensionRecord,
   processSubmission,
 } from "./extensionsProcessor.js";
+import { createEventInternal } from "./eventsController.js";
+import { extractDefaultString } from "../../common/saneSchemas.js";
+import { StatusChangeEvent, reviewStatus } from "../../common/events.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
@@ -38,7 +41,7 @@ export async function init() {
       { unique: true },
     );
     collection.createIndex({ "info.type": 1 });
-    collection.createIndex({ "info.published": 1 });
+    collection.createIndex({ published: 1 });
     collection.createIndex({ "origin.nodeSha": 1 }, { sparse: true });
     collection.createIndex({ "origin.commitSha": 1 }, { sparse: true });
   }
@@ -157,9 +160,31 @@ export async function updateExtension(
     const result = await dbc(auth.kind).findOneAndUpdate(
       { _id: id },
       { $set: patch },
-      { returnDocument: "after" },
+      { returnDocument: "before" },
     );
-    return !!result.value;
+    if (!result.value) return false;
+    // see if published or reviewed status changed
+    let oldStatus = reviewStatus(result.value);
+    let newStatus = reviewStatus(patch);
+    if (oldStatus !== newStatus) {
+      const event: StatusChangeEvent = {
+        type: "statusChange",
+        timestamp: new Date(),
+        logUrl: null,
+        submission: {
+          status: "ok",
+          origin: result.value.origin,
+          id: result.value._id,
+          shortcode: result.value.shortcode,
+          version: result.value.version,
+          info: result.value.info,
+          reviewStatus: newStatus,
+          reviewComments: patch.reviewComments ?? null,
+        },
+      };
+      createEventInternal(event, auth.kind);
+    }
+    return true;
   } catch (error) {
     handleControllerError(error);
     throw error;

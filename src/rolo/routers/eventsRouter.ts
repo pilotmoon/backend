@@ -1,6 +1,6 @@
 import { makeRouter } from "../koaWrapper.js";
 import { createEvent, listEvents } from "../controllers/eventsController.js";
-import { ZEventInfo } from "../../twix/directory/eventRecord.js";
+import { ZEventInfo } from "../../common/events.js";
 
 export const router = makeRouter({ prefix: "/events" });
 
