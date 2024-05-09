@@ -4,6 +4,7 @@ import { ZDirectoryWebhookParams, processTagEvent } from "./processTagEvent.js";
 import { getErrorInfo } from "../../common/errors.js";
 import { ZGithubCreateEvent } from "../../common/githubTypes.js";
 import { ZSubmitGistPayload, processGist } from "./processGist.js";
+import { GistEvent } from "./eventRecord.js";
 
 export const router = makeRouter();
 
@@ -19,27 +20,14 @@ async function processAsync(willProcessAsync: boolean, ctx: TwixContext) {
   }
 }
 
-function processError(err: unknown, ctx: TwixContext) {
-  const info = getErrorInfo(err);
-  ctx.alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
-  // if (err instanceof AxiosError) {
-  //   ctx.alog.log("Request config:", err.config);
-  //   ctx.alog.log(`Response status: ${err.response?.status}`);
-  //   ctx.alog.log(`Response headers: ${err.response?.headers}`);
-  //   ctx.alog.log("Response data:", err.response?.data);
-  // }
-  // if (err instanceof Error) {
-  //   ctx.alog.log(`Stack:\n${err.stack}`);
-  // }
-  ctx.status = info.status;
-}
-
 router.post("/webhooks/gist", async (ctx) => {
   try {
     const payload = ZSubmitGistPayload.parse(ctx.request.body);
     processAsync(await processGist(payload, ctx.alog), ctx);
   } catch (err) {
-    processError(err, ctx);
+    const info = getErrorInfo(err);
+    ctx.alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
+    ctx.status = info.status;
   } finally {
     ctx.body = ctx.alog.getString();
   }
@@ -71,7 +59,9 @@ router
         ctx.status = 200;
       }
     } catch (err) {
-      processError(err, ctx);
+      const info = getErrorInfo(err);
+      ctx.alog.log(`** Aborting due to error:\n[${info.type}] ${info.message}`);
+      ctx.status = info.status;
     } finally {
       ctx.body = ctx.alog.getString();
     }

@@ -31,35 +31,15 @@ export const ZSubmissionResult = z.discriminatedUnion("status", [
 ]);
 export type SubmissionResult = z.infer<typeof ZSubmissionResult>;
 
-export const ZEventHookOutcome = z.discriminatedUnion("status", [
-  z.object({
-    status: z.literal("ok"),
-    results: z.array(ZSubmissionResult),
-  }),
-  z.object({
-    status: z.literal("error"),
-    details: ZProblemDetails,
-  }),
-]);
-
-const ZEventCore = z.object({
+const ZEventCommon = z.object({
   timestamp: ZSaneDate,
   logUrl: ZSaneString.nullable(),
-});
-
-const ZEventFailure = ZEventCore.extend({
-  type: z.literal("hookFailure"),
-  details: ZProblemDetails,
-});
-export type EventFailure = z.infer<typeof ZEventFailure>;
-
-const ZEventExtHookCore = ZEventCore.extend({
   ownerId: NonNegativeSafeInteger,
   ownerHandle: ZSaneString,
-  outcome: ZEventHookOutcome,
+  submissions: z.array(ZSubmissionResult),
 });
 
-const ZRepoTagEvent = ZEventExtHookCore.extend({
+const ZRepoTagEvent = ZEventCommon.extend({
   type: z.literal("githubRepoTag"),
   repoId: NonNegativeSafeInteger,
   repoName: ZSaneString,
@@ -67,7 +47,7 @@ const ZRepoTagEvent = ZEventExtHookCore.extend({
 });
 export type RepoTagEvent = z.infer<typeof ZRepoTagEvent>;
 
-const ZGistEvent = ZEventExtHookCore.extend({
+const ZGistEvent = ZEventCommon.extend({
   type: z.literal("githubGistSubmit"),
   gistId: NonNegativeSafeInteger,
 });
@@ -76,7 +56,6 @@ export type GistEvent = z.infer<typeof ZGistEvent>;
 export const ZEventRecord = z.discriminatedUnion("type", [
   ZRepoTagEvent,
   ZGistEvent,
-  ZEventFailure,
 ]);
 export type EventRecord = z.infer<typeof ZEventRecord>;
 

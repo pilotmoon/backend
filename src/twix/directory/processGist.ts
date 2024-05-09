@@ -2,7 +2,6 @@ import { z } from "zod";
 import { ZSaneString } from "../../common/saneSchemas.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
-import { log } from "../../common/log.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
 import {
   ZExtensionOriginGithubGist,
@@ -58,8 +57,10 @@ export async function processGist(
     commit.version,
   ]);
   if (existing.has(commit.version)) {
-    alog.log(`Gist commit ${commit.version} is already in the database`);
-    return false;
+    throw new ApiError(
+      400,
+      `Gist commit ${commit.version} has already been submitted`,
+    );
   }
 
   // fetch user info

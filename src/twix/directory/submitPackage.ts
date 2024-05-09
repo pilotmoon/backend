@@ -206,7 +206,7 @@ export async function submitPackage(
       status: "error",
       origin,
       details: {
-        type: "https://api.pilotmoon.com/errors#submit-package",
+        type: "https://www.pilotmoon.com/api-errors#submit-package",
         title: "Failed to submit package",
         detail: innerMessage ?? errorInfo.message,
         errorInfo,
