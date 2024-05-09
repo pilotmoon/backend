@@ -16,7 +16,6 @@ export const ZGithubUser = z.object({
   login: ZSaneString,
   id: NonNegativeSafeInteger,
   type: ZGitHubUserType,
-  avatar_url: ZSaneString,
   html_url: ZSaneString,
   email: ZSaneEmail.nullish(),
   name: ZSaneString.nullish(),

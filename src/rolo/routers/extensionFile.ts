@@ -72,7 +72,7 @@ export async function generateExtensionFile(
   // return zip buffer
   let name = `${
     kebabCase(extractDefaultString(ext.info.name)) ?? "extension"
-  }-${ext.version}-${ext.shortcode}.popclipextz`;
+  }-${ext.shortcode}-${ext.version}.popclipextz`;
   return { data: zip.toBuffer(), name };
 }
 
