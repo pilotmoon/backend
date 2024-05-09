@@ -1,8 +1,7 @@
-import { AxiosError } from "axios";
 import { githubWebhookValidator } from "../githubClient.js";
 import { TwixContext, makeRouter } from "../koaWrapper.js";
 import { ZDirectoryWebhookParams, processTagEvent } from "./processTagEvent.js";
-import { ApiError, getErrorInfo } from "../../common/errors.js";
+import { getErrorInfo } from "../../common/errors.js";
 import { ZGithubCreateEvent } from "../../common/githubTypes.js";
 import { ZSubmitGistPayload, processGist } from "./processGist.js";
 

@@ -40,6 +40,7 @@ export class ActivityLog {
   cursor: number;
   id: string | undefined;
   authKind: AuthKind;
+  url: string | undefined;
   constructor(authKind: AuthKind) {
     this.messages = [];
     this.cursor = 0;
@@ -50,7 +51,7 @@ export class ActivityLog {
       const { data } = await getRolo(this.authKind).post("/logs", { message });
       const { id, url } = ZLogResponse.parse(data);
       this.id = id;
-      return url;
+      return (this.url = url);
     } catch (error) {
       loge("Failed to create remote log: ", error);
     }

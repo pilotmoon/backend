@@ -19,16 +19,17 @@ import {
   ZGithubTree,
   ZGithubUser,
 } from "../../common/githubTypes.js";
-import {
-  ZSaneIdentifier,
-  ZSaneString,
-  extractDefaultString,
-} from "../../common/saneSchemas.js";
+import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
 import { sleep } from "../../common/sleep.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
 import { ActivityLog } from "../activityLog";
 import { restClient as gh } from "../githubClient.js";
-import { SubmissionResult } from "./eventRecord.js";
+import {
+  RepoTagEvent,
+  SubmissionResult,
+  describeResult,
+  describeResultArray,
+} from "./eventRecord.js";
 import {
   PackageFile,
   existingExtensions,
@@ -179,9 +180,9 @@ export async function processTagEvent(
 
   // use nexttick so that we return a webhook response before
   // beginning the processing
+  const results: SubmissionResult[] = [];
   nextTick(async () => {
     const limit = pLimit(10);
-    const results: SubmissionResult[] = [];
     await Promise.all(
       newNodes.map((node) =>
         limit(async () => {
@@ -221,35 +222,25 @@ export async function processTagEvent(
     alog.log("All nodes processed");
     alog.log(`The include directive matched ${matchingNodes.length} paths.`);
     alog.log(`There were changes to ${newNodes.length} of those paths.`);
-    let okResults = results.filter((r) => r.status === "ok");
-    let errorResults = results.filter((r) => r.status === "error");
-    alog.log(
-      `There were ${okResults.length} successful submissions and ${errorResults.length} failed submissions.`,
-    );
-    function describeResult(r: SubmissionResult) {
-      if (r.origin.type !== "githubRepo") {
-        return `<unknown origin>`;
-      }
-      if (r.status === "ok") {
-        return `✅ ${r.origin.nodePath}\n'${extractDefaultString(
-          r.info.name,
-        )}' (${r.info.identifier})\n`;
-      } else {
-        return `🚫 ${r.origin.nodePath}\n${r.details.title}\n${r.details.detail}\n`;
-      }
-    }
-
-    alog.log(
-      `\nSuccessful submissions:\n\n${okResults
-        .map(describeResult)
-        .join("\n")}`,
-    );
-    alog.log(
-      `Failed submissions:\n\n${errorResults.map(describeResult).join("\n")}`,
-    );
+    alog.log(describeResultArray(results));
     alog.log("Done");
+
+    // const event: RepoTagEvent = {
+    //   type: "githubRepoTag",
+    //   timestamp: new Date(),
+    //   logUrl: null,
+    //   ownerId: tagInfo.repository.owner.id,
+    //   ownerHandle: tagInfo.repository.owner.login,
+    //   repoId: tagInfo.repository.id,
+    //   repoName: tagInfo.repository.name,
+    //   repoTag: tagInfo.ref,
+    //   outcome: {
+    //     status: "ok",
+    //     results: results,
+    //   },
+    // };
   });
-  return true;
+  return true; // indicates that processin continues asynchronously
 }
 
 // if symlink is relative link to a blob in the repo, resolve it

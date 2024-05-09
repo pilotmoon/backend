@@ -15,6 +15,7 @@ import {
 } from "./submitPackage.js";
 import { gitHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
+import { describeResultArray } from "./eventRecord.js";
 
 export const ZSubmitGistPayload = z.object({
   url: ZSaneString,
@@ -24,7 +25,7 @@ export type SubmitGistPayload = z.infer<typeof ZSubmitGistPayload>;
 export async function processGist(
   payload: SubmitGistPayload,
   alog: ActivityLog,
-) {
+): Promise<boolean> {
   alog.log(`Processing gist: ${payload.url}`);
 
   // extract gist id from url
@@ -39,9 +40,7 @@ export async function processGist(
   const gistId = match[1];
   alog.log(`Fetching gist ${gistId} from GitHub API`);
   const response = await gh().get(`/gists/${gistId}`);
-  log(`Response:`, response.data);
   const gist = ZGithubGist.parse(response.data);
-  log(`Response:`, gist);
 
   // check the gist is public
   if (!gist.public) {
@@ -99,7 +98,7 @@ export async function processGist(
   }
 
   // submit package
-  const result = await submitPackage(
+  const submissionResult = await submitPackage(
     origin,
     author,
     null,
@@ -107,5 +106,21 @@ export async function processGist(
     gistId,
     alog,
   );
+  alog.log("Gist processed");
+  alog.log(describeResultArray([submissionResult]));
+  alog.log("Done");
+
+  // let result = {
+  //   type: "githubGistSubmit",
+  //   timestamp: new Date(),
+  //   logUrl: null,
+  //   ownerId: origin.ownerId,
+  //   ownerHandle: origin.ownerHandle,
+  //   gistId: payload,
+  //   outcome: {
+  //     status: "ok",
+  //     results: [submissionResult],
+  //   },
+  // };
   return false;
 }
