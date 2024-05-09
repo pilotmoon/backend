@@ -21,7 +21,7 @@ import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
 import { AuthorInfo } from "../../rolo/controllers/authorsController.js";
-import { SubmissionResult, ZEventRecord } from "./eventRecord.js";
+import { SubmissionResult, ZEventInfo } from "./eventRecord.js";
 import { ApiError, getErrorInfo } from "../../common/errors.js";
 import { AxiosError } from "axios";
 

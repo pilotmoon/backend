@@ -17,6 +17,7 @@ import { asciiHello } from "./static.js";
 
 import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
 import { housekeep as housekeepLogs } from "./controllers/logsController.js";
+import { housekeep as housekeepEvents } from "./controllers/eventsController.js";
 
 import { init as initApiKeysController } from "./controllers/apiKeysController.js";
 import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
@@ -25,6 +26,7 @@ import { init as initLogsController } from "./controllers/logsController.js";
 import { init as initBlobsController } from "./controllers/blobsController.js";
 import { init as initExtensionsController } from "./controllers/extensionsController.js";
 import { init as initAuthorsController } from "./controllers/authorsController.js";
+import { init as initEventsController } from "./controllers/eventsController.js";
 
 import { init as initLogAccess } from "./middleware/logAccess.js";
 
@@ -38,6 +40,7 @@ import { router as logsRouter } from "./routers/logsRouter.js";
 import { router as blobsRouter } from "./routers/blobsRouter.js";
 import { router as extensionsRouter } from "./routers/extensionsRouter.js";
 import { router as authorsRouter } from "./routers/authorsRouter.js";
+import { router as eventsRouter } from "./routers/eventsRouter.js";
 import { setSecretKey } from "./secrets.js";
 
 // first set the encryption key, if we have one
@@ -56,6 +59,7 @@ mainRouter.use(logsRouter.routes());
 mainRouter.use(blobsRouter.routes());
 mainRouter.use(extensionsRouter.routes());
 mainRouter.use(authorsRouter.routes());
+mainRouter.use(eventsRouter.routes());
 
 // the root router simply serves a title screen, bypassing auth
 const rootRouter = makeRouter();
@@ -108,6 +112,7 @@ async function housekeep() {
   log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
   await housekeepLogAccess();
   await housekeepLogs();
+  await housekeepEvents();
 }
 const housekeepingTimer = setInterval(housekeep, hours(1));
 
@@ -159,6 +164,7 @@ await assertSuccess([
   initBlobsController(),
   initExtensionsController(),
   initAuthorsController(),
+  initEventsController(),
 ]);
 await housekeep();
 log("Startup complete".green);

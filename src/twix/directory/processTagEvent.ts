@@ -27,7 +27,6 @@ import { restClient as gh } from "../githubClient.js";
 import {
   RepoTagEvent,
   SubmissionResult,
-  describeResult,
   describeResultArray,
 } from "./eventRecord.js";
 import {
@@ -35,6 +34,7 @@ import {
   existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
+import { getRolo } from "../rolo.js";
 
 // webhook param
 const ZGlobPatternArray = z.union([
@@ -225,20 +225,18 @@ export async function processTagEvent(
     alog.log(describeResultArray(results));
     alog.log("Done");
 
-    // const event: RepoTagEvent = {
-    //   type: "githubRepoTag",
-    //   timestamp: new Date(),
-    //   logUrl: null,
-    //   ownerId: tagInfo.repository.owner.id,
-    //   ownerHandle: tagInfo.repository.owner.login,
-    //   repoId: tagInfo.repository.id,
-    //   repoName: tagInfo.repository.name,
-    //   repoTag: tagInfo.ref,
-    //   outcome: {
-    //     status: "ok",
-    //     results: results,
-    //   },
-    // };
+    const event: RepoTagEvent = {
+      type: "githubRepoTag",
+      timestamp: alog.created,
+      logUrl: alog.url ?? null,
+      ownerId: tagInfo.repository.owner.id,
+      ownerHandle: tagInfo.repository.owner.login,
+      repoId: tagInfo.repository.id,
+      repoName: tagInfo.repository.name,
+      repoTag: tagInfo.ref,
+      submissions: results,
+    };
+    await getRolo("test").post("events", event);
   });
   return true; // indicates that processin continues asynchronously
 }

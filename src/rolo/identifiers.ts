@@ -23,6 +23,7 @@ export const collectionNames = [
   "extensions",
   "blobs",
   "authors",
+  "events",
 ] as const;
 export const objectNames = [
   "apiKey",
@@ -40,6 +41,7 @@ export const objectNamesWithoutId = [
   "record",
   "productConfig",
   "licenseKeyFile",
+  "event",
 ] as const;
 
 // base definitions for keys and identifiers

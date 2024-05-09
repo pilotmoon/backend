@@ -23,27 +23,27 @@ const ZObject = z
   })
   .passthrough();
 
+// no id or auto id
+const ZRelaxedObject = z
+  .object({
+    object: z.enum(objectNamesWithoutId),
+    created: z.date().optional(),
+  })
+  .passthrough();
+
 // schema for lists in responses
 const ZList = z
   .object({
     object: z.literal("list"),
     pagination: z.record(z.unknown()),
     count: z.number().int().min(0),
-    items: z.array(ZObject),
+    items: z.union([z.array(ZObject), z.array(ZRelaxedObject)]),
   })
   .passthrough();
 
 // generic schema for all responses. this is used to validate and format
 // all responses to the client.
-const ZResponse = z.union([
-  ZObject,
-  ZList,
-  z
-    .object({
-      object: z.enum(objectNamesWithoutId),
-    })
-    .passthrough(),
-]);
+const ZResponse = z.union([ZObject, ZList, ZRelaxedObject]);
 
 // modify all response bodies.
 // also, add livemode key

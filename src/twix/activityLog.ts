@@ -36,12 +36,14 @@ function formatMessage(args: any[]) {
 }
 
 export class ActivityLog {
+  created: Date;
   messages: string[];
   cursor: number;
   id: string | undefined;
   authKind: AuthKind;
   url: string | undefined;
   constructor(authKind: AuthKind) {
+    this.created = new Date();
     this.messages = [];
     this.cursor = 0;
     this.authKind = authKind;

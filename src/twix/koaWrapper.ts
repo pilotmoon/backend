@@ -6,6 +6,7 @@ export interface TwixState extends Koa.DefaultState {}
 
 export interface TwixContext extends Koa.DefaultContext {
   alog: ActivityLog;
+  timestamp: Date;
 }
 
 export function makeServer() {

@@ -49,15 +49,15 @@ export type RepoTagEvent = z.infer<typeof ZRepoTagEvent>;
 
 const ZGistEvent = ZEventCommon.extend({
   type: z.literal("githubGistSubmit"),
-  gistId: NonNegativeSafeInteger,
+  gistId: ZSaneString,
 });
 export type GistEvent = z.infer<typeof ZGistEvent>;
 
-export const ZEventRecord = z.discriminatedUnion("type", [
+export const ZEventInfo = z.discriminatedUnion("type", [
   ZRepoTagEvent,
   ZGistEvent,
 ]);
-export type EventRecord = z.infer<typeof ZEventRecord>;
+export type EventInfo = z.infer<typeof ZEventInfo>;
 
 export function describeResult(r: SubmissionResult) {
   if (r.origin.type === "githubRepo") {
