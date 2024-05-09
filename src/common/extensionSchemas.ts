@@ -3,12 +3,43 @@ import { ZBlobHash1, ZBlobHash2 } from "./blobSchemas.js";
 import { CoreFileList, ZCoreFileListEntry } from "./fileList.js";
 import {
   NonNegativeSafeInteger,
+  PositiveSafeInteger,
+  ZLocalizableString,
   ZSaneDate,
+  ZSaneIdentifier,
+  ZSaneLongString,
   ZSaneString,
 } from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
 import { GithubUser, ZGitHubUserType } from "./githubTypes.js";
-import { createHash } from "node:crypto";
+
+export const ZExtensionAppInfo = z.object({
+  name: ZSaneString,
+  link: ZSaneString,
+});
+export type ExtensionAppInfo = z.infer<typeof ZExtensionAppInfo>;
+
+const ZIconComponents = z.object({
+  prefix: ZSaneString,
+  payload: ZSaneLongString,
+  modifiers: z.record(z.unknown()),
+});
+export type IconComponents = z.infer<typeof ZIconComponents>;
+
+export const ZExtensionInfo = z.object({
+  type: z.literal("popclip"),
+  name: ZLocalizableString,
+  identifier: ZSaneIdentifier,
+  description: ZLocalizableString,
+  keywords: ZSaneString.optional(),
+  icon: ZIconComponents.optional(),
+  actionTypes: z.array(ZSaneString).optional(),
+  entitlements: z.array(ZSaneString).optional(),
+  apps: z.array(ZExtensionAppInfo).optional(),
+  macosVersion: ZSaneString.optional(),
+  popclipVersion: PositiveSafeInteger.optional(),
+});
+export type ExtensionInfo = z.infer<typeof ZExtensionInfo>;
 
 export const ZGithubAuthorInfo = z.object({
   type: z.literal("github"),
@@ -79,6 +110,17 @@ export const ZExtensionPatch = z.object({
 });
 export type ExtensionPatch = z.infer<typeof ZExtensionPatch>;
 
+export const ZPartialExtensionRecord = ZExtensionPatch.extend({
+  object: z.literal("extension"),
+  created: z.coerce.date(),
+  shortcode: z.string(),
+  version: ZVersionString,
+  info: ZExtensionInfo,
+  origin: ZExtensionOrigin,
+  files: ZExtensionFileList,
+});
+export type ExtensionRecord = z.infer<typeof ZPartialExtensionRecord>;
+
 export function isConfigFileName(name: string) {
   return /^Config(?:[.][^.\/]+)?$/.test(name);
 }
@@ -131,18 +173,6 @@ export function canonicalSort(fileList: CoreFileList) {
       caseFirst: "upper",
     }),
   );
-}
-
-// this is the "internal" digest, not the one used for extension signing
-// which requires the full contents of each file to be hashed
-export function calculateDigest(fileList: ExtensionFileList) {
-  canonicalSort(fileList);
-  const hasher = createHash("sha256");
-  hasher.update(`files ${fileList.length}\0`);
-  for (const file of fileList) {
-    hasher.update(`${file.hash} ${file.executable ? "1" : "0"} ${file.path}\0`);
-  }
-  return hasher.digest();
 }
 
 export function githubAuthorInfoFromUser(user: GithubUser): GithubAuthorInfo {

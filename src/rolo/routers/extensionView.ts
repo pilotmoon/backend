@@ -1,21 +1,18 @@
 import { z } from "zod";
 import {
   LocalizableString,
-  ZLocalizableString,
   ZSaneDate,
   ZSaneIdentifier,
+  extractDefaultString,
 } from "../../common/saneSchemas.js";
 import { ZVersionString } from "../../common/versionString.js";
-import {
-  ExtensionRecord,
-  IconComponents,
-  ZExtensionAppInfo,
-  ZExtensionRecord,
-} from "../controllers/extensionsProcessor.js";
+import { ZExtensionRecord } from "../controllers/extensionsProcessor.js";
 import {
   ExtensionFileList,
   ExtensionOrigin,
-} from "../../common/extensionSchemas";
+  IconComponents,
+  ZExtensionAppInfo,
+} from "../../common/extensionSchemas.js";
 import { endpointFileName } from "./blobsRouter.js";
 import { descriptorStringFromComponents } from "@pilotmoon/fudge";
 import { truncatedHash } from "../../common/blobSchemas.js";
@@ -66,10 +63,6 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   previousVersions: z.array(ZPartialPopClipDirectoryView),
 });
 type PopClipDirectoryView = z.infer<typeof ZPopClipDirectoryView>;
-
-export function extractDefaultString(ls?: LocalizableString) {
-  return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
-}
 
 function extractAltStrings(
   name: LocalizableString,

@@ -3,10 +3,10 @@ import { kebabCase } from "case-anything";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
+import { extractDefaultString } from "../../common/saneSchemas.js";
 import { AuthKind } from "../auth.js";
 import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { getRegistryObjectInternal } from "../controllers/registriesController.js";
-import { extractDefaultString } from "./extensionView.js";
 import { Signer } from "../signext.js";
 
 let _excludeRegex: RegExp;

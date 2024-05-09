@@ -25,3 +25,7 @@ export const ZLocalizableString = z.union([
     .catchall(ZSaneString),
 ]);
 export type LocalizableString = z.infer<typeof ZLocalizableString>;
+
+export function extractDefaultString(ls?: LocalizableString) {
+  return typeof ls === "string" ? ls : ls?.en ?? "<missing>";
+}

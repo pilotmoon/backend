@@ -1,17 +1,13 @@
-import { AxiosError } from "axios";
+import path from "node:path";
 import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
-import { ApiError, getErrorInfo } from "../../common/errors.js";
+import { ApiError } from "../../common/errors.js";
 import {
   ZExtensionOriginGithubRepo,
   githubAuthorInfoFromUser,
 } from "../../common/extensionSchemas.js";
-import { ZSaneIdentifier, ZSaneString } from "../../common/saneSchemas.js";
-import { sleep } from "../../common/sleep.js";
-import { ActivityLog } from "../activityLog";
-import { restClient as gh } from "../githubClient.js";
 import {
   GithubBlobNode,
   GithubNode,
@@ -19,19 +15,25 @@ import {
   ZGithubBlob,
   ZGithubCommitListEntry,
   ZGithubCommitObject,
-  ZGithubNode,
   ZGithubRefObject,
   ZGithubTree,
   ZGithubUser,
 } from "../../common/githubTypes.js";
+import {
+  ZSaneIdentifier,
+  ZSaneString,
+  extractDefaultString,
+} from "../../common/saneSchemas.js";
+import { sleep } from "../../common/sleep.js";
 import { VersionString, ZVersionString } from "../../common/versionString.js";
+import { ActivityLog } from "../activityLog";
+import { restClient as gh } from "../githubClient.js";
+import { SubmissionResult } from "./eventRecord.js";
 import {
   PackageFile,
   existingExtensions,
   submitPackage,
 } from "./submitPackage.js";
-import { log } from "../../common/log.js";
-import path from "node:path";
 
 // webhook param
 const ZGlobPatternArray = z.union([
@@ -88,7 +90,7 @@ export async function processTagEvent(
   const version = parseVersion(tagInfo.ref, params.versionPrefix ?? "");
 
   // list of nodes to be processed
-  let matchingNodes: GithubNode[] = [];
+  const matchingNodes: GithubNode[] = [];
 
   // if include rules are defined, get the matching nodes
   if (!params.include) {
@@ -134,13 +136,13 @@ export async function processTagEvent(
     "origin.nodeSha",
     matchingNodes.map((n) => n.sha),
   );
-  matchingNodes = matchingNodes.filter((node) => !gotNodeShas.has(node.sha));
+  const newNodes = matchingNodes.filter((node) => !gotNodeShas.has(node.sha));
   if (matchingNodes.length === 0) {
     alog.log("All nodes are already in the database");
     return false;
   }
   alog.log(`${gotNodeShas.size} nodes are already in the database`);
-  alog.log(`Processing ${matchingNodes.length} new nodes`);
+  alog.log(`Processing ${newNodes.length} new nodes`);
 
   // get the ref info to find the commit sha
   const refResponse = await gh().get(
@@ -179,30 +181,30 @@ export async function processTagEvent(
   // beginning the processing
   nextTick(async () => {
     const limit = pLimit(10);
-    const errors: string[] = [];
+    const results: SubmissionResult[] = [];
     await Promise.all(
-      matchingNodes.map((node) =>
+      newNodes.map((node) =>
         limit(async () => {
-          try {
-            const commit = await getChangeCommit(
-              node,
-              tagInfo.repository.full_name,
-              taggedCommitInfo.sha,
-            );
-            const nodeOrigin = ZExtensionOriginGithubRepo.parse({
-              ...repoOrigin,
-              commitSha: commit.sha,
-              commitDate: commit.date,
-              nodePath: node.path,
-              nodeSha: node.sha,
-              nodeType: node.type,
-            });
-            const files = await getPackageFiles(
-              node,
-              tree.tree,
-              tagInfo.repository.full_name,
-              alog,
-            );
+          const commit = await getChangeCommit(
+            node,
+            tagInfo.repository.full_name,
+            taggedCommitInfo.sha,
+          );
+          const nodeOrigin = ZExtensionOriginGithubRepo.parse({
+            ...repoOrigin,
+            commitSha: commit.sha,
+            commitDate: commit.date,
+            nodePath: node.path,
+            nodeSha: node.sha,
+            nodeType: node.type,
+          });
+          const files = await getPackageFiles(
+            node,
+            tree.tree,
+            tagInfo.repository.full_name,
+            alog,
+          );
+          results.push(
             await submitPackage(
               nodeOrigin,
               author,
@@ -210,37 +212,42 @@ export async function processTagEvent(
               files,
               node.path,
               alog,
-            );
-          } catch (err) {
-            const info = getErrorInfo(err);
-            const path = node?.path ?? "<root>";
-            errors.push(`* Path ${path}:\n[${info.type}]\n${info.message}`);
-            alog.log(
-              `Error processing node ${path}:\n[${info.type}]\n${info.message}`,
-            );
-            // if (err instanceof AxiosError) {
-            //   alog.log("Request config:", err.config);
-            //   alog.log(`Response status: ${err.response?.status}`);
-            //   alog.log(`Response headers: ${err.response?.headers}`);
-            //   alog.log("Response data:", err.response?.data);
-            // }
-            // if (err instanceof Error) {
-            //   alog.log(`Stack:\n${err.stack}`);
-            // }
-          }
+            ),
+          );
         }),
       ),
     );
     await sleep(0);
     alog.log("All nodes processed");
-    if (errors.length > 0) {
-      alog.log(`There were errors with ${errors.length} nodes`);
-      for (const error of errors) {
-        alog.log(`\n${error}`);
+    alog.log(`The include directive matched ${matchingNodes.length} paths.`);
+    alog.log(`There were changes to ${newNodes.length} of those paths.`);
+    let okResults = results.filter((r) => r.status === "ok");
+    let errorResults = results.filter((r) => r.status === "error");
+    alog.log(
+      `There were ${okResults.length} successful submissions and ${errorResults.length} failed submissions.`,
+    );
+    function describeResult(r: SubmissionResult) {
+      if (r.origin.type !== "githubRepo") {
+        return `<unknown origin>`;
       }
-    } else {
-      alog.log("No errors");
+      if (r.status === "ok") {
+        return `✅ ${r.origin.nodePath}\n'${extractDefaultString(
+          r.info.name,
+        )}' (${r.info.identifier})\n`;
+      } else {
+        return `🚫 ${r.origin.nodePath}\n${r.details.title}\n${r.details.detail}\n`;
+      }
     }
+
+    alog.log(
+      `\nSuccessful submissions:\n\n${okResults
+        .map(describeResult)
+        .join("\n")}`,
+    );
+    alog.log(
+      `Failed submissions:\n\n${errorResults.map(describeResult).join("\n")}`,
+    );
+    alog.log("Done");
   });
   return true;
 }

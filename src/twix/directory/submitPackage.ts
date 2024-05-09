@@ -10,6 +10,7 @@ import {
   ExtensionOrigin,
   ExtensionSubmission,
   ZExtensionSubmission,
+  ZPartialExtensionRecord,
   canonicalSort,
   validateFileList,
 } from "../../common/extensionSchemas.js";
@@ -20,6 +21,9 @@ import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
 import { AuthorInfo } from "../../rolo/controllers/authorsController.js";
+import { SubmissionResult, ZEvent } from "./eventRecord.js";
+import { ApiError, getErrorInfo } from "../../common/errors.js";
+import { AxiosError } from "axios";
 
 const AUTH_KIND = "test";
 
@@ -98,91 +102,117 @@ export async function submitPackage(
   displayName: string,
   alog: ActivityLog,
 ) {
-  const errors = validateFileList(fileList);
-  if (errors.length > 0) {
-    throw new Error(errors.join("\n"));
-  }
+  let result: SubmissionResult;
+  try {
+    const errors = validateFileList(fileList);
+    if (errors.length > 0) {
+      throw new Error(errors.join("\n"));
+    }
 
-  const gotHashes = await existingBlobs(fileList);
-  const processedFiles: GitSha256File[] = [];
-  async function processFile(file: PackageFile) {
-    const existing = gotHashes.get(file.hash);
-    let processedFile: GitSha256File;
-    if (file.content) {
-      if (file.type !== "gitSha256File") {
-        throw new Error("Internal: file must not have content");
-      }
-      processedFile = file;
-    } else {
-      if (file.type !== "gitSha1File") {
-        throw new Error("Internal: file must have content");
-      }
-      if (origin.type !== "githubRepo") {
-        throw new Error("gitSha1File must have githubRepo origin");
-      }
-      if (existing) {
-        processedFile = {
-          ...file,
-          type: "gitSha256File" as const,
-          hash: existing.h2,
-        };
+    const gotHashes = await existingBlobs(fileList);
+    const processedFiles: GitSha256File[] = [];
+    async function processFile(file: PackageFile) {
+      const existing = gotHashes.get(file.hash);
+      let processedFile: GitSha256File;
+      if (file.content) {
+        if (file.type !== "gitSha256File") {
+          throw new Error("Internal: file must not have content");
+        }
+        processedFile = file;
       } else {
-        const ghResponse = await gh().get(
-          `/repos/${origin.ownerHandle}/${origin.repoName}/git/blobs/${file.hash}`,
-        );
-        const ghBlob = ZGithubBlob.parse(ghResponse.data);
-        const content = Buffer.from(ghBlob.content, "base64");
-        if (content.length !== ghBlob.size || content.length !== file.size) {
+        if (file.type !== "gitSha1File") {
+          throw new Error("Internal: file must have content");
+        }
+        if (origin.type !== "githubRepo") {
+          throw new Error("gitSha1File must have githubRepo origin");
+        }
+        if (existing) {
+          processedFile = {
+            ...file,
+            type: "gitSha256File" as const,
+            hash: existing.h2,
+          };
+        } else {
+          const ghResponse = await gh().get(
+            `/repos/${origin.ownerHandle}/${origin.repoName}/git/blobs/${file.hash}`,
+          );
+          const ghBlob = ZGithubBlob.parse(ghResponse.data);
+          const content = Buffer.from(ghBlob.content, "base64");
+          if (content.length !== ghBlob.size || content.length !== file.size) {
+            throw new Error("Size mismatch");
+          }
+          if (gitHash(content, "sha1").toString("hex") !== file.hash) {
+            throw new Error("Hash mismatch");
+          }
+          processedFile = {
+            ...file,
+            type: "gitSha256File" as const,
+            content,
+            hash: gitHash(content, "sha256").toString("hex"),
+          };
+        }
+      }
+
+      // upload if we have new content
+      if (!existing && processedFile?.content) {
+        const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
+          data: processedFile.content.toString("base64"),
+        });
+        const dbBlob = ZBlobSchema.parse(dbResponse.data);
+        if (dbBlob.size !== processedFile.size) {
           throw new Error("Size mismatch");
         }
-        if (gitHash(content, "sha1").toString("hex") !== file.hash) {
-          throw new Error("Hash mismatch");
-        }
-        processedFile = {
-          ...file,
-          type: "gitSha256File" as const,
-          content,
-          hash: gitHash(content, "sha256").toString("hex"),
-        };
       }
+      processedFiles.push(processedFile);
     }
 
-    // upload if we have new content
-    if (!existing && processedFile?.content) {
-      const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
-        data: processedFile.content.toString("base64"),
-      });
-      const dbBlob = ZBlobSchema.parse(dbResponse.data);
-      if (dbBlob.size !== processedFile.size) {
-        throw new Error("Size mismatch");
-      }
+    // build the file list
+    const limit = pLimit(5);
+    await Promise.all(fileList.map((node) => limit(processFile, node)));
+    canonicalSort(processedFiles);
+
+    // print something
+    alog.log(`Gathered ${processedFiles.length} files for '${displayName}':`);
+    for (const node of processedFiles) {
+      alog.log(`  ${node.path}`);
     }
-    processedFiles.push(processedFile);
+    alog.log(`Version: ${version}`);
+
+    // now we have all the files we need to submit the package
+    const submission: ExtensionSubmission = {
+      version,
+      origin,
+      author,
+      files: processedFiles,
+    };
+    const submissionResponse = await getRolo(AUTH_KIND).post(
+      "extensions",
+      ZExtensionSubmission.parse(submission),
+    );
+    const extensionRecord = ZPartialExtensionRecord.extend({
+      id: z.string(),
+    }).parse(submissionResponse.data);
+    result = {
+      status: "ok",
+      origin,
+      id: extensionRecord.id,
+      shortcode: extensionRecord.shortcode,
+      version: extensionRecord.version,
+      info: extensionRecord.info,
+    };
+  } catch (e) {
+    let { stack, innerMessage, ...errorInfo } = getErrorInfo(e);
+    result = {
+      status: "error",
+      origin,
+      details: {
+        type: "https://api.pilotmoon.com/errors#submit-package",
+        title: "Failed to submit package",
+        detail: innerMessage ?? errorInfo.message,
+        errorInfo,
+      },
+    };
   }
-
-  // build the file list
-  const limit = pLimit(5);
-  await Promise.all(fileList.map((node) => limit(processFile, node)));
-  canonicalSort(processedFiles);
-
-  // print something
-  alog.log(`Gathered ${processedFiles.length} files for '${displayName}':`);
-  for (const node of processedFiles) {
-    alog.log(`  ${node.path}`);
-  }
-  alog.log(`Version: ${version}`);
-
-  // now we have all the files we need to submit the package
-  const submission: ExtensionSubmission = {
-    version,
-    origin,
-    author,
-    files: processedFiles,
-  };
-  const submissionResponse = await getRolo(AUTH_KIND).post(
-    "extensions",
-    ZExtensionSubmission.parse(submission),
-  );
-  // submissionResponse.data.files = `${submission.files.length} files`;
-  alog.log(`Submitted package. Response:`, submissionResponse.data);
+  alog.log(`Submission result:`, result);
+  return result;
 }

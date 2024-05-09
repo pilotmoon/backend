@@ -99,6 +99,13 @@ export async function processGist(
   }
 
   // submit package
-  await submitPackage(origin, author, null, packageFiles, gistId, alog);
+  const result = await submitPackage(
+    origin,
+    author,
+    null,
+    packageFiles,
+    gistId,
+    alog,
+  );
   return false;
 }

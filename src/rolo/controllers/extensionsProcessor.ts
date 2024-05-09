@@ -12,21 +12,18 @@ import { gitHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import {
   ExtensionFileList,
+  ExtensionInfo,
   ExtensionOrigin,
   ExtensionSubmission,
+  IconComponents,
   ZExtensionFileList,
+  ZExtensionInfo,
   ZExtensionOrigin,
   ZExtensionPatch,
+  ZPartialExtensionRecord,
   isConfigFileName,
 } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
-import {
-  PositiveSafeInteger,
-  ZLocalizableString,
-  ZSaneIdentifier,
-  ZSaneLongString,
-  ZSaneString,
-} from "../../common/saneSchemas.js";
 import {
   ZVersionString,
   compareVersionStrings,
@@ -39,43 +36,8 @@ import {
 } from "./authorsController.js";
 import { createBlobInternal, readBlobInternal } from "./blobsController.js";
 
-export const ZExtensionAppInfo = z.object({
-  name: ZSaneString,
-  link: ZSaneString,
-});
-export type ExtensionAppInfo = z.infer<typeof ZExtensionAppInfo>;
-
-const ZIconComponents = z.object({
-  prefix: ZSaneString,
-  payload: ZSaneLongString,
-  modifiers: z.record(z.unknown()),
-});
-export type IconComponents = z.infer<typeof ZIconComponents>;
-
-export const ZExtensionInfo = z.object({
-  type: z.literal("popclip"),
-  name: ZLocalizableString,
-  identifier: ZSaneIdentifier,
-  description: ZLocalizableString,
-  keywords: ZSaneString.optional(),
-  icon: ZIconComponents.optional(),
-  actionTypes: z.array(ZSaneString).optional(),
-  entitlements: z.array(ZSaneString).optional(),
-  apps: z.array(ZExtensionAppInfo).optional(),
-  macosVersion: ZSaneString.optional(),
-  popclipVersion: PositiveSafeInteger.optional(),
-});
-type ExtensionInfo = z.infer<typeof ZExtensionInfo>;
-
-export const ZExtensionRecord = ZExtensionPatch.extend({
+export const ZExtensionRecord = ZPartialExtensionRecord.extend({
   _id: z.string(),
-  object: z.literal("extension"),
-  created: z.date(),
-  shortcode: z.string(),
-  version: ZVersionString,
-  info: ZExtensionInfo,
-  origin: ZExtensionOrigin,
-  files: ZExtensionFileList,
   // can be added in post-processing
   firstCreated: z.date().optional(),
   download: z.string().optional(),

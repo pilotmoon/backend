@@ -1,8 +1,20 @@
 import { STATUS_CODES } from "node:http";
 import { AxiosError } from "axios";
 import { MongoServerError } from "mongodb";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { PositiveSafeInteger } from "./saneSchemas.js";
+
+export const ZProblemDetails = z
+  .object({
+    type: z.string(),
+    status: PositiveSafeInteger.optional(),
+    title: z.string().optional(),
+    detail: z.string().optional(),
+    instance: z.string().optional(),
+  })
+  .passthrough();
+export type ProblemDetails = z.infer<typeof ZProblemDetails>;
 
 export class ApiError extends Error {
   constructor(
@@ -26,6 +38,7 @@ export function handleControllerError(error: unknown) {
 // type to represent information about an error
 interface ErrorInfo {
   message: string;
+  innerMessage?: string;
   type: string;
   status: number;
   stack?: string;
@@ -35,43 +48,29 @@ interface ErrorInfo {
 export function getErrorInfo(error: unknown): ErrorInfo {
   // get some kind of message
   let message;
+  let innerMessage = undefined;
   let type;
+  let status = 500;
+  if (error instanceof ApiError) {
+    type = "ApiError";
+    message = error.message;
+    status = error.status;
+  }
   if (error instanceof ZodError) {
     type = "ZodError";
     message = fromZodError(error).message;
+    status = 400;
   } else if (error instanceof AxiosError) {
     type = "AxiosError";
     message = error.message;
-    const innerError = error.response?.headers["x-error-message"];
-    if (typeof innerError === "string") {
-      message += ` / ${innerError}`;
-    }
+    status = error.response?.status ?? status;
+    innerMessage = error.response?.headers["x-error-message"];
   } else if (error instanceof Error) {
+    type = error.name;
     message = error.message;
   } else {
+    type = "UnknownError";
     message = String(error);
-  }
-
-  // try to get type name from error
-  if (!type) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      typeof error.name === "string"
-    ) {
-      type = error.name;
-    } else {
-      type = "UnknownError";
-    }
-  }
-
-  // adjust status code for known errors
-  let status = 500;
-  if (error instanceof ApiError) {
-    status = error.status;
-  } else if (error instanceof ZodError) {
-    status = 400;
   }
 
   let stack = undefined;
@@ -79,7 +78,7 @@ export function getErrorInfo(error: unknown): ErrorInfo {
     stack = error.stack;
   }
 
-  return { message, type, status, stack };
+  return { message, innerMessage, type, status, stack };
 }
 
 // get the string for a status code
