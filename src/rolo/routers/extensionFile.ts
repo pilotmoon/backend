@@ -70,9 +70,8 @@ export async function generateExtensionFile(
   zip.addFile(`${packageName}/${signature.name}`, signature.contentsBuffer);
 
   // return zip buffer
-  let name = `${
-    kebabCase(extractDefaultString(ext.info.name)) ?? "extension"
-  }-${ext.shortcode}-${ext.version}.popclipextz`;
+  let namePart = extractDefaultString(ext.info.name).replace(/[\/ ]/g, "-");
+  let name = `${namePart}-${ext.shortcode}-${ext.version}.popclipextz`;
   return { data: zip.toBuffer(), name };
 }
 
