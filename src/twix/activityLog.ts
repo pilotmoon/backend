@@ -29,7 +29,7 @@ function formatMessage(args: any[]) {
     .map((arg) => {
       return limitString(
         typeof arg === "string" ? arg : safeStringify(arg),
-        10000,
+        30000,
       );
     })
     .join(" ");
