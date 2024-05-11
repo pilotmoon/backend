@@ -212,6 +212,7 @@ export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   expiryDate: true,
   validBeforeOs: true,
   validBeforeVersion: true,
+  description: true,
   // these ones dont go into the actual license key:
   void: true,
   refunded: true,
