@@ -71,6 +71,7 @@ export const ZExtensionOriginGithubRepo = z.object({
   ownerHandle: ZSaneString,
   commitSha: ZBlobHash1,
   commitDate: ZSaneDate,
+  commitMessage: z.string(),
   nodePath: z.string(),
   nodeSha: ZBlobHash1,
   nodeType: z.enum(["blob", "tree"]),

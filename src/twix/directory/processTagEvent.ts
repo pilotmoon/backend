@@ -195,6 +195,7 @@ export async function processTagEvent(
             ...repoOrigin,
             commitSha: commit.sha,
             commitDate: commit.date,
+            commitMessage: commit.message,
             nodePath: node.path,
             nodeSha: node.sha,
             nodeType: node.type,
@@ -353,7 +354,8 @@ async function getChangeCommit(
     .nonempty()
     .parse(commitsResponse.data);
   return {
-    date: commits[0].commit.committer.date,
+    date: commits[0].commit.committer?.date ?? new Date("1970-01-01T00:00:00Z"),
+    message: commits[0].commit.message,
     sha: commits[0].sha,
   };
 }

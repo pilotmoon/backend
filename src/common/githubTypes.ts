@@ -163,9 +163,12 @@ export type GithubCommitObject = z.infer<typeof ZGithubCommitObject>;
 export const ZGithubCommitListEntry = z.object({
   sha: z.string(),
   commit: z.object({
-    committer: z.object({
-      date: ZSaneDate,
-    }),
+    committer: z
+      .object({
+        date: ZSaneDate,
+      })
+      .nullable(),
+    message: z.string(),
   }),
 });
 export type GithubCommitListEntry = z.infer<typeof ZGithubCommitListEntry>;
