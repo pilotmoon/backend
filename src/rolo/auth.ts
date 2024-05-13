@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ApiError } from "../common/errors.js";
-import { log } from "../common/log.js";
 import { collectionNames } from "./identifiers.js";
 
 // Auth "kinds" refer to the test and live variations of the api keys.

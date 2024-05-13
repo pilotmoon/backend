@@ -3,9 +3,12 @@ import { nextTick } from "node:process";
 import pLimit from "p-limit";
 import { default as picomatch } from "picomatch";
 import { z } from "zod";
-import { ApiError } from "../../common/errors.js";
+import { ApiError, getErrorInfo } from "../../common/errors.js";
 import {
+  ExtensionOrigin,
+  ExtensionOriginGithubRepo,
   ZExtensionOriginGithubRepo,
+  ZExtensionOriginGithubRepoPartial,
   githubAuthorInfoFromUser,
 } from "../../common/extensionSchemas.js";
 import {
@@ -168,16 +171,6 @@ export async function processTagEvent(
   const author = githubAuthorInfoFromUser(user);
   alog.log("Author:", author);
 
-  // create the partial origin object
-  const repoOrigin = {
-    type: "githubRepo",
-    repoId: tagInfo.repository.id,
-    repoName: tagInfo.repository.name,
-    ownerId: tagInfo.repository.owner.id,
-    ownerHandle: tagInfo.repository.owner.login,
-  };
-  alog.log("Repo Origin:", repoOrigin);
-
   // use nexttick so that we return a webhook response before
   // beginning the processing
   const results: SubmissionResult[] = [];
@@ -186,36 +179,62 @@ export async function processTagEvent(
     await Promise.all(
       newNodes.map((node) =>
         limit(async () => {
-          const commit = await getChangeCommit(
-            node,
-            tagInfo.repository.full_name,
-            taggedCommitInfo.sha,
-          );
-          const nodeOrigin = ZExtensionOriginGithubRepo.parse({
-            ...repoOrigin,
-            commitSha: commit.sha,
-            commitDate: commit.date,
-            commitMessage: commit.message,
+          let origin: ExtensionOrigin = {
+            type: "githubRepoPartial",
+            repoId: tagInfo.repository.id,
+            repoName: tagInfo.repository.name,
+            ownerId: tagInfo.repository.owner.id,
+            ownerHandle: tagInfo.repository.owner.login,
             nodePath: node.path,
             nodeSha: node.sha,
             nodeType: node.type,
-          });
-          const files = await getPackageFiles(
-            node,
-            tree.tree,
-            tagInfo.repository.full_name,
-            alog,
-          );
-          results.push(
-            await submitPackage(
-              nodeOrigin,
-              author,
-              version,
-              files,
-              node.path,
+          };
+          try {
+            origin = ZExtensionOriginGithubRepoPartial.parse(origin);
+            let commit = await getChangeCommit(
+              node,
+              tagInfo.repository.full_name,
+              taggedCommitInfo.sha,
+            );
+            origin = ZExtensionOriginGithubRepo.parse({
+              ...origin,
+              type: "githubRepo",
+              commitSha: commit.sha,
+              commitDate: commit.date,
+              commitMessage: commit.message,
+            });
+            let files = await getPackageFiles(
+              node,
+              tree.tree,
+              tagInfo.repository.full_name,
               alog,
-            ),
-          );
+            );
+            results.push(
+              await submitPackage(
+                origin,
+                author,
+                version,
+                files,
+                node.path,
+                alog,
+              ),
+            );
+          } catch (err) {
+            let { stack, innerMessage, ...errorInfo } = getErrorInfo(err);
+            alog.log(
+              `** Failed preparing to submit ${node.path} due to error:\n[${errorInfo.type}] ${errorInfo.message}`,
+            );
+            results.push({
+              status: "error",
+              origin,
+              details: {
+                type: "https://pilotmoon.com/api-errors#prepare-tagged-package",
+                title: "Failed to prepare package for submission",
+                detail: innerMessage ?? errorInfo.message,
+                errorInfo,
+              },
+            });
+          }
         }),
       ),
     );

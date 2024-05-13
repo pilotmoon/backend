@@ -19,7 +19,6 @@ import {
   processSubmission,
 } from "./extensionsProcessor.js";
 import { createEventInternal } from "./eventsController.js";
-import { extractDefaultString } from "../../common/saneSchemas.js";
 import { StatusChangeEvent, reviewStatus } from "../../common/events.js";
 
 export const extensionsCollectionName = "extensions";

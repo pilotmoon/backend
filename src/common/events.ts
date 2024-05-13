@@ -7,6 +7,8 @@ import {
 } from "./saneSchemas.js";
 import { ZVersionString } from "./versionString.js";
 import {
+  ExtensionOrigin,
+  ExtensionOriginGithubRepo,
   ExtensionPatch,
   ZExtensionInfo,
   ZExtensionOrigin,
@@ -28,7 +30,7 @@ export const ZSubmissionResult = z.discriminatedUnion("status", [
   }),
   z.object({
     status: z.literal("error"),
-    origin: ZExtensionOrigin,
+    origin: ZExtensionOrigin.nullable(),
     details: ZProblemDetails,
   }),
 ]);
@@ -74,7 +76,10 @@ export function reviewStatus(rec: ExtensionPatch) {
 }
 
 export function describeResult(r: SubmissionResult) {
-  if (r.origin.type === "githubRepo") {
+  if (
+    r.origin?.type === "githubRepo" ||
+    r.origin?.type === "githubRepoPartial"
+  ) {
     if (r.status === "ok") {
       return `✅ ${r.origin.nodePath.black.bgWhite}\n${extractDefaultString(
         r.info.name,
@@ -82,7 +87,7 @@ export function describeResult(r: SubmissionResult) {
     } else {
       return `🚫 ${r.origin.nodePath.black.bgWhite}\n${r.details.title}\n${r.details.detail}\n`;
     }
-  } else if (r.origin.type === "githubGist") {
+  } else if (r.origin?.type === "githubGist") {
     if (r.status === "ok") {
       return `✅ ${r.origin.gistId.black.bgWhite}\n${extractDefaultString(
         r.info.name,

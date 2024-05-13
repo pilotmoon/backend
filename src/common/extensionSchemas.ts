@@ -63,19 +63,27 @@ export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
 export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
 export type ExtensionFileList = z.infer<typeof ZExtensionFileList>;
 
-export const ZExtensionOriginGithubRepo = z.object({
-  type: z.literal("githubRepo"),
+export const ZExtensionOriginGithubRepoPartial = z.object({
+  type: z.literal("githubRepoPartial"),
   repoId: NonNegativeSafeInteger,
   repoName: ZSaneString,
   ownerId: NonNegativeSafeInteger,
   ownerHandle: ZSaneString,
-  commitSha: ZBlobHash1,
-  commitDate: ZSaneDate,
-  commitMessage: z.string(),
   nodePath: z.string(),
   nodeSha: ZBlobHash1,
-  nodeType: z.enum(["blob", "tree"]),
+  nodeType: z.enum(["blob", "tree", "commit"]),
 });
+export type ExtensionOriginGithubRepoPartial = z.infer<
+  typeof ZExtensionOriginGithubRepoPartial
+>;
+
+export const ZExtensionOriginGithubRepo =
+  ZExtensionOriginGithubRepoPartial.extend({
+    type: z.literal("githubRepo"),
+    commitSha: ZBlobHash1,
+    commitDate: ZSaneDate,
+    commitMessage: z.string(),
+  });
 export type ExtensionOriginGithubRepo = z.infer<
   typeof ZExtensionOriginGithubRepo
 >;
@@ -90,6 +98,7 @@ export const ZExtensionOriginGithubGist = z.object({
 });
 
 export const ZExtensionOrigin = z.discriminatedUnion("type", [
+  ZExtensionOriginGithubRepoPartial,
   ZExtensionOriginGithubRepo,
   ZExtensionOriginGithubGist,
 ]);
