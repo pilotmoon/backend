@@ -7,6 +7,10 @@ const ROLO_DISPLAY_URL = config.ROLO_URL_CANONICAL;
 
 // middleware to open a remote log and make it available to the context
 export async function openRemoteLog(ctx: Koa.Context, next: Koa.Next) {
+  if (ctx.request.url === "/") {
+    // don't open a log for the root page
+    return await next();
+  }
   ctx.alog = new ActivityLog(ROLO_AUTH_KIND);
   const url = await ctx.alog.prepareRemote(
     `${ctx.request.method} ${ctx.request.url}`,
