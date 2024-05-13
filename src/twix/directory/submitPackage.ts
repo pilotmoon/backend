@@ -24,7 +24,7 @@ import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { getRolo } from "../rolo.js";
 
-const AUTH_KIND = "test";
+export const EXTENSION_SUBMITTER_AUTH_KIND = "live";
 
 export const ZGitSha1File = ZCoreFileListEntry.extend({
   type: z.literal("gitSha1File"),
@@ -52,21 +52,24 @@ export async function existingExtensions(
   field: "origin.nodeSha" | "origin.commitSha" | "digest",
   values: string[],
 ) {
-  const { data } = await getRolo(AUTH_KIND).get("extensions", {
-    params: {
-      [field]: values.join(","),
-      format: "json",
-      extract: field,
-      limit: values.length,
+  const { data } = await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).get(
+    "extensions",
+    {
+      params: {
+        [field]: values.join(","),
+        format: "json",
+        extract: field,
+        limit: values.length,
+      },
     },
-  });
+  );
   return new Set(z.array(ZBlobHash1).parse(data));
 }
 
 // get a list of which files are already have in the blob store
 // NOTE this mutates the fileList objects to add the hash field if it's missing
 export async function existingBlobs(fileList: PackageFile[]) {
-  const { data } = await getRolo(AUTH_KIND).get("blobs", {
+  const { data } = await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).get("blobs", {
     params: {
       hash: [...new Set(fileList.map((child) => child.hash))].join(","),
       limit: fileList.length,
@@ -154,9 +157,12 @@ export async function submitPackage(
 
       // upload if we have new content
       if (!existing && processedFile?.content) {
-        const dbResponse = await getRolo(AUTH_KIND).post("blobs", {
-          data: processedFile.content.toString("base64"),
-        });
+        const dbResponse = await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).post(
+          "blobs",
+          {
+            data: processedFile.content.toString("base64"),
+          },
+        );
         const dbBlob = ZBlobSchema.parse(dbResponse.data);
         if (dbBlob.size !== processedFile.size) {
           throw new Error("Size mismatch");
@@ -184,10 +190,9 @@ export async function submitPackage(
       author,
       files: processedFiles,
     };
-    const submissionResponse = await getRolo(AUTH_KIND).post(
-      "extensions",
-      ZExtensionSubmission.parse(submission),
-    );
+    const submissionResponse = await getRolo(
+      EXTENSION_SUBMITTER_AUTH_KIND,
+    ).post("extensions", ZExtensionSubmission.parse(submission));
     const extensionRecord = ZPartialExtensionRecord.extend({
       id: z.string(),
     }).parse(submissionResponse.data);

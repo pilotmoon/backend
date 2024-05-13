@@ -8,6 +8,7 @@ import {
   githubAuthorInfoFromUser,
 } from "../../common/extensionSchemas.js";
 import {
+  EXTENSION_SUBMITTER_AUTH_KIND,
   PackageFile,
   existingExtensions,
   submitPackage,
@@ -118,6 +119,6 @@ export async function processGist(
     logUrl: alog.url ?? null,
     submission: submissionResult,
   };
-  await getRolo("test").post("events", event);
+  await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).post("events", event);
   return false;
 }

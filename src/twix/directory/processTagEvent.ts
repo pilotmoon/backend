@@ -33,6 +33,7 @@ import {
   describeResultArray,
 } from "../../common/events.js";
 import {
+  EXTENSION_SUBMITTER_AUTH_KIND,
   PackageFile,
   existingExtensions,
   submitPackage,
@@ -254,7 +255,7 @@ export async function processTagEvent(
       repoTag: tagInfo.ref,
       submissions: results,
     };
-    await getRolo("test").post("events", event);
+    await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).post("events", event);
   });
   return true; // indicates that processin continues asynchronously
 }
