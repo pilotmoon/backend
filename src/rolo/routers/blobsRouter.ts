@@ -86,8 +86,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   }
   ctx.body = document.dataBuffer;
   ctx.set("Content-Type", contentType);
-  // TODO put this in ctx.set("Cache-Control", "public, max-age=31536000, immutable");
-  ctx.set("Cache-Control", "public, max-age=86400");
+  ctx.set("Cache-Control", "public, max-age=604800, immutable");
 });
 
 router.get("/", async (ctx) => {
