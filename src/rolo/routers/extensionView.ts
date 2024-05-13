@@ -31,6 +31,7 @@ const ZPartialPopClipDirectoryView = z.object({
   download: z.string().nullable(),
   source: z.string().nullable(),
   sourceDate: ZSaneDate.nullable(),
+  sourceMessage: z.string().nullable(),
 });
 
 const ZAltString = z.object({
@@ -105,6 +106,13 @@ function extractSourceDate(origin: ExtensionOrigin) {
   return null;
 }
 
+function extractSourceMessage(origin: ExtensionOrigin) {
+  if (origin.type === "githubRepo") {
+    return origin.commitMessage;
+  }
+  return null;
+}
+
 function extractOwnerTag(origin: ExtensionOrigin) {
   if (origin.type === "githubGist") {
     return `github:${origin.ownerId}`;
@@ -162,6 +170,7 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
     download: doc.download ?? null,
     source: extractSourceUrl(doc.origin),
     sourceDate: extractSourceDate(doc.origin),
+    sourceMessage: extractSourceMessage(doc.origin),
     owner: extractOwnerTag(doc.origin),
     apps: doc.info.apps ?? [],
     files: doc.files.map((f) => ({
@@ -176,6 +185,7 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
       download: pv.download ?? null,
       source: extractSourceUrl(pv.origin),
       sourceDate: extractSourceDate(pv.origin),
+      sourceMessage: extractSourceMessage(pv.origin),
     })),
   };
   return ZPopClipDirectoryView.parse(view);
