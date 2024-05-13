@@ -87,7 +87,7 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   ctx.set("Content-Type", "application/octet-stream");
   const fallback = name.replace(/[^\x20-\x7e]/g, "?"); // only ascii printable
   ctx.set("Content-Disposition", createCDH(name, { fallback }));
-  //ctx.set("Cache-Control", "public, max-age=60"); // TODO - lengthen
+  ctx.set("Cache-Control", "public, max-age=3600"); // 1 hour, for now
 });
 
 // get a list of extensions with query parameters
