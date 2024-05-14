@@ -28,7 +28,7 @@ import { VersionString, ZVersionString } from "../../common/versionString.js";
 import { ActivityLog } from "../activityLog";
 import { restClient as gh } from "../githubClient.js";
 import {
-  RepoTagEvent,
+  RepoEvent,
   SubmissionResult,
   describeResultArray,
 } from "../../common/events.js";
@@ -246,7 +246,7 @@ export async function processTagEvent(
     alog.log(describeResultArray(results));
     alog.log("Done");
 
-    const event: RepoTagEvent = {
+    const event: RepoEvent = {
       type: "githubRepoTag",
       timestamp: alog.created,
       logUrl: alog.url ?? null,
@@ -317,7 +317,7 @@ async function resolveSymlink(
   );
 }
 
-async function getPackageFiles(
+export async function getPackageFiles(
   node: GithubNode,
   tree: GithubNode[],
   repoFullName: string,
@@ -360,7 +360,7 @@ async function getPackageFiles(
 }
 
 // find the most recent commit in which the node was changed
-async function getChangeCommit(
+export async function getChangeCommit(
   node: GithubNode,
   repoFullName: string,
   fromSha: string,

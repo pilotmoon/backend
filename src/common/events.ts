@@ -47,14 +47,14 @@ export const ZStatusChangeEvent = ZEventCommon.extend({
 });
 export type StatusChangeEvent = z.infer<typeof ZStatusChangeEvent>;
 
-const ZRepoTagEvent = ZEventCommon.extend({
+const ZRepoEvent = ZEventCommon.extend({
   type: z.literal("githubRepoTag"),
   ownerHandle: ZSaneString,
   repoName: ZSaneString,
-  repoTag: ZSaneString,
+  repoTag: ZSaneString.nullable(),
   submissions: z.array(ZSubmissionResult),
 });
-export type RepoTagEvent = z.infer<typeof ZRepoTagEvent>;
+export type RepoEvent = z.infer<typeof ZRepoEvent>;
 
 const ZGistEvent = ZEventCommon.extend({
   type: z.literal("githubGistSubmit"),
@@ -63,7 +63,7 @@ const ZGistEvent = ZEventCommon.extend({
 export type GistEvent = z.infer<typeof ZGistEvent>;
 
 export const ZEventInfo = z.discriminatedUnion("type", [
-  ZRepoTagEvent,
+  ZRepoEvent,
   ZGistEvent,
   ZStatusChangeEvent,
 ]);

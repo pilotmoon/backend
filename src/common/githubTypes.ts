@@ -110,6 +110,19 @@ export const ZGithubBlob = z.object({
 });
 
 /*******
+  Repo
+*******/
+
+export const ZGithubRepo = z.object({
+  id: NonNegativeSafeInteger,
+  name: ZSaneString,
+  private: z.boolean(),
+  owner: ZGithubUser,
+  html_url: ZSaneString,
+});
+export type GithubRepo = z.infer<typeof ZGithubRepo>;
+
+/*******
   Gist
 ********/
 

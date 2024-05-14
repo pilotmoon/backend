@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { ZSaneString } from "../../common/saneSchemas.js";
 import { ActivityLog } from "../activityLog.js";
 import { restClient as gh } from "../githubClient.js";
 import { ZGithubGist, ZGithubUser } from "../../common/githubTypes.js";
@@ -17,14 +15,10 @@ import { gitHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import { GistEvent, describeResultArray } from "../../common/events.js";
 import { getRolo } from "../rolo.js";
-
-export const ZSubmitGistPayload = z.object({
-  url: ZSaneString,
-});
-export type SubmitGistPayload = z.infer<typeof ZSubmitGistPayload>;
+import { SubmitUrlPayload } from "./urlPayload.js";
 
 export async function processGist(
-  payload: SubmitGistPayload,
+  payload: SubmitUrlPayload,
   alog: ActivityLog,
 ): Promise<boolean> {
   alog.log(`Processing gist: ${payload.url}`);
