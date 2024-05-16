@@ -59,7 +59,7 @@ export async function createLog(
   auth: Auth,
 ): Promise<LogSchema> {
   auth.assertAccess(collectionName, undefined, "create");
-  log("Creating log");
+  //log("Creating log");
   const now = new Date();
   const document: LogSchema = {
     _id: randomIdentifier("log"),
@@ -70,7 +70,7 @@ export async function createLog(
 
   try {
     await dbc(auth.kind).insertOne(document);
-    log("Inserted", document);
+    //log("Inserted", document);
     return document;
   } catch (error) {
     handleControllerError(error);
