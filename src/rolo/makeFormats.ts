@@ -1,11 +1,11 @@
-import { Context } from "koa";
 import { makeCsv } from "./makeCsv.js";
 import { makeObjc } from "./makeObjc.js";
 import { makePlist } from "./makePlist.js";
 import { stringFromQuery } from "../common/query.js";
 import makeStableJson from "fast-stable-stringify";
+import { AppContext } from "./koaWrapper.js";
 
-function preprocess(ctx: Context, obj: unknown) {
+function preprocess(ctx: AppContext, obj: unknown) {
   if (typeof obj !== "object" || obj === null) {
     throw new Error("Response must be an object");
   }
@@ -29,7 +29,7 @@ function preprocess(ctx: Context, obj: unknown) {
   return obj;
 }
 
-export function setBodySpecialFormat(ctx: Context, obj: unknown) {
+export function setBodySpecialFormat(ctx: AppContext, obj: unknown) {
   switch (ctx.query.format) {
     case "json":
       ctx.set("Content-Type", "application/json; charset=utf-8");

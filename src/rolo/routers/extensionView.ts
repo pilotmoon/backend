@@ -122,7 +122,7 @@ function extractOwnerTag(origin: ExtensionOrigin) {
   return null;
 }
 
-function thash(hash: string) {
+export function thash(hash: string) {
   return truncatedHash(Buffer.from(hash, "hex"));
 }
 

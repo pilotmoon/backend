@@ -241,31 +241,31 @@ export function getQueryPipeline(query: unknown) {
     pipeline.push({ $match: { published } });
   }
 
-  /** SPECIAL AGGREGATION TO GET LATEST VERSION ONLY, ADD PREVIOUS VERSION INFO
+  /** SPECIAL AGGREGATION TO GET LATEST CREATED ONLY, ADD PREVIOUS VERSION INFO
   TO EACH DOCUMENT, AND CALCULATE firstCreated **/
   if (boolFromQuery(query, "flatten", false)) {
     pipeline.push(
-      // was: { $sort: { created: -1 } },
-      {
-        $addFields: {
-          versionArray: {
-            $map: {
-              input: { $split: ["$version", "."] },
-              as: "digit",
-              in: { $toInt: "$$digit" },
-            },
-          },
-        },
-      },
-      {
-        $sort: {
-          "versionArray.0": -1,
-          "versionArray.1": -1,
-          "versionArray.2": -1,
-          "versionArray.3": -1,
-        },
-      },
-      { $unset: "versionArray" },
+      { $sort: { created: -1 } },
+      // {
+      //   $addFields: {
+      //     versionArray: {
+      //       $map: {
+      //         input: { $split: ["$version", "."] },
+      //         as: "digit",
+      //         in: { $toInt: "$$digit" },
+      //       },
+      //     },
+      //   },
+      // },
+      // {
+      //   $sort: {
+      //     "versionArray.0": -1,
+      //     "versionArray.1": -1,
+      //     "versionArray.2": -1,
+      //     "versionArray.3": -1,
+      //   },
+      // },
+      // { $unset: "versionArray" },
       // Group by identifer and push all documents into an array
       {
         $group: {

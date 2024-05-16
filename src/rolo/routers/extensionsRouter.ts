@@ -1,8 +1,9 @@
 import { create as createCDH } from "content-disposition-header";
 import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
-import { ApiError } from "../../common/errors.js";
 import {
+  ExtensionAppInfo,
+  ExtensionFileList,
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
@@ -14,12 +15,20 @@ import {
   readExtensionWithData,
   updateExtension,
 } from "../controllers/extensionsController.js";
-import { ZExtensionRecord } from "../controllers/extensionsProcessor.js";
+import {
+  ExtensionRecord,
+  ZExtensionRecord,
+} from "../controllers/extensionsProcessor.js";
 import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { filesExcludeRegex, generateExtensionFile } from "./extensionFile.js";
-import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
+import {
+  ZExtensionRecordWithHistory,
+  popclipView,
+  thash,
+} from "./extensionView.js";
+import { extractDefaultString } from "../../common/saneSchemas.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -90,11 +99,21 @@ router.get(matchFile.uuid, matchFile.pattern, async (ctx) => {
   ctx.set("Cache-Control", "public, max-age=604800, immutable");
 });
 
-// get a list of extensions with query parameters
 router.get("/", async (ctx) => {
   const view = stringFromQuery(ctx.query, "view", "");
+  await handleList(ctx, view);
+});
+
+router.get("/popclip/rss", async (ctx) => {
+  ctx.state.pagination.sortBy = "firstCreated";
+  ctx.state.pagination.limit = 100;
+  await handleList(ctx, "popclipRss");
+  ctx.set("Cache-Control", "public, max-age=300");
+});
+
+async function handleList(ctx: AppContext, view?: string) {
   const query = ctx.query;
-  if (view === "popclipDirectory") {
+  if (view === "popclipDirectory" || view === "popclipRss") {
     query.published = "1";
     query["info.type"] = "popclip";
     query.flatten = "1";
@@ -105,22 +124,107 @@ router.get("/", async (ctx) => {
     ctx.state.auth,
   );
   documents = documents.map((doc) => {
-    if (view !== "popclipDirectory") {
-      const parsed = ZExtensionRecord.passthrough().safeParse(doc);
-      if (!parsed.success) return doc; // e.g. is project or extract has been used
-      expand(parsed.data, ctx);
-      return parsed.data;
-    } else {
+    if (view === "popclipDirectory") {
       const document = ZExtensionRecordWithHistory.parse(doc);
       expand(document, ctx);
       for (const ver of document.previousVersions) {
         expand(ver, ctx);
       }
       return popclipView(document);
+    } else {
+      const parsed = ZExtensionRecord.passthrough().safeParse(doc);
+      if (!parsed.success) return doc; // e.g. is project or extract has been used
+      expand(parsed.data, ctx);
+      return parsed.data;
     }
   });
 
-  if (!setBodySpecialFormat(ctx, documents)) {
-    ctx.body = documents;
+  if (view === "popclipRss") {
+    makeRss(ctx, documents as ExtensionRecord[]);
+    return;
   }
-});
+  if (setBodySpecialFormat(ctx, documents)) {
+    return;
+  }
+  ctx.body = documents;
+}
+
+function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
+  let html = description;
+  for (const app of apps) {
+    html = description.replace(
+      new RegExp(`\\b${app.name}\\b`),
+      `<a href="${app.link}">${app.name}</a>`,
+    );
+  }
+  return html;
+}
+
+// either bare e.g. readme.md or suffixed e.g. blah-demo.mp4
+// and only in root folder
+function findSpecialFile(suffix: string, files: ExtensionFileList) {
+  const regex = new RegExp(`(^([^/]+-)?${suffix}$)`, "i");
+  const file = files.find((f) => regex.test(f.path));
+  return file?.hash ?? null;
+}
+
+function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
+  const parts: string[] = [];
+  let publicRoot = "https://public.popclip.app";
+  let webUrl = "https://www.popclip.app/extensions/";
+  parts.push(
+    `
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>PopClip Extensions</title>
+<link>${webUrl}</link>
+<atom:link href="${publicRoot}/extensions/popclip/rss" rel="self" type="application/rss+xml" />
+<description>A feed of extensions published to the PopClip Extensions Directory.</description>
+<language>en</language>`.trim(),
+  );
+
+  for (const ext of documents) {
+    let title = extractDefaultString(ext.info.name);
+    let description = linkifyDescription(
+      extractDefaultString(ext.info.description),
+      ext.info.apps ?? [],
+    );
+
+    // if (ext.download) {
+    //   description += `<br><a href="${publicRoot}${ext.download}">Download</a>`;
+    // }
+
+    let mp4Hash = findSpecialFile("demo.mp4", ext.files);
+    let gifHash = findSpecialFile("demo.gif", ext.files);
+
+    if (mp4Hash) {
+      description += `<br><video src="${publicRoot}/blobs/${thash(
+        mp4Hash,
+      )}/file.mp4" alt="Demo Video" autoplay loop playsinline>Browser can't show this video.</video>`;
+    } else if (gifHash) {
+      description += `<br><img src="${publicRoot}/blobs/${thash(
+        gifHash,
+      )}/file.gif" alt="Demo GIF" >`;
+    }
+
+    let perma = `${webUrl}x/${ext.shortcode}`;
+    let datestr = ext.firstCreated!.toISOString();
+
+    parts.push(
+      `
+<item>
+    <title>${title}</title>
+    <guid isPermaLink="false">${ext.info.identifier}</guid>
+    <description><![CDATA[<p>${description}</p>]]></description>
+    <link>${perma}</link>
+    <pubDate>${datestr}</pubDate>
+</item>`.trim(),
+    );
+  }
+
+  parts.push("</channel></rss>");
+
+  ctx.body = parts.join("\n");
+  ctx.set("Content-Type", "application/rss+xml");
+}
