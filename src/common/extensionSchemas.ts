@@ -47,12 +47,12 @@ export const ZGithubAuthorInfo = z.object({
   githubHandle: ZSaneString,
   githubType: ZGitHubUserType,
   githubUrl: ZSaneString,
-  websiteUrl: ZSaneString.optional(),
-  name: ZSaneString.optional(),
-  email: ZSaneString.optional(),
-  bio: ZSaneString.optional(),
-  company: ZSaneString.optional(),
-  location: ZSaneString.optional(),
+  websiteUrl: z.string().optional(),
+  name: z.string().optional(),
+  email: z.string().optional(),
+  bio: z.string().optional(),
+  company: z.string().optional(),
+  location: z.string().optional(),
 });
 export type GithubAuthorInfo = z.infer<typeof ZGithubAuthorInfo>;
 

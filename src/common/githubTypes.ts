@@ -18,12 +18,12 @@ export const ZGithubUser = z.object({
   type: ZGitHubUserType,
   html_url: ZSaneString,
   email: ZSaneEmail.nullish(),
-  name: ZSaneString.nullish(),
-  blog: ZSaneString.nullish(),
-  bio: ZSaneString.nullish(),
-  company: ZSaneString.nullish(),
-  location: ZSaneString.nullish(),
-  twitter_username: ZSaneString.nullish(),
+  name: z.string().nullish(),
+  blog: z.string().nullish(),
+  bio: z.string().nullish(),
+  company: z.string().nullish(),
+  location: z.string().nullish(),
+  twitter_username: z.string().nullish(),
 });
 export type GithubUser = z.infer<typeof ZGithubUser>;
 
