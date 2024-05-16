@@ -40,40 +40,45 @@ export function shutdown() {
 
 let lastHash: null | string = null;
 async function rebuildIfNecessary() {
-  // get recent published extensions, as string not json
-  const { data } = await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).get(
-    "extensions",
-    {
-      params: {
-        format: "json", // note this is run through stableStringify
-        limit: 25,
-        published: true,
+  try {
+    // get recent published extensions, as string not json
+    const { data } = await getRolo(EXTENSION_SUBMITTER_AUTH_KIND).get(
+      "extensions",
+      {
+        params: {
+          format: "json", // note this is run through stableStringify
+          limit: 25,
+          published: true,
+        },
+        responseType: "text",
       },
-      responseType: "text",
-    },
-  );
-  const hash = createHash("sha256").update(data).digest("hex");
+    );
+    const hash = createHash("sha256").update(data).digest("hex");
 
-  if (!lastHash) {
-    log("recording initial hash for popclipweb");
-    lastHash = hash;
-    return;
-  }
+    if (!lastHash) {
+      log("recording initial hash for popclipweb");
+      lastHash = hash;
+      return;
+    }
 
-  if (lastHash === hash) {
-    log("no need to rebuild popclipweb");
-    lastHash = hash;
-    return;
-  }
+    if (lastHash === hash) {
+      log("no need to rebuild popclipweb");
+      lastHash = hash;
+      return;
+    }
 
-  log("rebuilding popclipweb because extensions have changed");
-  let result = await rebuildSite();
-  log(result);
+    log("rebuilding popclipweb because extensions have changed");
+    let result = await rebuildSite();
+    log(result);
 
-  if (result?.status === 200) {
-    lastHash = hash;
-  } else {
-    log("rebuild failed, will retry");
+    if (result?.status === 200) {
+      lastHash = hash;
+    } else {
+      log("rebuild failed, will retry");
+    }
+  } catch (e) {
+    let info = getErrorInfo(e);
+    log(info);
   }
 }
 
