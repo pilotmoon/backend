@@ -52,7 +52,7 @@ export async function paginate<T extends Document>(
   }
 
   // add sorting and skipping
-  log("paginate", { pipeline, pagination });
+  // log("paginate", { pipeline, pagination });
   const resultsCursor = collection
     .aggregate(pipeline)
     .sort({ created: pagination.sort, _id: pagination.sort })

@@ -211,7 +211,7 @@ export async function listExtensions(
 
 export function getQueryPipeline(query: unknown) {
   const pipeline: Document[] = [];
-  log("getQueryPipeline", { query });
+  // log("getQueryPipeline", { query });
 
   /*** FILTER STRINGS THAT DON'T RESRICT VERSIONS ***/
 

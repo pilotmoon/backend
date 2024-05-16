@@ -47,8 +47,9 @@ async function rebuildIfNecessary() {
       {
         params: {
           format: "json", // note this is run through stableStringify
-          limit: 25,
+          limit: 50,
           published: true,
+          extract: "_id",
         },
         responseType: "text",
       },
@@ -62,7 +63,7 @@ async function rebuildIfNecessary() {
     }
 
     if (lastHash === hash) {
-      log("no need to rebuild popclipweb");
+      // log("no need to rebuild popclipweb");
       lastHash = hash;
       return;
     }
