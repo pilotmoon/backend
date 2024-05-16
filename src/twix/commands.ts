@@ -63,3 +63,8 @@ router.put("/webhooks/crashReport", async (ctx) => {
   ctx.alog.log("crashReport", ctx.request.headers, ctx.request.body);
   ctx.status = 204;
 });
+
+router.get("/webhooks/gh-code", async (ctx) => {
+  ctx.alog.log("gh-code", ctx.request.headers, ctx.request.body);
+  ctx.status = 204;
+});
