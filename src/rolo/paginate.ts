@@ -7,7 +7,7 @@ export const ZPagination = z.object({
   offset: z.number().int().min(0),
   limit: z.number().int().min(1).max(10000),
   sort: z.literal(1).or(z.literal(-1)),
-  sortBy: z.literal("created"),
+  sortBy: z.string(),
   cursor: z.string().optional(),
   gteDate: z.coerce.date().optional(),
   ltDate: z.coerce.date().optional(),
@@ -55,7 +55,7 @@ export async function paginate<T extends Document>(
   // log("paginate", { pipeline, pagination });
   const resultsCursor = collection
     .aggregate(pipeline)
-    .sort({ created: pagination.sort, _id: pagination.sort })
+    .sort({ [pagination.sortBy]: pagination.sort, _id: pagination.sort })
     .skip(pagination.offset)
     .limit(pagination.limit);
 

@@ -4,10 +4,13 @@ import { ZPagination } from "../paginate.js";
 
 export function processPagination() {
   return async (ctx: Context, next: Next) => {
-    function getQueryString(name: string) {
+    function getQueryString(name: string, defaultValue?: string) {
       const value = ctx.query[name];
-      if (typeof value === "undefined" || typeof value === "string") {
+      if (typeof value === "string") {
         return value;
+      }
+      if (typeof value === "undefined") {
+        return defaultValue;
       }
       if (Array.isArray(value)) {
         throw new ApiError(400, `duplicated ${name} parameter in query`);
@@ -26,7 +29,7 @@ export function processPagination() {
       offset: getQueryInteger("offset", 0),
       limit: getQueryInteger("limit", 10),
       sort: getQueryInteger("sort", -1),
-      sortBy: "created",
+      sortBy: getQueryString("sortBy", "created"),
       cursor: getQueryString("cursor"),
       gteDate: getQueryString("gteDate"),
       ltDate: getQueryString("ltDate"),
