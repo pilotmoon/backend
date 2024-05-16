@@ -49,7 +49,7 @@ jobs:
           mongodb-version: ${{ matrix.mongodb-version }}
           mongodb-replica-set: rs0
       - name: Run E2E tests
-        uses: BerniWittmann/background-server-action@v1
+        uses: pilotmoon/background-server-action@v2
         with:
           command: npm run test-rolo && npm run test-twix
           start: npm run start-rolo & npm run start-twix
