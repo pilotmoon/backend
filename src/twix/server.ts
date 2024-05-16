@@ -4,7 +4,7 @@ import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../common/errors.js";
 import { assertSuccess, waitFor } from "../common/init.js";
-import { log, loge } from "../common/log.js";
+import { log } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
 import { hours } from "../common/timeIntervals.js";
@@ -25,6 +25,10 @@ import { remoteConfigReady } from "./remoteConfig.js";
 import { getCouponOffers as initCatalog } from "./store/catalog.js";
 import { router as storeRouter } from "./store/storeRouter.js";
 import { getKeys as initStore } from "./store/storeValidateWebhook.js";
+import {
+  init as initRebuildSite,
+  shutdown as shutdownRebuildSite,
+} from "./rebuildSite.js";
 
 const router = makeRouter();
 router.use(paddleRouter.routes());
@@ -106,6 +110,7 @@ process.on("SIGINT", async () => {
       clearInterval(housekeepingTimer),
       closeServer(),
       stopReports(),
+      shutdownRebuildSite(),
     ]);
     log("Shutdown complete".bgGreen);
   }
@@ -124,6 +129,7 @@ await assertSuccess([
   initStore(),
   initCatalog(),
   initGithub(),
+  initRebuildSite(),
 ]);
 await housekeep();
 log("Startup complete".green);
