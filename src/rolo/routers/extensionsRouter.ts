@@ -104,7 +104,7 @@ router.get("/", async (ctx) => {
   await handleList(ctx, view);
 });
 
-router.get("/popclip/rss", async (ctx) => {
+router.get("/popclip.rss", async (ctx) => {
   ctx.state.pagination.sortBy = "firstCreated";
   ctx.state.pagination.limit = 100;
   await handleList(ctx, "popclipRss");
