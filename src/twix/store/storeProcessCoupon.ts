@@ -40,9 +40,9 @@ export async function processCoupon(
 
   // create coupon
   const { data } = await paddle.post("2.1/product/create_coupon", {
-    product_ids: offer.catalogEntry.productId,
+    //product_ids: offer.catalogEntry.productId,
     description: `${couponArgs.offer} for ${origin}`,
-    coupon_type: "product",
+    coupon_type: "checkout",
     discount_type: "percentage",
     discount_amount: offer.discountPercent,
     coupon_prefix: offer.prefix,
