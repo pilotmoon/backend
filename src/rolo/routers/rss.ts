@@ -6,6 +6,7 @@ import { extractDefaultString } from "../../common/saneSchemas.js";
 import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { AppContext } from "../koaWrapper.js";
 import { thash } from "./extensionView.js";
+import sanitizeHtml from "sanitize-html";
 
 function linkifyDescription(description: string, apps: ExtensionAppInfo[]) {
   let html = description;
@@ -72,9 +73,9 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
     parts.push(
       `
 <item>
-    <title>${title}</title>
+    <title>${sanitizeHtml(title)}</title>
     <guid isPermaLink="false">${ext.info.identifier}</guid>
-    <description><![CDATA[<p>${description}</p>]]></description>
+    <description><![CDATA[<p>${sanitizeHtml(description)}</p>]]></description>
     <link>${perma}</link>
     <pubDate>${datestr}</pubDate>
 </item>`.trim(),
