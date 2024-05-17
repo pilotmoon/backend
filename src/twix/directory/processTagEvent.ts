@@ -19,6 +19,7 @@ import {
   ZGithubCommitListEntry,
   ZGithubCommitObject,
   ZGithubRefObject,
+  ZGithubTagObject,
   ZGithubTree,
   ZGithubUser,
 } from "../../common/githubTypes.js";
@@ -153,11 +154,26 @@ export async function processTagEvent(
   const refResponse = await gh().get(
     `/repos/${tagInfo.repository.full_name}/git/ref/tags/${tagInfo.ref}`,
   );
+  alog.log({ refResponse: refResponse.data });
   const refObject = ZGithubRefObject.parse(refResponse.data);
+
+  let taggedCommitSha;
+  if (refObject.object.type === "commit") {
+    taggedCommitSha = refObject.object.sha;
+  } else if (refObject.object.type === "tag") {
+    // get the tag info
+    alog.log(`Fetching tag info for ${refObject.object.sha}`);
+    const tagResponse = await gh().get(
+      `/repos/${tagInfo.repository.full_name}/git/tags/${refObject.object.sha}`,
+    );
+    alog.log({ tagResponse: tagResponse.data });
+    const tagObject = ZGithubTagObject.parse(tagResponse.data);
+    taggedCommitSha = tagObject.object.sha;
+  }
 
   // get the commit info
   const taggedCommitResponse = await gh().get(
-    `/repos/${tagInfo.repository.full_name}/git/commits/${refObject.object.sha}`,
+    `/repos/${tagInfo.repository.full_name}/git/commits/${taggedCommitSha}`,
   );
   const taggedCommitInfo = ZGithubCommitObject.parse(taggedCommitResponse.data);
   alog.log(`Loaded tagged commit info:`, taggedCommitInfo);

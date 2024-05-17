@@ -156,7 +156,16 @@ export const ZGithubGist = z.object({
 export const ZGithubRefObject = z.object({
   ref: z.string(),
   object: z.object({
-    type: z.literal("commit"),
+    type: z.enum(["commit", "tag"]),
+    sha: z.string(),
+  }),
+});
+
+export const ZGithubTagObject = z.object({
+  tag: z.string(),
+  sha: z.string(),
+  object: z.object({
+    type: z.enum(["commit"]),
     sha: z.string(),
   }),
 });
