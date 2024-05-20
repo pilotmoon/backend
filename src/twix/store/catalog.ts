@@ -5,6 +5,7 @@ const ZCatalogEntry = z.object({
   mode: z.enum(["live", "test"]),
   productId: z.string(),
 });
+export type CatalogEntry = z.infer<typeof ZCatalogEntry>;
 
 const ZCouponOffer = z.object({
   product: z.string(),

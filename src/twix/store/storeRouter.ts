@@ -2,9 +2,10 @@ import { ApiError } from "../../common/errors.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
-import { processPrices } from "./storeProcessPrices.js";
+import { processPrices, processProducts } from "./storeProcessPrices.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
 import { makeRouter } from "../koaWrapper.js";
+import { stringFromQuery } from "../../common/query.js";
 
 export const router = makeRouter();
 
@@ -43,9 +44,22 @@ router.get("/frontend/store/getPrices", async (ctx) => {
   if (typeof product !== "string") {
     throw new ApiError(400, "'product' query parameter is required");
   }
-  ctx.alog.log(`Request received from IP: ${sourceIp}`);
+  ctx.alog.log(`getPrices request received from IP: ${sourceIp}`);
   const result = await processPrices(sourceIp, product);
   ctx.alog.log(`Sending prices for ${result.country}`);
+  ctx.set("Cache-Control", "private, max-age=900");
+  ctx.body = result;
+});
+
+router.get("/frontend/store/getProducts", async (ctx) => {
+  const sourceIp = ctx.request.ip;
+  const products = stringFromQuery(ctx.query, "products", "");
+  const coupons = stringFromQuery(ctx.query, "coupons", "");
+  ctx.alog.log(
+    `getProducts request received from IP: ${sourceIp}, coupons: ${coupons}`,
+  );
+  let result = await processProducts(sourceIp, products, coupons);
+  ctx.alog.log({ result });
   ctx.set("Cache-Control", "private, max-age=900");
   ctx.body = result;
 });
