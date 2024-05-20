@@ -18,8 +18,6 @@ if (!globalThis.crypto) globalThis.crypto = webcrypto;
 export const ZDataFileListEntry = ZExtensionFileListEntry.required();
 export type DataFileListEntry = z.infer<typeof ZDataFileListEntry>;
 
-export type KeyPair = { publicKey: bigint; privateKey: bigint };
-
 export class Signer {
   private privateKey_v1: crypto.KeyObject; // PEM RSA
   private privateKey_v2: Buffer; // ed25519
