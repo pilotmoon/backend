@@ -69,50 +69,53 @@ export type DigestOptions =
       meta: Record<string, string>;
     };
 
+// V1 has some deficiences in the signature format.
+// - Only the file's basename is included in the signature, so if it's in a
+// subdirectory, the path can be changed without invalidating the signature.
+// - The signature does not account for the file's executable bit.
+// V2 fixes these issues by including the full path and the executable bit.
+// V1 encodes the package name in the signature, while V2 does not.
+// V2 add metadata to the signature.
 function dataToSign(files: DataFileListEntry[], opts: DigestOptions) {
-  // Sort array with case-insensitive comparison as required by PopClip
-  const sortedFiles = files.sort((a, b) =>
+  const dataList: Buffer[] = [];
+  function pushRecord(str: string) {
+    dataList.push(Buffer.from(str + "\x1E"));
+  }
+  sortFiles(files);
+  if (opts.mode === "v1") {
+    dataList.push(Buffer.from(opts.packageName));
+    for (const file of files) {
+      dataList.push(Buffer.from(`+++${path.basename(file.path)}+++`));
+      dataList.push(file.data);
+    }
+  } else if (opts.mode === "v2") {
+    pushRecord(`popclipext ${files.length}`);
+    for (const [key, value] of sortedKeys(opts.meta)) {
+      pushRecord(`${key} ${value}`);
+    }
+    pushRecord("");
+    for (const file of files) {
+      let hash = crypto.createHash("sha256").update(file.data).digest("hex");
+      let exe = file.executable ? "1" : "0";
+      pushRecord(`${hash} ${exe} ${file.size} ${file.path}`);
+    }
+  }
+  return Buffer.concat(dataList);
+}
+
+// Sort array with case-insensitive comparison as required by PopClip
+function sortFiles(files: DataFileListEntry[]) {
+  files.sort((a, b) =>
     a.path.localeCompare(b.path, "en-US", {
       sensitivity: "accent",
       caseFirst: "upper",
     }),
   );
+}
 
-  // V1 has some deficiences in the signature format.
-  // - Only the file's basename is included in the signature, so if it's in a
-  // subdirectory, the path can be changed without invalidating the signature.
-  // - The signature does not account for the file's executable bit.
-  // V2 fixes these issues by including the full path and the executable bit.
-  // V1 encodes the package name in the signature, while V2 does not.
-  // V2 add metadata to the signature.
-
-  const dataList: Buffer[] = [];
-  if (opts.mode === "v1") {
-    dataList.push(Buffer.from(opts.packageName));
-    for (const file of sortedFiles) {
-      dataList.push(Buffer.from(`+++${path.basename(file.path)}+++`));
-      dataList.push(file.data);
-    }
-  } else {
-    dataList.push(Buffer.from(`popclipext ${sortedFiles.length}\x1E`));
-    let sortedMeta = Object.entries(opts.meta).sort(([keyA], [keyB]) =>
-      keyA.localeCompare(keyB, "en-US"),
-    );
-    for (const [key, value] of sortedMeta) {
-      dataList.push(Buffer.from(`${key} ${value}\x1E`));
-    }
-    dataList.push(Buffer.from(`\x1E`));
-    for (const file of sortedFiles) {
-      let hash = crypto.createHash("sha256").update(file.data).digest("hex");
-      let exe = file.executable ? "1" : "0";
-      let str = `${hash} ${exe} ${file.size} ${file.path}\x1E`;
-      dataList.push(Buffer.from(str));
-    }
-  }
-  let buf = Buffer.concat(dataList);
-  log({
-    mode: opts.mode,
-    bufSha256: crypto.createHash("sha256").update(buf).digest("hex"),
-  });
-  return buf;
+// Sort objects by key, into array of [k, v]
+function sortedKeys(meta: Record<string, string>) {
+  return Object.entries(meta).sort(([keyA], [keyB]) =>
+    keyA.localeCompare(keyB, "en-US"),
+  );
 }
