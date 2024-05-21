@@ -218,6 +218,9 @@ export async function processSubmission(
   if (!config.description) {
     throw new ApiError(400, "Extension 'description' field is required.");
   }
+  if (!config["popclip version"]) {
+    throw new ApiError(400, "Extension 'popclip version' field is required.");
+  }
 
   // get the info from the config
   const info = ZExtensionInfo.parse({
