@@ -26,6 +26,7 @@ const author: AuthorInfo = {
 const validYaml = `name: Hello World
 identifier: com.example.id-1-${randomString({ length: 10 })}
 description: A simple hello world extension ${randomString({ length: 10 })}
+popclip version: 1234
 actions:
 - {}`;
 const validYamlBuffer = Buffer.from(validYaml);
@@ -35,6 +36,7 @@ const validSnippet = `#popclip
 name: Hello World 2
 identifier: com.example.id-2-${randomString({ length: 10 })}
 description: foo bar ${randomString({ length: 10 })}
+popclip version: 1234
 actions:
 - {}`;
 const validSnippetBuffer = Buffer.from(validSnippet);
