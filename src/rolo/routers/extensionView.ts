@@ -54,6 +54,10 @@ const ZPopClipDirectoryView = ZPartialPopClipDirectoryView.extend({
   keywords: z.string(),
   owner: z.string().nullable(),
   apps: z.array(ZExtensionAppInfo),
+  actionTypes: z.array(z.string()),
+  entitlements: z.array(z.string()),
+  macosVersion: z.string().nullable(),
+  popclipVersion: z.number().nullable(),
   files: z.array(
     z.object({
       path: z.string(),
@@ -173,6 +177,10 @@ export function popclipView(doc: ExtensionRecordWithHistory) {
     sourceMessage: extractSourceMessage(doc.origin),
     owner: extractOwnerTag(doc.origin),
     apps: doc.info.apps ?? [],
+    actionTypes: doc.info.actionTypes ?? [],
+    entitlements: doc.info.entitlements ?? [],
+    macosVersion: doc.info.macosVersion ?? null,
+    popclipVersion: doc.info.popclipVersion ?? null,
     files: doc.files.map((f) => ({
       path: f.path,
       url: `/blobs/${thash(f.hash)}/${endpointFileName(f.path)}`,
