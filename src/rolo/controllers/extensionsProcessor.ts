@@ -222,6 +222,11 @@ export async function processSubmission(
     throw new ApiError(400, "Extension 'popclip version' field is required.");
   }
 
+  // needed for action type detection
+  if (configFile.path === "Config.js" || configFile.path === "Config.ts") {
+    config.module = true;
+  }
+
   // get the info from the config
   const info = ZExtensionInfo.parse({
     ...extractSummary(config),
