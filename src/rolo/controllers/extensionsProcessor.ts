@@ -234,6 +234,11 @@ export async function processSubmission(
   });
   mlog(`Identifier is ${info.identifier}`);
 
+  // check we have at least one action type
+  if (!info.actionTypes || info.actionTypes.length === 0) {
+    throw new ApiError(400, "Extension has no action types");
+  }
+
   // might use this for something in future
   if (info.identifier.startsWith("app.popclip.")) {
     throw new ApiError(
