@@ -16,18 +16,12 @@ import {
   ExtensionOrigin,
   ExtensionSubmission,
   IconComponents,
-  ZExtensionFileList,
   ZExtensionInfo,
-  ZExtensionOrigin,
-  ZExtensionPatch,
   ZPartialExtensionRecord,
   isConfigFileName,
 } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
-import {
-  ZVersionString,
-  compareVersionStrings,
-} from "../../common/versionString.js";
+import { compareVersionStrings } from "../../common/versionString.js";
 import { Auth, AuthKind } from "../auth.js";
 import { randomIdentifier } from "../identifiers.js";
 import {
@@ -235,7 +229,7 @@ export async function processSubmission(
   mlog(`Identifier is ${info.identifier}`);
 
   // check we have at least one action type
-  if (!info.actionTypes || info.actionTypes.length === 0) {
+  if (info.actionTypes.length === 0) {
     throw new ApiError(400, "Extension has no action types");
   }
 

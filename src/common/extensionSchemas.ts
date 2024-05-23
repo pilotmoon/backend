@@ -33,7 +33,7 @@ export const ZExtensionInfo = z.object({
   description: ZLocalizableString,
   keywords: ZSaneString.optional(),
   icon: ZIconComponents.optional(),
-  actionTypes: z.array(ZSaneString).optional(),
+  actionTypes: z.array(ZSaneString),
   entitlements: z.array(ZSaneString).optional(),
   apps: z.array(ZExtensionAppInfo).optional(),
   macosVersion: ZSaneString.optional(),
