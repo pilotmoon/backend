@@ -12,6 +12,10 @@ router.post("/", async (ctx) => {
 });
 
 router.get("/", async (ctx) => {
-  const documents = await listEvents(ctx.state.pagination, ctx.state.auth);
+  const documents = await listEvents(
+    ctx.query,
+    ctx.state.pagination,
+    ctx.state.auth,
+  );
   ctx.body = documents;
 });

@@ -7,6 +7,8 @@ import { handleControllerError } from "../../common/errors.js";
 import { Pagination, paginate } from "../paginate.js";
 import { EventInfo, ZEventInfo } from "../../common/events.js";
 import { days } from "../../common/timeIntervals.js";
+import { arrayFromQuery } from "../../common/query.js";
+import { log } from "../../common/log.js";
 
 // as stored in the database
 export const ZEventRecord = z.object({
@@ -71,10 +73,21 @@ export async function createEventInternal(info: EventInfo, authKind: AuthKind) {
   );
 }
 
-export async function listEvents(pagination: Pagination, auth: Auth) {
+export async function listEvents(
+  query: unknown,
+  pagination: Pagination,
+  auth: Auth,
+) {
   auth.assertAccess(eventsCollectionName, undefined, "read");
   try {
-    const documents = await paginate(dbc(auth.kind), pagination);
+    const pipeline = [];
+    log({ query });
+    const types = arrayFromQuery(query, "info.type", []);
+    log({ types });
+    if (types.length > 0) {
+      pipeline.push({ $match: { "info.type": { $in: types } } });
+    }
+    const documents = await paginate(dbc(auth.kind), pagination, pipeline);
     return documents;
   } catch (e) {
     handleControllerError(e);
