@@ -62,10 +62,18 @@ const ZGistEvent = ZEventCommon.extend({
 });
 export type GistEvent = z.infer<typeof ZGistEvent>;
 
+const ZCrashEvent = ZEventCommon.extend({
+  type: z.literal("crashReport"),
+  payloadType: z.string(),
+  payloadId: z.string(),
+  payload: z.unknown(),
+});
+
 export const ZEventInfo = z.discriminatedUnion("type", [
   ZRepoEvent,
   ZGistEvent,
   ZStatusChangeEvent,
+  ZCrashEvent,
 ]);
 export type EventInfo = z.infer<typeof ZEventInfo>;
 

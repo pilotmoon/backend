@@ -29,6 +29,7 @@ export async function init() {
   for (const kind of authKinds) {
     const collection = dbc(kind);
     collection.createIndex({ created: 1 });
+    collection.createIndex({ "info.type": 1 });
   }
 }
 
