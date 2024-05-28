@@ -58,7 +58,7 @@
     "typescript": "5.4.5"
   },
   "engines": {
-    "node": "18.17.0",
+    "node": "20.13.1",
     "npm": "10.1.0"
   },
   "name": "rolo",
