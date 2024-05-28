@@ -45,14 +45,12 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
 
   for (const ext of documents) {
     let title = extractDefaultString(ext.info.name);
-    let description = linkifyDescription(
-      extractDefaultString(ext.info.description),
-      ext.info.apps ?? [],
+    let description = sanitizeHtml(
+      linkifyDescription(
+        extractDefaultString(ext.info.description),
+        ext.info.apps ?? [],
+      ),
     );
-
-    // if (ext.download) {
-    //   description += `<br><a href="${publicRoot}${ext.download}">Download</a>`;
-    // }
 
     let mp4Hash = findSpecialFile("demo.mp4", ext.files);
     let gifHash = findSpecialFile("demo.gif", ext.files);
@@ -75,7 +73,7 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
 <item>
     <title>${sanitizeHtml(title)}</title>
     <guid isPermaLink="false">${ext.info.identifier}</guid>
-    <description><![CDATA[<p>${sanitizeHtml(description)}</p>]]></description>
+    <description><![CDATA[<p>${description}</p>]]></description>
     <link>${perma}</link>
     <pubDate>${datestr}</pubDate>
 </item>`.trim(),
