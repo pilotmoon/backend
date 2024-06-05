@@ -2,8 +2,6 @@ import { create as createCDH } from "content-disposition-header";
 import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
 import {
-  ExtensionAppInfo,
-  ExtensionFileList,
   ZExtensionPatch,
   ZExtensionSubmission,
 } from "../../common/extensionSchemas.js";
@@ -23,12 +21,7 @@ import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { filesExcludeRegex, generateExtensionFile } from "./extensionFile.js";
-import {
-  ZExtensionRecordWithHistory,
-  popclipView,
-  thash,
-} from "./extensionView.js";
-import { extractDefaultString } from "../../common/saneSchemas.js";
+import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 import { makeRss } from "./rss.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
@@ -141,7 +134,12 @@ async function handleList(ctx: AppContext, view?: string) {
   });
 
   if (view === "popclipRss") {
-    makeRss(ctx, documents as ExtensionRecord[]);
+    const rssList = (documents as ExtensionRecord[]).filter((d) => !d.unlisted);
+    makeRss(ctx, rssList);
+    ctx.set(
+      "Last-Modified",
+      (rssList[0]?.firstCreated ?? new Date()).toUTCString(),
+    );
     return;
   }
   if (setBodySpecialFormat(ctx, documents)) {
