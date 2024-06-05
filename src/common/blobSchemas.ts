@@ -21,7 +21,7 @@ export function gitHash(data: Buffer, algorithm: "sha1" | "sha256" = "sha1") {
 }
 
 export function truncatedHash(digest: Buffer) {
-  // we use the last 20 characters of the base58 encoded hash as the unique identifier
+  // we use the last 20 characters of the base58 encoded hash as a shorter but still strongly unique identifier
   return baseEncode([...digest], alphabets.base58Flickr, {
     trim: false,
   }).slice(-20);

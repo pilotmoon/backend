@@ -21,13 +21,9 @@ import { makeIdentifierPattern } from "../identifiers.js";
 import { AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { filesExcludeRegex, generateExtensionFile } from "./extensionFile.js";
-import {
-  ZExtensionRecordWithHistory,
-  popclipView,
-  thash,
-} from "./extensionView.js";
+import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
 import { makeRss } from "./rss.js";
-import { sha256Hex } from "../sha256.js";
+import { etag } from "../etag.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -145,7 +141,7 @@ async function handleList(ctx: AppContext, view?: string) {
       "Last-Modified",
       (rssList[0]?.firstCreated ?? new Date()).toUTCString(),
     );
-    ctx.set("ETag", thash(sha256Hex(ctx.body)));
+    ctx.set("ETag", `"${etag(ctx.body)}"`);
     return;
   }
   if (setBodySpecialFormat(ctx, documents)) {
