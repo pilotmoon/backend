@@ -115,6 +115,7 @@ export type ExtensionSubmission = z.infer<typeof ZExtensionSubmission>;
 // what can be patched in an extension
 export const ZExtensionPatch = z.object({
   published: z.boolean().optional(),
+  unlisted: z.boolean().optional(),
   reviewed: z.boolean().optional(),
   reviewComments: z.string().optional(),
   allowOriginChange: z.boolean().optional(),
