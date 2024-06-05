@@ -253,6 +253,7 @@ export async function processSubmission(
 
   // look for most recent submission (by created date) with the same identifier
   let shortcode;
+  let unlisted: boolean | undefined;
   const mostRecent = await dbc.findOne(
     { "info.identifier": info.identifier },
     { sort: { created: -1 } },
@@ -296,6 +297,8 @@ export async function processSubmission(
 
     shortcode = mostRecentParsed.shortcode;
     mlog(`Using previous submission shortcode: ${shortcode}`);
+    unlisted = mostRecentParsed.unlisted;
+    mlog(`Using previous submission unlisted state: ${unlisted}`);
   } else {
     mlog(`No previous submission found this identifier`);
 
@@ -352,6 +355,7 @@ export async function processSubmission(
     origin: submission.origin,
     files: submission.files,
     published: await shouldPublish(submission.origin, info, auth.kind),
+    unlisted,
   };
 }
 
