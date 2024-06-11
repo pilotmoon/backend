@@ -192,7 +192,7 @@ export async function updateApiKey(
       { $set: params },
       { returnDocument: "after" },
     );
-    return !!result.value;
+    return !!result?.value;
   } catch (error) {
     handleControllerError(error);
     throw error;
