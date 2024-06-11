@@ -89,10 +89,10 @@ export async function createAuthor(info: AuthorInfo, auth: Auth) {
       { upsert: true, returnDocument: "after" },
     );
     log("result", JSON.stringify(result, null, 2));
-    if (!result.value) {
+    if (!result) {
       throw new Error("Error inserting document");
     }
-    return result.value;
+    return result;
   } catch (e) {
     handleControllerError(e);
     throw e;
@@ -170,7 +170,7 @@ export async function updateAuthor(id: string, patch: AuthorPatch, auth: Auth) {
       { $set: patch },
       { returnDocument: "after" },
     );
-    return !!result.value;
+    return !!result;
   } catch (e) {
     handleControllerError(e);
     throw e;

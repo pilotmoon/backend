@@ -161,9 +161,9 @@ export async function updateExtension(
       { $set: patch },
       { returnDocument: "before" },
     );
-    if (!result.value) return false;
+    if (!result) return false;
     // see if published or reviewed status changed
-    let oldStatus = reviewStatus(result.value);
+    let oldStatus = reviewStatus(result);
     let newStatus = reviewStatus(patch);
     if (oldStatus !== newStatus) {
       const event: StatusChangeEvent = {
@@ -172,11 +172,11 @@ export async function updateExtension(
         logUrl: null,
         submission: {
           status: "ok",
-          origin: result.value.origin,
-          id: result.value._id,
-          shortcode: result.value.shortcode,
-          version: result.value.version,
-          info: result.value.info,
+          origin: result.origin,
+          id: result._id,
+          shortcode: result.shortcode,
+          version: result.version,
+          info: result.info,
           reviewStatus: newStatus,
           reviewComments: patch.reviewComments ?? null,
         },

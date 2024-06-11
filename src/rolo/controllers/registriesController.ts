@@ -173,7 +173,7 @@ export async function updateRegistry(
       { $set: info },
       { returnDocument: "after" },
     );
-    return !!result.value;
+    return !!result;
   } catch (error) {
     handleControllerError(error);
     throw error;
