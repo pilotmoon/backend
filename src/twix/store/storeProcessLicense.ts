@@ -28,7 +28,9 @@ export async function processLicense(
   const licenseArgs = ZLicenseArgs.parse(args);
   const api = getRolo(mode);
   const { date, expiryDate } = dates(licenseArgs);
-
+  const description = licenseArgs.valid_months
+    ? undefined
+    : "Lifetime Personal License";
   const info = {
     email: licenseArgs.email,
     name: licenseArgs.name,
@@ -38,6 +40,7 @@ export async function processLicense(
     origin,
     date,
     expiryDate,
+    description,
   };
   const { data } = await api.post("/licenseKeys", info);
   return ZLicenseKey.parse(data);
