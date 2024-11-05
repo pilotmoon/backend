@@ -1,8 +1,8 @@
 import { sha256Hex } from "./sha256.js";
 
 export function canonicalizeEmail(email: string) {
-  // Split the email address into the local part and domain
-  const [localPart, domain] = email.toLowerCase().split("@");
+  // Trim, then split the email address into the local part and domain
+  const [localPart, domain] = email.trim().toLowerCase().split("@");
 
   // Canonicalize the local part by removing dots
   // and removing any part after a plus sign

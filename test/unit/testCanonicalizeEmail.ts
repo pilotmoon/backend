@@ -19,4 +19,8 @@ test("test email addresses", (t) => {
     canonicalizeEmail("Ema.il.Address+TAG+another@example.com"),
     "emailaddress@example.com",
   );
+  t.is(
+    canonicalizeEmail(" Ema.il.Address+TAG+another@example.com"),
+    "emailaddress@example.com",
+  );
 });
