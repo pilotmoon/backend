@@ -23,12 +23,12 @@ const matchId = {
 };
 
 const lookup = {
-  txt: "text/plain",
+  txt: "text/plain; charset=utf-8",
   png: "image/png",
   svg: "image/svg+xml",
   gif: "image/gif",
   mp4: "video/mp4",
-  md: "text/markdown",
+  md: "text/markdown; charset=utf-8",
   webp: "image/webp",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
