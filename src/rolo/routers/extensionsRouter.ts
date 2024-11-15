@@ -70,7 +70,8 @@ function expand(
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readExtension(ctx.params.id, ctx.state.auth);
   if (document) {
-    ctx.body = expand(document, ctx);
+    expand(document, ctx);
+    ctx.body = document;
   }
 });
 
