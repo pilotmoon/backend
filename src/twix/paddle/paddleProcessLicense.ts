@@ -24,7 +24,12 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   log("Processing license:", args);
   const paddleArgs = ZLicenseArgs.passthrough().parse(args);
   if (paddleArgs.passthrough) {
-    const obj = JSON.parse(paddleArgs.passthrough);
+    let obj;
+    try {
+      obj = JSON.parse(paddleArgs.passthrough);
+    } catch (e) {
+      log("Ignoring error parsing passthrough JSON:", e);
+    }
     log({ passthrough: paddleArgs.passthrough, obj });
     const passthroughArgs = ZPassthroughArgs.safeParse(obj);
     if (passthroughArgs.success) {
