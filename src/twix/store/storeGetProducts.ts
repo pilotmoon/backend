@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
-import { log } from "../../common/log.js";
 import { getPaddleCheckoutApi } from "../paddle.js";
 import { CatalogEntry, getPaddleCatalog } from "./catalog.js";
 
@@ -114,7 +113,7 @@ const ZProductsResult = z.object({
 });
 export type ProductsResult = z.infer<typeof ZProductsResult>;
 
-export async function processProducts(
+export async function getProducts(
   ip: string,
   products: string,
   coupons: string,

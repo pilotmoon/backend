@@ -2,7 +2,7 @@ import { ApiError } from "../../common/errors.js";
 import { config } from "../config.js";
 import { processCoupon } from "./storeProcessCoupon.js";
 import { processLicense } from "./storeProcessLicense.js";
-import { processPrices, processProducts } from "./storeProcessPrices.js";
+import { getProducts } from "./storeGetProducts.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
 import { makeRouter } from "../koaWrapper.js";
 import { stringFromQuery } from "../../common/query.js";
@@ -45,7 +45,7 @@ router.get("/frontend/store/getProducts", async (ctx) => {
   ctx.alog.log(
     `getProducts request received from IP: ${sourceIp}, coupons: ${coupons}`,
   );
-  let result = await processProducts(sourceIp, products, coupons);
+  let result = await getProducts(sourceIp, products, coupons);
   ctx.alog.log({ result });
   ctx.set("Cache-Control", "private, max-age=900");
   ctx.body = result;
