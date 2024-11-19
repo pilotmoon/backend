@@ -38,19 +38,6 @@ router.post("/webhooks/store/generateCoupon", async (ctx) => {
   ctx.status = 201;
 });
 
-router.get("/frontend/store/getPrices", async (ctx) => {
-  const sourceIp = ctx.request.ip;
-  const product = ctx.query.product;
-  if (typeof product !== "string") {
-    throw new ApiError(400, "'product' query parameter is required");
-  }
-  ctx.alog.log(`getPrices request received from IP: ${sourceIp}`);
-  const result = await processPrices(sourceIp, product);
-  ctx.alog.log(`Sending prices for ${result.country}`);
-  ctx.set("Cache-Control", "private, max-age=900");
-  ctx.body = result;
-});
-
 router.get("/frontend/store/getProducts", async (ctx) => {
   const sourceIp = ctx.request.ip;
   const products = stringFromQuery(ctx.query, "products", "");
