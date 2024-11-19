@@ -349,12 +349,9 @@ export async function listLicenseKeys(
   auth: Auth,
 ): Promise<Document[]> {
   auth.assertAccess(collectionName, undefined, "read");
+  const pipeline = getQueryPipeline(query);
   try {
-    const docs = await paginate(
-      dbc(auth.kind),
-      pagination,
-      getQueryPipeline(query),
-    );
+    const docs = await paginate(dbc(auth.kind), pagination, pipeline);
     for (const doc of docs) decryptInPlace(doc);
     return docs;
   } catch (error) {

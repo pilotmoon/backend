@@ -29,6 +29,7 @@ export function getQueryPipeline(query: unknown) {
       refunded: ZQueryBoolString.optional(),
       couponPrefix: ZSaneAlphanum.optional(),
       view: z.nativeEnum(View).optional(),
+      flowId: ZSaneString.optional(),
     })
     .parse(query);
 
@@ -38,6 +39,7 @@ export function getQueryPipeline(query: unknown) {
   assignMatch($match, "product", q.product);
   assignMatch($match, "origin", q.origin);
   assignMatch($match, "order", q.order);
+  assignMatch($match, "originData.passthrough_data.flow_id", q.flowId);
   assignMatch($match, "void", q.void, matchExpressionFromQueryValue);
   assignMatch($match, "refunded", q.refunded, matchExpressionFromQueryValue);
   assignMatch($match, "originData.p_coupon", q.couponPrefix, (val) => {
