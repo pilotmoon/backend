@@ -6,6 +6,8 @@ import { getProducts } from "./storeGetProducts.js";
 import { validateStoreWebhook } from "./storeValidateWebhook.js";
 import { makeRouter } from "../koaWrapper.js";
 import { stringFromQuery } from "../../common/query.js";
+import { getLicense } from "./storeGetLicense.js";
+import { z } from "zod";
 
 export const router = makeRouter();
 
@@ -48,5 +50,26 @@ router.get("/frontend/store/getProducts", async (ctx) => {
   let result = await getProducts(sourceIp, products, coupons);
   ctx.alog.log({ result });
   ctx.set("Cache-Control", "private, max-age=900");
+  ctx.body = result;
+});
+
+// get license info for given flow id
+router.get("/frontend/store/getLicense", async (ctx) => {
+  const sourceIp = ctx.request.ip;
+  const parsedQuery = z
+    .object({
+      flowId: z.string().length(24),
+      mode: z.enum(["live", "test"]),
+    })
+    .parse({
+      flowId: stringFromQuery(ctx.query, "flowId", ""),
+      mode: stringFromQuery(ctx.query, "mode", "live"),
+    });
+  ctx.alog.log(
+    `getLicense request received from IP: ${sourceIp}, flowId: ${parsedQuery.flowId}`,
+  );
+  let result = await getLicense(parsedQuery.flowId, parsedQuery.mode);
+  ctx.alog.log({ result });
+  ctx.set("Cache-Control", "private");
   ctx.body = result;
 });
