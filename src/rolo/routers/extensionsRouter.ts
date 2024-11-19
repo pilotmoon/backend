@@ -66,7 +66,7 @@ function expand(
   }
 }
 
-// get extension data, optionally including file data
+// get extension data
 router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   const document = await readExtension(ctx.params.id, ctx.state.auth);
   if (document) {
