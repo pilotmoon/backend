@@ -12,12 +12,28 @@ const ZLicenseArgs = z.object({
   name: z.string(),
   product: z.string(),
   valid_months: z.coerce.number().int().min(1).optional(),
+  passthrough: z.string().optional(),
+});
+
+const ZPassthroughArgs = z.object({
+  flow_id: z.string().length(24).optional(),
 });
 
 export async function processLicense(args: unknown, mode: "test" | "live") {
   // create license
   log("Processing license:", args);
   const paddleArgs = ZLicenseArgs.passthrough().parse(args);
+  if (paddleArgs.passthrough) {
+    const obj = JSON.parse(paddleArgs.passthrough);
+    log({ passthrough: paddleArgs.passthrough, obj });
+    const passthroughArgs = ZPassthroughArgs.safeParse(obj);
+    if (passthroughArgs.success) {
+      log("Passthrough args:", passthroughArgs.data);
+      paddleArgs.passthrough_data = passthroughArgs.data;
+    } else {
+      log("Error parsing passthrough args:", passthroughArgs.error.message);
+    }
+  }
   const api = getRolo(mode);
   const { date, expiryDate } = dates(paddleArgs);
   const [product, description] = paddleArgs.product.split("/");
@@ -31,7 +47,14 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
     quantity: Number.parseInt(paddleArgs.p_quantity),
     order: paddleArgs.p_order_id,
     origin: "Paddle",
-    originData: _.omit(paddleArgs, "p_signature", "email", "name", "product"),
+    originData: _.omit(
+      paddleArgs,
+      "p_signature",
+      "email",
+      "name",
+      "product",
+      "passthrough",
+    ),
   };
   const { data } = await api.post("/licenseKeys", info);
   return ZLicenseKey.parse(data);
