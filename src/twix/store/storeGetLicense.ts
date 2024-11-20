@@ -18,7 +18,7 @@ const ZLicenseLookupResponse = z.object({
         id: z.string(),
         originData: z.object({
           passthrough_data: z.object({
-            flow_id: z.string().length(24),
+            flow_id: z.string().min(24),
           }),
         }),
       })
@@ -38,6 +38,7 @@ async function lookupLicense(flowId: string, api: AxiosInstance) {
     throw new ApiError(500, `Multiple licenses found for flowId: ${flowId}`);
   }
   const result = _.omit(orders[0], "originData");
+  result.flowId = flowId;
   log({ result });
   return result;
 }

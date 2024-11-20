@@ -16,7 +16,7 @@ const ZLicenseArgs = z.object({
 });
 
 const ZPassthroughArgs = z.object({
-  flow_id: z.string().length(24).optional(),
+  flow_id: z.string().min(24).optional(),
 });
 
 export async function processLicense(args: unknown, mode: "test" | "live") {

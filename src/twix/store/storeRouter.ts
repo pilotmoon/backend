@@ -58,7 +58,7 @@ router.get("/frontend/store/getLicense", async (ctx) => {
   const sourceIp = ctx.request.ip;
   const parsedQuery = z
     .object({
-      flowId: z.string().length(24),
+      flowId: z.string().min(24),
       mode: z.enum(["live", "test"]),
     })
     .parse({
