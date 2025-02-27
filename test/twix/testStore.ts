@@ -69,13 +69,7 @@ test("lizhi post /generateLicense with sample body with qty", async (t) => {
     order: "123456",
     quantity: 10,
   });
-  t.is(res.status, 201);
-  // parse url from the returned markdown link
-  t.assert(
-    res.data.web_url.startsWith("https://api.pilotmoon.com/v2"),
-    "link prefix",
-  );
-  t.is(res.data.file_name, "test.examplelicense");
+  t.is(res.status, 400);
 });
 
 test("post license with sample body to /store/generateLicense", async (t) => {
@@ -94,8 +88,19 @@ test("post license with sample body to /store/generateLicense with 12 months val
     email: "test@example.com",
     product: "com.example.product",
     order: "789013",
-    date: "2021-01-01T00:00:00.000Z",
     valid_months: 12,
+  });
+  t.is(res.status, 400);
+  t.log(res.data);
+});
+
+test("post license with sample body to /store/generateLicense with 24 months validity", async (t) => {
+  const res = await webhooks.post("/webhooks/store/generateLicense", {
+    name: "test",
+    email: "test@example.com",
+    product: "com.example.product",
+    order: "789014",
+    valid_months: 24,
   });
   t.is(res.status, 201);
   t.log(res.data);
