@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { getPaddleVendorsApi } from "../paddle.js";
 import { getCouponOffers } from "./catalog.js";
-import { ActivityLog } from "../activityLog.js";
+import type { ActivityLog } from "../activityLog.js";
 
 const ZCouponArgs = z.object({
   offer: z.string(),

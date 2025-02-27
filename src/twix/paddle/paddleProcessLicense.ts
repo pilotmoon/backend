@@ -24,7 +24,7 @@ export async function processLicense(args: unknown, mode: "test" | "live") {
   log("Processing license:", args);
   const paddleArgs = ZLicenseArgs.passthrough().parse(args);
   if (paddleArgs.passthrough) {
-    let obj;
+    let obj: unknown;
     try {
       obj = JSON.parse(paddleArgs.passthrough);
     } catch (e) {

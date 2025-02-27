@@ -47,7 +47,7 @@ router.get("/frontend/store/getProducts", async (ctx) => {
   ctx.alog.log(
     `getProducts request received from IP: ${sourceIp}, coupons: ${coupons}`,
   );
-  let result = await getProducts(sourceIp, products, coupons);
+  const result = await getProducts(sourceIp, products, coupons);
   ctx.alog.log({ result });
   ctx.set("Cache-Control", "private, max-age=900");
   ctx.body = result;
@@ -68,7 +68,7 @@ router.get("/frontend/store/getLicense", async (ctx) => {
   ctx.alog.log(
     `getLicense request received from IP: ${sourceIp}, flowId: ${parsedQuery.flowId}`,
   );
-  let result = await getLicense(parsedQuery.flowId, parsedQuery.mode);
+  const result = await getLicense(parsedQuery.flowId, parsedQuery.mode);
   ctx.alog.log({ result });
   ctx.set("Cache-Control", "private");
   ctx.body = result;
