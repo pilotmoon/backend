@@ -209,7 +209,9 @@ const encryptedFields = ["name", "email"] as const;
 export const ZLicenseKeyUpdate = ZLicenseKeyInfo.pick({
   name: true,
   email: true,
+  date: true,
   expiryDate: true,
+  quantity: true,
   validBeforeOs: true,
   validBeforeVersion: true,
   description: true,
