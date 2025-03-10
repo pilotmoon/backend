@@ -34,10 +34,14 @@ export async function processLicense(
 
   // check the validity period
   let description: string | undefined;
-  if (licenseArgs.valid_months === 24) {
-    description = "Standard Personal License";
-  } else if (licenseArgs.valid_months === undefined) {
-    description = "Lifetime Personal License";
+  if (quantity > 1) {
+    description = "Multi-user License";
+  } else {
+    if (licenseArgs.valid_months === 24) {
+      description = "Standard Personal License";
+    } else if (licenseArgs.valid_months === undefined) {
+      description = "Lifetime Personal License";
+    }
   }
 
   // calculate dates
