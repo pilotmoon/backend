@@ -69,7 +69,7 @@ test("lizhi post /generateLicense with sample body with qty", async (t) => {
     order: "123456",
     quantity: 10,
   });
-  t.is(res.status, 400);
+  t.is(res.status, 201);
 });
 
 test("post license with sample body to /store/generateLicense", async (t) => {

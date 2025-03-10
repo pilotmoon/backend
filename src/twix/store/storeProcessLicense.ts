@@ -15,7 +15,7 @@ const ZLicenseArgs = z.object({
   email: ZSaneEmail,
   order: ZSaneString,
   product: z.enum(["com.pilotmoon.popclip", "com.example.product"]),
-  quantity: z.literal(1).optional(),
+  quantity: z.number().int().positive().optional(),
   valid_months: z.literal(24).optional(),
 });
 
