@@ -60,6 +60,8 @@ export const ZExtensionFileListEntry = ZCoreFileListEntry.extend({
   hash: ZBlobHash2,
   data: z.instanceof(Buffer).optional(),
 });
+export type ExtensionFileListEntry = z.infer<typeof ZExtensionFileListEntry>;
+
 export const ZExtensionFileList = z.array(ZExtensionFileListEntry);
 export type ExtensionFileList = z.infer<typeof ZExtensionFileList>;
 

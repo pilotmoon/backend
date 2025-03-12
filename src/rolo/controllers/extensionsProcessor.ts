@@ -5,24 +5,25 @@ import {
   loadStaticConfig,
   validateStaticConfig,
 } from "@pilotmoon/fudge";
-import { Collection } from "mongodb";
+import type { Collection } from "mongodb";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { gitHash } from "../../common/blobSchemas.js";
 import { ApiError } from "../../common/errors.js";
 import {
-  ExtensionFileList,
-  ExtensionInfo,
-  ExtensionOrigin,
-  ExtensionSubmission,
-  IconComponents,
+  type ExtensionFileList,
+  type ExtensionFileListEntry,
+  type ExtensionInfo,
+  type ExtensionOrigin,
+  type ExtensionSubmission,
+  type IconComponents,
   ZExtensionInfo,
   ZPartialExtensionRecord,
   isConfigFileName,
 } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
 import { compareVersionStrings } from "../../common/versionString.js";
-import { Auth, AuthKind } from "../auth.js";
+import type { Auth, AuthKind } from "../auth.js";
 import { randomIdentifier } from "../identifiers.js";
 import {
   createAuthorInternal,
@@ -59,7 +60,7 @@ async function getFiles(
       const data = (await readBlobInternal(file.hash, authKind, true))
         ?.dataBuffer;
       if (!data) {
-        throw new Error(`File not found in blob store`);
+        throw new Error("File not found in blob store");
       }
       return { ...file, data };
     }),
@@ -70,54 +71,63 @@ const PILOTMOON_OWNER_ID = 17520;
 function githubOwnerIdFromOrigin(origin: ExtensionOrigin) {
   if (origin.type === "githubRepo") {
     return origin.ownerId;
-  } else if (origin.type === "githubGist") {
-    return origin.ownerId;
-  } else {
-    return null;
   }
+  if (origin.type === "githubGist") {
+    return origin.ownerId;
+  }
+  return null;
 }
 
-async function getConfigFile(files: ExtensionFileList) {
-  let result;
+async function getConfigFile(
+  files: ExtensionFileList,
+): Promise<ExtensionFileListEntry> {
+  // look forfiles named like a config file
   const configs = files.filter((file) => isConfigFileName(file.path));
+
+  // got one?
+  if (configs.length === 1) {
+    return configs[0];
+  }
+
+  // got more than one?
   if (configs.length > 1) {
     throw new ApiError(400, "Only one config file is allowed");
-  } else if (configs.length === 1) {
-    result = configs[0];
-  } else {
-    const snippets = [];
-    for (const file of files) {
-      if (!file.data) {
-        throw new Error("File data is missing");
-      }
-      const parsed = configFromText(
-        file.data.toString("utf8"),
-        fileNameSuffix(file.path),
-      );
-      if (parsed) {
-        snippets.push({ file, parsed });
-      }
-    }
-    if (snippets.length === 0) {
-      throw new ApiError(
-        400,
-        "Expected a Config file or a snippet in the files",
-      );
-    }
-    if (snippets.length > 1) {
-      throw new ApiError(400, "Found more than one snippet in the files");
-    }
-    const { parsed, file } = snippets[0];
-    log("snippet path", file.path);
-    log("parsed", parsed);
-    result = {
-      ...file,
-      path: parsed.fileName,
-      executable: parsed.isExecutable ? true : undefined,
-    };
-    log("result", file);
   }
-  return result;
+
+  // we have no config files, so look for a snippet in the files to use as the config
+  const snippets = [];
+  for (const file of files) {
+    if (!file.data) {
+      throw new Error("File data is missing");
+    }
+    const parsed = configFromText(
+      file.data.toString("utf8"),
+      fileNameSuffix(file.path),
+    );
+    if (parsed) {
+      snippets.push({ file, parsed });
+    }
+  }
+
+  // no snippets?
+  if (snippets.length === 0) {
+    throw new ApiError(400, "Expected a Config file or a snippet in the files");
+  }
+
+  // multiple smippets?
+  if (snippets.length > 1) {
+    throw new ApiError(400, "Found more than one snippet in the files");
+  }
+
+  // single snippet, we're good
+  const { parsed, file } = snippets[0];
+  log("snippet path", file.path);
+  log("parsed", parsed);
+  return {
+    ...file,
+    path: parsed.fileName,
+    executable: parsed.isExecutable ? true : undefined,
+  };
 }
 
 function sameOrigin(existing: ExtensionOrigin, candidate: ExtensionOrigin) {
@@ -139,11 +149,11 @@ function originDescription(origin: ExtensionOrigin) {
     return `githubRepo:${origin.ownerHandle}/${origin.repoName}/${
       origin.nodePath
     }${origin.nodeType === "tree" ? "/" : ""} (repoId:${origin.repoId})`;
-  } else if (origin.type === "githubGist") {
-    return `githubGist:${origin.gistId} (owner:${origin.ownerHandle})`;
-  } else {
-    return "unknown origin";
   }
+  if (origin.type === "githubGist") {
+    return `githubGist:${origin.gistId} (owner:${origin.ownerHandle})`;
+  }
+  return "unknown origin";
 }
 
 export async function processSubmission(
@@ -164,11 +174,11 @@ export async function processSubmission(
       throw new Error("File data is missing");
     }
     if (file.data.length !== file.size) {
-      throw new Error(`File size mismatch`);
+      throw new Error("File size mismatch");
     }
     const dataHash = gitHash(file.data, "sha256").toString("hex");
     if (dataHash !== file.hash) {
-      throw new Error(`File hash mismatch`);
+      throw new Error("File hash mismatch");
     }
     mlog(`File ${file.hash} ${file.path} OK`);
   }
@@ -182,29 +192,34 @@ export async function processSubmission(
   // modify the file list entry
   const configFileEntry = submission.files.find(
     (file) => file.hash === configFile.hash,
-  )!;
+  );
+  if (!configFileEntry) {
+    throw new Error("No config file entry");
+  }
   configFileEntry.path = configFile.path;
   configFileEntry.executable = configFile.executable;
   mlog(`Config file ${configFile.path} from ${configFileEntry.path}`);
 
-  let config;
-  try {
-    const staticConfig = loadStaticConfig([
-      {
-        name: configFile.path,
-        contents: configFile.data.toString("utf8"),
-      },
-    ]);
-    if (!staticConfig || Object.keys(staticConfig).length === 0) {
-      throw new Error(`No config found in ${configFile.path}`);
+  const config = (() => {
+    try {
+      const staticConfig = loadStaticConfig([
+        {
+          name: configFile.path,
+          contents: configFile.data.toString("utf8"),
+        },
+      ]);
+      if (!staticConfig || Object.keys(staticConfig).length === 0) {
+        throw new Error(`No config found in ${configFile.path}`);
+      }
+      return validateStaticConfig(staticConfig);
+    } catch (e) {
+      throw new ApiError(
+        400,
+        `Config load error: ${e instanceof Error ? e.message : "unknown"}`,
+      );
     }
-    config = validateStaticConfig(staticConfig);
-  } catch (e) {
-    throw new ApiError(
-      400,
-      `Config load error: ${e instanceof Error ? e.message : "unknown"}`,
-    );
-  }
+  })();
+
   mlog("Config validated OK");
   if (!config.identifier) {
     throw new ApiError(400, "Extension 'identifier' field is required.");
@@ -252,7 +267,7 @@ export async function processSubmission(
   }
 
   // look for most recent submission (by created date) with the same identifier
-  let shortcode;
+  let shortcode: string | undefined;
   let unlisted = true;
   const mostRecent = await dbc.findOne(
     { "info.identifier": info.identifier },
@@ -300,7 +315,7 @@ export async function processSubmission(
     unlisted = mostRecentParsed.unlisted ?? false;
     mlog(`Using previous submission unlisted state: ${unlisted}`);
   } else {
-    mlog(`No previous submission found this identifier`);
+    mlog("No previous submission found this identifier");
 
     // generate a new shortcode
     let hashInput = info.identifier;
@@ -312,7 +327,7 @@ export async function processSubmission(
         { projection: { _id: 1 } },
       );
       if (existing) {
-        hashInput = candidate + "+";
+        hashInput = `${candidate}+`;
         count++;
         mlog(`Shortcode ${candidate} already exists, trying again (${count})`);
       } else {
@@ -324,7 +339,7 @@ export async function processSubmission(
 
     // auto version, start at 1 for new submissions
     if (!submission.version) {
-      mlog(`Starting auto version at 1`);
+      mlog("Starting auto version at 1");
       submission.version = "1";
     }
   }
@@ -401,9 +416,8 @@ async function blobbifyIcon(
       payload: `${fileExt},${blobRecord.document._id.slice("blob_".length)}`,
       modifiers: components.modifiers,
     };
-  } else {
-    return components;
   }
+  return components;
 }
 
 async function shouldPublish(
