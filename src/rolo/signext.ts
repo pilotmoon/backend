@@ -1,10 +1,8 @@
-import crypto from "crypto";
-import { makePlist } from "./makePlist.js";
-import { ZExtensionFileListEntry } from "../common/extensionSchemas.js";
-import { z } from "zod";
-import path from "node:path";
 import * as ed from "@noble/ed25519";
+import crypto from "node:crypto";
+import path from "node:path";
 import { log } from "../common/log.js";
+import { makePlist } from "./makePlist.js";
 
 /*
 Utility for signing PopCLip extension packages
@@ -15,8 +13,11 @@ import { webcrypto } from "node:crypto";
 // @ts-ignore
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
-export const ZDataFileListEntry = ZExtensionFileListEntry.required();
-export type DataFileListEntry = z.infer<typeof ZDataFileListEntry>;
+export type DataFileListEntry = {
+  path: string;
+  data: Buffer;
+  executable: boolean;
+};
 
 export class Signer {
   private privateKey_v1: crypto.KeyObject; // PEM RSA
@@ -77,7 +78,7 @@ export type DigestOptions =
 function dataToSign(files: DataFileListEntry[], opts: DigestOptions) {
   const dataList: Buffer[] = [];
   function pushRecord(str: string) {
-    dataList.push(Buffer.from(str + "\x1E"));
+    dataList.push(Buffer.from(`${str}\x1E`));
   }
   sortFiles(files);
   if (opts.mode === "v1") {
@@ -93,9 +94,9 @@ function dataToSign(files: DataFileListEntry[], opts: DigestOptions) {
     }
     pushRecord("");
     for (const file of files) {
-      let hash = crypto.createHash("sha256").update(file.data).digest("hex");
-      let exe = file.executable ? "1" : "0";
-      pushRecord(`${hash} ${exe} ${file.size} ${file.path}`);
+      const hash = crypto.createHash("sha256").update(file.data).digest("hex");
+      const exe = file.executable ? "1" : "0";
+      pushRecord(`${hash} ${exe} ${file.data.length} ${file.path}`);
     }
   }
   return Buffer.concat(dataList);
