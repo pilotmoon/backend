@@ -4,8 +4,8 @@ import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { log } from "../../common/log.js";
 import { extractDefaultString } from "../../common/saneSchemas.js";
-import { AuthKind } from "../auth.js";
-import { ExtensionRecord } from "../controllers/extensionsProcessor.js";
+import type { AuthKind } from "../auth.js";
+import type { ExtensionRecord } from "../controllers/extensionsProcessor.js";
 import { getRegistryObjectInternal } from "../controllers/registriesController.js";
 import { Signer } from "../signext.js";
 
@@ -37,16 +37,21 @@ export async function generateExtensionFile(
   }
 
   // flesh out file data
-  let files = ext.files.map((file) => ({
-    ...file,
-    data: file.data!,
-    executable: !!file.executable,
-  }));
+  const files = ext.files.map((file) => {
+    if (!file.data) {
+      throw new ApiError(500, "File data is missing from record");
+    }
+    return {
+      ...file,
+      data: file.data,
+      executable: !!file.executable,
+    };
+  });
 
   // add files to zip
-  let packageName = `@${ext.shortcode}.${ext.info.identifier}.popclipext`;
-  let zip = new AdmZip();
-  for (let file of files) {
+  const packageName = `@${ext.shortcode}.${ext.info.identifier}.popclipext`;
+  const zip = new AdmZip();
+  for (const file of files) {
     // note, files list has been pre-filtered in the aggregation
     zip.addFile(
       `${packageName}/${file.path}`,
@@ -57,8 +62,8 @@ export async function generateExtensionFile(
   }
 
   // add signature file
-  let { key_v1, key_v2 } = await getExtensionSigningKeys(authKind);
-  let signature = await new Signer(key_v1, key_v2).extensionSignature(
+  const { key_v1, key_v2 } = await getExtensionSigningKeys(authKind);
+  const signature = await new Signer(key_v1, key_v2).extensionSignature(
     files,
     packageName,
     {
@@ -70,8 +75,8 @@ export async function generateExtensionFile(
   zip.addFile(`${packageName}/${signature.name}`, signature.contentsBuffer);
 
   // return zip buffer
-  let namePart = extractDefaultString(ext.info.name).replace(/[\/ ]/g, "-");
-  let name = `${namePart}-${ext.shortcode}-${ext.version}.popclipextz`;
+  const namePart = extractDefaultString(ext.info.name).replace(/[\/ ]/g, "-");
+  const name = `${namePart}-${ext.shortcode}-${ext.version}.popclipextz`;
   return { data: zip.toBuffer(), name };
 }
 
@@ -89,7 +94,7 @@ async function getExtensionSigningKeys(authKind: AuthKind) {
     throw new Error(`No popclipext signing key found for kind ${authKind}`);
   }
 
-  let keyRecord = z
+  const keyRecord = z
     .object({
       object: z.literal("record"),
       record: z.object({
