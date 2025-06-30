@@ -29,8 +29,8 @@ function findSpecialFile(suffix: string, files: ExtensionFileList) {
 
 export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
   const parts: string[] = [];
-  let publicRoot = "https://public.popclip.app";
-  let webUrl = "https://www.popclip.app/extensions/";
+  const publicRoot = "https://public.popclip.app";
+  const webUrl = "https://www.popclip.app/extensions/";
   parts.push(
     `
 <?xml version="1.0" encoding="utf-8"?>
@@ -38,13 +38,13 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
 <channel>
 <title>PopClip Extensions</title>
 <link>${webUrl}</link>
-<atom:link href="${publicRoot}/extensions/popclip/rss" rel="self" type="application/rss+xml" />
+<atom:link href="${publicRoot}/extensions/popclip.rss" rel="self" type="application/rss+xml" />
 <description>A feed of extensions published to the PopClip Extensions Directory.</description>
 <language>en</language>`.trim(),
   );
 
   for (const ext of documents) {
-    let title = extractDefaultString(ext.info.name);
+    const title = extractDefaultString(ext.info.name);
     let description = sanitizeHtml(
       linkifyDescription(
         extractDefaultString(ext.info.description),
@@ -52,8 +52,8 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
       ),
     );
 
-    let mp4Hash = findSpecialFile("demo.mp4", ext.files);
-    let gifHash = findSpecialFile("demo.gif", ext.files);
+    const mp4Hash = findSpecialFile("demo.mp4", ext.files);
+    const gifHash = findSpecialFile("demo.gif", ext.files);
 
     if (mp4Hash) {
       description += `<br><video src="${publicRoot}/blobs/${thash(
@@ -65,8 +65,8 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
       )}/file.gif" alt="Demo GIF" >`;
     }
 
-    let perma = `${webUrl}x/${ext.shortcode}`;
-    let datestr = ext.firstCreated!.toISOString();
+    const perma = `${webUrl}x/${ext.shortcode}`;
+    const datestr = (ext.firstCreated ?? new Date(0)).toUTCString();
 
     parts.push(
       `
@@ -80,7 +80,7 @@ export function makeRss(ctx: AppContext, documents: ExtensionRecord[]) {
     );
   }
 
-  parts.push("</channel></rss>");
+  parts.push("</channel>\n</rss>");
 
   ctx.body = parts.join("\n");
   ctx.set("Content-Type", "application/rss+xml");
