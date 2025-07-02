@@ -1,6 +1,6 @@
-import { create as createCDH } from "content-disposition-header";
-import { Document } from "mongodb";
 import { randomUUID } from "node:crypto";
+import { create as createCDH } from "content-disposition-header";
+import type { Document } from "mongodb";
 import {
   ZExtensionPatch,
   ZExtensionSubmission,
@@ -14,16 +14,16 @@ import {
   updateExtension,
 } from "../controllers/extensionsController.js";
 import {
-  ExtensionRecord,
+  type ExtensionRecord,
   ZExtensionRecord,
 } from "../controllers/extensionsProcessor.js";
+import { etag } from "../etag.js";
 import { makeIdentifierPattern } from "../identifiers.js";
-import { AppContext, makeRouter } from "../koaWrapper.js";
+import { type AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 import { filesExcludeRegex, generateExtensionFile } from "./extensionFile.js";
-import { ZExtensionRecordWithHistory, popclipView } from "./extensionView.js";
+import { popclipView, ZExtensionRecordWithHistory } from "./extensionView.js";
 import { makeRss } from "./rss.js";
-import { etag } from "../etag.js";
 
 export const router = makeRouter({ prefix: "/extensions" });
 const matchId = {
@@ -127,12 +127,11 @@ async function handleList(ctx: AppContext, view?: string) {
         expand(ver, ctx);
       }
       return popclipView(document);
-    } else {
-      const parsed = ZExtensionRecord.passthrough().safeParse(doc);
-      if (!parsed.success) return doc; // e.g. is project or extract has been used
-      expand(parsed.data, ctx);
-      return parsed.data;
     }
+    const parsed = ZExtensionRecord.passthrough().safeParse(doc);
+    if (!parsed.success) return doc; // e.g. is project or extract has been used
+    expand(parsed.data, ctx);
+    return parsed.data;
   });
 
   if (view === "popclipRss") {

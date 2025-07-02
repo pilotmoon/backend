@@ -40,7 +40,7 @@
     "zod-validation-error": "0.3.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.6.2",
+    "@biomejs/biome": "2.0.0",
     "@faker-js/faker": "7.6.0",
     "@types/adm-zip": "0.5.5",
     "@types/js-yaml": "4.0.9",
@@ -58,8 +58,7 @@
     "typescript": "5.4.5"
   },
   "engines": {
-    "node": "20.13.1",
-    "npm": "10.1.0"
+    "node": "20.13.1"
   },
   "name": "rolo",
   "private": true,
