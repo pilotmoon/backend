@@ -1,7 +1,7 @@
 import { CronJob } from "cron";
 import { z } from "zod";
 import { log } from "../common/log.js";
-import { AuthKind } from "../rolo/auth.js";
+import type { AuthKind } from "../rolo/auth.js";
 import { getTransporter } from "./email.js";
 import { getRemoteConfig } from "./remoteConfig.js";
 import { getRolo } from "./rolo.js";
@@ -30,7 +30,7 @@ async function getConfig() {
 //call once on server start
 let weeklyJob: CronJob;
 let monthlyJob: CronJob;
-let testJob: CronJob;
+//let testJob: CronJob;
 export async function start() {
   await getConfig();
 
@@ -63,7 +63,7 @@ export function stop() {
   log("Stopping reports");
   weeklyJob.stop();
   monthlyJob.stop();
-  testJob?.stop();
+  //testJob?.stop();
 }
 
 async function testReport() {
