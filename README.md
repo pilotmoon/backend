@@ -5,13 +5,13 @@ Back-end components for Pilotmoon's apps and websites.
 Current capabilities:
 
 - Generate license keys
+- Process and store extensions for directory
 
 Planned capabilities:
 
 - Manage downloads & release notes
 - Generate Sparkle feeds
 - Collect anonymous app analytics
-- Sign and store extensions
 - Synchronise extensions and settings
 
 ## Components
