@@ -6,3 +6,4 @@ import "./rolo/testLogs.js";
 import "./rolo/testBlobs.js";
 import "./rolo/testAuthors.js";
 import "./rolo/testExtensions.js";
+import "./rolo/testFiles.js";

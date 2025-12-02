@@ -1,4 +1,5 @@
-import { Context, Next } from "koa";
+import { Readable } from "node:stream";
+import type { Context, Next } from "koa";
 import { z } from "zod";
 import { ApiError } from "../../common/errors.js";
 import { idRegex, objectNames, objectNamesWithoutId } from "../identifiers.js";
@@ -54,6 +55,7 @@ export async function formatBody(ctx: Context, next: Next) {
   // if body is buffer or not an object, don't modify it
   if (
     Buffer.isBuffer(ctx.body) ||
+    ctx.body instanceof Readable ||
     typeof ctx.body !== "object" ||
     ctx.body === null
   )

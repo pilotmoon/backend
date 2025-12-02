@@ -2,46 +2,51 @@ import "colors";
 import bodyParser from "koa-bodyparser";
 import { ApiError } from "../common/errors.js";
 import { assertSuccess } from "../common/init.js";
-import { log, loge } from "../common/log.js";
+import { log } from "../common/log.js";
 import { handleError } from "../common/middleware/handleError.js";
 import { measureResponseTime } from "../common/middleware/measureResponseTime.js";
+import { hours } from "../common/timeIntervals.js";
 import { config } from "./config.js";
+import { init as initApiKeysController } from "./controllers/apiKeysController.js";
+import { init as initAuthorsController } from "./controllers/authorsController.js";
+import { init as initBlobsController } from "./controllers/blobsController.js";
+import {
+  housekeep as housekeepEvents,
+  init as initEventsController,
+} from "./controllers/eventsController.js";
+import { init as initExtensionsController } from "./controllers/extensionsController.js";
+import { init as initFilesController } from "./controllers/filesController.js";
+import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
+import {
+  housekeep as housekeepLogs,
+  init as initLogsController,
+} from "./controllers/logsController.js";
+import { init as initRegistriesController } from "./controllers/registriesController.js";
 import { close as closeDb, connect as connectDb } from "./database.js";
+import type { AppContext } from "./koaWrapper.js";
 import { makeRouter, makeServer } from "./koaWrapper.js";
 import { authorize } from "./middleware/authorize.js";
 import { enforceJson } from "./middleware/enforceJson.js";
 import { formatBody } from "./middleware/formatBody.js";
-import { logAccess } from "./middleware/logAccess.js";
+import {
+  housekeep as housekeepLogAccess,
+  init as initLogAccess,
+  logAccess,
+} from "./middleware/logAccess.js";
 import { processPagination } from "./middleware/processPagination.js";
-import { asciiHello } from "./static.js";
-
-import { housekeep as housekeepLogAccess } from "./middleware/logAccess.js";
-import { housekeep as housekeepLogs } from "./controllers/logsController.js";
-import { housekeep as housekeepEvents } from "./controllers/eventsController.js";
-
-import { init as initApiKeysController } from "./controllers/apiKeysController.js";
-import { init as initLicenseKeysController } from "./controllers/licenseKeysController.js";
-import { init as initRegistriesController } from "./controllers/registriesController.js";
-import { init as initLogsController } from "./controllers/logsController.js";
-import { init as initBlobsController } from "./controllers/blobsController.js";
-import { init as initExtensionsController } from "./controllers/extensionsController.js";
-import { init as initAuthorsController } from "./controllers/authorsController.js";
-import { init as initEventsController } from "./controllers/eventsController.js";
-
-import { init as initLogAccess } from "./middleware/logAccess.js";
-
-import { hours } from "../common/timeIntervals.js";
 import { router as apiKeysRouter } from "./routers/apiKeysRouter.js";
+import { router as authorsRouter } from "./routers/authorsRouter.js";
+import { router as blobsRouter } from "./routers/blobsRouter.js";
+import { router as eventsRouter } from "./routers/eventsRouter.js";
+import { router as extensionsRouter } from "./routers/extensionsRouter.js";
+import { router as filesRouter } from "./routers/filesRouter.js";
 import { router as healthRouter } from "./routers/healthRouter.js";
 import { router as licenseKeysRouter } from "./routers/licenseKeysRouter.js";
+import { router as logsRouter } from "./routers/logsRouter.js";
 import { router as registriesRouter } from "./routers/registriesRouter.js";
 import { router as reportsRouter } from "./routers/reportsRouter.js";
-import { router as logsRouter } from "./routers/logsRouter.js";
-import { router as blobsRouter } from "./routers/blobsRouter.js";
-import { router as extensionsRouter } from "./routers/extensionsRouter.js";
-import { router as authorsRouter } from "./routers/authorsRouter.js";
-import { router as eventsRouter } from "./routers/eventsRouter.js";
 import { setSecretKey } from "./secrets.js";
+import { asciiHello } from "./static.js";
 
 // first set the encryption key, if we have one
 if (config.APP_SECRET) {
@@ -57,6 +62,7 @@ mainRouter.use(registriesRouter.routes());
 mainRouter.use(licenseKeysRouter.routes());
 mainRouter.use(logsRouter.routes());
 mainRouter.use(blobsRouter.routes());
+mainRouter.use(filesRouter.routes());
 mainRouter.use(extensionsRouter.routes());
 mainRouter.use(authorsRouter.routes());
 mainRouter.use(eventsRouter.routes());
@@ -69,6 +75,13 @@ rootRouter.get("/", (ctx) => {
 
 // create Koa server
 const app = makeServer();
+
+function shouldBypassJson(ctx: AppContext) {
+  if (ctx.method !== "POST") {
+    return false;
+  }
+  return ctx.path === "/files" || ctx.path === "/files/";
+}
 
 // function that routers can use for generating url for Location header
 app.context.getLocation = (
@@ -102,14 +115,24 @@ app.use(rootRouter.routes());
 app.use(rootRouter.allowedMethods());
 app.use(authorize);
 app.use(processPagination());
-app.use(enforceJson);
-app.use(parseJsonBody);
+app.use(async (ctx, next) => {
+  if (shouldBypassJson(ctx)) {
+    return next();
+  }
+  return enforceJson(ctx, next);
+});
+app.use(async (ctx, next) => {
+  if (shouldBypassJson(ctx)) {
+    return next();
+  }
+  return parseJsonBody(ctx, next);
+});
 app.use(mainRouter.routes());
 app.use(mainRouter.allowedMethods());
 
 // housekeeping tasks
 async function housekeep() {
-  log(`Housekeeping ${new Date().getTime()}`.black.bgYellow);
+  log(`Housekeeping ${Date.now()}`.black.bgYellow);
   await housekeepLogAccess();
   await housekeepLogs();
   await housekeepEvents();
@@ -162,6 +185,7 @@ await assertSuccess([
   initLicenseKeysController(),
   initLogsController(),
   initBlobsController(),
+  initFilesController(),
   initExtensionsController(),
   initAuthorsController(),
   initEventsController(),

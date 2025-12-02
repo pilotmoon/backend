@@ -1,7 +1,7 @@
 import { defaultRng, randomString } from "@pilotmoon/chewit";
 import Prando from "prando";
 import { logw } from "../common/log.js";
-import { AuthKind, authKinds } from "./auth.js";
+import { type AuthKind, authKinds } from "./auth.js";
 
 // the collection names, object types and corresponding key prefixes
 export const idPrefixes = [
@@ -12,6 +12,7 @@ export const idPrefixes = [
   "ext",
   "blob",
   "au",
+  "file",
 ] as const;
 export const collectionNames = [
   "apiKeys",
@@ -24,6 +25,7 @@ export const collectionNames = [
   "blobs",
   "authors",
   "events",
+  "files",
 ] as const;
 export const objectNames = [
   "apiKey",
@@ -33,6 +35,7 @@ export const objectNames = [
   "extension",
   "blob",
   "author",
+  "file",
 ] as const;
 export const objectNamesWithoutId = [
   "health",
