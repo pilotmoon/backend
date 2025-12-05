@@ -60,7 +60,7 @@ router.get("/download/:identifier(.+)", async (ctx) => {
   ctx.body = result.stream;
   ctx.length = result.record.size;
   ctx.set("Content-Type", "application/octet-stream");
-  ctx.set("Cache-Control", "public, max-age=3600, immutable");
+  ctx.set("Cache-Control", "public, max-age=604800");
   const fallback = result.record.name.replace(/[^\x20-\x7e]/g, "?");
   ctx.set("Content-Disposition", createCDH(result.record.name, { fallback }));
 });
