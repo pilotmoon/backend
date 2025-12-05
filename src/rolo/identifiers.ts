@@ -52,6 +52,7 @@ const secretKeyPrefix = "sk";
 const secretKeyLength = 24;
 const idLength = 12;
 const base62 = (n: number) => `[0-9a-zA-Z]{${n}}`;
+export const objectIdHexPattern = "[0-9a-f]{24}";
 export const secretKeyRegex = new RegExp(
   `^${secretKeyPrefix}_(${authKinds.join("|")})_(${base62(idLength)})${base62(
     secretKeyLength,
@@ -91,6 +92,17 @@ export function makeIdentifierPattern(
 // produce a pattern for matching generic identifiers
 export function makeGenericIdPattern(varName: string): string {
   return `/:${varName}([0-9a-zA-Z-_.]+)`;
+}
+
+export function makePrefixedObjectIdPattern(
+  varName: string,
+  prefix: string,
+): string {
+  return `/:${varName}(${prefix}_${objectIdHexPattern})`;
+}
+
+export function prefixedObjectIdRegex(prefix: string) {
+  return new RegExp(`^${prefix}_(${objectIdHexPattern})$`, "i");
 }
 
 /*** helpers for deterministic tests ***/

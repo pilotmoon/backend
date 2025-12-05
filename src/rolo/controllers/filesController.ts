@@ -11,15 +11,16 @@ import {
 } from "../../common/fileSchemas.js";
 import { type Auth, type AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
+import { prefixedObjectIdRegex } from "../identifiers.js";
 import { type Pagination, paginate } from "../paginate.js";
 
 const collectionName = "files";
 const bucketName = "files";
-const fileIdPrefix = "file_";
-const fileIdRegex = /^file_([0-9a-f]{24})$/i;
+const fileIdPrefix = "file";
+const fileIdRegex = prefixedObjectIdRegex(fileIdPrefix);
 
 function toFileId(objectId: ObjectId): string {
-  return `${fileIdPrefix}${objectId.toHexString()}`;
+  return `${fileIdPrefix}_${objectId.toHexString()}`;
 }
 
 function toObjectId(id: string): ObjectId | null {

@@ -1,5 +1,6 @@
 import { randomString } from "@pilotmoon/chewit";
 import test from "ava";
+import { objectIdHexPattern } from "../../src/rolo/identifiers.js";
 import { rolo } from "./setup.js";
 
 const sampleName = `assets/${randomString({ length: 8 })}.txt`;
@@ -7,7 +8,7 @@ const simpleName = `${randomString({ length: 6 })}.txt`;
 const sampleData = Buffer.from(
   `Files test payload ${Date.now()}_${randomString({ length: 6 })}`,
 );
-const fileIdPattern = /^file_[0-9a-f]{24}$/;
+const fileIdPattern = new RegExp(`^file_${objectIdHexPattern}$`, "i");
 let fileId = "";
 let simpleFileId = "";
 
