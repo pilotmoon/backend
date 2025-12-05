@@ -1,14 +1,14 @@
 // an event is a record of something that happened in the system
 
 import { z } from "zod";
-import { Auth, AuthKind, authKinds } from "../auth.js";
-import { getDb } from "../database.js";
 import { handleControllerError } from "../../common/errors.js";
-import { Pagination, paginate } from "../paginate.js";
-import { EventInfo, ZEventInfo } from "../../common/events.js";
-import { days } from "../../common/timeIntervals.js";
-import { arrayFromQuery } from "../../common/query.js";
+import { type EventInfo, ZEventInfo } from "../../common/events.js";
 import { log } from "../../common/log.js";
+import { arrayFromQuery } from "../../common/query.js";
+import { days } from "../../common/timeIntervals.js";
+import { Auth, type AuthKind, authKinds } from "../auth.js";
+import { getDb } from "../database.js";
+import { type Pagination, paginate } from "../paginate.js";
 
 // as stored in the database
 export const ZEventRecord = z.object({
@@ -21,9 +21,7 @@ export type EventRecord = z.infer<typeof ZEventRecord>;
 const eventsCollectionName = "events";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
-  return getDb(kind).collection<EventRecord>(eventsCollectionName, {
-    ignoreUndefined: true,
-  });
+  return getDb(kind).collection<EventRecord>(eventsCollectionName);
 }
 
 // called at server startup to create indexes
@@ -67,7 +65,7 @@ export async function createEventInternal(info: EventInfo, authKind: AuthKind) {
   return await createEvent(
     info,
     new Auth({
-      scopes: [`events:create`],
+      scopes: ["events:create"],
       kind: authKind,
     }),
   );

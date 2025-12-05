@@ -21,15 +21,15 @@
 //    location: <github location>, //optional
 //  ... end of "github"" type
 
+import type { Document } from "mongodb";
 import { z } from "zod";
-import { Auth, AuthKind, authKinds } from "../auth.js";
+import { handleControllerError } from "../../common/errors.js";
+import { ZGithubAuthorInfo } from "../../common/extensionSchemas.js";
+import { log } from "../../common/log.js";
+import { Auth, type AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
 import { randomIdentifier } from "../identifiers.js";
-import { handleControllerError } from "../../common/errors.js";
-import { Pagination, paginate } from "../paginate.js";
-import { Document } from "mongodb";
-import { log } from "../../common/log.js";
-import { ZGithubAuthorInfo } from "../../common/extensionSchemas.js";
+import { type Pagination, paginate } from "../paginate.js";
 
 // what is passed in on creation
 export const ZAuthorInfo = z.discriminatedUnion("type", [ZGithubAuthorInfo]);
@@ -53,9 +53,7 @@ export type AuthorRecord = z.infer<typeof ZAuthorRecord>;
 const authorsCollectionName = "authors";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
-  return getDb(kind).collection<AuthorRecord>(authorsCollectionName, {
-    ignoreUndefined: true,
-  });
+  return getDb(kind).collection<AuthorRecord>(authorsCollectionName);
 }
 
 // called at server startup to create indexes
@@ -106,7 +104,7 @@ export async function createAuthorInternal(
   return await createAuthor(
     info,
     new Auth({
-      scopes: [`authors:create`],
+      scopes: ["authors:create"],
       kind: authKind,
     }),
   );

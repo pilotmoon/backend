@@ -1,32 +1,30 @@
 import type { Document } from "mongodb";
 import { handleControllerError } from "../../common/errors.js";
-import {
+import { reviewStatus, type StatusChangeEvent } from "../../common/events.js";
+import type {
   ExtensionPatch,
   ExtensionSubmission,
 } from "../../common/extensionSchemas.js";
 import { log } from "../../common/log.js";
-import { authKinds, type Auth, type AuthKind } from "../auth.js";
-import { getClient, getDb } from "../database.js";
-import { Pagination, paginate } from "../paginate.js";
 import {
   arrayFromQuery,
   boolFromQuery,
   stringFromQuery,
 } from "../../common/query.js";
-import {
-  ExtensionRecord,
-  ZExtensionRecord,
-  processSubmission,
-} from "./extensionsProcessor.js";
+import { type Auth, type AuthKind, authKinds } from "../auth.js";
+import { getClient, getDb } from "../database.js";
+import { type Pagination, paginate } from "../paginate.js";
 import { createEventInternal } from "./eventsController.js";
-import { StatusChangeEvent, reviewStatus } from "../../common/events.js";
+import {
+  type ExtensionRecord,
+  processSubmission,
+  ZExtensionRecord,
+} from "./extensionsProcessor.js";
 
 export const extensionsCollectionName = "extensions";
 // helper function to get the database collection for a given key kind
 function dbc(kind: AuthKind) {
-  return getDb(kind).collection<ExtensionRecord>(extensionsCollectionName, {
-    ignoreUndefined: true,
-  });
+  return getDb(kind).collection<ExtensionRecord>(extensionsCollectionName);
 }
 
 // called at server startup to create indexes
@@ -163,8 +161,8 @@ export async function updateExtension(
     );
     if (!result) return false;
     // see if published or reviewed status changed
-    let oldStatus = reviewStatus(result);
-    let newStatus = reviewStatus(patch);
+    const oldStatus = reviewStatus(result);
+    const newStatus = reviewStatus(patch);
     if (oldStatus !== newStatus) {
       const event: StatusChangeEvent = {
         type: "statusChange",

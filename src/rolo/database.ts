@@ -1,6 +1,6 @@
-import { Db, MongoClient, ServerApiVersion } from "mongodb";
+import { type Db, MongoClient, ServerApiVersion } from "mongodb";
 import { log } from "../common/log.js";
-import { AuthKind } from "./auth.js";
+import type { AuthKind } from "./auth.js";
 import { config } from "./config.js";
 
 let client: MongoClient;
@@ -39,6 +39,7 @@ export async function connect() {
     log("Connecting to database...");
     client = new MongoClient(config.DATABASE_URL, {
       serverApi: ServerApiVersion.v1,
+      ignoreUndefined: true,
     });
     client.on("close", (event: unknown): void => {
       log("Database connection closed (close)", event);
