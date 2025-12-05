@@ -31,7 +31,12 @@ router.post("/", async (ctx) => {
 });
 
 router.get("/", async (ctx) => {
-  const documents = await listFiles(ctx.state.pagination, ctx.state.auth);
+  const nameFilter = stringFromQuery(ctx.query, "name", "").trim();
+  const documents = await listFiles(
+    ctx.state.pagination,
+    ctx.state.auth,
+    nameFilter || undefined,
+  );
   if (!setBodySpecialFormat(ctx, documents)) {
     ctx.body = documents;
   }

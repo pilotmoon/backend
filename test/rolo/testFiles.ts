@@ -65,6 +65,15 @@ test("list files includes uploaded file", async (t) => {
   t.true(ids.includes(fileId));
 });
 
+test("list files can filter by name", async (t) => {
+  const res = await rolo().get("files", {
+    params: { name: sampleName },
+  });
+  t.is(res.status, 200);
+  t.is(res.data.object, "list");
+  t.true(res.data.items.every((item: any) => item.name === sampleName));
+});
+
 test("list files sorts by created ascending", async (t) => {
   const res = await rolo().get("files", {
     params: { sort: 1, sortBy: "created", limit: 20 },

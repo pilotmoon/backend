@@ -163,10 +163,17 @@ export async function streamFileByName(
 export async function listFiles(
   pagination: Pagination,
   auth: Auth,
+  name?: string,
 ): Promise<FileRecord[]> {
   auth.assertAccess(collectionName, undefined, "read");
   try {
-    const docs = await paginate(filesCollection(auth.kind), pagination);
+    const matchPipeline =
+      name && name.length > 0 ? [{ $match: { filename: name } }] : [];
+    const docs = await paginate(
+      filesCollection(auth.kind),
+      pagination,
+      matchPipeline,
+    );
     return docs.map(toRecord);
   } catch (error) {
     handleControllerError(error);
