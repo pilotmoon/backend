@@ -4,10 +4,10 @@ import { ApiError } from "../../common/errors.js";
 import { stringFromQuery } from "../../common/query.js";
 import {
   createFile,
+  deleteFile,
   listFiles,
   readFileById,
   streamFileByName,
-  updateFile,
 } from "../controllers/filesController.js";
 import { makePrefixedObjectIdPattern } from "../identifiers.js";
 import { makeRouter } from "../koaWrapper.js";
@@ -60,12 +60,11 @@ router.get("/download/:identifier(.+)", async (ctx) => {
   ctx.set("Content-Disposition", createCDH(result.record.name, { fallback }));
 });
 
-router.patch(matchId.uuid, matchId.pattern, async (ctx) => {
-  const document = await updateFile(
-    ctx.params.id,
-    ctx.request.body,
-    ctx.state.auth,
-  );
-  if (!document) return;
-  ctx.body = document;
+router.delete(matchId.uuid, matchId.pattern, async (ctx) => {
+  const removed = await deleteFile(ctx.params.id, ctx.state.auth);
+  if (!removed) {
+    ctx.status = 404;
+    return;
+  }
+  ctx.status = 204;
 });

@@ -13,7 +13,7 @@
 
 1. **Data Contracts & Validation**
    - Add Zod schemas for file creation and lookup in `src/common` (fields:
-     `fileId`, `name`, `size`, `created`, `hidden` flag for availability).
+     `fileId`, `name`, `size`, `created` timestamp).
    - Define filename rules (allow slashes, reject traversal and duplicate
      separators) and ensure uniqueness on `name`.
    - Update TypeScript types shared between services and tests.
@@ -22,17 +22,17 @@
      `filesBucket`) configured for the `files` namespace.
    - Use the GridFS `files` documents themselves as metadata: rely on the
      document `_id` as the canonical identifier (exposed externally as
-     `file_<ObjectId>`), store the visibility flag in `metadata.hidden`, and
-     stamp creation dates directly on the GridFS document.
-   - Implement repository functions for create/read/update-visibility that
-     coordinate GridFS writes/reads only—no parallel metadata collection.
+     `file_<ObjectId>`) and stamp creation dates directly on the GridFS
+     document.
+   - Implement repository functions for create/read/delete that coordinate
+     GridFS writes/reads only—no parallel metadata collection.
 3. **API Layer**
    - Add new routes/controllers under `src/rolo/files` for `POST /files`,
-     `GET /files` (paginated), `GET /files/:fileId`, and
-     `GET /files/download/:name`.
+     `GET /files` (paginated), `GET /files/:fileId`,
+     `GET /files/download/:name`, and `DELETE /files/:fileId`.
    - Handle uploads via streaming (raw body with a required `?name=` query
      parameter) and return `fileId` plus metadata; enforce conflicts on
-     duplicate names and default new files to `hidden: false`.
+     duplicate names.
    - When retrieving by name, stream the binary contents as
      `application/octet-stream`; when retrieving by `fileId`, return a JSON
      metadata payload consistent with other records.
@@ -45,6 +45,6 @@
 5. **Docs & Ops Updates**
    - Document the new endpoints in README/AGENTS, including sample `curl`
      commands.
-   - Note the reliance on GridFS indexes (`filename`, `metadata.hidden`,
-     `created`) alongside the default `_id` and ensure deployment instructions
-     mention building them with the bucket.
+   - Note the reliance on GridFS indexes (`filename`, `created`) alongside the
+     default `_id` and ensure deployment instructions mention building them with
+     the bucket.

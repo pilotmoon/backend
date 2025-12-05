@@ -7,7 +7,6 @@ import {
   type FileRecord,
   ZFileCreateInput,
   ZFileRecord,
-  ZFileUpdateInput,
 } from "../../common/fileSchemas.js";
 import { type Auth, type AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
@@ -44,17 +43,12 @@ function getBucket(kind: AuthKind) {
   return bucket;
 }
 
-type GridFsMetadata = {
-  hidden?: boolean;
-};
-
 type GridFsFileDocument = {
   _id: ObjectId;
   filename: string;
   length: number;
   uploadDate: Date;
   created?: Date;
-  metadata?: GridFsMetadata;
 };
 
 function filesCollection(kind: AuthKind) {
@@ -62,13 +56,11 @@ function filesCollection(kind: AuthKind) {
 }
 
 function toRecord(document: GridFsFileDocument): FileRecord {
-  const metadata = document.metadata ?? {};
   return ZFileRecord.parse({
     _id: toFileId(document._id),
     object: "file",
     name: document.filename,
     size: document.length,
-    hidden: metadata.hidden ?? false,
     created: document.created ?? document.uploadDate,
   });
 }
@@ -79,7 +71,6 @@ export async function init() {
     const collection = filesCollection(kind);
     await collection.createIndex({ filename: 1 }, { unique: true });
     await collection.createIndex({ created: 1 });
-    await collection.createIndex({ "metadata.hidden": 1 });
   }
 }
 
@@ -96,11 +87,6 @@ export async function createFile(
   const uploadStream = bucket.openUploadStreamWithId(
     gridFsId,
     parsedInput.name,
-    {
-      metadata: {
-        hidden: false,
-      },
-    },
   );
   try {
     await pipeline(source, uploadStream);
@@ -154,16 +140,8 @@ export async function readFileById(
   }
 }
 
-async function findDocumentByName(
-  name: string,
-  kind: AuthKind,
-  requirePublished: boolean,
-) {
-  const match: Record<string, unknown> = { filename: name };
-  if (requirePublished) {
-    match["metadata.hidden"] = { $ne: true };
-  }
-  return filesCollection(kind).findOne(match);
+async function findDocumentByName(name: string, kind: AuthKind) {
+  return filesCollection(kind).findOne({ filename: name });
 }
 
 export async function streamFileByName(
@@ -171,7 +149,7 @@ export async function streamFileByName(
   auth: Auth,
 ): Promise<{ record: FileRecord; stream: Readable } | null> {
   auth.assertAccess(collectionName, undefined, "read");
-  const document = await findDocumentByName(name, auth.kind, true);
+  const document = await findDocumentByName(name, auth.kind);
   if (!document) return null;
   try {
     const bucket = getBucket(auth.kind);
@@ -179,37 +157,6 @@ export async function streamFileByName(
     return { record: toRecord(document), stream };
   } catch (_) {
     throw new ApiError(500, "Unable to read stored file");
-  }
-}
-
-export async function updateFile(
-  id: string,
-  suppliedInput: unknown,
-  auth: Auth,
-): Promise<FileRecord | null> {
-  auth.assertAccess(collectionName, id, "update");
-  const objectId = toObjectId(id);
-  if (!objectId) {
-    return null;
-  }
-  const update = ZFileUpdateInput.parse(suppliedInput);
-  try {
-    const document = await filesCollection(auth.kind).findOneAndUpdate(
-      { _id: objectId },
-      {
-        $set: {
-          "metadata.hidden": update.hidden,
-        },
-      },
-      { returnDocument: "after" },
-    );
-    if (!document) {
-      return null;
-    }
-    return toRecord(document);
-  } catch (error) {
-    handleControllerError(error);
-    throw error;
   }
 }
 
@@ -221,6 +168,26 @@ export async function listFiles(
   try {
     const docs = await paginate(filesCollection(auth.kind), pagination);
     return docs.map(toRecord);
+  } catch (error) {
+    handleControllerError(error);
+    throw error;
+  }
+}
+
+export async function deleteFile(id: string, auth: Auth): Promise<boolean> {
+  auth.assertAccess(collectionName, id, "delete");
+  const objectId = toObjectId(id);
+  if (!objectId) {
+    return false;
+  }
+  const bucket = getBucket(auth.kind);
+  const document = await filesCollection(auth.kind).findOne({ _id: objectId });
+  if (!document) {
+    return false;
+  }
+  try {
+    await bucket.delete(objectId);
+    return true;
   } catch (error) {
     handleControllerError(error);
     throw error;

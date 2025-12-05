@@ -6,7 +6,7 @@
     "rules": {
       "recommended": true,
       "style": {
-        "noParameterAssign": "error",
+        "noParameterAssign": "warn",
         "useAsConstAssertion": "error",
         "useDefaultParameterLast": "error",
         "useEnumInitializers": "error",

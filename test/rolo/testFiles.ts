@@ -43,7 +43,6 @@ test("get file metadata by id", async (t) => {
   t.is(res.status, 200);
   t.is(res.data.id, fileId);
   t.is(res.data.name, sampleName);
-  t.false(res.data.hidden);
 });
 
 test("nonexistent file id returns 404", async (t) => {
@@ -93,31 +92,6 @@ test("download simple file by name", async (t) => {
   t.deepEqual(Buffer.from(res.data), sampleData);
 });
 
-test("hide file prevents name access", async (t) => {
-  const res = await rolo().patch(`files/${fileId}`, {
-    hidden: true,
-  });
-  t.is(res.status, 200);
-  t.true(res.data.hidden);
-
-  const byName = await rolo().get(`files/download/${sampleName}`, {
-    responseType: "arraybuffer",
-  });
-  t.is(byName.status, 404);
-
-  const meta = await rolo().get(`files/${fileId}`);
-  t.is(meta.status, 200);
-  t.true(meta.data.hidden);
-
-  const list = await rolo().get("files", {
-    params: { limit: 10 },
-  });
-  t.is(list.status, 200);
-  const hiddenEntry = list.data.items.find((item: any) => item.id === fileId);
-  t.truthy(hiddenEntry);
-  t.true(hiddenEntry.hidden);
-});
-
 test("duplicate names are rejected", async (t) => {
   const res = await rolo().post("files", sampleData, {
     headers: {
@@ -160,4 +134,17 @@ test("missing file name is rejected", async (t) => {
   }
   t.is(res.status, 400);
   t.true(String(res.data).includes("File name is required"));
+});
+
+test("delete file removes stored data", async (t) => {
+  const res = await rolo().delete(`files/${fileId}`);
+  t.is(res.status, 204);
+
+  const meta = await rolo().get(`files/${fileId}`);
+  t.is(meta.status, 404);
+
+  const byName = await rolo().get(`files/download/${sampleName}`, {
+    responseType: "arraybuffer",
+  });
+  t.is(byName.status, 404);
 });

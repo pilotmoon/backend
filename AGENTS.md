@@ -59,15 +59,13 @@ environment updates so reviewers can regenerate `.env-*` files.
 ## Files & GridFS Storage
 
 Rolo now exposes `/files` for large payloads backed by MongoDB GridFS. Upload by
-sending the raw file body to `POST /files?name=<path>`; new files default to
-visible (`hidden: false`). Retrieve metadata via `GET /files/{fileId}` while
-`GET /files/download/{file/path.ext}` streams binary data as
-`application/octet-stream`, gated by the `hidden` flag. Use
-`PATCH /files/{fileId}` with `{ "hidden": true }` for soft-delete behavior—names
-stay unique forever so no replacements occur. Keep shared schemas in
-`src/common/fileSchemas.ts`, controllers in
-`src/rolo/controllers/filesController.ts`, and update tests whenever storage or
-routing is adjusted.
+sending the raw file body to `POST /files?name=<path>`; retrieve metadata via
+`GET /files/{fileId}` and stream binary data through
+`GET /files/download/{file/path.ext}` with `application/octet-stream`. Remove a
+file entirely with `DELETE /files/{fileId}`—names become available for reuse
+after deletion. Keep shared schemas in `src/common/fileSchemas.ts`, controllers
+in `src/rolo/controllers/filesController.ts`, and update tests whenever storage
+or routing is adjusted.
 
 ## Security & Configuration Tips
 

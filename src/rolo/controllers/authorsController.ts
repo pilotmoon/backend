@@ -179,7 +179,7 @@ export async function deleteAuthor(id: string, auth: Auth) {
   auth.assertAccess(authorsCollectionName, id, "delete");
   try {
     const result = await dbc(auth.kind).deleteOne({ _id: id });
-    return result.deletedCount == 1;
+    return result.deletedCount === 1;
   } catch (e) {
     handleControllerError(e);
     throw e;
