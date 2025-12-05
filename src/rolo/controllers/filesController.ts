@@ -1,7 +1,6 @@
-import { type Readable, Transform } from "node:stream";
+import type { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { GridFSBucket, ObjectId } from "mongodb";
-import { z } from "zod";
+import { GridFSBucket, MongoServerError, ObjectId } from "mongodb";
 import { ApiError, handleControllerError } from "../../common/errors.js";
 import {
   type FileCreateInput,
@@ -12,19 +11,27 @@ import {
 } from "../../common/fileSchemas.js";
 import { type Auth, type AuthKind, authKinds } from "../auth.js";
 import { getDb } from "../database.js";
-import { randomIdentifier } from "../identifiers.js";
 import { type Pagination, paginate } from "../paginate.js";
 
 const collectionName = "files";
 const bucketName = "files";
+const fileIdPrefix = "file_";
+const fileIdRegex = /^file_([0-9a-f]{24})$/i;
 
-const ZFileDbRecord = ZFileRecord.extend({
-  gridFsId: z.instanceof(ObjectId),
-});
-type FileDbRecord = z.infer<typeof ZFileDbRecord>;
+function toFileId(objectId: ObjectId): string {
+  return `${fileIdPrefix}${objectId.toHexString()}`;
+}
 
-function dbc(kind: AuthKind) {
-  return getDb(kind).collection<FileDbRecord>(collectionName);
+function toObjectId(id: string): ObjectId | null {
+  const match = fileIdRegex.exec(id);
+  if (!match) {
+    return null;
+  }
+  try {
+    return new ObjectId(match[1]);
+  } catch {
+    return null;
+  }
 }
 
 const bucketCache = new Map<AuthKind, GridFSBucket>();
@@ -36,35 +43,43 @@ function getBucket(kind: AuthKind) {
   return bucket;
 }
 
-function toRecord(document: FileDbRecord): FileRecord {
-  const { gridFsId: _gridFsId, ...rest } = document;
-  return ZFileRecord.parse(rest);
+type GridFsMetadata = {
+  hidden?: boolean;
+};
+
+type GridFsFileDocument = {
+  _id: ObjectId;
+  filename: string;
+  length: number;
+  uploadDate: Date;
+  created?: Date;
+  metadata?: GridFsMetadata;
+};
+
+function filesCollection(kind: AuthKind) {
+  return getDb(kind).collection<GridFsFileDocument>(`${bucketName}.files`);
+}
+
+function toRecord(document: GridFsFileDocument): FileRecord {
+  const metadata = document.metadata ?? {};
+  return ZFileRecord.parse({
+    _id: toFileId(document._id),
+    object: "file",
+    name: document.filename,
+    size: document.length,
+    hidden: metadata.hidden ?? false,
+    created: document.created ?? document.uploadDate,
+  });
 }
 
 // One-time setup for collections and indexes
 export async function init() {
   for (const kind of authKinds) {
-    const collection = dbc(kind);
-    await collection.createIndex({ name: 1 }, { unique: true });
+    const collection = filesCollection(kind);
+    await collection.createIndex({ filename: 1 }, { unique: true });
     await collection.createIndex({ created: 1 });
-    await collection.createIndex({ hidden: 1 });
+    await collection.createIndex({ "metadata.hidden": 1 });
   }
-}
-
-async function ensureUniqueName(name: string, kind: AuthKind): Promise<void> {
-  const existing = await dbc(kind).findOne({ name });
-  if (existing) {
-    throw new ApiError(409, "File name already exists");
-  }
-}
-
-function makeCountingStream(onBytes: (size: number) => void) {
-  return new Transform({
-    transform(chunk, _encoding, callback) {
-      onBytes(chunk.length);
-      callback(null, chunk);
-    },
-  });
 }
 
 export async function createFile(
@@ -74,39 +89,47 @@ export async function createFile(
 ): Promise<FileRecord> {
   auth.assertAccess(collectionName, undefined, "create");
   const parsedInput: FileCreateInput = ZFileCreateInput.parse(suppliedInput);
-  await ensureUniqueName(parsedInput.name, auth.kind);
   const bucket = getBucket(auth.kind);
   const gridFsId = new ObjectId();
-  const uploadStream = bucket.openUploadStreamWithId(gridFsId, "");
-  let size = 0;
-  const counter = makeCountingStream((bytes) => {
-    size += bytes;
-  });
+  const now = new Date();
+  const uploadStream = bucket.openUploadStreamWithId(
+    gridFsId,
+    parsedInput.name,
+    {
+      metadata: {
+        hidden: false,
+      },
+    },
+  );
   try {
-    await pipeline(source, counter, uploadStream);
+    await pipeline(source, uploadStream);
   } catch (error) {
     await bucket.delete(gridFsId).catch(() => {});
+    if (error instanceof MongoServerError && error.code === 11000) {
+      throw new ApiError(409, "File name already exists");
+    }
     throw error;
   }
 
-  const now = new Date();
-  const document: FileDbRecord = {
-    _id: randomIdentifier("file"),
-    object: "file",
-    name: parsedInput.name,
-    size,
-    hidden: false,
-    created: now,
-    gridFsId,
-  };
   try {
-    await dbc(auth.kind).insertOne(document);
+    const document = await filesCollection(auth.kind).findOneAndUpdate(
+      { _id: gridFsId },
+      {
+        $set: {
+          created: now,
+        },
+      },
+      { returnDocument: "after" },
+    );
+    if (!document) {
+      throw new ApiError(500, "Unable to read stored file metadata");
+    }
+    return toRecord(document);
   } catch (error) {
     await bucket.delete(gridFsId).catch(() => {});
     handleControllerError(error);
     throw error;
   }
-  return toRecord(document);
 }
 
 export async function readFileById(
@@ -114,7 +137,13 @@ export async function readFileById(
   auth: Auth,
 ): Promise<FileRecord | null> {
   auth.assertAccess(collectionName, id, "read");
-  const document = await dbc(auth.kind).findOne({ _id: id });
+  const objectId = toObjectId(id);
+  if (!objectId) {
+    return null;
+  }
+  const document = await filesCollection(auth.kind).findOne({
+    _id: objectId,
+  });
   if (!document) return null;
   try {
     return toRecord(document);
@@ -129,11 +158,11 @@ async function findDocumentByName(
   kind: AuthKind,
   requirePublished: boolean,
 ) {
-  const match: Record<string, unknown> = { name };
+  const match: Record<string, unknown> = { filename: name };
   if (requirePublished) {
-    match.hidden = { $ne: true };
+    match["metadata.hidden"] = { $ne: true };
   }
-  return dbc(kind).findOne(match);
+  return filesCollection(kind).findOne(match);
 }
 
 export async function streamFileByName(
@@ -145,7 +174,7 @@ export async function streamFileByName(
   if (!document) return null;
   try {
     const bucket = getBucket(auth.kind);
-    const stream = bucket.openDownloadStream(document.gridFsId);
+    const stream = bucket.openDownloadStream(document._id);
     return { record: toRecord(document), stream };
   } catch (_) {
     throw new ApiError(500, "Unable to read stored file");
@@ -158,25 +187,25 @@ export async function updateFile(
   auth: Auth,
 ): Promise<FileRecord | null> {
   auth.assertAccess(collectionName, id, "update");
-  const update = ZFileUpdateInput.parse(suppliedInput);
-  const existing = await readFileById(id, auth);
-  if (!existing) {
+  const objectId = toObjectId(id);
+  if (!objectId) {
     return null;
   }
-  const nextRecord = {
-    ...existing,
-    ...update,
-  };
+  const update = ZFileUpdateInput.parse(suppliedInput);
   try {
-    await dbc(auth.kind).updateOne(
-      { _id: id },
+    const document = await filesCollection(auth.kind).findOneAndUpdate(
+      { _id: objectId },
       {
         $set: {
-          ...update,
+          "metadata.hidden": update.hidden,
         },
       },
+      { returnDocument: "after" },
     );
-    return nextRecord;
+    if (!document) {
+      return null;
+    }
+    return toRecord(document);
   } catch (error) {
     handleControllerError(error);
     throw error;
@@ -189,7 +218,7 @@ export async function listFiles(
 ): Promise<FileRecord[]> {
   auth.assertAccess(collectionName, undefined, "read");
   try {
-    const docs = await paginate(dbc(auth.kind), pagination);
+    const docs = await paginate(filesCollection(auth.kind), pagination);
     return docs.map(toRecord);
   } catch (error) {
     handleControllerError(error);

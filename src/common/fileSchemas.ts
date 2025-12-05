@@ -11,6 +11,8 @@ function isValidSegment(segment: string) {
   );
 }
 
+const fileIdLike = /^file_[0-9a-fA-F]{24}$/;
+
 export const ZFileName = z
   .string()
   .trim()
@@ -25,11 +27,10 @@ export const ZFileName = z
   .refine((val) => !val.includes("//"), {
     message: "File name cannot contain '//' sequences",
   })
-  .refine(
-    (val) => val.split("/").every((segment) => isValidSegment(segment)),
-    { message: "File name contains invalid path segments" },
-  )
-  .refine((val) => !/^file_[0-9a-zA-Z]{12}$/.test(val), {
+  .refine((val) => val.split("/").every((segment) => isValidSegment(segment)), {
+    message: "File name contains invalid path segments",
+  })
+  .refine((val) => !fileIdLike.test(val), {
     message: "File name cannot match a file identifier pattern",
   });
 

@@ -9,13 +9,12 @@ import {
   streamFileByName,
   updateFile,
 } from "../controllers/filesController.js";
-import { makeIdentifierPattern } from "../identifiers.js";
 import { type AppContext, makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/files" });
 const matchId = {
-  pattern: makeIdentifierPattern("id", "file"),
+  pattern: "/:id(file_[0-9a-fA-F]{24})",
   uuid: randomUUID(),
 };
 

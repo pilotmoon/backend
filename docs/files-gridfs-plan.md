@@ -20,12 +20,12 @@
 2. **Persistence & GridFS Wiring**
    - Extend the Mongo helper to initialize a `GridFSBucket` (e.g.,
      `filesBucket`) configured for the `files` namespace.
-   - Create a new `files` collection for metadata with unique indexes on
-     `fileId` and `name`, referencing the GridFS `_id` and storing the `hidden`
-     flag for soft deletes (defaulting to `false` on insert).
+   - Use the GridFS `files` documents themselves as metadata: rely on the
+     document `_id` as the canonical identifier (exposed externally as
+     `file_<ObjectId>`), store the visibility flag in `metadata.hidden`, and
+     stamp creation dates directly on the GridFS document.
    - Implement repository functions for create/read/update-visibility that
-     coordinate metadata writes and GridFS streams without ever replacing
-     content once created.
+     coordinate GridFS writes/reads only—no parallel metadata collection.
 3. **API Layer**
    - Add new routes/controllers under `src/rolo/files` for `POST /files`,
      `GET /files` (paginated), `GET /files/:fileId`, and `GET /files/:name`.
@@ -44,6 +44,6 @@
 5. **Docs & Ops Updates**
    - Document the new endpoints in README/AGENTS, including sample `curl`
      commands.
-   - Note any new environment variables (e.g., bucket names) and update `.env-*`
-     templates if necessary.
-   - Provide migration notes for deploying indexes on existing Mongo instances.
+   - Note the reliance on GridFS indexes (`filename`, `metadata.hidden`,
+     `created`) alongside the default `_id` and ensure deployment instructions
+     mention building them with the bucket.
