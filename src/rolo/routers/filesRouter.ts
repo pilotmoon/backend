@@ -9,7 +9,7 @@ import {
   streamFileByName,
   updateFile,
 } from "../controllers/filesController.js";
-import { type AppContext, makeRouter } from "../koaWrapper.js";
+import { makeRouter } from "../koaWrapper.js";
 import { setBodySpecialFormat } from "../makeFormats.js";
 
 export const router = makeRouter({ prefix: "/files" });
@@ -18,21 +18,8 @@ const matchId = {
   uuid: randomUUID(),
 };
 
-function headerValue(
-  header: string | string[] | undefined,
-): string | undefined {
-  if (!header) return undefined;
-  return Array.isArray(header) ? header[0] : header;
-}
-
-function resolveName(ctx: AppContext) {
-  const headerName = headerValue(ctx.request.header["x-file-name"]);
-  const queryName = stringFromQuery(ctx.query, "name", "").trim();
-  return headerName?.trim() || queryName;
-}
-
 router.post("/", async (ctx) => {
-  const name = resolveName(ctx);
+  const name = stringFromQuery(ctx.query, "name", "").trim();
   if (!name) {
     throw new ApiError(400, "File name is required");
   }

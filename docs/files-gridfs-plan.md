@@ -29,9 +29,9 @@
 3. **API Layer**
    - Add new routes/controllers under `src/rolo/files` for `POST /files`,
      `GET /files` (paginated), `GET /files/:fileId`, and `GET /files/:name`.
-   - Handle uploads via streaming (raw body with `X-File-Name`) and return
-     `fileId` plus metadata; enforce conflicts on duplicate names and default
-     new files to `hidden: false`.
+   - Handle uploads via streaming (raw body with a required `?name=` query
+     parameter) and return `fileId` plus metadata; enforce conflicts on
+     duplicate names and default new files to `hidden: false`.
    - When retrieving by name, stream the binary contents as
      `application/octet-stream`; when retrieving by `fileId`, return a JSON
      metadata payload consistent with other records.
