@@ -79,14 +79,14 @@ test("list files sorts by created ascending", async (t) => {
 });
 
 test("download file by name", async (t) => {
-  const res = await rolo().get(`files/${sampleName}`, {
+  const res = await rolo().get(`files/download/${sampleName}`, {
     responseType: "arraybuffer",
   });
   t.is(res.status, 200);
 });
 
 test("download simple file by name", async (t) => {
-  const res = await rolo().get(`files/${simpleName}`, {
+  const res = await rolo().get(`files/download/${simpleName}`, {
     responseType: "arraybuffer",
   });
   t.is(res.status, 200);
@@ -100,7 +100,7 @@ test("hide file prevents name access", async (t) => {
   t.is(res.status, 200);
   t.true(res.data.hidden);
 
-  const byName = await rolo().get(`files/${sampleName}`, {
+  const byName = await rolo().get(`files/download/${sampleName}`, {
     responseType: "arraybuffer",
   });
   t.is(byName.status, 404);
@@ -129,16 +129,20 @@ test("duplicate names are rejected", async (t) => {
   t.is(res.status, 409);
 });
 
-test("id-like names are rejected", async (t) => {
-  const idLikeName = `file_${"abcdef0123456789".repeat(1).padEnd(24, "0")}`;
-  const res = await rolo().post("files", sampleData, {
+test("id-like names can be uploaded and downloaded", async (t) => {
+  const trickyName = `file_${randomString({ length: 24 })}.zip`;
+  const upload = await rolo().post("files", sampleData, {
     headers: {
       "Content-Type": "text/plain",
     },
-    params: { name: idLikeName },
+    params: { name: trickyName },
     maxBodyLength: Number.POSITIVE_INFINITY,
   });
-  t.is(res.status, 400);
+  t.is(upload.status, 201);
+  const download = await rolo().get(`files/download/${trickyName}`, {
+    responseType: "arraybuffer",
+  });
+  t.is(download.status, 200);
 });
 
 test("missing file name is rejected", async (t) => {

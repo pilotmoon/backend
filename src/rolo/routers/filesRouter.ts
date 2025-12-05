@@ -46,7 +46,7 @@ router.get(matchId.uuid, matchId.pattern, async (ctx) => {
   ctx.status = 404;
 });
 
-router.get("/:identifier(.+)", async (ctx) => {
+router.get("/download/:identifier(.+)", async (ctx) => {
   const result = await streamFileByName(ctx.params.identifier, ctx.state.auth);
   if (!result) {
     ctx.status = 404;
